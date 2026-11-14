@@ -11,6 +11,9 @@ uv run --package worker python -m worker --cada 30  # sigue corriendo, una vuelt
 docker compose --profile vivo up                    # base, API y worker en contenedores
 ```
 
+En producción corre con GitHub Actions (`.github/workflows/worker-vivo.yml`), una vuelta cada 15 minutos, con los
+secretos del repo `FIRMS_MAP_KEY`, `DATABASE_URL` y `NVIDIA_API_KEY`.
+
 Necesita `DATABASE_URL` y `FIRMS_MAP_KEY`. Para la verificación también `NVIDIA_API_KEY` y `DATA_MANIFEST_URL`
 (regiones y máscara de fuentes fijas); sin ellas, esas señales quedan sin información y el resto sigue.
 

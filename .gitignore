@@ -2,3 +2,27 @@
 .env.*
 !.env.example
 .board/
+
+# Node y Turborepo
+node_modules/
+dist/
+.turbo/
+.astro/
+*.tsbuildinfo
+
+# Python
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.ruff_cache/
+
+# Datos: en el repo solo van las muestras chicas
+data/*
+!data/muestras/
+*.parquet
+!data/muestras/*.parquet
+
+# Varios
+.DS_Store
+coverage/

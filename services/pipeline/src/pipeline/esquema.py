@@ -26,4 +26,14 @@ ESQUEMAS = {
         "provisional": pl.Boolean,
     },
     "fuentes_fijas": {"cell_id": pl.String},
+    "prediccion": {
+        "cell_id": pl.String,
+        "month": pl.String,
+        "horizon": pl.Int8,
+        "expected_fire_days": pl.Float64,
+        "p10": pl.Float64,
+        "p90": pl.Float64,
+        "skill_vs_climatology": pl.Float64,
+        "model": pl.String,
+    },
 }

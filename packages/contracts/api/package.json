@@ -1,0 +1,25 @@
+{
+  "name": "@charmy/contracts-api",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Contrato de la API de Charmy (OpenAPI 3.1), su mock y los tipos de TypeScript generados.",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/schema.d.ts"
+    },
+    "./openapi.yaml": "./openapi.yaml"
+  },
+  "files": ["dist", "openapi.yaml"],
+  "scripts": {
+    "lint": "redocly lint openapi.yaml",
+    "build": "openapi-typescript openapi.yaml -o dist/schema.d.ts",
+    "mock": "pnpm dlx @stoplight/prism-cli@5.16.0 mock openapi.yaml --port 4010",
+    "coleccion": "openapi2postmanv2 -s openapi.yaml -o postman/charmy.postman_collection.json -p -O folderStrategy=Tags,requestNameSource=Fallback"
+  },
+  "devDependencies": {
+    "@redocly/cli": "2.78.0",
+    "openapi-to-postmanv2": "6.4.3",
+    "openapi-typescript": "7.13.0"
+  }
+}

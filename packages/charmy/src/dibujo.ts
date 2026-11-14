@@ -1,5 +1,6 @@
 // Generado a partir de docs/charmy-base/Charmy.dc.html (diseño aprobado, decisión D-07).
-// Único agregado a mano: data-parte="llama-cola", para animar la llama de la cola.
+// Agregados a mano para animar con CSS sin tocar el dibujo: las capas de una sola figura van dentro de un <g>,
+// y data-parte marca la llama de la cola, las puntas de las orejas y el signo de exclamación.
 // No editar a mano el dibujo: si cambia el diseño, se regenera desde la base y se revisa el resultado.
 
 /** Capas que se prenden o apagan según el estado y el vestuario. */
@@ -12,16 +13,18 @@ export function dibujo(v: Record<Capa, 0 | 1>): string {
   <ellipse cx="124" cy="222" rx="76" ry="8" fill="#1B2430" opacity="0.08"/>
 
   <path d="M160 204 C186 214 212 210 220 192 C222 186 222 180 218 176 C214 186 206 194 190 196 C178 198 168 196 160 192 Z" fill="#D9732F"/>
-  <g data-parte="llama-cola" transform="translate(219 180) rotate(15)">
-    <path d="M-9 6 C-12 -6 -3 -10 0 -24 C4 -14 12 -12 10 0 C8 8 -6 10 -9 6 Z" fill="#FF6B1A"/>
-    <path d="M-4 4 C-6 -4 0 -6 1 -13 C4 -7 7 -5 5 2 C4 6 -2 7 -4 4 Z" fill="#FFC53D"/>
+  <g transform="translate(219 180) rotate(15)">
+    <g data-parte="llama-cola">
+      <path d="M-9 6 C-12 -6 -3 -10 0 -24 C4 -14 12 -12 10 0 C8 8 -6 10 -9 6 Z" fill="#FF6B1A"/>
+      <path d="M-4 4 C-6 -4 0 -6 1 -13 C4 -7 7 -5 5 2 C4 6 -2 7 -4 4 Z" fill="#FFC53D"/>
+    </g>
   </g>
 
   <ellipse cx="92" cy="50" rx="15" ry="33" fill="#E8833A" transform="rotate(-16 92 50)"/>
   <ellipse cx="92" cy="54" rx="7.5" ry="23" fill="#F6B48F" transform="rotate(-16 92 54)"/>
   <ellipse cx="148" cy="50" rx="15" ry="33" fill="#E8833A" transform="rotate(16 148 50)"/>
   <ellipse cx="148" cy="54" rx="7.5" ry="23" fill="#F6B48F" transform="rotate(16 148 54)"/>
-  <g data-capa="alert" opacity="${v.alert}">
+  <g data-capa="alert" data-parte="orejas-llama" opacity="${v.alert}">
     <g transform="translate(83 22) rotate(-16)">
       <path d="M-6 4 C-8 -4 -2 -6 0 -14 C2 -8 7 -6 6 4 C4 8 -4 8 -6 4 Z" fill="#FF6B1A"/>
       <path d="M-6 4 C-8 -4 -2 -6 0 -14 C2 -8 7 -6 6 4 C4 8 -4 8 -6 4 Z" fill="#FFC53D" transform="scale(0.55)"/>
@@ -33,7 +36,9 @@ export function dibujo(v: Record<Capa, 0 | 1>): string {
   </g>
 
   <ellipse cx="120" cy="168" rx="56" ry="48" fill="#E8833A"/>
-  <ellipse cx="120" cy="178" rx="34" ry="32" fill="#FCE9CF" data-capa="belly" opacity="${v.belly}"/>
+  <g data-capa="belly" opacity="${v.belly}">
+    <ellipse cx="120" cy="178" rx="34" ry="32" fill="#FCE9CF"/>
+  </g>
 
   <g data-capa="bombero" opacity="${v.bombero}">
     <ellipse cx="120" cy="169" rx="57" ry="48" fill="#2E3B4E"/>
@@ -67,11 +72,23 @@ export function dibujo(v: Record<Capa, 0 | 1>): string {
   <ellipse cx="96" cy="212" rx="18" ry="9" fill="#C4612A"/>
   <ellipse cx="144" cy="212" rx="18" ry="9" fill="#C4612A"/>
 
-  <ellipse cx="72" cy="170" rx="11" ry="21" fill="#D9732F" transform="rotate(20 72 170)" data-capa="armL" opacity="${v.armL}"/>
-  <ellipse cx="168" cy="170" rx="11" ry="21" fill="#D9732F" transform="rotate(-20 168 170)" data-capa="armR" opacity="${v.armR}"/>
-  <ellipse cx="64" cy="128" rx="11" ry="22" fill="#D9732F" transform="rotate(-28 64 128)" data-capa="armLUp" opacity="${v.armLUp}"/>
-  <ellipse cx="176" cy="128" rx="11" ry="22" fill="#D9732F" transform="rotate(28 176 128)" data-capa="armRUp" opacity="${v.armRUp}"/>
-  <ellipse cx="184" cy="150" rx="24" ry="10" fill="#D9732F" transform="rotate(-12 184 150)" data-capa="armRPoint" opacity="${v.armRPoint}"/>
+  <g data-capa="armL" opacity="${v.armL}">
+
+    <ellipse cx="72" cy="170" rx="11" ry="21" fill="#D9732F" transform="rotate(20 72 170)"/>
+
+  </g>
+  <g data-capa="armR" opacity="${v.armR}">
+    <ellipse cx="168" cy="170" rx="11" ry="21" fill="#D9732F" transform="rotate(-20 168 170)"/>
+  </g>
+  <g data-capa="armLUp" opacity="${v.armLUp}">
+    <ellipse cx="64" cy="128" rx="11" ry="22" fill="#D9732F" transform="rotate(-28 64 128)"/>
+  </g>
+  <g data-capa="armRUp" opacity="${v.armRUp}">
+    <ellipse cx="176" cy="128" rx="11" ry="22" fill="#D9732F" transform="rotate(28 176 128)"/>
+  </g>
+  <g data-capa="armRPoint" opacity="${v.armRPoint}">
+    <ellipse cx="184" cy="150" rx="24" ry="10" fill="#D9732F" transform="rotate(-12 184 150)"/>
+  </g>
 
   <ellipse cx="120" cy="100" rx="52" ry="44" fill="#E8833A"/>
 
@@ -117,7 +134,11 @@ export function dibujo(v: Record<Capa, 0 | 1>): string {
     <rect x="132" y="70" width="18" height="3.5" rx="1.75" fill="#4A2A1E" transform="rotate(-10 141 72)"/>
   </g>
 
-  <path d="M111 118 C113 123 118 123 120 118 C122 123 127 123 129 118 C128 126 122 126 120 122 C118 126 112 126 111 118 Z" fill="#3A2018" data-capa="mouthW" opacity="${v.mouthW}"/>
+  <g data-capa="mouthW" opacity="${v.mouthW}">
+
+    <path d="M111 118 C113 123 118 123 120 118 C122 123 127 123 129 118 C128 126 122 126 120 122 C118 126 112 126 111 118 Z" fill="#3A2018"/>
+
+  </g>
   <g data-capa="mouthOpen" opacity="${v.mouthOpen}">
     <path d="M109 117 C113 132 127 132 131 117 C124 121 116 121 109 117 Z" fill="#5A2418"/>
     <ellipse cx="120" cy="126" rx="5.5" ry="3" fill="#F07A6A"/>
@@ -126,7 +147,9 @@ export function dibujo(v: Record<Capa, 0 | 1>): string {
     <path d="M105 116 C109 137 131 137 135 116 C127 121 113 121 105 116 Z" fill="#5A2418"/>
     <ellipse cx="120" cy="129" rx="7" ry="3.5" fill="#F07A6A"/>
   </g>
-  <ellipse cx="120" cy="122" rx="5" ry="6.5" fill="#5A2418" data-capa="mouthO" opacity="${v.mouthO}"/>
+  <g data-capa="mouthO" opacity="${v.mouthO}">
+    <ellipse cx="120" cy="122" rx="5" ry="6.5" fill="#5A2418"/>
+  </g>
 
   <g fill="#4A2A1E" opacity="0.55">
     <rect x="60" y="114" width="26" height="2" rx="1" transform="rotate(-8 73 115)"/>
@@ -161,9 +184,13 @@ export function dibujo(v: Record<Capa, 0 | 1>): string {
     <path d="M-6 4 C-8 -4 -2 -6 0 -14 C2 -8 7 -6 6 4 C4 8 -4 8 -6 4 Z" fill="#FFC53D" transform="translate(140 56) scale(0.5)"/>
   </g>
 
-  <ellipse cx="136" cy="140" rx="9" ry="17" fill="#D9732F" transform="rotate(-35 136 140)" data-capa="armChin" opacity="${v.armChin}"/>
+  <g data-capa="armChin" opacity="${v.armChin}">
 
-  <g data-capa="alert" opacity="${v.alert}">
+    <ellipse cx="136" cy="140" rx="9" ry="17" fill="#D9732F" transform="rotate(-35 136 140)"/>
+
+  </g>
+
+  <g data-capa="alert" data-parte="exclamacion" opacity="${v.alert}">
     <rect x="203" y="30" width="11" height="28" rx="5.5" fill="#E8590C"/>
     <circle cx="208.5" cy="67" r="6" fill="#E8590C"/>
   </g>

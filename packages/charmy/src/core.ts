@@ -54,6 +54,10 @@ export interface OpcionesCharmy {
   decorative?: boolean;
   /** "cabeza" recorta a la cabeza. Por defecto se elige solo según el tamaño. */
   variant?: "completo" | "cabeza";
+  /** Por defecto true. false deja a Charmy quieto (listas, avatares). Con movimiento reducido, siempre quieto. */
+  animate?: boolean;
+  /** Dónde va el globo de `say` respecto del dibujo. Por defecto "derecha". */
+  sayPosition?: "derecha" | "arriba";
 }
 
 export function esMood(x: unknown): x is Mood {
@@ -120,7 +124,13 @@ export function normalizar(op: OpcionesCharmy = {}) {
   const size = Number.isFinite(op.size) && (op.size as number) > 0 ? Math.round(op.size as number) : 240;
   const variant = op.variant ?? (size < TAMANO_MINIMO_CUERPO ? "cabeza" : "completo");
   const conTexto = typeof op.say === "string" && op.say.trim() !== "";
-  return { mood, outfit, size, variant, conTexto, label: op.label ?? etiqueta(mood, outfit), decorative: !!op.decorative };
+  const animate = op.animate !== false;
+  const sayPosition = op.sayPosition === "arriba" ? "arriba" : "derecha";
+  return {
+    mood, outfit, size, variant, conTexto, animate, sayPosition,
+    label: op.label ?? etiqueta(mood, outfit),
+    decorative: !!op.decorative,
+  };
 }
 
 /** Recuadro de la cabeza con orejas y sombrero, en el sistema de 240 × 240. */
@@ -134,8 +144,26 @@ export function charmySvg(op: OpcionesCharmy = {}): string {
     : `role="img" aria-label="${escaparTexto(n.label)}"`;
   return (
     `<svg xmlns="http://www.w3.org/2000/svg" class="charmy" width="${n.size}" height="${n.size}" ` +
-    `viewBox="${VIEWBOX[n.variant]}" ${accesible} data-mood="${n.mood}" data-outfit="${n.outfit}">` +
+    `viewBox="${VIEWBOX[n.variant]}" ${accesible} data-mood="${n.mood}" data-outfit="${n.outfit}"` +
+    `${n.animate ? "" : ' data-animado="no"'}>` +
     dibujo(capasVisibles(n.mood, n.outfit, n.conTexto)) +
     `</svg>`
   );
 }
+
+/**
+ * Charmy con su globo como HTML, para páginas sin React (Astro estático). Necesita CHARMY_CSS o charmy.css en la página.
+ * Seguro de insertar: el texto de `say` y el de `label` se escapan.
+ */
+export function charmyHtml(op: OpcionesCharmy = {}): string {
+  const n = normalizar(op);
+  const dibujo = `<span class="charmy-dibujo" style="display:inline-block;line-height:0">${charmySvg(op)}</span>`;
+  const anim = n.animate ? "" : ' data-animado="no"';
+  if (!n.conTexto) return `<span class="charmy-raiz"${anim}>${dibujo}</span>`;
+  return (
+    `<span class="charmy-raiz charmy-con-globo" data-globo="${n.sayPosition}"${anim}>${dibujo}` +
+    `<span class="charmy-globo" role="status" aria-live="polite">${escaparTexto(op.say as string)}</span></span>`
+  );
+}
+
+export { CHARMY_CSS } from "./estilos.js";

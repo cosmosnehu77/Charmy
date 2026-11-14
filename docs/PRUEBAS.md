@@ -13,7 +13,11 @@ Una tarea está terminada cuando:
 1. Su issue tiene la sección **"Pruebas mínimas"** y cada punto tiene una prueba automática que pasa, o una
    verificación manual escrita en el PR cuando no se puede automatizar (algo visual, una cuenta externa).
 2. `pnpm check --filter <paquete>` o `uv run --package <servicio> pytest` pasa en local.
+   Además, cada commit corre solo las pruebas de lo que toca (hook `pre-commit`, D-29): las de los paquetes JS que
+   cambiaron y de los que dependen de ellos, y las de cada servicio de Python que cambió. Un servicio sin pruebas no
+   se puede commitear, y el CI también lo rechaza. El hook se activa con `pnpm install`; no se saltea con `--no-verify`.
 3. El CI del PR está en verde. Un PR con el CI en rojo no se fusiona, aunque "ande en local".
+   Tampoco se despliega: los flujos de despliegue esperan a que `CI ok` de ese commit en `main` esté en verde.
 4. El PR apunta a `main`. **Nunca se apilan PR** (un PR cuya base es otra rama): al fusionarse, su contenido no
    llega a `main` y hay que rehacerlo.
 5. La rama está al día con `main`: se corre `tools/al-dia` antes de abrir el PR y cada vez que GitHub marca
@@ -76,6 +80,7 @@ uv run --package <servicio> pytest           # pruebas de un servicio Python
 uv run --package <servicio> pytest -k calendario -x
 uv run ruff check services/<carpeta>
 pnpm check && uv run pytest services         # todo, antes de un PR que toca varias carpetas
+pnpm install                                 # activa el hook pre-commit (git config core.hooksPath .githooks)
 ```
 
 ## 6. Revisión de un PR

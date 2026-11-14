@@ -1,0 +1,163 @@
+{
+ "type": "FeatureCollection",
+ "features": [
+  {
+   "id": "S2B_MSIL2A_20261110T142719_N0513_R053_T19GBP_20261110T180922.SAFE",
+   "properties": {
+    "datetime": "2026-11-10T14:44:37.662Z",
+    "eo:cloud_cover": 56.72
+   }
+  },
+  {
+   "id": "S2B_MSIL2A_20261110T142719_N0513_R053_T18GYU_20261110T180922.SAFE",
+   "properties": {
+    "datetime": "2026-11-10T14:44:37.51Z",
+    "eo:cloud_cover": 57.1
+   }
+  },
+  {
+   "id": "S2B_MSIL2A_20261110T142719_N0513_R053_T19GCP_20261110T180922.SAFE",
+   "properties": {
+    "datetime": "2026-11-10T14:44:34.322Z",
+    "eo:cloud_cover": 95.12
+   }
+  },
+  {
+   "id": "S2A_MSIL2A_20261107T142801_N0513_R053_T19GBP_20261107T224009.SAFE",
+   "properties": {
+    "datetime": "2026-11-07T14:44:43.089Z",
+    "eo:cloud_cover": 0.74
+   }
+  },
+  {
+   "id": "S2A_MSIL2A_20261107T142801_N0513_R053_T18GYU_20261107T224009.SAFE",
+   "properties": {
+    "datetime": "2026-11-07T14:44:42.936Z",
+    "eo:cloud_cover": 0.58
+   }
+  },
+  {
+   "id": "S2A_MSIL2A_20261107T142801_N0513_R053_T19GCP_20261107T224009.SAFE",
+   "properties": {
+    "datetime": "2026-11-07T14:44:39.752Z",
+    "eo:cloud_cover": 0.0
+   }
+  },
+  {
+   "id": "S2C_MSIL2A_20261105T142751_N0513_R053_T19GBP_20261105T190403.SAFE",
+   "properties": {
+    "datetime": "2026-11-05T14:44:32.408Z",
+    "eo:cloud_cover": 95.18
+   }
+  },
+  {
+   "id": "S2C_MSIL2A_20261105T142751_N0513_R053_T18GYU_20261105T190403.SAFE",
+   "properties": {
+    "datetime": "2026-11-05T14:44:32.255Z",
+    "eo:cloud_cover": 94.32
+   }
+  },
+  {
+   "id": "S2C_MSIL2A_20261105T142751_N0513_R053_T19GCP_20261105T190403.SAFE",
+   "properties": {
+    "datetime": "2026-11-05T14:44:29.058Z",
+    "eo:cloud_cover": 76.62
+   }
+  },
+  {
+   "id": "S2B_MSIL2A_20261031T142719_N0513_R053_T19GBP_20261031T175910.SAFE",
+   "properties": {
+    "datetime": "2026-10-31T14:44:38.128Z",
+    "eo:cloud_cover": 58.94
+   }
+  },
+  {
+   "id": "S2B_MSIL2A_20261031T142719_N0513_R053_T18GYU_20261031T175910.SAFE",
+   "properties": {
+    "datetime": "2026-10-31T14:44:37.976Z",
+    "eo:cloud_cover": 59.76
+   }
+  },
+  {
+   "id": "S2B_MSIL2A_20261031T142719_N0513_R053_T19GCP_20261031T175910.SAFE",
+   "properties": {
+    "datetime": "2026-10-31T14:44:34.786Z",
+    "eo:cloud_cover": 97.27
+   }
+  },
+  {
+   "id": "S2C_MSIL2A_20261026T142711_N0513_R053_T19GBP_20261026T190609.SAFE",
+   "properties": {
+    "datetime": "2026-10-26T14:44:36.043Z",
+    "eo:cloud_cover": 36.5
+   }
+  },
+  {
+   "id": "S2C_MSIL2A_20261026T142711_N0513_R053_T18GYU_20261026T190609.SAFE",
+   "properties": {
+    "datetime": "2026-10-26T14:44:35.891Z",
+    "eo:cloud_cover": 36.63
+   }
+  },
+  {
+   "id": "S2C_MSIL2A_20261026T142711_N0513_R053_T19GCP_20261026T190609.SAFE",
+   "properties": {
+    "datetime": "2026-10-26T14:44:32.691Z",
+    "eo:cloud_cover": 41.23
+   }
+  },
+  {
+   "id": "S2A_MSIL2A_20261018T142801_N0513_R053_T19GBP_20261018T235303.SAFE",
+   "properties": {
+    "datetime": "2026-10-18T14:44:47.41Z",
+    "eo:cloud_cover": 37.57
+   }
+  },
+  {
+   "id": "S2A_MSIL2A_20261018T142801_N0513_R053_T18GYU_20261018T235303.SAFE",
+   "properties": {
+    "datetime": "2026-10-18T14:44:47.257Z",
+    "eo:cloud_cover": 37.25
+   }
+  },
+  {
+   "id": "S2A_MSIL2A_20261018T142801_N0513_R053_T19GCP_20261018T235303.SAFE",
+   "properties": {
+    "datetime": "2026-10-18T14:44:44.068Z",
+    "eo:cloud_cover": 46.5
+   }
+  },
+  {
+   "id": "S2C_MSIL2A_20261016T142711_N0513_R053_T19GBP_20261016T175111.SAFE",
+   "properties": {
+    "datetime": "2026-10-16T14:44:38.324Z",
+    "eo:cloud_cover": 14.62
+   }
+  },
+  {
+   "id": "S2C_MSIL2A_20261016T142711_N0513_R053_T18GYU_20261016T175111.SAFE",
+   "properties": {
+    "datetime": "2026-10-16T14:44:38.173Z",
+    "eo:cloud_cover": 15.54
+   }
+  },
+  {
+   "id": "S2C_MSIL2A_20261016T142711_N0513_R053_T19GCP_20261016T175111.SAFE",
+   "properties": {
+    "datetime": "2026-10-16T14:44:34.97Z",
+    "eo:cloud_cover": 43.97
+   }
+  }
+ ],
+ "links": [
+  {
+   "href": "https://sh.dataspace.copernicus.eu/catalog/v1/search",
+   "rel": "self",
+   "type": "application/geo+json"
+  }
+ ],
+ "context": {
+  "limit": 50,
+  "returned": 21
+ }
+}

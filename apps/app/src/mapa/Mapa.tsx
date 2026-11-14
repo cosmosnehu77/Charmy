@@ -12,7 +12,8 @@ import { useConsulta } from "@/estado/consulta";
 import { atributosFoco } from "@/experto/atributos";
 import { useFocosVivo } from "@/vivo/consultas";
 import { useVivo } from "@/vivo/estado";
-import { agregarCapas, datosArea } from "./capas";
+import { useContexto } from "@/contexto/estado";
+import { agregarCapas, datosArea, ponerImagen } from "./capas";
 import { esFallaDelEstilo, LIMITES_MVP, perfiles, transformarEstilo } from "./perfiles";
 
 maplibregl.setWorkerUrl(urlWorker);
@@ -58,11 +59,12 @@ export default function Mapa() {
   const vivoVisible = useVivo((s) => s.visible);
   const { data: vivoDatos } = useFocosVivo();
   const vivo = vivoVisible ? (vivoDatos ?? null) : null;
+  const capaImagen = useContexto((s) => s.capa);
   const [falla, setFalla] = useState(false);
 
   // Lo último que hay que dibujar, para volver a agregarlo después de un cambio de estilo.
-  const datos = useRef({ area, focos, vivo });
-  datos.current = { area, focos, vivo };
+  const datos = useRef({ area, focos, vivo, capaImagen });
+  datos.current = { area, focos, vivo, capaImagen };
 
   // Crear el mapa una sola vez.
   useEffect(() => {
@@ -86,6 +88,7 @@ export default function Mapa() {
     m.on("style.load", () => {
       setFalla(false);
       agregarCapas(m, datos.current.area, datos.current.focos, datos.current.vivo);
+      ponerImagen(m, datos.current.capaImagen);
       // Terra Draw ya se detuvo antes de setStyle (ver el efecto del perfil): acá se crea uno nuevo.
       dibujo.current = crearDibujo(m);
       const modo = useConsulta.getState().dibujando;
@@ -178,6 +181,17 @@ export default function Mapa() {
       ?.getSource<maplibregl.GeoJSONSource>("vivo")
       ?.setData(vivo ?? { type: "FeatureCollection", features: [] });
   }, [vivo]);
+
+  // Imagen satelital como capa.
+  useEffect(() => {
+    const m = mapa.current;
+    if (!m?.getSource("area")) return; // si el estilo está cargando, la pone el style.load
+    ponerImagen(m, capaImagen);
+    if (capaImagen) {
+      const [o, s, e, n] = capaImagen.bbox;
+      m.fitBounds([o, s, e, n], { padding: 48, duration: 800 });
+    }
+  }, [capaImagen]);
 
   // Herramienta de dibujo.
   useEffect(() => {

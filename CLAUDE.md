@@ -15,6 +15,8 @@ Este archivo no copia tablas: apunta a ellas. Qué se construye está en `REQUIS
 2. Lee en `PLAN.md` la **fase activa** y las tareas de esa fase cuyo dueño es tu persona.
 3. Trabaja solo en esas tareas. No adelantes tareas de otra fase ni tomes las de otro carril.
 4. Las tareas con la etiqueta `reserva` no tienen dueño: no las tomes, las asigna el líder en el tablero.
+5. Si tu persona se está quedando sin uso de tokens (cerca del 90 %), o el tablero trae un RELEVO que te nombra,
+   usa la skill `relevo` (`AGENTS.md` §7). Al 90 % no se explora: se deja la tarea lista con `tools/relevo dejar`.
 
 ## Carriles
 
@@ -88,6 +90,8 @@ Este archivo no copia tablas: apunta a ellas. Qué se construye está en `REQUIS
 
 - Antes de abrir el PR, corre `pnpm check --filter <paquete>` o `uv run --package <servicio> pytest`.
 - **Todo PR apunta a `main`.** Nunca se apila un PR sobre otra rama: al fusionarse no llega a `main`.
+- Cuando entra a `main` un cambio de lockfile, el flujo `al-dia.yml` arregla solo los PR abiertos que chocan **solo**
+  en lockfiles y comenta en los que tienen un conflicto real. Después de su comentario, `git pull` antes de seguir.
 - **Antes de abrir el PR, y cada vez que GitHub marque conflictos, corre `tools/al-dia`.** Trae `main` a tu rama y
   resuelve solo los choques de `pnpm-lock.yaml` y `uv.lock` (pasan cada vez que dos PR agregan dependencias).
   Nunca resuelvas un lockfile a mano. Si el script se detiene, el conflicto es real: resuélvelo, o pide ayuda en el tablero.

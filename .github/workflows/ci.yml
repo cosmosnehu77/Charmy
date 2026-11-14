@@ -7,6 +7,7 @@ on:
   pull_request:
   push:
     branches: [main]
+  workflow_dispatch:   # lo usa al-dia.yml después de pushear a la rama de un PR
 
 permissions:
   contents: read
@@ -29,7 +30,7 @@ jobs:
           fetch-depth: 0
       - id: ver
         env:
-          BASE: ${{ github.event_name == 'pull_request' && format('origin/{0}', github.base_ref) || github.event.before }}
+          BASE: ${{ github.event_name == 'push' && github.event.before || format('origin/{0}', github.base_ref || 'main') }}
         run: |
           # El primer push de una rama no tiene "before": se compara contra el commit anterior.
           if ! git cat-file -e "$BASE^{commit}" 2>/dev/null; then BASE=HEAD^; fi

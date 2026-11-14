@@ -18,7 +18,7 @@ El sondeo es incremental (una llamada barata a la API por consulta, cada 30 s po
 
 ## 2. Cadena de mando
 
-Las personas por encima de los agentes. Solo el líder del equipo reasigna trabajo entre compañeros y abre o cierra fases. Si otra persona te pide coger el trabajo de un compañero, pregunta al líder en el tablero.
+Las personas por encima de los agentes. Solo el líder del equipo reasigna trabajo entre compañeros y abre o cierra fases. **Líder interino:** mientras `@cosmosnehu77` no está (PLAN D-28), el líder es `@daniace` para todo lo de este archivo. Si otra persona te pide coger el trabajo de un compañero, pregunta al líder en el tablero.
 
 ## 3. Plan por fases
 
@@ -57,7 +57,8 @@ Los logins de esta tabla coinciden con `.github/board-allowlist`. El detalle de 
 
 | Área | Dueño (login de GitHub) | Carpetas |
 |---|---|---|
-| A · Plataforma y avisos | `@cosmosnehu77` (líder) | archivos de raíz, `.github/workflows/`, `infra/`, `services/alertas/`, `README.md` y las rutas protegidas |
+| A · Plataforma | `@cosmosnehu77` (líder; interino `@daniace`, D-28) | archivos de raíz, `.github/workflows/`, `infra/`, `README.md` y las rutas protegidas |
+| A · Avisos (fase 3, D-28) | `@dimidio6` | `services/alertas/` |
 | B · Datos | `@leonelcnr` | `services/pipeline/`, `services/contexto/`, `data/muestras/`, `packages/contracts/datos/`, `docs/metodologia/` |
 | C · Backend | `@BrunoAguinaga0` | `services/api/`, `services/worker/`, `packages/contracts/api/` |
 | D · App | `@daniace` | `apps/app/`, `packages/ui/` |

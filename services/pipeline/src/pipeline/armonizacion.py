@@ -238,7 +238,7 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--regiones", type=Path, required=True)
     p.add_argument("--out", type=Path, required=True)
     args = p.parse_args(argv)
-    focos = filtrar(pl.read_parquet(args.focos, hive_partitioning=True))
+    focos = filtrar(pl.read_parquet(args.focos / "*.parquet"))
     regiones = json.loads(args.regiones.read_text())
     codigos = [f["properties"]["region"] for f in regiones["features"]]
     m = dias_celda_mensuales(focos, region_de_celdas(focos["cell_id"], regiones), codigos)

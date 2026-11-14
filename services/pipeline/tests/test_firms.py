@@ -43,12 +43,15 @@ def test_satelite_desconocido_falla(tmp_path):
         leer_csv(tmp_path / "x.csv")
 
 
-def test_escribe_particionado_y_no_pisa(tmp_path):
+def test_escribe_un_archivo_por_satelite_y_anio_con_todas_las_columnas(tmp_path):
     df = cargar(list(FIX.glob("*.csv")))
     escribir(df, tmp_path / "focos")
-    assert (tmp_path / "focos" / "satellite=N20" / "year=2019").is_dir()
-    leido = pl.read_parquet(tmp_path / "focos", hive_partitioning=True)
-    assert leido.height == df.height
+    archivo = tmp_path / "focos" / "N20-2019.parquet"
+    assert archivo.is_file()
+    # Cada archivo se lee solo, sin carpetas Hive: satellite y year van adentro (así los ve DuckDB por HTTPS).
+    uno = pl.read_parquet(archivo)
+    assert {"satellite", "year"} <= set(uno.columns) and set(uno["satellite"]) == {"N20"}
+    assert pl.read_parquet(tmp_path / "focos" / "*.parquet").height == df.height
     with pytest.raises(FileExistsError):
         escribir(df, tmp_path / "focos")
 

@@ -35,7 +35,9 @@ pertenece a la región que contiene su centro; las celdas en el mar o en otros p
 ## `focos`
 
 Un foco de FIRMS por fila, normalizado, **sin filtrar**: los filtros de D-04 (`type = 0`, confianza) los aplica la
-armonización. Parquet particionado por Hive: `focos/satellite=<satélite>/year=<año>/*.parquet`.
+armonización. Un Parquet por satélite y año, `focos/<satellite>-<year>.parquet` (por ejemplo `focos/N20-2019.parquet`),
+con **todas** las columnas adentro, `satellite` y `year` incluidas: cada archivo se lee solo, también aplanado en un
+release y por HTTPS.
 
 | Columna | Tipo | Descripción |
 |---|---|---|
@@ -55,9 +57,13 @@ armonización. Parquet particionado por Hive: `focos/satellite=<satélite>/year=
 | `version` | string | Versión de la colección de FIRMS, por ejemplo `6.1NRT` o `2` |
 | `product` | string | `sp` (archivo estándar) o `nrt` (casi en tiempo real) |
 | `cell_id` | string | Celda de 0,1° (ver Grilla) |
-| `satellite`, `year` | partición | `year` es el año UTC de `acq_datetime` |
+| `year` | int32 | Año UTC de `acq_datetime` |
 
 Clave única: (`satellite`, `acq_datetime`, `latitude`, `longitude`). Si un foco llega por SP y por NRT, queda el de SP.
+
+**Id del foco** (el `id` del `Feature` en la API): `<satellite>-<acq_datetime ISO UTC>-<latitude .5f>-<longitude .5f>`,
+por ejemplo `N20-2026-11-12T04:04:00Z--52.52398--70.23965`. Sale de la clave única, así que es estable mientras el
+foco exista. Un foco NRT y su versión SP pueden diferir en coordenadas: el id no une NRT con histórico.
 
 En GeoJSON (`/hotspots`) cada foco es un `Feature` de tipo `Point` con `[longitude, latitude]` y el resto de las
 columnas en `properties`.

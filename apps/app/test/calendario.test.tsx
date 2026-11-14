@@ -178,3 +178,27 @@ describe("describirCelda: origen de cada valor", () => {
     expect(describirCelda(celda("goes_medido"), 2020, 2)).toContain("goes_medido");
   });
 });
+
+describe("calendario sin celdas o con área inválida", () => {
+  it("si no hay celdas muestra el motivo que manda la API, sin grilla", async () => {
+    fetchSimulado.mockImplementation(async (url) =>
+      String(url).includes("/calendar")
+        ? new Response(JSON.stringify({ unit: "x", baseline: "El área está fuera de la cobertura del MVP (Argentina y Chile).", cells: [] }))
+        : new Response(JSON.stringify(focos)),
+    );
+    montar(<Calendario />);
+    expect(await screen.findByText("El área está fuera de la cobertura del MVP (Argentina y Chile).")).toBeInTheDocument();
+    expect(screen.queryByRole("table")).not.toBeInTheDocument();
+  });
+
+  it("si la API rechaza el área (400) muestra su mensaje", async () => {
+    fetchSimulado.mockImplementation(async (url) =>
+      String(url).includes("/calendar")
+        ? new Response(JSON.stringify({ code: "poligono_invalido", message: "El polígono se cruza consigo mismo." }), { status: 400 })
+        : new Response(JSON.stringify(focos)),
+    );
+    montar(<Calendario />);
+    expect(await screen.findByText(/El polígono se cruza consigo mismo\./)).toBeInTheDocument();
+    expect(screen.queryByText(/no está disponible/)).not.toBeInTheDocument();
+  });
+});

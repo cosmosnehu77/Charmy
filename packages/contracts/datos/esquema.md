@@ -13,6 +13,7 @@ Los nombres de campo siguen al OpenAPI (`docs/repo-inicial/openapi.yaml`), así 
 | `calendario` | **estable** | F2-B2, `pipeline.armonizacion` (en `data/muestras`, todavía provisorio) |
 | `metricas` | **estable** | F2-B1, `pipeline.armonizacion` (en `data/muestras`, todavía provisoria) |
 | `fuentes_fijas` | **estable** | F3-B1, `pipeline.fuentes_fijas` |
+| `prediccion` | **estable** | F3-B2, `pipeline.prediccion` (solo si pasa la compuerta D-10) |
 
 ## Grilla
 
@@ -125,6 +126,23 @@ Una celda entra si, con los focos VIIRS del histórico, algún punto de 0,01° (
 días por año, durante 5 años o más y en 10 meses del año distintos, o si la mayoría de sus focos traen `type` 1, 2
 o 3 de FIRMS. No dice qué tipo de fuente es: si hace falta, se suma una columna sin romper nada.
 
+## `prediccion`
+
+Días con fuego esperados por celda para los próximos meses (RF-PRE-01), en la unidad de S-NPP y sin las celdas de
+fuentes fijas. Coincide con `/forecast`. Solo trae celdas con fuego en al menos 5 años y solo los horizontes que
+pasaron la compuerta (D-10, RF-PRE-02): mejorar el error absoluto medio de la climatología en más de 2 % en los
+últimos dos años, con un modelo entrenado sin verlos. **Si ningún horizonte pasa, el archivo no se publica.**
+
+| Columna | Tipo | Descripción |
+|---|---|---|
+| `cell_id` | string | Celda de 0,1° |
+| `month` | string | Mes pronosticado, `"AAAA-MM"` |
+| `horizon` | int8 | Meses desde el último mes con datos: 1, 2 o 3 (el `months` de `/forecast`) |
+| `expected_fire_days` | float64 | Días con fuego esperados en el mes |
+| `p10`, `p90` | float64 | Percentiles 10 y 90; siempre `p10 <= expected_fire_days <= p90` |
+| `skill_vs_climatology` | float64 | Mejora relativa del MAE sobre la climatología en la prueba, para ese horizonte |
+| `model` | string | Modelo, p. ej. `lightgbm-v1` |
+
 ## Muestras (`data/muestras/`)
 
 Las genera `uv run --package pipeline python -m pipeline.muestras <csv>... --out data/muestras --dia <fecha>`.
@@ -152,4 +170,5 @@ Las genera `uv run --package pipeline python -m pipeline.muestras <csv>... --out
 ## Publicación
 
 `pipeline.armonizacion` deja en `--out` lo que se publica: `serie.parquet`, `calendario.parquet`,
-`metricas.parquet` y `regiones.geojson`; `pipeline.fuentes_fijas`, `fuentes_fijas.csv`. Se suben con `publicar` (`infra/README.md`) como `datos-AAAA-MM-DD`.
+`metricas.parquet` y `regiones.geojson`; `pipeline.fuentes_fijas`, `fuentes_fijas.csv`; `pipeline.prediccion`,
+`prediccion.parquet` (si pasa la compuerta). Se suben con `publicar` (`infra/README.md`) como `datos-AAAA-MM-DD`.

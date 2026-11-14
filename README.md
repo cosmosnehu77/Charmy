@@ -7,23 +7,38 @@ experto sirve a brigadas e investigadores.
 Proyecto del equipo de Comodoro Rivadavia para el NASA Space Apps Challenge 2026, desafío
 "Harmonization of MODIS and VIIRS Hot Spots".
 
-**Estado:** fases 1 y 2, cimientos y núcleo. Los datos y los números que se ven hoy son **muestras provisorias**,
-no resultados.
+**Estado:** fase 4, pulido y entrega. La serie armonizada sale del histórico completo de FIRMS (2000 a 2026); el
+método, la validación y sus límites están en [`docs/metodologia/`](docs/metodologia/README.md).
+
+## Probarlo
+
+| Pieza | Dirección |
+|---|---|
+| Landing | <https://charmy-landing.pages.dev> |
+| Aplicación (mapa, calendario, modo experto) | <https://charmy-app.pages.dev> |
+| Juego | <https://charmy-juego.pages.dev> |
+| API (`/api/v1`, contrato en [`openapi.yaml`](packages/contracts/api/openapi.yaml)) | <https://charmy-j36m.onrender.com/api/v1/health> |
+
+La API corre en un plan gratuito que se duerme: el primer pedido puede tardar cerca de un minuto.
 
 ## Qué hay en el repo
 
 | Carpeta | Qué es |
 |---|---|
-| [`apps/app/`](apps/app/) | La aplicación: mapa 2D y 3D, calendario y filtros (Vite + React + MapLibre). |
+| [`apps/app/`](apps/app/) | La aplicación: mapa 2D y 3D, calendario, filtros y modo experto (Vite + React + MapLibre). |
+| [`apps/landing/`](apps/landing/) | La landing (Astro). |
+| [`apps/juego/`](apps/juego/) | El juego de Charmy bombero (Vite + Phaser). |
 | [`packages/charmy/`](packages/charmy/) | El componente `<Charmy mood outfit size say />`, la única forma de mostrar a Charmy. |
 | [`packages/ui/`](packages/ui/) | Colores, tipografías y rampas aptas para daltonismo. |
 | [`packages/contracts/api/`](packages/contracts/api/) | Contrato OpenAPI de la API, su mock y la colección de Postman. |
-| [`packages/contracts/datos/`](packages/contracts/datos/) | Esquema de los datos (focos, calendario, series y métricas). |
-| [`services/pipeline/`](services/pipeline/) | Carga de FIRMS a Parquet y armonización. |
+| [`packages/contracts/datos/`](packages/contracts/datos/) | Esquema de los datos (focos, calendario, series, métricas y predicción). |
+| [`services/pipeline/`](services/pipeline/) | Carga de FIRMS a Parquet, armonización, calendario y predicción. |
+| [`services/api/`](services/api/) | La API (FastAPI + DuckDB sobre los Parquet publicados; Postgres para lo en vivo). |
+| [`services/worker/`](services/worker/) | Focos recientes de NOAA-20 y NOAA-21 y su verificación con varias señales (`/live`). |
+| [`services/contexto/`](services/contexto/) | Tiempo (Meteomatics) e imagen satelital (Copernicus) de un foco. |
+| [`services/alertas/`](services/alertas/) | Avisos por Telegram y feed CAP 1.2 para entidades. |
 | [`data/muestras/`](data/muestras/) | Muestras chicas con la forma de los datos reales. Los datos completos se publican fuera del repo. |
-| [`infra/`](infra/) | Despliegue, publicación de los datos y prueba de humo. |
-
-Las piezas que faltan (API, worker, avisos, landing y juego) se suman en sus fases; ver [`PLAN.md`](PLAN.md).
+| [`infra/`](infra/) | Flujos de GitHub Actions, publicación de los datos y prueba de humo. |
 
 ## Documentos
 
@@ -99,9 +114,28 @@ cp .env.example .env
 canal privado y nunca se suben al repo. Después, abrir el repo con el agente y pedirle que lea `PLAN.md` y tome las
 tareas de la fase activa.
 
+## Uso de inteligencia artificial
+
+- **Datos y armonización:** sin IA. Son reglas fijas y regresiones lineales ([método](docs/metodologia/README.md)).
+- **Predicción:** un modelo de aprendizaje automático (LightGBM). Solo se muestra si supera a la climatología en los
+  años de prueba (D-10).
+- **Verificación de focos en vivo:** un modelo de lenguaje (Gemma, vía NVIDIA) solo etiqueta titulares de noticias.
+  El veredicto sale de reglas fijas sobre varias señales, y que no haya noticias nunca convierte un foco en falso (D-09).
+- **Desarrollo:** el código y la documentación se escribieron con agentes de programación (Claude Code y otros),
+  coordinados por el tablero y revisados por las personas del equipo. Toda funcionalidad entra con sus pruebas
+  ([`docs/PRUEBAS.md`](docs/PRUEBAS.md)).
+
+## Secretos
+
+El repo es público desde el primer commit. Las claves (FIRMS, Meteomatics, Copernicus, NVIDIA, Telegram, la base y
+los despliegues) viven solo en `.env` local, en la plataforma de la API y en los secretos de GitHub Actions; nunca en
+el código, los issues ni el tablero. Al cerrar la fase 4 se revisó todo el historial y no aparece ninguna.
+
 ## Datos y créditos
 
-Focos de calor: NASA FIRMS (MODIS y VIIRS). Fuentes complementarias y condiciones de uso: ver `PLAN.md`, sección 1.1.
-Charmy no reemplaza a los servicios de emergencia.
+Focos de calor: NASA FIRMS (MODIS y VIIRS). Tiempo: Meteomatics. Imagen: Copernicus Sentinel-2. Condiciones de uso de
+cada fuente: [`PLAN.md`](PLAN.md), sección 1.1, y [`docs/metodologia/`](docs/metodologia/README.md).
+Charmy no reemplaza a los servicios de emergencia: ante un incendio, llamá al 100 (bomberos, Argentina) o al 132
+(bomberos, Chile).
 
 La plantilla de coordinación es [tabla-agentes](https://github.com/cosmosnehu77/tabla-agentes).

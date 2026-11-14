@@ -4,6 +4,9 @@ import userEvent from "@testing-library/user-event";
 import App from "@/App";
 import { perfilInicial, useApp } from "@/estado/app";
 
+// jsdom no tiene WebGL: el mapa se prueba aparte (perfiles.test.ts) y en el navegador.
+vi.mock("@/mapa/Mapa", () => ({ default: () => <div data-testid="mapa" /> }));
+
 function montar() {
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return render(

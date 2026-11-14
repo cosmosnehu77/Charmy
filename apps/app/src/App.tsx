@@ -1,6 +1,10 @@
+import { lazy, Suspense } from "react";
 import { AvisoEmergencias } from "@/components/AvisoEmergencias";
 import { Encabezado } from "@/components/Encabezado";
 import { useApp } from "@/estado/app";
+
+// MapLibre pesa: se carga aparte para que el resto de la app aparezca enseguida (RNF-03).
+const Mapa = lazy(() => import("@/mapa/Mapa"));
 
 export default function App() {
   const perfilMapa = useApp((s) => s.perfilMapa);
@@ -33,9 +37,13 @@ export default function App() {
           aria-label={`Mapa ${perfilMapa.toUpperCase()}`}
           className="relative order-1 min-h-[50vh] flex-1 bg-charmy-cielo md:order-2 md:min-h-0"
         >
-          <div className="absolute inset-0 grid place-items-center text-sm text-tinta-suave">
-            Mapa en preparación
-          </div>
+          <Suspense
+            fallback={
+              <div className="absolute inset-0 grid place-items-center text-sm text-tinta-suave">Cargando el mapa…</div>
+            }
+          >
+            <Mapa />
+          </Suspense>
         </main>
       </div>
     </div>

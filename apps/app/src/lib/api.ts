@@ -5,7 +5,9 @@
  * El navegador solo habla con nuestra API: nunca con FIRMS, Meteomatics ni Copernicus.
  */
 
-export const urlApi: string = (import.meta.env.VITE_API_URL ?? "").replace(/\/+$/, "");
+export function urlApi(): string {
+  return (import.meta.env.VITE_API_URL ?? "").replace(/\/+$/, "");
+}
 
 export class ErrorApi extends Error {
   constructor(
@@ -17,8 +19,9 @@ export class ErrorApi extends Error {
 }
 
 export async function pedir<T>(ruta: string, opciones?: RequestInit): Promise<T> {
-  if (!urlApi) throw new Error("VITE_API_URL no está definida");
-  const respuesta = await fetch(`${urlApi}${ruta}`, {
+  const base = urlApi();
+  if (!base) throw new Error("VITE_API_URL no está definida");
+  const respuesta = await fetch(`${base}${ruta}`, {
     ...opciones,
     headers: { Accept: "application/json", ...opciones?.headers },
   });

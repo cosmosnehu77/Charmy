@@ -1,6 +1,7 @@
 import { lazy, Suspense } from "react";
 import { AvisoEmergencias } from "@/components/AvisoEmergencias";
 import { Encabezado } from "@/components/Encabezado";
+import { PanelConsulta } from "@/consulta/PanelConsulta";
 import { useApp } from "@/estado/app";
 
 // MapLibre pesa: se carga aparte para que el resto de la app aparezca enseguida (RNF-03).
@@ -20,14 +21,9 @@ export default function App() {
       <div className="flex min-h-0 flex-1 flex-col md:flex-row">
         <aside
           aria-label="Área y período"
-          className="order-2 flex flex-col gap-4 border-t bg-card p-4 md:order-1 md:w-80 md:border-t-0 md:border-r"
+          className="order-2 flex flex-col gap-4 border-t bg-card p-4 md:order-1 md:w-80 md:overflow-y-auto md:border-t-0 md:border-r"
         >
-          <section className="flex flex-col gap-1">
-            <h2 className="text-lg font-semibold">Área y período</h2>
-            <p className="text-sm text-tinta-suave">
-              Elegí una zona en el mapa y un rango de fechas para ver su calendario de quema.
-            </p>
-          </section>
+          <PanelConsulta />
           <div className="mt-auto">
             <AvisoEmergencias />
           </div>

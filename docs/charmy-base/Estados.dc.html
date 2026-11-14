@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Estados de Charmy</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&amp;family=IBM+Plex+Sans:wght@400;500;600&amp;family=IBM+Plex+Mono:wght@400;500&amp;display=swap">
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div style="width: 1280px; height: 520px; box-sizing: border-box; padding: 48px 56px; background: #F6F8F9; font-family: 'IBM Plex Sans', system-ui, sans-serif; color: #1B2430; display: flex; flex-direction: column; gap: 28px">
+  <div style="display: flex; flex-direction: column; gap: 6px">
+    <div style="font-family: 'IBM Plex Mono', monospace; font-size: 13px; letter-spacing: 0.08em; text-transform: uppercase; color: #5A6675">Estados · entrada <span style="color: #9A3412">mood</span></div>
+    <h2 style="margin: 0; font-family: 'Bricolage Grotesque', system-ui, sans-serif; font-weight: 800; font-size: 40px; letter-spacing: -0.02em">Seis estados para toda la experiencia</h2>
+  </div>
+  <div style="display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 16px">
+    <div style="background: #FFFFFF; border: 1px solid #D6DDE3; border-radius: 14px; padding: 14px 14px 18px; display: flex; flex-direction: column; gap: 8px">
+      <div style="display: flex; justify-content: center"><dc-import name="Charmy" mood="idle" outfit="base" size="150" hint-size="150px,150px"></dc-import></div>
+      <div style="font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: #9A3412">idle</div>
+      <div style="font-weight: 600; font-size: 17px">En reposo</div>
+      <p style="margin: 0; font-size: 14px; line-height: 1.45; color: #5A6675">Respira y parpadea mientras la app espera.</p>
+    </div>
+    <div style="background: #FFFFFF; border: 1px solid #D6DDE3; border-radius: 14px; padding: 14px 14px 18px; display: flex; flex-direction: column; gap: 8px">
+      <div style="display: flex; justify-content: center"><dc-import name="Charmy" mood="saluda" outfit="base" size="150" hint-size="150px,150px"></dc-import></div>
+      <div style="font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: #9A3412">saluda</div>
+      <div style="font-weight: 600; font-size: 17px">Saluda</div>
+      <p style="margin: 0; font-size: 14px; line-height: 1.45; color: #5A6675">Primera visita a la landing o a la app.</p>
+    </div>
+    <div style="background: #FFFFFF; border: 1px solid #D6DDE3; border-radius: 14px; padding: 14px 14px 18px; display: flex; flex-direction: column; gap: 8px">
+      <div style="display: flex; justify-content: center"><dc-import name="Charmy" mood="explica" outfit="base" size="150" hint-size="150px,150px"></dc-import></div>
+      <div style="font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: #9A3412">explica</div>
+      <div style="font-weight: 600; font-size: 17px">Explica</div>
+      <p style="margin: 0; font-size: 14px; line-height: 1.45; color: #5A6675">Recorrido guiado y ayudas del modo novato.</p>
+    </div>
+    <div style="background: #FFFFFF; border: 1px solid #D6DDE3; border-radius: 14px; padding: 14px 14px 18px; display: flex; flex-direction: column; gap: 8px">
+      <div style="display: flex; justify-content: center"><dc-import name="Charmy" mood="alerta" outfit="base" size="150" hint-size="150px,150px"></dc-import></div>
+      <div style="font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: #9A3412">alerta</div>
+      <div style="font-weight: 600; font-size: 17px">Alerta</div>
+      <p style="margin: 0; font-size: 14px; line-height: 1.45; color: #5A6675">Foco nuevo en tu zona o mes por encima de lo normal. Se le encienden las puntas de las orejas.</p>
+    </div>
+    <div style="background: #FFFFFF; border: 1px solid #D6DDE3; border-radius: 14px; padding: 14px 14px 18px; display: flex; flex-direction: column; gap: 8px">
+      <div style="display: flex; justify-content: center"><dc-import name="Charmy" mood="festeja" outfit="base" size="150" hint-size="150px,150px"></dc-import></div>
+      <div style="font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: #9A3412">festeja</div>
+      <div style="font-weight: 600; font-size: 17px">Festeja</div>
+      <p style="margin: 0; font-size: 14px; line-height: 1.45; color: #5A6675">Logros en Charmy Kids y reportes confirmados.</p>
+    </div>
+    <div style="background: #FFFFFF; border: 1px solid #D6DDE3; border-radius: 14px; padding: 14px 14px 18px; display: flex; flex-direction: column; gap: 8px">
+      <div style="display: flex; justify-content: center"><dc-import name="Charmy" mood="pensando" outfit="base" size="150" hint-size="150px,150px"></dc-import></div>
+      <div style="font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: #9A3412">pensando</div>
+      <div style="font-weight: 600; font-size: 17px">Pensando</div>
+      <p style="margin: 0; font-size: 14px; line-height: 1.45; color: #5A6675">Mientras se cargan o procesan datos.</p>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1280,"height":520}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {};
+  }
+}
+</script>
+</body>
+</html>

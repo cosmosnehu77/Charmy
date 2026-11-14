@@ -1,0 +1,547 @@
+openapi: 3.1.0
+info:
+  title: Charmy API
+  version: 0.1.0-draft
+  description: |
+    Contrato en borrador para el MVP de Space Apps 2026. Destino: packages/contracts/openapi.yaml.
+    Los datos históricos salen de Parquet precalculado; los datos en vivo, del worker (VIIRS NOAA-20/21 NRT).
+servers:
+  - url: http://localhost:8000/api/v1
+tags:
+  - name: historico
+  - name: vivo
+  - name: alertas
+  - name: meta
+paths:
+  /hotspots:
+    get:
+      tags: [historico]
+      summary: Focos dentro de un área y un rango de fechas
+      parameters:
+        - $ref: '#/components/parameters/bbox'
+        - $ref: '#/components/parameters/from'
+        - $ref: '#/components/parameters/to'
+        - name: source
+          in: query
+          schema: { type: string, enum: [harmonized, modis, viirs], default: harmonized }
+        - name: min_confidence
+          in: query
+          schema: { type: string, enum: [low, nominal, high], default: nominal }
+        - name: format
+          in: query
+          description: csv devuelve text/csv con los atributos crudos de FIRMS
+          schema: { type: string, enum: [geojson, csv], default: geojson }
+      responses:
+        '200':
+          description: Focos
+          content:
+            application/geo+json:
+              schema: { $ref: '#/components/schemas/HotspotCollection' }
+            text/csv:
+              schema: { type: string }
+        '400': { $ref: '#/components/responses/BadRequest' }
+  /calendar:
+    post:
+      tags: [historico]
+      summary: Calendario de actividad de quema armonizado para un polígono
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [area]
+              properties:
+                area: { $ref: '#/components/schemas/GeoJSONPolygon' }
+                from_year: { type: integer, default: 2001 }
+                to_year: { type: integer }
+                resolution: { type: string, enum: [month, day_of_year], default: month }
+      responses:
+        '200':
+          description: Matriz de calendario con anomalías
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Calendar' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+  /forecast:
+    get:
+      tags: [historico]
+      summary: Actividad esperada para los próximos meses (solo si el modelo supera la climatología)
+      parameters:
+        - $ref: '#/components/parameters/bbox'
+        - name: months
+          in: query
+          schema: { type: integer, minimum: 1, maximum: 3, default: 1 }
+      responses:
+        '200':
+          description: Pronóstico por celda
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  model: { type: string, example: lightgbm-v1 }
+                  skill_vs_climatology: { type: number, description: Mejora relativa de MAE en el test temporal }
+                  cells:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        cell_id: { type: string }
+                        month: { type: string, example: '2026-12' }
+                        expected_fire_days: { type: number }
+                        p10: { type: number }
+                        p90: { type: number }
+  /live:
+    get:
+      tags: [vivo]
+      summary: Focos de las últimas horas con estado de verificación
+      parameters:
+        - $ref: '#/components/parameters/bbox'
+        - name: hours
+          in: query
+          schema: { type: integer, minimum: 1, maximum: 120, default: 48 }
+      responses:
+        '200':
+          description: Focos en vivo
+          content:
+            application/geo+json:
+              schema: { $ref: '#/components/schemas/HotspotCollection' }
+  /live/{hotspot_id}/evidence:
+    get:
+      tags: [vivo]
+      summary: Señales y evidencia usadas para el veredicto
+      parameters:
+        - name: hotspot_id
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: Evidencia
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Verification' }
+        '404': { $ref: '#/components/responses/NotFound' }
+  /weather:
+    get:
+      tags: [vivo]
+      summary: Tiempo actual, pronóstico e índice de riesgo de incendio en un punto
+      description: |
+        Lo implementa el módulo services/contexto (carril B) con datos de Meteomatics, con caché.
+        Lo consumen la app y el servicio de avisos.
+      parameters:
+        - name: lat
+          in: query
+          required: true
+          schema: { type: number, minimum: -90, maximum: 90 }
+        - name: lon
+          in: query
+          required: true
+          schema: { type: number, minimum: -180, maximum: 180 }
+        - name: hours
+          in: query
+          description: Horas de pronóstico
+          schema: { type: integer, minimum: 0, maximum: 48, default: 12 }
+      responses:
+        '200':
+          description: Tiempo en el punto
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  source: { type: string, example: Meteomatics }
+                  fetched_at: { type: string, format: date-time }
+                  now: { $ref: '#/components/schemas/WeatherPoint' }
+                  forecast:
+                    type: array
+                    items: { $ref: '#/components/schemas/WeatherPoint' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '503':
+          description: La fuente de datos del tiempo no responde. El resto de la app sigue funcionando.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+  /imagery/latest:
+    get:
+      tags: [vivo]
+      summary: Imagen satelital óptica más reciente y despejada alrededor de un punto
+      description: |
+        Lo implementa el módulo services/contexto (carril B) con Sentinel-2 L2A de Copernicus Data Space,
+        usando las APIs Catalog y Process de Sentinel Hub desde el servidor. Las imágenes se guardan en caché.
+        Sirve para inspección visual; no cambia el veredicto de un foco.
+      parameters:
+        - name: lat
+          in: query
+          required: true
+          schema: { type: number, minimum: -90, maximum: 90 }
+        - name: lon
+          in: query
+          required: true
+          schema: { type: number, minimum: -180, maximum: 180 }
+        - name: radius_km
+          in: query
+          schema: { type: number, minimum: 1, maximum: 25, default: 5 }
+        - name: style
+          in: query
+          description: color_real muestra lo que vería el ojo; falso_color resalta superficie quemada y fuego activo
+          schema: { type: string, enum: [color_real, falso_color], default: color_real }
+        - name: before
+          in: query
+          description: Buscar la imagen más reciente anterior a esta fecha. Por defecto, hoy.
+          schema: { type: string, format: date }
+        - name: max_cloud_pct
+          in: query
+          schema: { type: integer, minimum: 0, maximum: 100, default: 30 }
+      responses:
+        '200':
+          description: Datos de la imagen y dónde pedirla
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ImageryResult' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '404':
+          description: No hay una imagen lo bastante despejada en los últimos 30 días para ese lugar.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+        '503':
+          description: La fuente de imágenes no responde o se agotó la cuota. El resto de la app sigue funcionando.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+  /imagery/{image_id}.png:
+    get:
+      tags: [vivo]
+      summary: La imagen ya generada, servida desde la caché
+      parameters:
+        - name: image_id
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: Imagen
+          content:
+            image/png:
+              schema: { type: string, format: binary }
+        '404': { $ref: '#/components/responses/NotFound' }
+  /reports:
+    get:
+      tags: [alertas]
+      summary: Reportes ciudadanos recientes dentro de un área
+      description: Lo consulta el servicio de avisos para notificar a las entidades de cada zona.
+      parameters:
+        - $ref: '#/components/parameters/bbox'
+        - name: since
+          in: query
+          description: Solo reportes creados después de este momento
+          schema: { type: string, format: date-time }
+      responses:
+        '200':
+          description: Reportes
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id: { type: string }
+                    lat: { type: number }
+                    lon: { type: number }
+                    description: { type: string }
+                    photo_url: { type: string, format: uri }
+                    status: { type: string, enum: [sin_verificar, visto, en_camino, controlado, falso] }
+                    created_at: { type: string, format: date-time }
+        '400': { $ref: '#/components/responses/BadRequest' }
+    post:
+      tags: [alertas]
+      summary: Reporte ciudadano anónimo
+      description: Sin cuenta. Requiere token de captcha; límite de frecuencia por IP. No guarda datos personales.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [lat, lon, captcha_token]
+              properties:
+                lat: { type: number, minimum: -90, maximum: 90 }
+                lon: { type: number, minimum: -180, maximum: 180 }
+                description: { type: string, maxLength: 500 }
+                photo_url: { type: string, format: uri }
+                captcha_token: { type: string }
+      responses:
+        '201':
+          description: Reporte creado como "sin verificar"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id: { type: string }
+                  status: { type: string, enum: [sin_verificar] }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '429': { description: Demasiados reportes desde esta conexión. Probá de nuevo en unos minutos. }
+  /entities/me/alerts:
+    get:
+      tags: [alertas]
+      summary: Bandeja de la entidad (focos y reportes dentro de sus zonas)
+      security: [{ bearer: [] }]
+      responses:
+        '200':
+          description: Alertas
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/Alert' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+  /alerts/{alert_id}:
+    patch:
+      tags: [alertas]
+      summary: La entidad actualiza el estado de una alerta (alimenta la verificación)
+      security: [{ bearer: [] }]
+      parameters:
+        - name: alert_id
+          in: path
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [status]
+              properties:
+                status: { type: string, enum: [visto, en_camino, controlado, falso] }
+                note: { type: string, maxLength: 500 }
+      responses:
+        '200':
+          description: Alerta actualizada
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Alert' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
+  /cap/{zone_id}.xml:
+    get:
+      tags: [alertas]
+      summary: Feed CAP 1.2 de una zona
+      parameters:
+        - name: zone_id
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: Alertas en formato OASIS CAP 1.2
+          content:
+            application/cap+xml:
+              schema: { type: string }
+        '404': { $ref: '#/components/responses/NotFound' }
+  /harmonization/metrics:
+    get:
+      tags: [meta]
+      summary: Métricas de validación de la armonización por región
+      responses:
+        '200':
+          description: Métricas
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  method: { type: string, example: log-linear por región y mes, validación dejando un año afuera }
+                  overlap: { type: string, example: '2012-01/2026-11' }
+                  regions:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        region: { type: string }
+                        r2: { type: number }
+                        bias: { type: number }
+                        mae: { type: number }
+                        n_months: { type: integer }
+  /health:
+    get:
+      tags: [meta]
+      summary: Estado del servicio y antigüedad de los datos
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status: { type: string, example: ok }
+                  last_nrt_fetch: { type: string, format: date-time }
+                  data_version: { type: string }
+components:
+  securitySchemes:
+    bearer:
+      type: http
+      scheme: bearer
+      description: JWT de Supabase Auth (enlace mágico, solo entidades invitadas)
+  parameters:
+    bbox:
+      name: bbox
+      in: query
+      required: true
+      description: oeste,sur,este,norte en grados decimales (mismo orden que FIRMS)
+      schema: { type: string, example: '-72,-46.5,-65,-42' }
+    from:
+      name: from
+      in: query
+      schema: { type: string, format: date }
+    to:
+      name: to
+      in: query
+      schema: { type: string, format: date }
+  responses:
+    BadRequest:
+      description: Parámetros inválidos
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+    Unauthorized:
+      description: Falta iniciar sesión como entidad
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+    NotFound:
+      description: No existe
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+  schemas:
+    Error:
+      type: object
+      required: [code, message]
+      properties:
+        code: { type: string, example: bbox_invalido }
+        message: { type: string, example: 'El área debe tener el formato oeste,sur,este,norte.' }
+    GeoJSONPolygon:
+      type: object
+      required: [type, coordinates]
+      properties:
+        type: { type: string, enum: [Polygon] }
+        coordinates:
+          type: array
+          items:
+            type: array
+            items:
+              type: array
+              items: { type: number }
+              minItems: 2
+              maxItems: 2
+    HotspotCollection:
+      type: object
+      properties:
+        type: { type: string, enum: [FeatureCollection] }
+        features:
+          type: array
+          items: { $ref: '#/components/schemas/Hotspot' }
+    Hotspot:
+      type: object
+      properties:
+        type: { type: string, enum: [Feature] }
+        id: { type: string }
+        geometry:
+          type: object
+          properties:
+            type: { type: string, enum: [Point] }
+            coordinates: { type: array, items: { type: number }, minItems: 2, maxItems: 2 }
+        properties:
+          type: object
+          properties:
+            acq_datetime: { type: string, format: date-time }
+            satellite: { type: string, enum: [Terra, Aqua, N, N20, N21] }
+            instrument: { type: string, enum: [MODIS, VIIRS] }
+            confidence: { type: string, enum: [low, nominal, high] }
+            frp: { type: number, description: Potencia radiativa del fuego (MW) }
+            daynight: { type: string, enum: [D, N] }
+            fixed_source: { type: boolean }
+            verdict:
+              type: string
+              enum: [confirmado, probable, sin_confirmar, fuente_fija]
+    Calendar:
+      type: object
+      properties:
+        unit: { type: string, example: dias_celda_con_fuego_equivalente_viirs }
+        baseline: { type: string, example: mediana 2001-2025 por mes }
+        cells:
+          type: array
+          items:
+            type: object
+            properties:
+              year: { type: integer }
+              month: { type: integer, minimum: 1, maximum: 12 }
+              value: { type: number }
+              lower: { type: number }
+              upper: { type: number }
+              median: { type: number }
+              percentile: { type: number, minimum: 0, maximum: 100 }
+              origin: { type: string, enum: [modis_convertido, viirs_medido] }
+    WeatherPoint:
+      type: object
+      properties:
+        time: { type: string, format: date-time }
+        wind_speed_ms: { type: number }
+        wind_dir_deg: { type: number, description: Dirección desde la que sopla el viento, en grados }
+        temperature_c: { type: number }
+        relative_humidity_pct: { type: number }
+        fire_risk_index: { type: number, description: Índice de riesgo de incendio de la fuente }
+        fire_risk_label: { type: string, enum: [bajo, moderado, alto, muy_alto, extremo] }
+    ImageryResult:
+      type: object
+      properties:
+        image_id: { type: string }
+        image_url: { type: string, description: Ruta de la imagen en esta API, lista para usar como capa del mapa }
+        bbox:
+          type: array
+          description: oeste, sur, este, norte de la imagen, para ubicarla sobre el mapa
+          items: { type: number }
+          minItems: 4
+          maxItems: 4
+        acquired_at: { type: string, format: date-time }
+        cloud_cover_pct: { type: number }
+        style: { type: string, enum: [color_real, falso_color] }
+        source: { type: string, example: Copernicus Sentinel-2 L2A }
+        attribution: { type: string, example: Contiene datos modificados de Copernicus Sentinel 2026 }
+    Verification:
+      type: object
+      properties:
+        verdict: { type: string, enum: [confirmado, probable, sin_confirmar, fuente_fija] }
+        score: { type: number, minimum: 0, maximum: 1 }
+        signals:
+          type: object
+          properties:
+            satellite: { type: number }
+            fixed_source: { type: number }
+            news: { type: number }
+            reports: { type: number }
+        evidence:
+          type: array
+          items:
+            type: object
+            properties:
+              kind: { type: string, enum: [noticia, reporte, entidad, satelite] }
+              title: { type: string }
+              url: { type: string, format: uri }
+              label: { type: string, enum: [apoya, contradice, sin_informacion] }
+    Alert:
+      type: object
+      properties:
+        id: { type: string }
+        zone_id: { type: string }
+        kind: { type: string, enum: [foco_satelital, reporte_ciudadano] }
+        hotspot_id: { type: string }
+        report_id: { type: string }
+        status: { type: string, enum: [nueva, visto, en_camino, controlado, falso] }
+        created_at: { type: string, format: date-time }

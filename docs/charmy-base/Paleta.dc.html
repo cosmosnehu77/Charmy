@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Paleta, tamaños y voz de Charmy</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&amp;family=IBM+Plex+Sans:wght@400;500;600&amp;family=IBM+Plex+Mono:wght@400;500&amp;display=swap">
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div style="width: 1280px; height: 680px; box-sizing: border-box; padding: 48px 56px; background: #F6F8F9; font-family: 'IBM Plex Sans', system-ui, sans-serif; color: #1B2430; display: flex; flex-direction: column; gap: 28px">
+  <div style="display: flex; flex-direction: column; gap: 6px">
+    <div style="font-family: 'IBM Plex Mono', monospace; font-size: 13px; letter-spacing: 0.08em; text-transform: uppercase; color: #5A6675">Guía de uso</div>
+    <h2 style="margin: 0; font-family: 'Bricolage Grotesque', system-ui, sans-serif; font-weight: 800; font-size: 40px; letter-spacing: -0.02em">Paleta, tamaños y voz</h2>
+  </div>
+
+  <div style="display: grid; grid-template-columns: 1.15fr 0.85fr 1.2fr; gap: 20px; flex: 1; min-height: 0">
+
+    <div style="background: #FFFFFF; border: 1px solid #D6DDE3; border-radius: 14px; padding: 20px; display: flex; flex-direction: column; gap: 14px">
+      <div style="font-weight: 600; font-size: 17px">Paleta de Charmy</div>
+      <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px 14px">
+        <sc-for list="{{swatches}}" as="s" hint-placeholder-count="12">
+          <div style="display: flex; align-items: center; gap: 10px">
+            <div style="width: 36px; height: 36px; border-radius: 8px; background: {{s.hex}}; border: 1px solid #D6DDE3; flex-shrink: 0"></div>
+            <div style="display: flex; flex-direction: column; min-width: 0">
+              <span style="font-size: 14px; font-weight: 500">{{s.name}}</span>
+              <span style="font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: #5A6675">{{s.hex}}</span>
+            </div>
+          </div>
+        </sc-for>
+      </div>
+      <p style="margin: 0; font-size: 13px; line-height: 1.45; color: #5A6675">Rasgos de vizcacha que no cambian: orejas largas, banda oscura sobre el hocico, bigotes y cola larga. La punta de la cola es una llama.</p>
+    </div>
+
+    <div style="background: #FFFFFF; border: 1px solid #D6DDE3; border-radius: 14px; padding: 20px; display: flex; flex-direction: column; gap: 14px">
+      <div style="font-weight: 600; font-size: 17px">Tamaños</div>
+      <div style="display: flex; align-items: flex-end; gap: 18px">
+        <div style="display: flex; flex-direction: column; align-items: center; gap: 6px">
+          <dc-import name="Charmy" mood="idle" outfit="base" size="120" hint-size="120px,120px"></dc-import>
+          <span style="font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: #5A6675">120 px</span>
+        </div>
+        <div style="display: flex; flex-direction: column; align-items: center; gap: 6px">
+          <dc-import name="Charmy" mood="idle" outfit="base" size="64" hint-size="64px,64px"></dc-import>
+          <span style="font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: #5A6675">64 px</span>
+        </div>
+        <div style="display: flex; flex-direction: column; align-items: center; gap: 6px">
+          <dc-import name="Charmy" mood="idle" outfit="base" size="40" hint-size="40px,40px"></dc-import>
+          <span style="font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: #5A6675">40 px</span>
+        </div>
+      </div>
+      <ul style="margin: 0; padding-left: 18px; font-size: 14px; line-height: 1.5; display: flex; flex-direction: column; gap: 4px">
+        <li>Ayudas y alertas: 96 px o más.</li>
+        <li>Avatar de Telegram y lista: 48–64 px.</li>
+        <li>Por debajo de 40 px conviene usar solo la cabeza.</li>
+      </ul>
+    </div>
+
+    <div style="background: #FFFFFF; border: 1px solid #D6DDE3; border-radius: 14px; padding: 20px; display: flex; flex-direction: column; gap: 14px">
+      <div style="font-weight: 600; font-size: 17px">Cómo habla Charmy</div>
+      <div style="display: flex; flex-direction: column; gap: 8px">
+        <div style="display: flex; gap: 10px; font-size: 14px; line-height: 1.4"><span style="color: #2F6B45; font-weight: 600; width: 22px; flex-shrink: 0">Sí</span><span>“Este mes hay más focos que lo normal en tu zona.”</span></div>
+        <div style="display: flex; gap: 10px; font-size: 14px; line-height: 1.4"><span style="color: #B42318; font-weight: 600; width: 22px; flex-shrink: 0">No</span><span>“¡PELIGRO! ¡Se quema todo!”</span></div>
+        <div style="display: flex; gap: 10px; font-size: 14px; line-height: 1.4"><span style="color: #2F6B45; font-weight: 600; width: 22px; flex-shrink: 0">Sí</span><span>“Si ves fuego, llamá al 100.”</span></div>
+        <div style="display: flex; gap: 10px; font-size: 14px; line-height: 1.4"><span style="color: #B42318; font-weight: 600; width: 22px; flex-shrink: 0">No</span><span>“Anomalía de 2,3 desvíos en VIIRS I‑band” en el modo novato.</span></div>
+      </div>
+      <div style="border-top: 1px solid #E3E9EF; padding-top: 12px; display: flex; flex-direction: column; gap: 8px">
+        <div style="font-weight: 600; font-size: 15px">Entradas para la animación (Rive)</div>
+        <div style="font-family: 'IBM Plex Mono', monospace; font-size: 13px; line-height: 1.6; color: #1B2430">mood · enum de 6 estados<br>outfit · enum de 5 vestuarios<br>talking · boolean, mueve la boca<br>lookX, lookY · número, sigue el cursor</div>
+      </div>
+    </div>
+
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1280,"height":680}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {
+      swatches: [
+        { name: 'Pelaje', hex: '#E8833A' },
+        { name: 'Pelaje oscuro', hex: '#C4612A' },
+        { name: 'Hocico y panza', hex: '#FCE9CF' },
+        { name: 'Banda del hocico', hex: '#4A2A1E' },
+        { name: 'Llama', hex: '#FF6B1A' },
+        { name: 'Núcleo de la llama', hex: '#FFC53D' },
+        { name: 'Acento de interfaz', hex: '#C2410C' },
+        { name: 'Casco de bombero', hex: '#F2B705' },
+        { name: 'Chaqueta', hex: '#2E3B4E' },
+        { name: 'Sombrero de guía', hex: '#4F7A55' },
+        { name: 'Cielo de estepa', hex: '#EEF2F4' },
+        { name: 'Tinta', hex: '#1B2430' }
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>

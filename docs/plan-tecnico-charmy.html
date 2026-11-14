@@ -1,0 +1,624 @@
+<title>Plan técnico Charmy</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: columna de lectura de 72rem con barra de navegación lateral en escritorio; secciones separadas por reglas finas, el color de brasa solo para lo que importa. */
+:root{
+  --bg:#F2F4F6; --surface:#FFFFFF; --ink:#18212B; --muted:#596574; --line:#D7DDE3;
+  --ember:#C2410C; --ember-ink:#9A3412; --ember-soft:#FDEBDD; --steppe:#3F6B4E; --steppe-soft:#E3EFE6;
+  --must:#C2410C; --should:#A16207; --could:#5B6B7C;
+  --h1:#FFFFB2; --h2:#FED976; --h3:#FEB24C; --h4:#FD8D3C; --h5:#F03B20; --h6:#BD0026;
+  --display:"Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --body:"IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+  --mono:"IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0E1318; --surface:#151C23; --ink:#E5EAEF; --muted:#9AA6B3; --line:#26313C;
+  --ember:#FF7A3D; --ember-ink:#FFB089; --ember-soft:#3A1D0F; --steppe:#8CC29C; --steppe-soft:#16291D;
+  --must:#FF7A3D; --should:#E3B341; --could:#94A3B4; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0E1318; --surface:#151C23; --ink:#E5EAEF; --muted:#9AA6B3; --line:#26313C;
+  --ember:#FF7A3D; --ember-ink:#FFB089; --ember-soft:#3A1D0F; --steppe:#8CC29C; --steppe-soft:#16291D;
+  --must:#FF7A3D; --should:#E3B341; --could:#94A3B4; color-scheme:dark}
+
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.6;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:0 64px}
+.wrap{max-width:72rem;margin:0 auto;display:grid;grid-template-columns:13rem minmax(0,1fr);gap:48px}
+nav.toc{position:sticky;top:calc(env(safe-area-inset-top,0px) + 24px);align-self:start;padding-top:40px;font-size:14px}
+nav.toc ol{list-style:none;margin:0;padding:0;display:grid;gap:2px;counter-reset:t}
+nav.toc a{color:var(--muted);text-decoration:none;display:block;padding:4px 8px;border-radius:6px}
+nav.toc a:hover,nav.toc a:focus-visible{color:var(--ink);background:var(--surface);outline:none}
+main{min-width:0}
+h1,h2,h3{font-family:var(--display);text-wrap:balance;line-height:1.15;margin:0}
+h1{font-size:clamp(2.2rem,5vw,3.6rem);font-weight:800;letter-spacing:-.02em}
+h2{font-size:1.75rem;font-weight:800;letter-spacing:-.01em}
+h3{font-size:1.15rem;font-weight:600}
+p{margin:0;max-width:68ch}
+a{color:var(--ember-ink)}
+code,.mono{font-family:var(--mono);font-size:.88em}
+section{padding-block:44px;border-top:1px solid var(--line);display:grid;gap:20px}
+.eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.lede{font-size:1.15rem;color:var(--muted);max-width:62ch}
+.stack{display:grid;gap:12px}
+ul.clean{margin:0;padding-left:1.1rem;display:grid;gap:6px;max-width:70ch}
+ul.clean li::marker{color:var(--ember)}
+
+/* hero */
+header.hero{padding-block:48px 36px;display:grid;gap:22px}
+.alert{display:grid;grid-template-columns:auto minmax(0,1fr);gap:14px;align-items:start;background:var(--ember-soft);
+  border:1px solid color-mix(in oklab,var(--ember) 35%,transparent);border-radius:10px;padding:16px 18px;max-width:62rem}
+.alert .dot{width:10px;height:10px;border-radius:50%;background:var(--ember);margin-top:8px;box-shadow:0 0 0 4px color-mix(in oklab,var(--ember) 25%,transparent)}
+.alert strong{color:var(--ember-ink)}
+.decisions{display:grid;grid-template-columns:repeat(auto-fit,minmax(15rem,1fr));gap:12px}
+.decision{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:14px 16px;display:grid;gap:4px;align-content:start}
+.decision b{font-family:var(--display);font-size:1.02rem}
+.decision span{color:var(--muted);font-size:.93rem}
+
+/* tables */
+.tbl{overflow-x:auto;border:1px solid var(--line);border-radius:10px;background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:.93rem}
+th,td{text-align:left;vertical-align:top;padding:10px 14px;border-bottom:1px solid var(--line)}
+th{font-family:var(--mono);font-size:11.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:500;background:color-mix(in oklab,var(--bg) 60%,var(--surface))}
+tr:last-child td{border-bottom:0}
+td.k{font-weight:600;white-space:nowrap}
+.pill{display:inline-block;font-family:var(--mono);font-size:11px;letter-spacing:.05em;text-transform:uppercase;padding:2px 8px;border-radius:999px;border:1px solid currentColor;white-space:nowrap}
+.p-must{color:var(--must)} .p-should{color:var(--should)} .p-could{color:var(--could)}
+
+/* pipeline steps */
+ol.steps{list-style:none;margin:0;padding:0;display:grid;gap:0;counter-reset:s}
+ol.steps li{counter-increment:s;display:grid;grid-template-columns:2.4rem minmax(0,1fr);gap:14px;padding:14px 0;border-bottom:1px dashed var(--line)}
+ol.steps li:last-child{border-bottom:0}
+ol.steps li::before{content:counter(s);font-family:var(--mono);font-weight:500;color:var(--ember);font-size:1.05rem;width:2.4rem;height:2.4rem;border:1.5px solid var(--ember);border-radius:50%;display:grid;place-items:center}
+ol.steps b{display:block;font-family:var(--display);font-weight:600;margin-bottom:2px}
+ol.steps p{color:var(--muted)}
+
+/* calendar illustration */
+.cal{display:grid;gap:14px;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:18px}
+.calgrid{display:grid;grid-template-columns:3.2rem repeat(12,minmax(0,1fr));gap:3px;font-family:var(--mono);font-size:11px;color:var(--muted)}
+.calgrid .c{aspect-ratio:1.6;border-radius:3px;max-width:100%}
+.calgrid .lbl{display:flex;align-items:center}
+.calgrid .ml{text-align:center}
+.calgrid .c.mark{outline:2px solid var(--ink);outline-offset:-2px}
+.legend{display:flex;flex-wrap:wrap;gap:16px;align-items:center;font-size:12.5px;color:var(--muted)}
+.ramp{display:flex;border-radius:3px;overflow:hidden}
+.ramp i{width:22px;height:10px;display:block}
+.tag-ill{font-family:var(--mono);font-size:11px;color:var(--muted);border:1px dashed var(--line);padding:2px 8px;border-radius:6px;justify-self:start}
+
+/* svg diagram */
+.diagram{overflow-x:auto;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px}
+.diagram svg{display:block;min-width:900px;width:100%;height:auto}
+.n rect{fill:var(--bg);stroke:var(--line);stroke-width:1.2}
+.n.hot rect{fill:var(--ember-soft);stroke:var(--ember)}
+.n.green rect{fill:var(--steppe-soft);stroke:var(--steppe)}
+.n text{fill:var(--ink);font-family:var(--body);font-size:13px}
+.n text.s{fill:var(--muted);font-size:11.5px;font-family:var(--mono)}
+.edge{stroke:var(--muted);stroke-width:1.3;fill:none}
+.arrowhead{fill:var(--muted)}
+.zone{fill:none;stroke:var(--line);stroke-dasharray:4 4}
+.zl{fill:var(--muted);font-family:var(--mono);font-size:11px;letter-spacing:.06em}
+
+/* tree */
+pre.tree{margin:0;overflow-x:auto;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:16px 18px;font-family:var(--mono);font-size:13px;line-height:1.55}
+pre.tree .c{color:var(--muted)}
+
+/* two-col */
+.cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(18rem,1fr));gap:16px}
+.box{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:16px 18px;display:grid;gap:8px;align-content:start;min-width:0}
+.box h3{font-size:1.02rem}
+.box p,.box li{font-size:.94rem}
+.box.rec{border-color:var(--steppe);box-shadow:inset 0 3px 0 var(--steppe)}
+.box .tagline{font-family:var(--mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.box.rec .tagline{color:var(--steppe)}
+
+/* states row */
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{font-size:.88rem;padding:4px 10px;border-radius:999px;background:var(--surface);border:1px solid var(--line)}
+.chip b{font-weight:600}
+
+/* verification */
+.verif{display:grid;grid-template-columns:repeat(auto-fit,minmax(13rem,1fr));gap:12px}
+.sig{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:14px;display:grid;gap:6px;align-content:start}
+.sig .w{font-family:var(--mono);font-size:11.5px;color:var(--muted)}
+.verdicts{display:flex;flex-wrap:wrap;gap:8px}
+.v{font-size:.9rem;padding:5px 12px;border-radius:6px;font-weight:500;border:1px solid}
+.v1{color:var(--h6);border-color:currentColor}
+.v2{color:var(--should);border-color:currentColor}
+.v3{color:var(--could);border-color:currentColor}
+.v4{color:var(--steppe);border-color:currentColor}
+
+/* timeline */
+.tl{display:grid;grid-template-columns:4fr 12fr 18fr 10fr 4fr;gap:4px}
+.tl .ph{background:var(--surface);border:1px solid var(--line);border-top:4px solid var(--c,var(--line));border-radius:8px;padding:10px 12px;display:grid;gap:4px;align-content:start;min-width:0}
+.tl .ph b{font-family:var(--display);font-size:.98rem}
+.tl .ph .h{font-family:var(--mono);font-size:11.5px;color:var(--muted)}
+.tl .ph ul{margin:4px 0 0;padding-left:1rem;font-size:.86rem;display:grid;gap:3px}
+.tl .ph .exit{font-size:.82rem;color:var(--muted);border-top:1px dashed var(--line);padding-top:6px;margin-top:4px}
+.f0{border:1px dashed var(--line);border-radius:10px;padding:14px 16px;background:var(--surface);display:grid;gap:6px}
+
+.sources ol{margin:0;padding-left:1.4rem;display:grid;gap:6px;font-size:.92rem}
+.sources li{max-width:none}
+.note{font-size:.88rem;color:var(--muted)}
+footer{padding-block:28px;color:var(--muted);font-size:.85rem;border-top:1px solid var(--line)}
+
+@media (max-width:900px){
+  .wrap{grid-template-columns:minmax(0,1fr);gap:0}
+  nav.toc{display:none}
+  .tl{grid-template-columns:minmax(0,1fr)}
+}
+@media (prefers-reduced-motion:no-preference){
+  .alert .dot{animation:pulse 2.4s ease-in-out infinite}
+  @keyframes pulse{50%{box-shadow:0 0 0 9px color-mix(in oklab,var(--ember) 0%,transparent)}}
+}
+</style>
+
+<div class="wrap">
+<nav class="toc" aria-label="Secciones">
+  <ol>
+    <li><a href="#resumen">Resumen</a></li>
+    <li><a href="#jurado">Qué evalúa el jurado</a></li>
+    <li><a href="#alcance">Alcance del MVP</a></li>
+    <li><a href="#armonizacion">Armonización y calendario</a></li>
+    <li><a href="#arquitectura">Arquitectura</a></li>
+    <li><a href="#stack">Stack</a></li>
+    <li><a href="#charmy">Charmy, la mascota</a></li>
+    <li><a href="#app">App: mapa y modos</a></li>
+    <li><a href="#prediccion">Predicción</a></li>
+    <li><a href="#verificacion">Verificación de focos</a></li>
+    <li><a href="#alertas">Alertas a entidades</a></li>
+    <li><a href="#kids">Charmy Kids</a></li>
+    <li><a href="#equipo">Equipo y 48 h</a></li>
+    <li><a href="#agentes">Agentes y skills</a></li>
+    <li><a href="#novedad">Qué nos distingue</a></li>
+    <li><a href="#riesgos">Riesgos</a></li>
+    <li><a href="#entrega">Entrega</a></li>
+    <li><a href="#fuentes">Fuentes</a></li>
+  </ol>
+</nav>
+
+<main>
+<header class="hero" id="resumen">
+  <div class="eyebrow">NASA Space Apps 2026 · Comodoro Rivadavia · Harmonization of MODIS and VIIRS Hot Spots</div>
+  <h1>Charmy: plan técnico para 48 horas</h1>
+  <p class="lede">Propuesta de alcance, arquitectura, stack, reparto del equipo y metodología con <code>tabla-agentes</code>, contrastada con el enunciado del desafío y con fuentes.</p>
+
+  <div class="alert" role="note">
+    <span class="dot" aria-hidden="true"></span>
+    <div class="stack">
+      <p><strong>El hackathon es mañana, 14 y 15 de noviembre de 2026.</strong> Hay unas 48 horas de trabajo. El plan prioriza lo que el jurado evalúa y deja la mascota, el juego y las alertas como diferenciales con tiempo acotado.</p>
+      <p><strong>Falta en el excalidraw el núcleo del desafío:</strong> armonizar MODIS y VIIRS y mostrar un <em>calendario de actividad de quema</em> con anomalías y descarga de CSV. Sin eso, el resto no puntúa en “Relevancia”.</p>
+    </div>
+  </div>
+
+  <div class="decisions">
+    <div class="decision"><b>1. Calendario armonizado primero</b><span>Serie MODIS→VIIRS 2001–hoy, calendario año × mes, anomalía contra la mediana histórica y CSV de los focos del área.</span></div>
+    <div class="decision"><b>2. Un mismo motor de mapa</b><span>MapLibre con dos perfiles: 3D con relieve y 2D liviano. Se mantiene un solo código, como en el prototipo que ya les gustó.</span></div>
+    <div class="decision"><b>3. Datos precalculados</b><span>Parquet estático para la historia; la API solo atiende lo vivo (NOAA‑20/21), la verificación y las alertas. La demo no depende de la red.</span></div>
+    <div class="decision"><b>4. Alertas híbridas</b><span>El público reporta sin cuenta. Las entidades se suman por invitación, eligen su zona y reciben Telegram y un feed CAP estándar.</span></div>
+    <div class="decision"><b>5. Contratos antes que código</b><span>OpenAPI, esquema de datos, tokens y la API del componente Charmy quedan acordados en las primeras 4 h, con un mock de Postman.</span></div>
+  </div>
+</header>
+
+<section id="jurado">
+  <div class="eyebrow">Criterios</div>
+  <h2>Qué evalúa el jurado y dónde suma cada módulo</h2>
+  <p>Space Apps evalúa cinco criterios: impacto, creatividad, validez, relevancia y presentación. La guía oficial pide darle a la presentación el mismo peso que a los otros cuatro.</p>
+  <div class="tbl"><table>
+    <thead><tr><th>Criterio</th><th>Qué significa acá</th><th>Módulo que lo cubre</th></tr></thead>
+    <tbody>
+      <tr><td class="k">Relevancia</td><td>Responder al enunciado: armonización MODIS/VIIRS, calendario de quema, área elegida por el usuario, comparación con la mediana histórica, descarga de analíticas y CSV.</td><td>Pipeline de armonización, calendario, mapa con dibujo de área</td></tr>
+      <tr><td class="k">Validez</td><td>Que la armonización se pueda verificar: métricas del período de solape (2012–2026), datos reales de FIRMS y supuestos explícitos.</td><td>Panel “¿Qué tan buena es la armonización?” en modo experto</td></tr>
+      <tr><td class="k">Impacto</td><td>Uso real por brigadas, Defensa Civil e investigadores. Que funcione en el campo con poca conectividad.</td><td>Modo 2D liviano, alertas por zona, feed CAP</td></tr>
+      <tr><td class="k">Creatividad</td><td>Lo que no hacen otros equipos: Charmy como guía, verificación con evidencia, juego educativo con focos reales.</td><td>Charmy, verificación, Charmy Kids</td></tr>
+      <tr><td class="k">Presentación</td><td>Video o slides claros, landing atractiva, repo prolijo con README.</td><td>Landing, video, README del monorepo</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section id="alcance">
+  <div class="eyebrow">Priorización MoSCoW</div>
+  <h2>Alcance del MVP</h2>
+  <p>Las piezas <span class="pill p-must">imprescindible</span> tienen que estar en <code>main</code> el sábado a la noche. Las <span class="pill p-should">importante</span> entran el domingo a la mañana. Las <span class="pill p-could">deseable</span> solo entran si sobra tiempo antes del congelamiento.</p>
+  <div class="tbl"><table>
+    <thead><tr><th>Pieza</th><th>Prioridad</th><th>Versión mínima que ya suma</th></tr></thead>
+    <tbody>
+      <tr><td class="k">Armonización MODIS↔VIIRS</td><td><span class="pill p-must">imprescindible</span></td><td>Factores por región y mes ajustados en el solape, serie mensual 2001–hoy para Argentina y Chile.</td></tr>
+      <tr><td class="k">Calendario de quema</td><td><span class="pill p-must">imprescindible</span></td><td>Mapa de calor año × mes, anomalía contra la mediana y CSV del área dibujada.</td></tr>
+      <tr><td class="k">Mapa 2D y 3D</td><td><span class="pill p-must">imprescindible</span></td><td>Focos históricos y recientes, filtros por fecha, sensor y confianza, área por dibujo o lat/lon.</td></tr>
+      <tr><td class="k">Charmy básico</td><td><span class="pill p-must">imprescindible</span></td><td>3 estados (saluda, explica, alerta) y 1 vestuario. Aparece en la landing y en el modo novato.</td></tr>
+      <tr><td class="k">Landing</td><td><span class="pill p-must">imprescindible</span></td><td>Hero con Charmy, el problema, cómo funciona, equipo, créditos de datos (NASA FIRMS, CONAE).</td></tr>
+      <tr><td class="k">Focos en vivo NOAA‑20/21</td><td><span class="pill p-should">importante</span></td><td>Últimas 48 h con caché, consumidos desde el worker y no desde el navegador.</td></tr>
+      <tr><td class="k">Verificación de focos</td><td><span class="pill p-should">importante</span></td><td>Señales satelitales y de fuente fija primero; noticias y LLM como capa extra.</td></tr>
+      <tr><td class="k">Alertas a entidades</td><td><span class="pill p-should">importante</span></td><td>Bot de Telegram y feed CAP para una entidad de demo; reporte anónimo.</td></tr>
+      <tr><td class="k">Charmy Kids</td><td><span class="pill p-should">importante</span></td><td>Un nivel 2D de 3 minutos con focos de un día real, puntaje y combo.</td></tr>
+      <tr><td class="k">Predicción a 1–3 meses</td><td><span class="pill p-could">deseable</span></td><td>Se muestra solo si le gana a la climatología en el test temporal.</td></tr>
+      <tr><td class="k">Cuentas de usuario general</td><td><span class="pill p-could">deseable</span></td><td>No hace falta para el MVP. Solo las entidades tienen cuenta.</td></tr>
+      <tr><td class="k">Juego 3D voxel</td><td><span class="pill p-could">deseable</span></td><td>Fuera de las 48 h. Queda en la hoja de ruta.</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section id="armonizacion">
+  <div class="eyebrow">Núcleo del desafío</div>
+  <h2>Armonización MODIS↔VIIRS y calendario de quema</h2>
+  <p>MODIS (1 km, Terra y Aqua) cubre desde 2000; VIIRS (375 m) desde 2012. Tienen distinta resolución, sensibilidad y horario de paso, por eso no se pueden sumar directamente. Además, la cantidad de satélites VIIRS cambió con el tiempo: S‑NPP desde 2012, NOAA‑20 y NOAA‑21 después. Desde el <b>2 de noviembre de 2026</b> FIRMS dejó de producir datos nuevos de S‑NPP, y los MODIS terminan su recolección científica en 2027. El calendario tiene que sobrevivir a ese cambio de sensores.</p>
+
+  <ol class="steps">
+    <li><div><b>Descargar y filtrar</b><p>Archivo FIRMS de MODIS C6.1 (estándar) y VIIRS 375 m SP para Argentina y Chile, más el dataset que entregue el evento. Se quedan los focos de vegetación (<code>type = 0</code>, disponible solo en datos estándar), MODIS con confianza ≥ 30 y VIIRS con confianza nominal o alta.</p></div></li>
+    <li><div><b>Llevar a una unidad común</b><p>Se cuentan <em>días‑celda con fuego</em> en una grilla de 0,1° (unos 11 km): una celda vale 1 en un día si cualquier sensor detectó fuego ahí. Así se atenúa la diferencia de resolución (VIIRS ve más píxeles por incendio) y no se cuentan dos veces los satélites que pasan el mismo día. El conteo crudo de píxeles queda disponible en modo experto.</p></div></li>
+    <li><div><b>Calibrar en cadena durante los solapes</b><p>MODIS → S‑NPP con el solape 2012–2026, y NOAA‑20 → S‑NPP con el solape 2020–2026, para que la serie continúe ahora que S‑NPP terminó. Por región (provincia o ecorregión) y mes se ajusta <code>log(VIIRS+1) = a + b·log(MODIS+1)</code> o un mapeo por cuantiles. Gana el que tenga menor error en la validación que deja un año afuera.</p></div></li>
+    <li><div><b>Producir la serie armonizada</b><p>Serie “equivalente VIIRS” 2001–hoy con banda de incertidumbre a partir de los residuos de la validación. Cada tramo indica si es MODIS convertido o VIIRS medido. Las regiones con pocos focos comparten parámetros con su región vecina para no sobreajustar.</p></div></li>
+    <li><div><b>Calendario y anomalías</b><p>Matriz año × mes (y día del año en modo experto). La anomalía es la posición del mes contra la mediana del mismo mes en 2001–2025, en percentiles o en rango intercuartil. Se resaltan los meses críticos y el mes actual.</p></div></li>
+    <li><div><b>Mostrar la validez</b><p>Panel con dispersión MODIS convertido contra VIIRS en el solape, R², sesgo por región y un selector <em>Armonizado / solo MODIS / solo VIIRS</em> para que el jurado vea el efecto.</p></div></li>
+  </ol>
+
+  <div class="cal" aria-label="Esquema ilustrativo del calendario de quema">
+    <span class="tag-ill">Esquema ilustrativo, no son datos reales</span>
+    <div class="calgrid" id="calgrid"></div>
+    <div class="legend">
+      <span>Focos armonizados por mes:</span>
+      <span class="ramp" aria-hidden="true"><i style="background:var(--h1)"></i><i style="background:var(--h2)"></i><i style="background:var(--h3)"></i><i style="background:var(--h4)"></i><i style="background:var(--h5)"></i><i style="background:var(--h6)"></i></span>
+      <span>menos → más</span>
+      <span>Recuadro: mes por encima del percentil 90 histórico</span>
+    </div>
+  </div>
+  <p class="note">Para los conteos usen una rampa secuencial apta para daltonismo (YlOrRd de ColorBrewer, la de este esquema) y para las anomalías una divergente (PuOr o BrBG). El enunciado pide explícitamente rampas de color accesibles.</p>
+</section>
+
+<section id="arquitectura">
+  <div class="eyebrow">Despliegue</div>
+  <h2>Arquitectura</h2>
+  <p>La historia se procesa una sola vez y se publica como archivos estáticos. Lo único que corre todo el tiempo es la API y un worker que consulta FIRMS cada 30 minutos. Si la API se cae durante la demo, el mapa y el calendario siguen funcionando.</p>
+  <div class="diagram">
+    <svg viewBox="0 0 1120 440" role="img" aria-label="Diagrama de arquitectura: fuentes de datos, pipeline, almacenamiento, API y frontends">
+      <defs><marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="arrowhead" d="M0,0 L10,5 L0,10 z"/></marker></defs>
+      <text class="zl" x="16" y="22">FUENTES</text>
+      <text class="zl" x="246" y="22">PROCESO (Python · uv)</text>
+      <text class="zl" x="486" y="22">ALMACENAMIENTO</text>
+      <text class="zl" x="716" y="22">SERVICIO</text>
+      <text class="zl" x="936" y="22">CLIENTES Y SALIDAS</text>
+
+      <g class="n"><rect x="16" y="36" width="190" height="54" rx="8"/><text x="28" y="59">Archivo FIRMS</text><text class="s" x="28" y="78">MODIS C6.1 + VIIRS SP</text></g>
+      <g class="n"><rect x="16" y="104" width="190" height="54" rx="8"/><text x="28" y="127">Dataset del evento</text><text class="s" x="28" y="146">CSV histórico</text></g>
+      <g class="n"><rect x="16" y="196" width="190" height="54" rx="8"/><text x="28" y="219">API FIRMS en vivo</text><text class="s" x="28" y="238">VIIRS NOAA‑20/21 NRT</text></g>
+      <g class="n"><rect x="16" y="264" width="190" height="54" rx="8"/><text x="28" y="287">Google News RSS</text><text class="s" x="28" y="306">evidencia periodística</text></g>
+      <g class="n"><rect x="16" y="332" width="190" height="54" rx="8"/><text x="28" y="355">NVIDIA NIM</text><text class="s" x="28" y="374">LLM compatible OpenAI</text></g>
+
+      <g class="n hot"><rect x="246" y="56" width="200" height="84" rx="8"/><text x="258" y="82">Pipeline de armonización</text><text class="s" x="258" y="102">DuckDB · Polars · LightGBM</text><text class="s" x="258" y="120">se corre una vez, offline</text></g>
+      <g class="n"><rect x="246" y="250" width="200" height="84" rx="8"/><text x="258" y="276">Worker en vivo</text><text class="s" x="258" y="296">cron 30 min · verificación</text><text class="s" x="258" y="314">dispara alertas</text></g>
+
+      <g class="n"><rect x="486" y="56" width="190" height="84" rx="8"/><text x="498" y="82">Parquet y PMTiles</text><text class="s" x="498" y="102">serie, calendario, focos</text><text class="s" x="498" y="120">Cloudflare R2 o Releases</text></g>
+      <g class="n"><rect x="486" y="250" width="190" height="84" rx="8"/><text x="498" y="276">Postgres + PostGIS</text><text class="s" x="498" y="296">reportes, entidades, zonas</text><text class="s" x="498" y="314">Supabase (incluye Auth)</text></g>
+
+      <g class="n green"><rect x="716" y="150" width="180" height="96" rx="8"/><text x="728" y="178">API FastAPI</text><text class="s" x="728" y="198">/api/v1 · OpenAPI</text><text class="s" x="728" y="216">Docker · Render/Fly/VPS</text><text class="s" x="728" y="234">DuckDB sobre Parquet</text></g>
+
+      <rect class="zone" x="928" y="32" width="184" height="212" rx="10"/>
+      <text class="zl" x="940" y="234">Cloudflare Pages</text>
+      <g class="n"><rect x="940" y="42" width="160" height="50" rx="8"/><text x="952" y="63">landing</text><text class="s" x="952" y="81">Astro + GSAP</text></g>
+      <g class="n hot"><rect x="940" y="102" width="160" height="50" rx="8"/><text x="952" y="123">app</text><text class="s" x="952" y="141">React + MapLibre</text></g>
+      <g class="n"><rect x="940" y="162" width="160" height="50" rx="8"/><text x="952" y="183">juego</text><text class="s" x="952" y="201">Phaser 4</text></g>
+      <g class="n"><rect x="940" y="276" width="160" height="50" rx="8"/><text x="952" y="297">Bot de Telegram</text><text class="s" x="952" y="315">alertas por zona</text></g>
+      <g class="n"><rect x="940" y="344" width="160" height="50" rx="8"/><text x="952" y="365">Feed CAP 1.2</text><text class="s" x="952" y="383">XML por zona</text></g>
+
+      <path class="edge" marker-end="url(#ah)" d="M206,63 C226,63 226,90 244,90"/>
+      <path class="edge" marker-end="url(#ah)" d="M206,131 C226,131 226,110 244,110"/>
+      <path class="edge" marker-end="url(#ah)" d="M206,223 C226,223 226,275 244,275"/>
+      <path class="edge" marker-end="url(#ah)" d="M206,291 L244,291"/>
+      <path class="edge" marker-end="url(#ah)" d="M206,359 C226,359 226,310 244,310"/>
+      <path class="edge" marker-end="url(#ah)" d="M446,98 L484,98"/>
+      <path class="edge" marker-end="url(#ah)" d="M446,292 L484,292"/>
+      <path class="edge" marker-end="url(#ah)" d="M676,98 C700,98 696,180 714,180"/>
+      <path class="edge" marker-end="url(#ah)" d="M676,292 C700,292 696,220 714,220"/>
+      <path class="edge" marker-end="url(#ah)" d="M896,180 C916,180 916,127 938,127"/>
+      <path class="edge" marker-end="url(#ah)" d="M896,205 C916,205 916,187 938,187"/>
+      <path class="edge" marker-end="url(#ah)" d="M896,236 C920,236 916,369 938,369"/>
+      <path class="edge" marker-end="url(#ah)" d="M446,318 C700,350 860,301 938,301"/>
+      <path class="edge" marker-end="url(#ah)" d="M581,56 C600,20 900,20 1020,100" stroke-dasharray="5 4"/>
+    </svg>
+  </div>
+  <p class="note">La línea punteada es la lectura directa de PMTiles y Parquet desde el navegador, sin pasar por la API. Para levantar todo en local alcanza con <code>docker compose up</code> (api, worker, postgres y bot), que es lo que muestra el ícono de Docker del excalidraw.</p>
+
+  <h3>Estructura del monorepo</h3>
+  <pre class="tree">charmy/                     <span class="c"># creado desde la plantilla tabla-agentes</span>
+├─ apps/
+│  ├─ landing/              <span class="c"># Astro + GSAP</span>
+│  ├─ app/                  <span class="c"># Vite + React + TS + MapLibre</span>
+│  └─ juego/                <span class="c"># Phaser 4 + Vite</span>
+├─ services/
+│  ├─ api/                  <span class="c"># FastAPI (uv)</span>
+│  ├─ worker/               <span class="c"># NRT, verificación, alertas (uv)</span>
+│  └─ pipeline/             <span class="c"># armonización, calendario, ML, notebooks (uv)</span>
+├─ packages/
+│  ├─ charmy/               <span class="c"># componente de mascota compartido (React + vanilla)</span>
+│  ├─ ui/                   <span class="c"># tokens de diseño, Tailwind v4 preset</span>
+│  └─ contracts/            <span class="c"># openapi.yaml, esquemas Parquet/GeoJSON, colección Postman</span>
+├─ data/                    <span class="c"># solo muestras chicas; lo grande va a R2 o Releases</span>
+├─ docs/                    <span class="c"># metodología, validación, decisiones</span>
+├─ docker-compose.yml
+├─ pnpm-workspace.yaml · turbo.json · pyproject.toml (workspace uv)
+└─ AGENTS.md · PLAN.md · CLAUDE.md · tools/board   <span class="c"># de tabla-agentes</span></pre>
+  <p class="note">pnpm y Turborepo orquestan el lado JS. uv maneja el lado Python con un solo lockfile. Turborepo ya detecta workspaces de uv, pero esa integración figura como experimental: si da problemas, los scripts de Python se corren directo con <code>uv run</code>.</p>
+</section>
+
+<section id="stack">
+  <div class="eyebrow">Tecnologías</div>
+  <h2>Stack recomendado</h2>
+  <div class="tbl"><table>
+    <thead><tr><th>Área</th><th>Elección</th><th>Por qué</th><th>Alternativa</th></tr></thead>
+    <tbody>
+      <tr><td class="k">Mapa</td><td>MapLibre GL JS v5 o superior</td><td>Globo, relieve 3D y estilo propio en un solo motor, sin tokens pagos. El prototipo anterior ya lo usa.</td><td>deck.gl para hexágonos H3. Ojo: sus capas no se apoyan sobre el relieve de MapLibre.</td></tr>
+      <tr><td class="k">Relieve</td><td>Terrain tiles (Terrarium en AWS) o PMTiles</td><td>Gratuito y probado en el prototipo.</td><td>Mapterhorn</td></tr>
+      <tr><td class="k">Dibujo de área</td><td>Terra Draw + Turf.js</td><td>Polígono o rectángulo sobre MapLibre, y lat/lon manual como pide el enunciado.</td><td>Solo lat/lon y radio</td></tr>
+      <tr><td class="k">Gráficos</td><td>Observable Plot</td><td>Calendario tipo heatmap y series en pocas líneas.</td><td>ECharts (tiene calendario nativo)</td></tr>
+      <tr><td class="k">UI de la app</td><td>React + TS + Tailwind v4 + shadcn/ui, TanStack Query, Zustand</td><td>Rápido de armar con agentes. Ya tienen una skill <code>vite-shadcn-tailwind4</code>.</td><td>—</td></tr>
+      <tr><td class="k">Landing</td><td>Astro + GSAP (ScrollTrigger)</td><td>Estática, carga rápido, animaciones fluidas de scroll.</td><td>Motion (ex Framer Motion)</td></tr>
+      <tr><td class="k">Mascota</td><td>Rive (state machine) o SVG por capas + Motion</td><td>Ver la sección de Charmy.</td><td>Lottie, solo para animaciones decorativas</td></tr>
+      <tr><td class="k">Juego</td><td>Phaser 4</td><td>Versión estable desde abril de 2026, renderer WebGL nuevo, MIT.</td><td>PixiJS; three.js para el voxel futuro</td></tr>
+      <tr><td class="k">API</td><td>FastAPI + DuckDB + httpx</td><td>Mismo lenguaje que el pipeline, OpenAPI automático, DuckDB lee Parquet sin servidor de base.</td><td>—</td></tr>
+      <tr><td class="k">Datos y ML</td><td>Polars, DuckDB, GeoPandas, h3, LightGBM</td><td>Rápido en una laptop. LightGBM es estándar para ocurrencia de fuego con datos tabulares.</td><td>Prophet para una serie por región</td></tr>
+      <tr><td class="k">Base operativa</td><td>Supabase (Postgres + PostGIS + Auth con enlace mágico)</td><td>Cuentas de entidades por invitación sin construir autenticación.</td><td>SQLite + SpatiaLite</td></tr>
+      <tr><td class="k">LLM</td><td>NVIDIA NIM (<code>integrate.api.nvidia.com/v1</code>)</td><td>Compatible con el SDK de OpenAI, créditos gratuitos para prototipos.</td><td>Claude API</td></tr>
+      <tr><td class="k">Mensajería</td><td>Bot de Telegram (aiogram) + CAP 1.2</td><td>Telegram es gratis e inmediato. CAP es el estándar internacional de alerta pública.</td><td>Email (Resend)</td></tr>
+      <tr><td class="k">Deploy</td><td>Cloudflare Pages + contenedor de API en Render, Fly o un VPS</td><td>Los tres frontends son estáticos. La API es un solo contenedor.</td><td>GitHub Pages</td></tr>
+      <tr><td class="k">Contratos y pruebas</td><td>OpenAPI + colección y mock de Postman</td><td>El frontend arranca contra el mock sin esperar a la API. Tienen Postman CLI instalado.</td><td>Prism</td></tr>
+    </tbody>
+  </table></div>
+  <p class="note">Las instancias gratuitas de Render y Fly pueden entrar en suspensión. El día de la demo, despiértenla antes o usen un VPS chico.</p>
+</section>
+
+<section id="charmy">
+  <div class="eyebrow">Mascota</div>
+  <h2>Charmy, la vizcacha de fuego</h2>
+  <p>Charmy aparece en toda la experiencia: saluda en la landing, guía en el modo novato, avisa cuando hay un foco cerca y es el personaje del juego. Para que sea coherente se construye como un solo componente con <b>estados</b> y <b>vestuarios</b>, publicado en <code>packages/charmy</code>.</p>
+  <div class="cols">
+    <div class="box rec"><span class="tagline">Recomendado si alguien sabe animar</span><h3>Rive</h3>
+      <ul class="clean"><li>Un archivo <code>.riv</code> trae la máquina de estados. El código solo cambia entradas: <code>mood</code>, <code>outfit</code>, <code>talking</code>.</li><li>Los vestuarios son capas que se prenden y apagan en el mismo artboard.</li><li>Seguimiento del cursor y parpadeo sin código extra.</li><li>Runtime web para React y para canvas puro, así que sirve en la app y en Phaser.</li></ul></div>
+    <div class="box"><span class="tagline">Plan B para 48 h</span><h3>SVG por capas + Motion</h3>
+      <ul class="clean"><li>Se dibuja el cuerpo en partes (orejas, ojos, cola, cuerpo) en Figma o Inkscape.</li><li>Cada vestuario es un grupo SVG que se intercambia.</li><li>Las animaciones de idle, saludo y salto se hacen con Motion o CSS.</li><li>Menos expresivo, pero cualquiera del equipo lo puede mantener con su agente.</li></ul></div>
+  </div>
+  <h3>Estados y vestuarios para el MVP</h3>
+  <div class="chips">
+    <span class="chip"><b>idle</b> · respira, parpadea</span>
+    <span class="chip"><b>saluda</b> · landing, primer uso</span>
+    <span class="chip"><b>explica</b> · globo de diálogo en el modo novato</span>
+    <span class="chip"><b>alerta</b> · foco cerca o anomalía</span>
+    <span class="chip"><b>festeja</b> · juego, logros</span>
+    <span class="chip"><b>pensando</b> · cargando datos</span>
+  </div>
+  <div class="chips">
+    <span class="chip">Vestuario <b>bombero</b> (juego y alertas)</span>
+    <span class="chip"><b>piloto</b> de avión hidrante</span>
+    <span class="chip"><b>científica</b> (modo experto)</span>
+    <span class="chip"><b>guía</b> con mochila (modo novato)</span>
+  </div>
+  <pre class="tree">&lt;Charmy mood="explica" outfit="guia" size="md"
+        say="Este mes hubo 3 veces más focos que lo normal en Cushamen." /&gt;</pre>
+  <p class="note">Una vizcacha de fuego con tonos cálidos funciona bien en pixel art para el juego y en vector para la app. Conviene que la persona del equipo sin agente sea la dueña del arte: es trabajo humano y no compite con los agentes. Definan también un tono de voz para sus textos: corto, en segunda persona, sin alarmismo.</p>
+</section>
+
+<section id="app">
+  <div class="eyebrow">Producto principal</div>
+  <h2>App: un mapa, dos modos</h2>
+  <div class="cols">
+    <div class="box"><span class="tagline">Modo novato</span><h3>Para vecinos, escuelas y prensa</h3>
+      <ul class="clean"><li>Charmy hace un recorrido de 4 pasos al entrar.</li><li>Buscador de localidad en lugar de coordenadas.</li><li>Una sola frase por área: “Este mes está <b>por encima</b> de lo normal”.</li><li>Leyendas en palabras, sin siglas de sensores.</li><li>Botón “Reportar un foco” y teléfonos útiles: 100 (bomberos) y 911.</li></ul></div>
+    <div class="box"><span class="tagline">Modo experto</span><h3>Para brigadas, técnicos e investigadores</h3>
+      <ul class="clean"><li>Selector Armonizado / MODIS / VIIRS y filtros por confianza, FRP, día o noche y satélite.</li><li>Calendario año × mes y día del año, con percentiles.</li><li>Panel de validación de la armonización.</li><li>Descarga de CSV, GeoJSON y PNG del calendario.</li><li>Atributos crudos de FIRMS en el popup del foco.</li></ul></div>
+    <div class="box"><span class="tagline">Perfiles del mapa</span><h3>3D con relieve y 2D liviano</h3>
+      <ul class="clean"><li>3D: relieve, columnas por celda y globo para ver todo el mundo.</li><li>2D: sin relieve, estilo vectorial mínimo, puntos agregados.</li><li>Se elige solo según la conexión (<code>navigator.connection</code>), con un botón para cambiar.</li><li>Fuentes fijas (antorchas de gas) en otra capa, sin contar como incendio.</li></ul></div>
+  </div>
+  <p>Del prototipo anterior conviene conservar el relieve 3D, el calendario que mueve el mapa al hacer clic en un día y la reproducción temporal. Conviene sacar de la primera pantalla el FWI, las cicatrices simuladas y los paneles con muchas cifras: pasan al modo experto o a la hoja de ruta.</p>
+</section>
+
+<section id="prediccion">
+  <div class="eyebrow">Modelo</div>
+  <h2>Predicción de actividad para los próximos meses</h2>
+  <p>Lo defendible frente a un jurado técnico es pronosticar la <b>actividad esperada por celda y mes</b> (días‑celda con fuego), no la ubicación exacta de cada foco.</p>
+  <ul class="clean">
+    <li><b>Línea base:</b> climatología (mediana del mismo mes) y persistencia. Si el modelo no le gana, no se muestra.</li>
+    <li><b>Modelo:</b> LightGBM en una grilla de 0,25° con variables de mes (seno y coseno), rezagos 1, 2, 3 y 12, anomalía del mes anterior, región y altura. Si sobra tiempo, se suman variables climáticas mensuales de ERA5‑Land.</li>
+    <li><b>Validación:</b> corte temporal (entrenar hasta 2023, probar en 2024–2026), MAE y Brier contra la línea base, publicado en el panel de validación.</li>
+    <li><b>En la UI:</b> capa “Lo que esperamos para diciembre” con intervalo y una frase de Charmy que deja clara la incertidumbre.</li>
+  </ul>
+</section>
+
+<section id="verificacion">
+  <div class="eyebrow">Veracidad</div>
+  <h2>Verificación de focos: varias señales, el LLM es solo una</h2>
+  <p>Que no haya noticias de un foco no lo vuelve falso. Por eso el veredicto combina señales y siempre muestra la evidencia. En la cuenca del Golfo San Jorge, alrededor de Comodoro Rivadavia, la causa más probable de un falso positivo son las antorchas de gas de la industria petrolera, y eso se detecta con datos satelitales, no con noticias. Es además un ángulo local que le habla directo al jurado.</p>
+  <div class="verif">
+    <div class="sig"><b>Satélite</b><span class="w">peso alto</span><span>Confianza, FRP y si lo vio más de un satélite o pasada en 12–24 h (NOAA‑20, NOAA‑21, Aqua, Terra).</span></div>
+    <div class="sig"><b>Fuente fija</b><span class="w">peso alto</span><span>Máscara de celdas que se repiten en muchos meses de muchos años, más <code>type = 2</code> del histórico. Separa antorchas e industria.</span></div>
+    <div class="sig"><b>Noticias</b><span class="w">peso medio</span><span>Google News RSS por localidad + “incendio” + <code>when:2d</code>. Un LLM en NVIDIA NIM extrae lugar y fecha y etiqueta: apoya, contradice o sin información.</span></div>
+    <div class="sig"><b>Reportes y entidades</b><span class="w">peso medio</span><span>Reportes ciudadanos cercanos y el estado que marquen las entidades: visto, falso, controlado.</span></div>
+  </div>
+  <div class="verdicts" aria-label="Veredictos posibles">
+    <span class="v v1">Confirmado</span><span class="v v2">Probable</span><span class="v v3">Sin confirmar</span><span class="v v4">Probable fuente fija</span>
+  </div>
+  <p class="note">No encontramos un modelo llamado “JEV”. Las referencias que sí existen para este enfoque son FEVER, cuyas etiquetas apoya / contradice / sin información se usan arriba, y el laboratorio CheckThat! de CLEF, que en 2026 tiene tareas de verificación de afirmaciones con cantidades y fechas. Para pasar coordenadas a una localidad pueden usar la API Georef de datos.gob.ar.</p>
+</section>
+
+<section id="alertas">
+  <div class="eyebrow">Decisión pendiente</div>
+  <h2>Avisar a las entidades locales</h2>
+  <p>Comparamos las tres ideas que tenían. La recomendación es combinarlas: cada actor usa el canal que le sirve y nadie tiene que crear una cuenta para empezar.</p>
+  <div class="cols">
+    <div class="box"><span class="tagline">Opción A</span><h3>Login para todos</h3><p>Da trazabilidad, pero suma fricción para el público y obliga a tratar datos personales (Ley 25.326). Es demasiado para 48 h.</p></div>
+    <div class="box"><span class="tagline">Opción B</span><h3>Reporte anónimo + Telegram</h3><p>Se hace en pocas horas y llega rápido, pero no hay forma de que la entidad responda ni de saber qué pasó con el reporte.</p></div>
+    <div class="box"><span class="tagline">Opción C</span><h3>Cuentas para entidades</h3><p>Las entidades ven sus reportes en la app y marcan el estado. Necesita autenticación, aunque solo para pocas cuentas.</p></div>
+    <div class="box rec"><span class="tagline">Recomendado</span><h3>Híbrido B + C + CAP</h3>
+      <ul class="clean"><li>El público reporta sin cuenta: ubicación, foto opcional, captcha y límite por IP.</li><li>Las entidades entran por invitación con enlace mágico y dibujan su zona.</li><li>Cada foco o reporte en su zona llega por Telegram y queda en su bandeja.</li><li>La entidad marca el estado, y eso alimenta la verificación.</li><li>Un feed CAP 1.2 por zona lo pueden consumir otros sistemas.</li></ul></div>
+  </div>
+  <p class="note">Para la demo alcanza con una entidad de prueba (por ejemplo “Bomberos Voluntarios Demo”), un grupo de Telegram y el XML CAP generado. En el pitch, digan que buscan alianzas con el Servicio Provincial de Manejo del Fuego de Chubut y con bomberos voluntarios. Muestren siempre el aviso de que Charmy no reemplaza al 100 ni al 911.</p>
+</section>
+
+<section id="kids">
+  <div class="eyebrow">Educación</div>
+  <h2>Charmy Kids</h2>
+  <p>Juego 2D en pixel art con Phaser 4: rondas de 3 minutos, fáciles de entender y que dan ganas de jugar otra vez. Lo que lo distingue es que <b>los focos salen de un día real de FIRMS</b> sobre un mapa estilizado de la Patagonia.</p>
+  <ul class="clean">
+    <li><b>Bucle:</b> aparecen focos en sus posiciones reales y se propagan con el viento. Charmy bombero los apaga con la manguera y tiene que recargar agua en lagos.</li>
+    <li><b>Poder especial:</b> cada 5 focos apagados se carga el avión hidrante, que descarga una línea de agua.</li>
+    <li><b>Puntaje:</b> combos por apagar seguido y bonus por focos de alta intensidad (FRP). Ranking local y, si sobra tiempo, global con la API.</li>
+    <li><b>Cierre:</b> “El 12 de enero de 2026 hubo N focos en Chubut” más un consejo de prevención de Charmy.</li>
+    <li><b>Herramientas:</b> Pixelorama o LibreSprite para sprites, jsfxr para sonidos, Tiled para el mapa.</li>
+  </ul>
+  <p class="note">Asignen un tope de tiempo estricto. Si el domingo a las 10 no hay un nivel jugable de punta a punta, el juego entra como prototipo en la landing y no como pieza principal.</p>
+</section>
+
+<section id="equipo">
+  <div class="eyebrow">Metodología</div>
+  <h2>Equipo, fases y 48 horas</h2>
+  <div class="tbl"><table>
+    <thead><tr><th>Persona</th><th>Rol</th><th>Carpetas</th><th>Agente</th></tr></thead>
+    <tbody>
+      <tr><td class="k">P1</td><td>Líder: integración, deploy, contratos, pitch</td><td><code>/</code>, <code>packages/contracts</code>, <code>docker-compose.yml</code></td><td>Sí</td></tr>
+      <tr><td class="k">P2</td><td>Datos: armonización, calendario, predicción</td><td><code>services/pipeline</code></td><td>Sí</td></tr>
+      <tr><td class="k">P3</td><td>Backend: API, worker, verificación, alertas</td><td><code>services/api</code>, <code>services/worker</code></td><td>Sí</td></tr>
+      <tr><td class="k">P4</td><td>Frontend de la app: mapa, calendario, modos</td><td><code>apps/app</code>, <code>packages/ui</code></td><td>Sí</td></tr>
+      <tr><td class="k">P5</td><td>Landing, componente Charmy y juego</td><td><code>apps/landing</code>, <code>apps/juego</code>, <code>packages/charmy</code></td><td>Sí</td></tr>
+      <tr><td class="k">P6</td><td>Arte de Charmy, guion del video, slides, contacto con bomberos</td><td><code>docs/</code>, assets</td><td>No hace falta</td></tr>
+    </tbody>
+  </table></div>
+
+  <div class="f0">
+    <b>Fase 0: hoy, viernes 13 a la noche</b>
+    <ul class="clean">
+      <li>Pedir el MAP_KEY de FIRMS y la descarga del archivo de Argentina y Chile: las descargas grandes se encolan y llegan por mail.</li>
+      <li>Crear las claves de NVIDIA Build, el bot de Telegram (BotFather) y las cuentas de Cloudflare, Supabase y Render o Fly.</li>
+      <li>Crear el repo desde <code>tabla-agentes</code>, completar <code>AGENTS.md</code>, la allowlist y CODEOWNERS, y copiar el <code>PLAN.md</code> borrador.</li>
+      <li>Confirmar con la organización local si se permite traer código previo. Lo seguro es llegar solo con plantilla, cuentas y claves.</li>
+    </ul>
+  </div>
+
+  <div class="tl" aria-label="Línea de tiempo de 48 horas">
+    <div class="ph" style="--c:var(--could)"><b>F1 Cimientos</b><span class="h">sáb · h 0–4</span><ul><li>Monorepo y CI</li><li>Contratos y mock</li><li>3 apps desplegadas</li></ul><span class="exit">Cierre: todo despliega</span></div>
+    <div class="ph" style="--c:var(--must)"><b>F2 Núcleo</b><span class="h">sáb · h 4–16</span><ul><li>Armonización v1</li><li>Calendario + CSV</li><li>Mapa con datos reales</li><li>Charmy con 3 estados</li></ul><span class="exit">Cierre: el flujo del enunciado funciona punta a punta</span></div>
+    <div class="ph" style="--c:var(--should)"><b>F3 Diferenciales</b><span class="h">sáb noche–dom · h 16–34</span><ul><li>NRT y verificación</li><li>Telegram + CAP</li><li>Modo novato guiado</li><li>Juego jugable</li><li>Predicción, si llega</li></ul><span class="exit">Cierre: congelamiento de funcionalidades</span></div>
+    <div class="ph" style="--c:var(--steppe)"><b>F4 Pulido</b><span class="h">dom · h 34–44</span><ul><li>Solo bugs</li><li>Datos cacheados</li><li>README y video</li></ul><span class="exit">Cierre: demo grabada</span></div>
+    <div class="ph" style="--c:var(--ember)"><b>F5 Entrega</b><span class="h">dom · h 44–48</span><ul><li>Enviar 2 h antes</li><li>Repo público</li></ul></div>
+  </div>
+
+  <ul class="clean">
+    <li><b>Guion de la demo primero:</b> el sábado a la mañana escriban los 3 minutos de la demo. Lo que no aparezca en el guion baja de prioridad.</li>
+    <li><b>Contratos y mock:</b> P1 publica <code>openapi.yaml</code> y un mock de Postman en la primera hora, así P4 y P5 no esperan a P3.</li>
+    <li><b>Porciones verticales:</b> cada PR deja algo visible desplegado. Ramas cortas, merge varias veces por hora, nada de ramas de un día entero.</li>
+    <li><b>Turnos de sueño:</b> los agentes trabajan con una persona supervisando. Duerman en dos turnos y que el tablero diga quién está despierto.</li>
+    <li><b>Una integración cada 6 h:</b> P1 recorre el flujo completo en producción y publica en el tablero lo que está roto.</li>
+  </ul>
+</section>
+
+<section id="agentes">
+  <div class="eyebrow">Claude Code</div>
+  <h2>Agentes, tablero y skills</h2>
+  <p><code>tabla-agentes</code> ya resuelve la coordinación: plan por fases, carpetas con dueño, el issue fijado como tablero y hooks que muestran los mensajes nuevos. Para este proyecto conviene sumar:</p>
+  <ul class="clean">
+    <li><b><code>CLAUDE.md</code> por app</b> con comandos de dev, test y build y qué no tocar.</li>
+    <li><b>Skill <code>firms-data</code></b> en <code>.claude/skills/</code>: fuentes válidas (S‑NPP ya no tiene NRT nuevo), campos, límites de la API (1 a 5 días por consulta, 5.000 transacciones cada 10 minutos) y filtros de armonización. Evita que cada agente lo vuelva a investigar.</li>
+    <li><b>Skill <code>charmy</code></b>: cómo usar el componente, estados, vestuarios y tono de voz.</li>
+    <li><b>Skill <code>contratos</code></b>: dónde vive el OpenAPI, cómo regenerar tipos TS y Pydantic y que todo cambio se anuncia en el tablero.</li>
+    <li><b>Skills que ya tienen:</b> <code>vite-shadcn-tailwind4</code> (P4), <code>dataviz</code> (calendario y gráficos), <code>api-engineer</code> de Postman (P1 y P3) y <code>fewer-permission-prompts</code> para no cortar el ritmo con permisos.</li>
+    <li><b>Secretos:</b> el repo va a ser público. Usen <code>.env.example</code> sin valores, secretos en la plataforma de deploy y revisen con <code>tools/board check</code> y el bloqueo de patrones del tablero.</li>
+  </ul>
+  <p class="note">En la carpeta del proyecto dejé un <code>PLAN.md</code> con las fases y tareas de esta propuesta y un <code>openapi.yaml</code> borrador para copiarlos al repo.</p>
+</section>
+
+<section id="novedad">
+  <div class="eyebrow">Para ganar</div>
+  <h2>Qué nos distingue</h2>
+  <ul class="clean">
+    <li><b>Armonización transparente:</b> el jurado puede alternar entre MODIS, VIIRS y armonizado y ver las métricas de validación. Pocos equipos muestran la validez.</li>
+    <li><b>Lista para el apagado de S‑NPP:</b> la calibración en cadena con NOAA‑20 resuelve un problema que existe desde hace 11 días.</li>
+    <li><b>Antorchas de gas del Golfo San Jorge:</b> se separan automáticamente. Es el falso positivo propio de Comodoro.</li>
+    <li><b>Verificación con evidencia:</b> veredicto con señales y enlaces, sin que un LLM decida solo.</li>
+    <li><b>Interoperable:</b> el feed CAP 1.2 lo puede consumir cualquier sistema de alerta.</li>
+    <li><b>Funciona en el campo:</b> modo 2D liviano y datos estáticos cacheados.</li>
+    <li><b>Charmy:</b> una misma identidad entre landing, app, alertas y juego, y un juego con focos reales para escuelas.</li>
+  </ul>
+</section>
+
+<section id="riesgos">
+  <div class="eyebrow">Riesgos</div>
+  <h2>Qué puede salir mal y cómo evitarlo</h2>
+  <div class="tbl"><table>
+    <thead><tr><th>Riesgo</th><th>Mitigación</th></tr></thead>
+    <tbody>
+      <tr><td class="k">Demasiado alcance</td><td>MoSCoW estricto y congelamiento de funcionalidades en la hora 34. El juego y la predicción tienen tope de tiempo.</td></tr>
+      <tr><td class="k">Descarga del archivo demorada</td><td>Pedirla hoy. Plan B: API de área por tramos de 5 días o el dataset del evento.</td></tr>
+      <tr><td class="k">Límite de la API de FIRMS</td><td>Solo el worker consulta, cada 30 minutos, con caché. El navegador nunca llama a FIRMS.</td></tr>
+      <tr><td class="k">Mala calibración en zonas con pocos focos</td><td>Agrupar regiones y mostrar la banda de incertidumbre.</td></tr>
+      <tr><td class="k">El LLM inventa</td><td>Solo etiqueta texto que recibe, con salida JSON validada. Nunca da el veredicto final solo.</td></tr>
+      <tr><td class="k">Falla internet o la API en la demo</td><td>Video grabado y datos estáticos. La API despierta antes de presentar.</td></tr>
+      <tr><td class="k">Secretos en el repo público</td><td>Secretos en la plataforma, <code>.gitignore</code> desde el commit 1 y revisión antes de hacer público el repo.</td></tr>
+      <tr><td class="k">Agentes que se pisan</td><td>Carpetas con dueño, dependencias en <code>PLAN.md</code> y contratos anunciados en el tablero.</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section id="entrega">
+  <div class="eyebrow">Envío</div>
+  <h2>Lista de entrega</h2>
+  <ul class="clean">
+    <li>Enlace al repo público (el monorepo) con un README que diga qué es, cómo correrlo, el método de armonización y los créditos de datos.</li>
+    <li>Demo del proyecto: video corto o slides, según el formato que fije la guía de envío 2026.</li>
+    <li>Enlaces de la app, la landing y el juego desplegados.</li>
+    <li>Datos y recursos usados: NASA FIRMS (MODIS y VIIRS), recursos de CONAE si se usan, dataset del evento.</li>
+    <li>Declaración de uso de IA. La guía 2025 pedía declararla y marcar las imágenes generadas: confirmen la regla de 2026.</li>
+    <li>Enviar al menos 2 horas antes del cierre local.</li>
+  </ul>
+  <p class="note">No pude abrir las guías oficiales de jurado y envío desde mi entorno. Los criterios salen de los resultados de búsqueda que citan esas páginas. Revisen el formato exacto de la demo y la hora de cierre en spaceappschallenge.org.</p>
+</section>
+
+<section id="fuentes" class="sources">
+  <div class="eyebrow">Fuentes</div>
+  <h2>Fuentes</h2>
+  <ol>
+    <li>Enunciado del desafío “Harmonization of MODIS and VIIRS Hot Spots” y video de CONAE (archivos del equipo).</li>
+    <li><a href="https://www.earthdata.nasa.gov/data/tools/firms">NASA FIRMS</a> · <a href="https://firms.modaps.eosdis.nasa.gov/api/area/">API de área de FIRMS</a> · <a href="https://firms.modaps.eosdis.nasa.gov/download/">Descarga de archivo</a></li>
+    <li><a href="https://earthdata.nasa.gov/data/tools/firms/active-fire-data-attributes-modis-viirs">Atributos de focos MODIS y VIIRS</a> · <a href="https://modaps.modaps.eosdis.nasa.gov/services/about/products/viirs-land-c2-nrt/vnp14imgtdl_nrt.html">Producto VNP14IMGTDL_NRT</a></li>
+    <li><a href="https://www.earthdata.nasa.gov/news/blog/transitioning-from-s-npp-viirs-omps-what-nasa-firms-users-need-know">Transición desde S‑NPP VIIRS (Earthdata)</a> · <a href="https://ladsweb.modaps.eosdis.nasa.gov/learn/modis-to-viirs-transition/">Transición de MODIS a VIIRS (LAADS)</a> · <a href="https://atmosphere.copernicus.eu/drifting-away-modis-cams-global-fire-assimilation-system">CAMS y el fin de MODIS</a></li>
+    <li><a href="https://doi.org/10.1029/2017JD027823">Li et al. 2018, FRP de MODIS y VIIRS</a> · <a href="https://www.mdpi.com/2072-4292/18/10/1650">Remote Sensing 18(10):1650, fusión MODIS‑VIIRS</a> · <a href="https://modis.gsfc.nasa.gov/sci_team/meetings/202305/presentations/boschetti.pdf">Boschetti, MODIS Science Team 2023</a> · <a href="https://gofcgold.umd.edu/sites/default/files/2022-07/Giglio_GOFC_2022_NASA_Fire.pdf">Giglio, GOFC 2022</a></li>
+    <li><a href="https://www.spaceappschallenge.org/resources/judging-awards-guide">Guía de jurado y premios</a> · <a href="https://www.spaceappschallenge.org/resources/project-submission-guide/">Guía de envío</a> · <a href="https://www.spaceappschallenge.org/resources/participant-faqs/">FAQ de participantes (fechas)</a></li>
+    <li><a href="https://newreleases.io/project/github/maplibre/maplibre-gl-js/release/v5.0.0">MapLibre GL JS v5</a> · <a href="https://deck.gl/docs/api-reference/maplibre/overview">deck.gl con MapLibre</a> · <a href="https://docs.protomaps.com/pmtiles/maplibre">PMTiles en MapLibre</a></li>
+    <li><a href="https://rive.app/blog/rive-as-a-lottie-alternative">Rive como alternativa a Lottie</a> · <a href="https://www.pkgpulse.com/guides/lottie-vs-rive-vs-css-animations-web-animation-formats-2026">Lottie, Rive y CSS en 2026</a></li>
+    <li><a href="https://phaser.io/news/2026/04/phaser-4-1-0-salusa-release">Phaser 4.1.0</a></li>
+    <li><a href="https://turborepo.dev/docs/guides/tools/python">Turborepo con Python y uv</a></li>
+    <li><a href="https://arxiv.org/abs/2602.09516">CLEF‑2026 CheckThat! Lab</a> · <a href="https://newscatcherapi.com/blog/google-news-rss-search-parameters-the-missing-documentaiton">Parámetros de Google News RSS (no oficial)</a></li>
+    <li><a href="https://klymentiev.com/blog/nvidia-nim-free-credits">NVIDIA NIM: créditos y límites (no oficial)</a> · <a href="https://build.nvidia.com">build.nvidia.com</a></li>
+    <li><a href="https://arxiv.org/abs/2007.00137">Modelo hurdle espacial con conteos mensuales de FIRMS</a> · <a href="https://link.springer.com/article/10.1007/s11069-025-07292-2">LightGBM para ocurrencia de incendios (Natural Hazards, 2025)</a></li>
+    <li><a href="https://docs.oasis-open.org/emergency-adopt/cap-feeds/v1.0/cap-feeds-v1.0.html">OASIS CAP Feeds</a> · <a href="https://www.undrr.org/early-warnings-for-all/common-alerting-protocol">UNDRR: Common Alerting Protocol</a></li>
+    <li><a href="https://www.argentina.gob.ar/sites/default/files/2024/01/reporte_diario_12-12-2023.pdf">Reporte diario del SNMF (ejemplo)</a></li>
+    <li><a href="https://github.com/cosmosnehu77/tabla-agentes">tabla-agentes</a></li>
+  </ol>
+  <p class="note">Los créditos y límites de NVIDIA y los parámetros de Google News RSS vienen de fuentes no oficiales y pueden cambiar. Verifíquenlos al crear las claves.</p>
+</section>
+
+<footer>Preparado el 13 de noviembre de 2026 para el equipo Charmy · Space Apps Comodoro Rivadavia.</footer>
+</main>
+</div>
+
+<script>
+(function(){
+  // Esquema ilustrativo: patrón estacional sintético (más actividad en verano austral), no son datos reales.
+  var g=document.getElementById('calgrid'); if(!g) return;
+  var months=['E','F','M','A','M','J','J','A','S','O','N','D'];
+  var ramp=['--h1','--h2','--h3','--h4','--h5','--h6'];
+  var html='<span></span>'+months.map(function(m){return '<span class="ml">'+m+'</span>'}).join('');
+  var seed=7; function rnd(){seed=(seed*9301+49297)%233280;return seed/233280;}
+  var years=[2003,2006,2009,2012,2015,2018,2021,2024,2026];
+  years.forEach(function(y,yi){
+    html+='<span class="lbl">'+y+'</span>';
+    for(var m=0;m<12;m++){
+      var season=Math.cos((m-0.5)/12*2*Math.PI); // pico en ene‑feb
+      var v=0.5+0.42*season+0.18*(rnd()-0.5)+(yi===5&&m<3?0.25:0)+(yi===8&&m<2?0.2:0);
+      if(y===2026&&m>10){html+='<span></span>';continue;}
+      var idx=Math.max(0,Math.min(5,Math.floor(v*6)));
+      var mark=(v>1.02)?' mark':'';
+      html+='<span class="c'+mark+'" style="background:var('+ramp[idx]+')" title="'+months[m]+' '+y+'"></span>';
+    }
+  });
+  g.innerHTML=html;
+})();
+</script>

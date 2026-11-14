@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Sprite de Charmy para el juego</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&amp;family=IBM+Plex+Sans:wght@400;500;600&amp;family=IBM+Plex+Mono:wght@400;500&amp;display=swap">
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div style="width: 760px; height: 600px; box-sizing: border-box; padding: 40px 44px; background: #24323D; font-family: 'IBM Plex Sans', system-ui, sans-serif; color: #F2F5F7; display: flex; flex-direction: column; gap: 24px">
+  <div style="display: flex; flex-direction: column; gap: 6px">
+    <div style="font-family: 'IBM Plex Mono', monospace; font-size: 13px; letter-spacing: 0.08em; text-transform: uppercase; color: #B8C3CE">Charmy Kids · pixel art 16 px</div>
+    <h2 style="margin: 0; font-family: 'Bricolage Grotesque', system-ui, sans-serif; font-weight: 800; font-size: 34px; letter-spacing: -0.02em">Charmy bombero para Phaser</h2>
+  </div>
+
+  <div style="display: flex; gap: 40px; align-items: flex-end">
+    <div style="display: flex; flex-direction: column; gap: 10px">
+      <div style="display: flex; flex-direction: column">
+        <sc-for list="{{spriteA}}" as="row" hint-placeholder-count="17">
+          <div style="display: flex">
+            <sc-for list="{{row.px}}" as="p" hint-placeholder-count="16">
+              <div style="width: 14px; height: 14px; background: {{p.bg}}"></div>
+            </sc-for>
+          </div>
+        </sc-for>
+      </div>
+      <div style="font-size: 14px; color: #B8C3CE">Quieto</div>
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 10px">
+      <div style="display: flex; flex-direction: column">
+        <sc-for list="{{spriteB}}" as="row" hint-placeholder-count="17">
+          <div style="display: flex">
+            <sc-for list="{{row.px}}" as="p" hint-placeholder-count="22">
+              <div style="width: 14px; height: 14px; background: {{p.bg}}"></div>
+            </sc-for>
+          </div>
+        </sc-for>
+      </div>
+      <div style="font-size: 14px; color: #B8C3CE">Apagando con la manguera</div>
+    </div>
+  </div>
+
+  <div style="display: flex; flex-wrap: wrap; gap: 10px 18px">
+    <sc-for list="{{legend}}" as="c" hint-placeholder-count="10">
+      <div style="display: flex; align-items: center; gap: 8px; font-size: 13px; color: #D5DDE4">
+        <div style="width: 14px; height: 14px; border-radius: 3px; background: {{c.hex}}"></div>
+        <span>{{c.name}}</span>
+      </div>
+    </sc-for>
+  </div>
+  <p style="margin: 0; font-size: 14px; line-height: 1.5; color: #B8C3CE">Boceto base de 16 × 17 px con escala ×4 en el juego. El arte final se puede pasar a 32 × 32 en Pixelorama o LibreSprite, manteniendo la paleta.</p>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":760,"height":600}}'>
+class Component extends DCLogic {
+  renderVals() {
+    var map = {
+      '.': 'transparent', o: '#E8833A', d: '#C4612A', c: '#FCE9CF', k: '#3A2018', m: '#8A2A1A',
+      y: '#F2B705', r: '#C2410C', n: '#2E3B4E', l: '#D8E86A', f: '#FF6B1A', g: '#FFC53D',
+      h: '#8B2E1E', b: '#4DA8DA', w: '#BDE6F7'
+    };
+    var a = [
+      '..o..........o..',
+      '..oo........oo..',
+      '..oo.yyyyyy.oo..',
+      '...oyyyrryyyo...',
+      '..yyyyyyyyyyyy..',
+      '..oooooooooooo..',
+      '..ookooooookoo..',
+      '..ookkkkkkkkoo..',
+      '..occcckkcccco..',
+      '...occcmmccco...',
+      '....oooooooo....',
+      '..nnnnnrrnnnnn..',
+      '..onnnnnnnnnno..',
+      '..onllllllllno..',
+      '...nnnnnnnnnn.g.',
+      '...nnnnnnnnnnofg',
+      '...dd....dd.ooo.'
+    ];
+    var b = a.map(function (r, i) {
+      if (i === 11) return r + '...b.w';
+      if (i === 12) return r.slice(0, 14) + 'hhbbwb.b';
+      if (i === 13) return r + '..b.w.';
+      if (i === 14) return r + '....b.';
+      return r + '......';
+    });
+    var toRows = function (rows) {
+      return rows.map(function (r) {
+        return { px: r.split('').map(function (ch) { return { bg: map[ch] || 'transparent' }; }) };
+      });
+    };
+    return {
+      spriteA: toRows(a),
+      spriteB: toRows(b),
+      legend: [
+        { hex: '#E8833A', name: 'Pelaje' },
+        { hex: '#C4612A', name: 'Pelaje oscuro' },
+        { hex: '#FCE9CF', name: 'Hocico' },
+        { hex: '#3A2018', name: 'Banda y ojos' },
+        { hex: '#F2B705', name: 'Casco' },
+        { hex: '#C2410C', name: 'Escudo' },
+        { hex: '#2E3B4E', name: 'Chaqueta' },
+        { hex: '#D8E86A', name: 'Reflectivo' },
+        { hex: '#FF6B1A', name: 'Llama' },
+        { hex: '#4DA8DA', name: 'Agua' }
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>

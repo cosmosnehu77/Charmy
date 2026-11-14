@@ -1,0 +1,309 @@
+#!/usr/bin/env bash
+# Tablero de mensajes entre agentes sobre un issue de GitHub. Solo necesita `gh` (autenticado).
+# Uso: tools/board <post|read|unread|wait|whoami|check> [args]   (ver `tools/board help`)
+# Variables: BOARD_ISSUE (por defecto 1), BOARD_REPO (por defecto: el remoto origin),
+#            BOARD_ALLOW (logins permitidos; si no, .github/board-allowlist),
+#            BOARD_LOGIN (fuerza el usuario de gh, para pruebas), BOARD_FORCE=1 (saltar el filtro de secretos)
+set -u
+
+ISSUE="${BOARD_ISSUE:-1}"
+ROOT="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
+STATE_DIR="$ROOT/.board"
+ALLOW_FILE="$ROOT/.github/board-allowlist"
+
+die() { echo "board: $*" >&2; exit 1; }
+command -v gh >/dev/null 2>&1 || die "no se encuentra gh (https://cli.github.com); instálalo y ejecuta: gh auth login"
+case "$ISSUE" in ''|*[!0-9]*) die "BOARD_ISSUE debe ser un número" ;; esac
+
+valid_repo() { [[ "$1" =~ ^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$ ]]; }
+valid_login() { [[ "$1" =~ ^[A-Za-z0-9-]+$ ]]; }
+lower() { tr '[:upper:]' '[:lower:]'; }
+
+repo_from_remote() {
+  local url path
+  url="$(git remote get-url origin 2>/dev/null)" || return 1
+  case "$url" in
+    https://*|http://*|ssh://*) path="${url#*://}"; path="${path#*/}" ;;
+    git@*:* ) path="${url#*:}" ;;
+    *) return 1 ;;
+  esac
+  path="${path%.git}"
+  path="${path%/}"
+  valid_repo "$path" || return 1
+  printf '%s\n' "$path"
+}
+
+repo() {
+  local f="$STATE_DIR/repo" r="" cached=""
+  if [ -n "${BOARD_REPO:-}" ]; then
+    valid_repo "$BOARD_REPO" || return 1
+    r="$BOARD_REPO"
+  else
+    if [ -s "$f" ]; then
+      cached="$(cat "$f")"
+      valid_repo "$cached" || cached=""
+    fi
+    r="$(repo_from_remote 2>/dev/null)" || r=""
+    [ -n "$r" ] || r="$cached"
+    if [ -z "$r" ]; then
+      r="$(gh repo view --json nameWithOwner --jq .nameWithOwner 2>/dev/null)" || r=""
+      valid_repo "$r" || r=""
+    fi
+    [ -n "$r" ] || return 1
+  fi
+  mkdir -p "$STATE_DIR"
+  printf '%s\n' "$r" > "$f"
+  printf '%s\n' "$r"
+}
+REPO="$(repo)" || REPO=""
+[ -n "$REPO" ] || die "no se pudo determinar el repositorio; define BOARD_REPO=dueño/nombre"
+
+# GitHub redirige los repos renombrados. Resolvemos el nombre canónico una vez para
+# que todas las llamadas de esta ejecución usen la ruta actual del repositorio.
+CANONICAL_REPO="$(gh api "repos/$REPO" --jq .full_name 2>/dev/null)" || CANONICAL_REPO=""
+if valid_repo "$CANONICAL_REPO"; then
+  REPO="$CANONICAL_REPO"
+  mkdir -p "$STATE_DIR"
+  printf '%s\n' "$REPO" > "$STATE_DIR/repo"
+fi
+
+me() {
+  if [ -n "${BOARD_LOGIN:-}" ]; then valid_login "$BOARD_LOGIN" && { echo "$BOARD_LOGIN"; return; }; return 1; fi
+  mkdir -p "$STATE_DIR"
+  local f="$STATE_DIR/login" l
+  if [ -s "$f" ]; then
+    l="$(cat "$f")"
+    if valid_login "$l"; then echo "$l"; return; fi
+  fi
+  l="$(gh api user --jq .login 2>/dev/null)" || return 1
+  valid_login "$l" && { echo "$l" > "$f"; echo "$l"; }
+}
+
+# Lista de logins permitidos, en minúsculas y separados por espacios (vacía = sin filtro).
+# Origen: BOARD_ALLOW (separado por comas o espacios) o el archivo .github/board-allowlist
+# (un login por línea; '#' inicia un comentario; se admite el prefijo '@').
+allow_list() {
+  local raw="" l out=""
+  if [ -n "${BOARD_ALLOW:-}" ]; then raw="$BOARD_ALLOW"
+  elif [ -f "$ALLOW_FILE" ]; then raw="$(sed 's/#.*//' "$ALLOW_FILE")"; fi
+  while IFS= read -r l; do
+    l="${l#@}"
+    [ -n "$l" ] && valid_login "$l" && out="$out $l"
+  done < <(printf '%s\n' "$raw" | tr ', \t' '\n\n\n')
+  printf '%s' "${out# }" | lower
+}
+
+b64d() { base64 -d 2>/dev/null || base64 -D; }
+
+# Formato de fila: id<TAB>login<TAB>created_at<TAB>base64(cuerpo). Distinto de cero si gh falla.
+JQ_ROW='.[] | "\(.id)\t\(.user.login)\t\(.created_at)\t\(.body | @base64)"'
+
+# Comentarios actualizados en/después de $1 (hora ISO). Una sola llamada a la API si no hay nada nuevo.
+fetch_since() {
+  gh api --paginate "repos/$REPO/issues/$ISSUE/comments?per_page=100&since=$1" --jq "$JQ_ROW" 2>/dev/null
+}
+
+# Últimos $1 comentarios sin paginar todo el hilo (nº de comentarios -> saltar a la(s) última(s) página(s)).
+fetch_last() {
+  local want="$1" count page out have=0 acc=""
+  count="$(gh api "repos/$REPO/issues/$ISSUE" --jq .comments 2>/dev/null)" || return 1
+  case "$count" in ''|*[!0-9]*) return 1 ;; esac
+  [ "$count" -gt 0 ] || return 0
+  page=$(( (count + 99) / 100 ))
+  while [ "$page" -ge 1 ] && [ "$have" -lt "$want" ]; do
+    out="$(gh api "repos/$REPO/issues/$ISSUE/comments?per_page=100&page=$page" --jq "$JQ_ROW" 2>/dev/null)" || return 1
+    [ -n "$out" ] && { acc="$out"$'\n'"$acc"; have=$(( have + $(printf '%s\n' "$out" | wc -l) )); }
+    page=$(( page - 1 ))
+  done
+  printf '%s\n' "$acc" | awk 'NF' | tail -n "$want"
+}
+
+# El cursor guarda "<id del comentario más nuevo visto> <su created_at>".
+# Se valida al leerlo: un archivo manipulado o corrupto se trata como "sin cursor".
+CURSOR_RE='^[0-9]+ [0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z$'
+cursor_file() { echo "$STATE_DIR/cursor-$(echo "$REPO" | tr '/' '_')-$ISSUE"; }
+get_cursor() {
+  local f c; f="$(cursor_file)"
+  [ -s "$f" ] || { echo ""; return; }
+  c="$(head -n 1 "$f")"
+  if [[ "$c" =~ $CURSOR_RE ]]; then echo "$c"; else echo ""; fi
+}
+set_cursor() { # $1=id $2=created_at; solo avanza
+  mkdir -p "$STATE_DIR"
+  case "$1" in ''|*[!0-9]*) return 0 ;; esac
+  local cur; cur="$(get_cursor | cut -d' ' -f1)"
+  if [ -z "$cur" ] || [ "$1" -gt "$cur" ]; then echo "$1 $2" > "$(cursor_file)"; fi
+}
+
+# stdin: filas de fetch. Imprime los comentarios formateados.
+# $1 = login para el que marcar menciones (puede ir vacío); $2 = lista de permitidos (vacía = todos).
+# Elimina caracteres de control (salvo tab y salto de línea) para que nadie pueda inyectar
+# secuencias de escape en la terminal. Los autores fuera de la lista se muestran ocultos.
+render() {
+  local login="$1" allow="$2" id user ts b body flag lu
+  while IFS=$'\t' read -r id user ts b; do
+    [ -n "$id" ] || continue
+    if [ -n "$allow" ]; then
+      lu="$(printf '%s' "$user" | lower)"
+      case " $allow " in
+        *" $lu "*) ;;
+        *) printf -- '--- @%s %s (#%s) [OCULTO: @%s no está en la lista de permitidos]\n' "$user" "$ts" "$id" "$user"; continue ;;
+      esac
+    fi
+    body="$(printf '%s' "$b" | b64d | tr -d '\000-\010\013-\037\177')"
+    flag=""
+    if [ -n "$login" ] && printf '%s' "$body" | grep -qiE "(^|[^A-Za-z0-9_-])@(${login}|all|todos)([^A-Za-z0-9_-]|$)"; then
+      flag=" ** MENCIÓN **"
+    fi
+    printf -- '--- @%s %s (#%s)%s\n%s\n' "$user" "$ts" "$id" "$flag" "$body"
+  done
+}
+
+# Emite los comentarios no leídos de otras personas (y permitidas) y avanza el cursor.
+# Devuelve 0 sin imprimir nada si no hay ninguno; 1 si falla la consulta.
+do_unread() {
+  local all login cur cid cts new maxrow allow
+  login="$(me)" || return 1
+  allow="$(allow_list)"
+  cur="$(get_cursor)"; cid="${cur%% *}"; cts="${cur#* }"
+  if [ -z "$cur" ]; then
+    # primera ejecución en este clon (o cursor inválido): últimos 10 como contexto
+    all="$(fetch_last 10)" || return 1
+    new="$all"
+  else
+    all="$(fetch_since "$cts")" || return 1
+    new="$(printf '%s\n' "$all" | awk -F'\t' -v c="$cid" 'NF && $1+0 > c+0')"
+  fi
+  [ -n "$new" ] || return 0
+  maxrow="$(printf '%s\n' "$new" | sort -n -t"$(printf '\t')" -k1,1 | tail -1)"
+  new="$(printf '%s\n' "$new" | awk -F'\t' -v me="$login" 'NF && tolower($2) != tolower(me)')"
+  # Los autores no permitidos no despiertan al agente ni entran en su contexto (sí avanzan el cursor).
+  if [ -n "$allow" ] && [ -n "$new" ]; then
+    new="$(printf '%s\n' "$new" | awk -F'\t' -v a=" $allow " 'NF && index(a, " " tolower($2) " ")')"
+  fi
+  if [ -n "$new" ]; then
+    printf '%s\n' "$new" | render "$login" "$allow"
+  fi
+  set_cursor "$(printf '%s' "$maxrow" | cut -f1)" "$(printf '%s' "$maxrow" | cut -f3)"
+  return 0
+}
+
+# Patrones típicos de credenciales. Evita que un agente publique un secreto por accidente.
+SECRET_RE='(gh[pousr]_[A-Za-z0-9]{30,}|github_pat_[A-Za-z0-9_]{20,}|sk-[A-Za-z0-9_-]{20,}|AKIA[0-9A-Z]{16}|AIza[0-9A-Za-z_-]{35}|xox[abprs]-[A-Za-z0-9-]{10,}|-----BEGIN [A-Z ]*PRIVATE KEY-----)'
+
+cmd_post() {
+  local text
+  if [ $# -gt 0 ]; then text="$*"; else text="$(cat)"; fi
+  [ -n "$text" ] || die "mensaje vacío"
+  case "$text" in
+    "["*" de "*"]"*|"["*"'s "*"]"*) ;;
+    *) die "el mensaje debe empezar con [<agente> de <persona>], p. ej. [Claude de Sam]" ;;
+  esac
+  if [ "${BOARD_FORCE:-}" != "1" ] && printf '%s' "$text" | grep -qE "$SECRET_RE"; then
+    die "el mensaje parece contener un token o clave privada; no se publicó (si es un falso positivo: BOARD_FORCE=1)"
+  fi
+  gh api "repos/$REPO/issues/$ISSUE/comments" -f body="$text" --jq .html_url || die "no se pudo publicar"
+}
+
+cmd_read() {
+  local n=10
+  while [ $# -gt 0 ]; do
+    case "$1" in
+      -n) n="${2:-}"; shift 2 ;;
+      -n*) n="${1#-n}"; shift ;;
+      *) die "read: argumento desconocido $1" ;;
+    esac
+  done
+  case "$n" in ''|*[!0-9]*) die "read: -n necesita un número" ;; esac
+  local all login
+  all="$(fetch_last "$n")" || die "no se pudo contactar con GitHub"
+  login="$(me)" || login=""
+  [ -n "$all" ] && printf '%s\n' "$all" | tail -n "$n" | render "$login" "$(allow_list)"
+  return 0
+}
+
+cmd_unread() {
+  do_unread || { echo "board: no se pudo contactar con GitHub (cursor sin cambios)" >&2; exit 1; }
+}
+
+cmd_wait() {
+  local interval=30 timeout=0 start out
+  while [ $# -gt 0 ]; do
+    case "$1" in
+      --interval) interval="${2:-}"; shift 2 ;;
+      --timeout) timeout="${2:-}"; shift 2 ;;
+      *) die "wait: argumento desconocido $1" ;;
+    esac
+  done
+  case "$interval" in ''|*[!0-9]*) die "wait: --interval necesita segundos enteros" ;; esac
+  case "$timeout" in ''|*[!0-9]*) die "wait: --timeout necesita segundos enteros" ;; esac
+  [ "$interval" -ge 5 ] || die "wait: --interval mínimo 5 s (límite de la API de GitHub)"
+  start="$(date +%s)"
+  while :; do
+    # errores transitorios de gh: se ignoran y se reintenta en el siguiente ciclo
+    if out="$(do_unread 2>/dev/null)" && [ -n "$out" ]; then
+      printf '%s\n' "$out"
+      exit 0
+    fi
+    if [ "$timeout" -gt 0 ] && [ $(( $(date +%s) - start )) -ge "$timeout" ]; then
+      echo "board: wait agotó el tiempo tras ${timeout}s" >&2
+      exit 124
+    fi
+    sleep "$interval"
+  done
+}
+
+# Diagnóstico de la instalación y de la configuración de seguridad.
+cmd_check() {
+  local rc=0 login info state locked ispr private allow
+  echo "Repositorio: $REPO   Issue del tablero: #$ISSUE"
+  if login="$(me)"; then echo "OK     gh autenticado como @$login"; else echo "ERROR  gh no autenticado: ejecuta gh auth login"; rc=1; fi
+  info="$(gh api "repos/$REPO/issues/$ISSUE" --jq '[.state, .locked, (.pull_request != null)] | @tsv' 2>/dev/null)" || info=""
+  if [ -z "$info" ]; then
+    echo "ERROR  no se encuentra el issue #$ISSUE en $REPO (¿BOARD_ISSUE correcto? ¿acceso al repo?)"; rc=1
+  else
+    IFS=$'\t' read -r state locked ispr <<<"$info"
+    [ "$ispr" = "true" ] && { echo "ERROR  #$ISSUE es un pull request, no un issue"; rc=1; }
+    [ "$state" = "open" ] && echo "OK     el issue está abierto" || echo "AVISO  el issue está cerrado ($state)"
+    if [ "$locked" = "true" ]; then
+      echo "OK     el issue está bloqueado: solo colaboradores con escritura pueden comentar"
+    else
+      echo "AVISO  el issue NO está bloqueado: cualquiera que pueda ver el repo puede comentar en él."
+      echo "       El líder debería ejecutar: gh issue lock $ISSUE --repo $REPO"
+    fi
+  fi
+  private="$(gh api "repos/$REPO" --jq .private 2>/dev/null)" || private=""
+  [ "$private" = "false" ] && echo "AVISO  el repositorio es público: el tablero es visible para todo el mundo; no publiquéis nada sensible"
+  [ "$private" = "true" ] && echo "OK     el repositorio es privado"
+  allow="$(allow_list)"
+  if [ -n "$allow" ]; then
+    echo "OK     lista de permitidos: $allow"
+    if [ -n "${login:-}" ]; then
+      case " $allow " in *" $(printf '%s' "$login" | lower) "*) ;; *) echo "AVISO  tu login (@$login) no está en la lista de permitidos";; esac
+    fi
+  else
+    echo "AVISO  no hay lista de permitidos (.github/board-allowlist o BOARD_ALLOW): se muestran mensajes de cualquier autor"
+  fi
+  return "$rc"
+}
+
+case "${1:-help}" in
+  post) shift; cmd_post "$@" ;;
+  read) shift; cmd_read "$@" ;;
+  unread) shift; cmd_unread ;;
+  wait) shift; cmd_wait "$@" ;;
+  whoami) me || die "gh no está autenticado" ;;
+  check) cmd_check ;;
+  *)
+    cat <<USAGE
+tools/board post <texto>       publica un comentario (o pásalo por stdin); debe empezar con [<agente> de <persona>]
+tools/board read [-n N]        muestra los últimos N comentarios (por defecto 10)
+tools/board unread             muestra los comentarios de otros desde tu última consulta y los marca como leídos
+tools/board wait [--interval S] [--timeout S]
+                               se bloquea hasta que otra persona publique; lo imprime; sale con 0 (124 si se agota el tiempo)
+tools/board whoami             tu login de GitHub
+tools/board check              comprueba la instalación y la configuración de seguridad
+Variables: BOARD_ISSUE (por defecto 1), BOARD_REPO, BOARD_ALLOW, BOARD_LOGIN, BOARD_FORCE
+USAGE
+    ;;
+esac

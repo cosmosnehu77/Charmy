@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Charmy: explorador de variantes</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&amp;family=IBM+Plex+Sans:wght@400;500;600&amp;family=IBM+Plex+Mono:wght@400;500&amp;display=swap">
+<style>
+body{margin:0}
+a{color:#9A3412}a:hover{color:#7C2D12}
+button:focus-visible{outline:3px solid #C2410C;outline-offset:2px}
+</style>
+</helmet>
+<div style="width: 1280px; height: 800px; box-sizing: border-box; display: flex; background: #EEF2F4; font-family: 'IBM Plex Sans', system-ui, sans-serif; color: #1B2430; overflow: hidden">
+  <div style="width: 600px; flex-shrink: 0; position: relative; display: flex; align-items: center; justify-content: center">
+    <div style="position: absolute; width: 500px; height: 500px; border-radius: 50%; background: #FDE7D3; top: 120px; left: 50px"></div>
+    <div style="position: absolute; left: 0; right: 0; bottom: 0; height: 190px; background: #E3DCCD"></div>
+    <div style="position: relative; margin-top: 40px">
+      <dc-import name="Charmy" mood="{{mood}}" outfit="{{outfit}}" size="{{bigSize}}" hint-size="460px,460px"></dc-import>
+    </div>
+  </div>
+
+  <div style="flex: 1; min-width: 0; box-sizing: border-box; padding: 64px 72px 56px 24px; display: flex; flex-direction: column; gap: 22px">
+    <div style="font-family: 'IBM Plex Mono', monospace; font-size: 13px; letter-spacing: 0.08em; text-transform: uppercase; color: #5A6675">Mascota de Charmy · NASA Space Apps 2026</div>
+    <div style="display: flex; flex-direction: column; gap: 6px">
+      <h1 style="margin: 0; font-family: 'Bricolage Grotesque', system-ui, sans-serif; font-weight: 800; font-size: 88px; line-height: 0.95; letter-spacing: -0.03em">Charmy</h1>
+      <p style="margin: 0; font-size: 20px; color: #5A6675">La vizcacha de fuego que te guía por los focos de calor de la Patagonia.</p>
+    </div>
+
+    <div style="background: #FFFFFF; border: 1px solid #D6DDE3; border-radius: 16px; padding: 18px 20px; display: flex; flex-direction: column; gap: 6px">
+      <div style="font-size: 12px; font-family: 'IBM Plex Mono', monospace; color: #5A6675; text-transform: uppercase; letter-spacing: 0.06em">Charmy dice</div>
+      <p style="margin: 0; font-size: 19px; line-height: 1.45">{{line}}</p>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 10px">
+      <div style="font-weight: 600; font-size: 15px">Estado</div>
+      <div style="display: flex; flex-wrap: wrap; gap: 8px">
+        <sc-for list="{{moods}}" as="m" hint-placeholder-count="6">
+          <sc-if value="{{m.sel}}" hint-placeholder-val="{{false}}">
+            <button type="button" onClick="{{m.pick}}" aria-pressed="true" style="min-height: 44px; padding: 0 18px; border-radius: 999px; border: 1px solid #1B2430; background: #1B2430; color: #FFFFFF; font: 500 15px 'IBM Plex Sans', system-ui, sans-serif; cursor: pointer">{{m.label}}</button>
+          </sc-if>
+          <sc-if value="{{m.off}}" hint-placeholder-val="{{true}}">
+            <button type="button" onClick="{{m.pick}}" aria-pressed="false" style="min-height: 44px; padding: 0 18px; border-radius: 999px; border: 1px solid #C3CCD5; background: #FFFFFF; color: #1B2430; font: 500 15px 'IBM Plex Sans', system-ui, sans-serif; cursor: pointer">{{m.label}}</button>
+          </sc-if>
+        </sc-for>
+      </div>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 10px">
+      <div style="font-weight: 600; font-size: 15px">Vestuario</div>
+      <div style="display: flex; flex-wrap: wrap; gap: 8px">
+        <sc-for list="{{outfits}}" as="f" hint-placeholder-count="5">
+          <sc-if value="{{f.sel}}" hint-placeholder-val="{{false}}">
+            <button type="button" onClick="{{f.pick}}" aria-pressed="true" style="min-height: 44px; padding: 0 18px; border-radius: 999px; border: 1px solid #C2410C; background: #C2410C; color: #FFFFFF; font: 500 15px 'IBM Plex Sans', system-ui, sans-serif; cursor: pointer">{{f.label}}</button>
+          </sc-if>
+          <sc-if value="{{f.off}}" hint-placeholder-val="{{true}}">
+            <button type="button" onClick="{{f.pick}}" aria-pressed="false" style="min-height: 44px; padding: 0 18px; border-radius: 999px; border: 1px solid #C3CCD5; background: #FFFFFF; color: #1B2430; font: 500 15px 'IBM Plex Sans', system-ui, sans-serif; cursor: pointer">{{f.label}}</button>
+          </sc-if>
+        </sc-for>
+      </div>
+      <p style="margin: 0; font-size: 15px; color: #5A6675">{{where}}</p>
+    </div>
+
+    <div style="margin-top: auto; background: #1B2430; color: #E8EDF2; border-radius: 12px; padding: 14px 18px; font-family: 'IBM Plex Mono', monospace; font-size: 14px">{{code}}</div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1280,"height":800}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { mood: 'saluda', outfit: 'base' };
+  }
+  renderVals() {
+    var self = this;
+    var mood = this.state.mood;
+    var outfit = this.state.outfit;
+    var moodList = [
+      { id: 'idle', label: 'En reposo', line: 'Hola, soy Charmy. Miro los focos de calor de la Patagonia desde el espacio.' },
+      { id: 'saluda', label: 'Saluda', line: '¡Hola! Te muestro cómo usar el mapa en cuatro pasos.' },
+      { id: 'explica', label: 'Explica', line: 'Cada cuadrito del calendario es un mes. Cuanto más oscuro, más focos hubo.' },
+      { id: 'alerta', label: 'Alerta', line: 'Hay un foco nuevo cerca de tu zona. Miralo en el mapa y, si ves fuego, llamá al 100.' },
+      { id: 'festeja', label: 'Festeja', line: '¡Apagaste veinte focos! Es tu mejor marca.' },
+      { id: 'pensando', label: 'Pensando', line: 'Estoy uniendo los datos de MODIS y VIIRS. Dame un segundo.' }
+    ];
+    var outfitList = [
+      { id: 'base', label: 'Base', where: 'Se usa en la landing, la presentación y las redes.' },
+      { id: 'bombero', label: 'Bombero', where: 'Se usa en las alertas a entidades y como protagonista de Charmy Kids.' },
+      { id: 'piloto', label: 'Piloto', where: 'Se usa en Charmy Kids para el poder del avión hidrante.' },
+      { id: 'cientifica', label: 'Científica', where: 'Se usa en el modo experto, la validación y las descargas.' },
+      { id: 'guia', label: 'Guía', where: 'Se usa en el modo novato y en el recorrido guiado.' }
+    ];
+    var curMood = moodList.filter(function (m) { return m.id === mood; })[0];
+    var curOutfit = outfitList.filter(function (f) { return f.id === outfit; })[0];
+    return {
+      mood: mood,
+      outfit: outfit,
+      bigSize: 460,
+      line: curMood.line,
+      where: curOutfit.where,
+      code: '<Charmy mood="' + mood + '" outfit="' + outfit + '" />',
+      moods: moodList.map(function (m) {
+        return { label: m.label, sel: m.id === mood, off: m.id !== mood, pick: function () { self.setState({ mood: m.id }); } };
+      }),
+      outfits: outfitList.map(function (f) {
+        return { label: f.label, sel: f.id === outfit, off: f.id !== outfit, pick: function () { self.setState({ outfit: f.id }); } };
+      })
+    };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,9 @@
+# Lista de logins de GitHub cuyos mensajes del tablero pueden leer los agentes.
+# Un login por línea (el '@' es opcional). Todo lo que vaya tras '#' se ignora.
+# Los mensajes de cualquier otra cuenta se ocultan y no despiertan a ningún agente.
+# Tiene que coincidir con la tabla de AGENTS.md, sección 6.
+
+cosmosnehu77      # Nehuén, líder. Carril A y componente Charmy
+daniace           # Daniel. Carril D
+leonelcnr         # Leonel. Carril B
+BrunoAguinaga0    # Bruno. Carril C y landing

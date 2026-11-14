@@ -1,0 +1,21 @@
+{
+  "v": 3,
+  "createdOnFiles": {"v": 1, "at": "2026-11-13T21:30:00Z"},
+  "title": "Charmy · Variantes",
+  "launch": {"view": "canvas"},
+  "pages": [],
+  "boards": {
+    "Main.dc.html": {"x": 0, "y": 0, "w": 1280, "h": 800, "title": "Charmy · explorador de variantes", "is_interactive": true},
+    "Charmy.dc.html": {"x": 1360, "y": 0, "w": 240, "h": 240, "title": "Componente <Charmy>"},
+    "Estados.dc.html": {"x": 0, "y": 920, "w": 1280, "h": 520, "title": "Estados"},
+    "Vestuarios.dc.html": {"x": 1360, "y": 920, "w": 1280, "h": 520, "title": "Vestuarios"},
+    "EnContexto.dc.html": {"x": 0, "y": 1560, "w": 1280, "h": 900, "title": "Charmy en contexto"},
+    "PixelArt.dc.html": {"x": 1360, "y": 1560, "w": 760, "h": 600, "title": "Sprite para Charmy Kids"},
+    "Paleta.dc.html": {"x": 0, "y": 2580, "w": 1280, "h": 680, "title": "Paleta, tamaños y voz"}
+  },
+  "order": ["Main.dc.html", "Charmy.dc.html", "Estados.dc.html", "Vestuarios.dc.html", "EnContexto.dc.html", "PixelArt.dc.html", "Paleta.dc.html"],
+  "notes": {
+    "titulo": {"x": 0, "y": -300, "text": "Charmy, la vizcacha de fuego: variantes de la mascota", "kind": "title1", "maxW": 2640}
+  },
+  "designSystems": []
+}

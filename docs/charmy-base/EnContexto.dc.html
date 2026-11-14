@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Charmy en contexto</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&amp;family=IBM+Plex+Sans:wght@400;500;600&amp;family=IBM+Plex+Mono:wght@400;500&amp;display=swap">
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div style="width: 1280px; height: 900px; box-sizing: border-box; padding: 48px 56px; background: #F6F8F9; font-family: 'IBM Plex Sans', system-ui, sans-serif; color: #1B2430; display: flex; flex-direction: column; gap: 28px">
+  <div style="display: flex; flex-direction: column; gap: 6px">
+    <div style="font-family: 'IBM Plex Mono', monospace; font-size: 13px; letter-spacing: 0.08em; text-transform: uppercase; color: #5A6675">En contexto · textos de ejemplo</div>
+    <h2 style="margin: 0; font-family: 'Bricolage Grotesque', system-ui, sans-serif; font-weight: 800; font-size: 40px; letter-spacing: -0.02em">Dónde aparece Charmy</h2>
+  </div>
+
+  <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; flex: 1">
+
+    <div style="display: flex; flex-direction: column; gap: 10px">
+      <div style="font-size: 13px; font-weight: 600; color: #5A6675">App · modo novato</div>
+      <div style="flex: 1; position: relative; border-radius: 14px; overflow: hidden; background: #DCE5DE; border: 1px solid #C9D4CC">
+        <div style="position: absolute; width: 14px; height: 14px; border-radius: 50%; background: #F03B20; top: 60px; left: 210px"></div>
+        <div style="position: absolute; width: 10px; height: 10px; border-radius: 50%; background: #FD8D3C; top: 90px; left: 250px"></div>
+        <div style="position: absolute; width: 12px; height: 12px; border-radius: 50%; background: #FD8D3C; top: 44px; left: 290px"></div>
+        <div style="position: absolute; left: 12px; bottom: 6px"><dc-import name="Charmy" mood="explica" outfit="guia" size="130" hint-size="130px,130px"></dc-import></div>
+        <div style="position: absolute; left: 132px; right: 12px; bottom: 16px; background: #FFFFFF; border-radius: 14px; padding: 12px 14px; display: flex; flex-direction: column; gap: 8px; box-shadow: 0 6px 18px rgba(27,36,48,0.14)">
+          <div style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #5A6675">Paso 2 de 4</div>
+          <p style="margin: 0; font-size: 14px; line-height: 1.4">Cada cuadrito del calendario es un mes. Cuanto más oscuro, más focos hubo.</p>
+          <div style="display: flex; gap: 8px; justify-content: flex-end">
+            <button type="button" style="min-height: 36px; padding: 0 12px; border-radius: 8px; border: 1px solid #C3CCD5; background: #FFFFFF; color: #1B2430; font: 500 13px 'IBM Plex Sans', sans-serif">Saltar</button>
+            <button type="button" style="min-height: 36px; padding: 0 12px; border-radius: 8px; border: 1px solid #1B2430; background: #1B2430; color: #FFFFFF; font: 500 13px 'IBM Plex Sans', sans-serif">Siguiente</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 10px">
+      <div style="font-size: 13px; font-weight: 600; color: #5A6675">App · alerta en tu zona</div>
+      <div style="flex: 1; border-radius: 14px; background: #E9EEF1; border: 1px solid #D6DDE3; display: flex; align-items: center; justify-content: center; padding: 16px">
+        <div style="width: 100%; background: #FFFFFF; border: 1px solid #F3C9B0; border-radius: 14px; padding: 14px; display: flex; gap: 12px; align-items: center; box-shadow: 0 6px 18px rgba(27,36,48,0.10)">
+          <dc-import name="Charmy" mood="alerta" outfit="bombero" size="96" hint-size="96px,96px"></dc-import>
+          <div style="display: flex; flex-direction: column; gap: 6px; min-width: 0">
+            <div style="font-weight: 600; font-size: 16px">Foco nuevo en tu zona</div>
+            <div style="font-size: 13px; color: #5A6675">Probable · VIIRS NOAA‑20 · hace 25 min</div>
+            <div style="font-size: 13px; color: #9A3412">Si ves fuego, llamá al 100.</div>
+            <a href="#" style="align-self: flex-start; min-height: 36px; display: inline-flex; align-items: center; padding: 0 12px; border-radius: 8px; background: #C2410C; color: #FFFFFF; font-size: 13px; font-weight: 500; text-decoration: none">Ver en el mapa</a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 10px">
+      <div style="font-size: 13px; font-weight: 600; color: #5A6675">Landing · portada</div>
+      <div style="flex: 1; border-radius: 14px; background: #1B2430; color: #F2F5F7; padding: 22px; display: flex; align-items: flex-end; justify-content: space-between; gap: 8px; overflow: hidden">
+        <div style="display: flex; flex-direction: column; gap: 12px; min-width: 0; align-self: center">
+          <div style="font-family: 'Bricolage Grotesque', sans-serif; font-weight: 800; font-size: 28px; line-height: 1.05">25 años de fuego en un solo calendario</div>
+          <p style="margin: 0; font-size: 13px; color: #B8C3CE">MODIS y VIIRS armonizados para la Patagonia.</p>
+          <a href="#" style="align-self: flex-start; min-height: 40px; display: inline-flex; align-items: center; padding: 0 14px; border-radius: 999px; background: #FF7A3D; color: #1B2430; font-size: 14px; font-weight: 600; text-decoration: none">Abrir el mapa</a>
+        </div>
+        <div style="flex-shrink: 0"><dc-import name="Charmy" mood="saluda" outfit="base" size="150" hint-size="150px,150px"></dc-import></div>
+      </div>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 10px">
+      <div style="font-size: 13px; font-weight: 600; color: #5A6675">Charmy Kids · marcador</div>
+      <div style="flex: 1; border-radius: 14px; background: #24323D; color: #F2F5F7; padding: 16px; display: flex; flex-direction: column; justify-content: space-between">
+        <div style="display: flex; justify-content: space-between; font-family: 'IBM Plex Mono', monospace; font-size: 14px">
+          <span>1.250 pts</span>
+          <span style="color: #FFC53D">Combo ×4</span>
+          <span>Focos 18/24</span>
+        </div>
+        <div style="display: flex; align-items: flex-end; justify-content: space-between">
+          <dc-import name="Charmy" mood="festeja" outfit="piloto" size="140" hint-size="140px,140px"></dc-import>
+          <div style="display: flex; flex-direction: column; gap: 6px; align-items: flex-end; padding-bottom: 12px">
+            <div style="font-size: 12px; color: #B8C3CE">Avión hidrante</div>
+            <div style="width: 120px; height: 10px; border-radius: 5px; background: #3A4A57; overflow: hidden"><div style="width: 80%; height: 10px; background: #4DA8DA"></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 10px">
+      <div style="font-size: 13px; font-weight: 600; color: #5A6675">App · modo experto</div>
+      <div style="flex: 1; border-radius: 14px; background: #FFFFFF; border: 1px solid #D6DDE3; padding: 16px; display: flex; gap: 12px; align-items: center">
+        <dc-import name="Charmy" mood="pensando" outfit="cientifica" size="110" hint-size="110px,110px"></dc-import>
+        <div style="display: flex; flex-direction: column; gap: 10px; min-width: 0; flex: 1">
+          <div style="font-weight: 600; font-size: 15px">Calculando la serie armonizada</div>
+          <div style="font-size: 13px; color: #5A6675">Uniendo MODIS y VIIRS · región 3 de 5</div>
+          <div style="height: 8px; border-radius: 4px; background: #E3E9EF; overflow: hidden"><div style="width: 60%; height: 8px; background: #1B2430"></div></div>
+        </div>
+      </div>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 10px">
+      <div style="font-size: 13px; font-weight: 600; color: #5A6675">Telegram · bot de alertas</div>
+      <div style="flex: 1; border-radius: 14px; background: #DCE7EF; padding: 16px; display: flex; align-items: flex-end; gap: 10px">
+        <div style="width: 48px; height: 48px; border-radius: 50%; background: #FDE7D3; overflow: hidden; flex-shrink: 0; display: flex; align-items: center; justify-content: center"><dc-import name="Charmy" mood="alerta" outfit="bombero" size="56" hint-size="56px,56px"></dc-import></div>
+        <div style="background: #FFFFFF; border-radius: 14px 14px 14px 4px; padding: 12px 14px; display: flex; flex-direction: column; gap: 6px; min-width: 0">
+          <div style="font-weight: 600; font-size: 13px; color: #9A3412">Charmy Alertas</div>
+          <p style="margin: 0; font-size: 14px; line-height: 1.4">Foco probable en tu zona “Lago Puelo”. Lo detectó VIIRS NOAA‑20 a las 14:32.</p>
+          <div style="font-size: 13px; color: #1D5F8C">[DOMINIO]/f/[ID]</div>
+          <div style="font-size: 11px; color: #5A6675; align-self: flex-end">14:57</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1280,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {};
+  }
+}
+</script>
+</body>
+</html>

@@ -3,6 +3,9 @@
 Tablas (las lee services/api):
 - `focos_vivo`: focos de las últimas 120 horas, con las columnas de `focos` y el `id` del contrato.
 - `estado_vivo`: una fila con el último intento, la última consulta exitosa y el último error.
+
+RLS activado y sin políticas: Supabase no las expone por su API pública; el worker y la API entran con el
+usuario dueño de la base.
 """
 
 from datetime import datetime, timedelta
@@ -29,12 +32,14 @@ CREATE TABLE IF NOT EXISTS focos_vivo (
     cell_id text NOT NULL
 );
 CREATE INDEX IF NOT EXISTS focos_vivo_fecha ON focos_vivo (acq_datetime);
+ALTER TABLE focos_vivo ENABLE ROW LEVEL SECURITY;
 CREATE TABLE IF NOT EXISTS estado_vivo (
     id int PRIMARY KEY CHECK (id = 1),
     attempted_at timestamptz NOT NULL,
     fetched_at timestamptz,
     error text
 );
+ALTER TABLE estado_vivo ENABLE ROW LEVEL SECURITY;
 """
 
 GUARDAR = """

@@ -6,7 +6,8 @@ name: Worker en vivo
 
 on:
   schedule:
-    - cron: "*/15 * * * *"
+    # Minutos no redondos: GitHub demora o saltea los cron de los minutos más pedidos (0, 15, 30, 45).
+    - cron: "7,22,37,52 * * * *"
   workflow_dispatch:
 
 permissions:

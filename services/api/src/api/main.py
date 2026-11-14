@@ -3,8 +3,13 @@
 Ninguna clave se lee al importar: la API arranca sin .env.
 """
 
+import logging
 import os
+import threading
+from collections.abc import AsyncIterator
+from contextlib import asynccontextmanager
 
+import duckdb
 from contexto import imagen, tiempo
 from fastapi import APIRouter, FastAPI, Request
 from fastapi.exceptions import RequestValidationError
@@ -13,11 +18,32 @@ from fastapi.responses import JSONResponse
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from api import avisos, calendario, cap, hotspots, prediccion, vivo
-from api.datos import DatosNoDisponibles, version
+from api.datos import DatosNoDisponibles, copiar, version
 from api.errores import ErrorDeContrato, respuesta
 
+log = logging.getLogger(__name__)
+
+
+def _copiar_datos() -> None:
+    try:
+        log.warning("Copia local de los datos: %s archivos nuevos", copiar())
+    except DatosNoDisponibles as error:
+        log.warning("Sin copia local de los datos: %s", error)
+
+
+@asynccontextmanager
+async def arranque(_: FastAPI) -> AsyncIterator[None]:
+    # La copia baja en segundo plano: la API responde desde el primer momento, leyendo del release.
+    threading.Thread(target=_copiar_datos, daemon=True).start()
+    yield
+
+
 app = FastAPI(
-    title="Charmy API", version="0.1.0", docs_url="/api/v1/docs", openapi_url="/api/v1/openapi.json"
+    title="Charmy API",
+    version="0.1.0",
+    docs_url="/api/v1/docs",
+    openapi_url="/api/v1/openapi.json",
+    lifespan=arranque,
 )
 # Orígenes de los frontends publicados, separados por coma (CORS_ORIGINS). Localhost se permite en cualquier
 # puerto para desarrollo. No es un secreto: se lee al crear la app.
@@ -34,6 +60,7 @@ v1 = APIRouter(prefix="/api/v1")
 ERRORES = {
     404: ("no_existe", "No encontramos lo que buscás."),
     405: ("metodo_no_permitido", "Esta ruta no acepta ese método."),
+    500: ("error_interno", "Algo falló de nuestro lado. Probá de nuevo en un rato."),
 }
 
 
@@ -57,6 +84,20 @@ async def parametros_invalidos(_: Request, exc: RequestValidationError) -> JSONR
 @app.exception_handler(DatosNoDisponibles)
 async def datos_no_disponibles(_: Request, __: DatosNoDisponibles) -> JSONResponse:
     return respuesta(503, "datos_no_disponibles", "Los datos no están disponibles ahora. Probá más tarde.")
+
+
+@app.exception_handler(duckdb.IOException)
+async def lectura_fallida(_: Request, exc: duckdb.IOException) -> JSONResponse:
+    # Un Parquet del release que deja de responder a mitad de la consulta.
+    log.warning("DuckDB no pudo leer los datos: %s", type(exc).__name__)
+    return await datos_no_disponibles(_, DatosNoDisponibles())
+
+
+@app.exception_handler(Exception)
+async def error_inesperado(_: Request, exc: Exception) -> JSONResponse:
+    # Nunca texto plano ni detalles internos: el detalle queda en el registro del servidor.
+    log.exception("Error inesperado", exc_info=exc)
+    return respuesta(500, *ERRORES[500])
 
 
 @v1.get("/health", operation_id="getHealth", tags=["meta"])

@@ -3,9 +3,15 @@
 Con `DATA_MANIFEST_URL` se usan los archivos del release publicado (infra/README.md) y DuckDB los lee
 por HTTPS. Sin ella, se usan las muestras locales de `data/muestras` (correr desde la raíz del repo).
 Nada se lee al importar.
+
+Copia local (F4-C1, RNF-02): al arrancar, la API baja en segundo plano cada archivo publicado a `data/copia`
+y controla su `sha256`. Lo que ya está copiado se lee del disco; si el release deja de responder, el
+histórico sigue con la copia y su manifiesto.
 """
 
+import hashlib
 import json
+import logging
 import os
 from functools import cache
 from pathlib import Path
@@ -14,25 +20,82 @@ import duckdb
 import httpx
 
 MUESTRAS = Path("data/muestras")
+COPIA = Path("data/copia")  # fuera del repo: data/* está ignorado salvo las muestras
+CLIENTE = httpx.Client(follow_redirects=True, timeout=20)
+
+log = logging.getLogger(__name__)
 
 
 class DatosNoDisponibles(Exception):
     """La fuente de datos no responde o no tiene la tabla pedida."""
 
 
+def _leer(manifiesto: dict) -> tuple[str, tuple[tuple[str, str, str], ...]]:
+    return manifiesto["version"], tuple((a["ruta"], a["url"], a["sha256"]) for a in manifiesto["archivos"])
+
+
 @cache
-def _leer_manifiesto(url: str) -> tuple[str, tuple[tuple[str, str], ...]]:
+def _leer_manifiesto(url: str) -> tuple[str, tuple[tuple[str, str, str], ...]]:
     try:
-        respuesta = httpx.get(url, follow_redirects=True, timeout=20)
+        respuesta = CLIENTE.get(url)
         respuesta.raise_for_status()
-        manifiesto = respuesta.json()
-        return manifiesto["version"], tuple((a["ruta"], a["url"]) for a in manifiesto["archivos"])
+        return _leer(respuesta.json())
     except (httpx.HTTPError, ValueError, KeyError) as error:
+        copia = COPIA / "manifest.json"
+        if copia.exists():
+            log.warning("El manifiesto no responde (%s): se usa la copia local", type(error).__name__)
+            return _leer(json.loads(copia.read_text(encoding="utf-8")))
         raise DatosNoDisponibles(f"No se pudo leer el manifiesto de datos: {error}") from error
 
 
-def _manifiesto(url: str) -> tuple[tuple[str, str], ...]:
-    return _leer_manifiesto(url)[1]
+def _manifiesto(url: str) -> list[tuple[str, str]]:
+    """(ruta, origen) de cada archivo publicado: la copia local si ya está, si no la URL del release."""
+    version, publicados = _leer_manifiesto(url)
+    return [
+        (ruta, str(COPIA / version / ruta) if (COPIA / version / ruta).exists() else u)
+        for ruta, u, _ in publicados
+    ]
+
+
+def _bajar(url: str, sha256: str, destino: Path) -> None:
+    parcial = destino.with_name(destino.name + ".parcial")
+    suma = hashlib.sha256()
+    with CLIENTE.stream("GET", url) as respuesta, parcial.open("wb") as archivo:
+        respuesta.raise_for_status()
+        for trozo in respuesta.iter_bytes():
+            suma.update(trozo)
+            archivo.write(trozo)
+    if suma.hexdigest() != sha256:
+        parcial.unlink()
+        raise ValueError("el sha256 no coincide con el manifiesto")
+    parcial.replace(destino)
+
+
+def copiar() -> int:
+    """Baja a `COPIA` los archivos publicados que falten y guarda el manifiesto. Devuelve cuántos bajó."""
+    url = os.environ.get("DATA_MANIFEST_URL", "").strip()
+    if not url:
+        return 0
+    version, publicados = _leer_manifiesto(url)
+    bajados = 0
+    for ruta, origen, sha256 in publicados:
+        destino = COPIA / version / ruta
+        if destino.exists():
+            continue
+        destino.parent.mkdir(parents=True, exist_ok=True)
+        try:
+            _bajar(origen, sha256, destino)
+            bajados += 1
+        except (httpx.HTTPError, OSError, ValueError) as error:
+            # Ese archivo se sigue leyendo del release hasta que la API vuelva a arrancar.
+            log.warning("No se copió %s: %s", ruta, type(error).__name__)
+    manifiesto = {
+        "version": version,
+        "archivos": [{"ruta": r, "url": u, "sha256": s} for r, u, s in publicados],
+    }
+    COPIA.mkdir(parents=True, exist_ok=True)
+    (COPIA / "manifest.json").write_text(json.dumps(manifiesto), encoding="utf-8")
+    return bajados
 
 
 def version() -> str:
@@ -67,7 +130,7 @@ def archivos(tabla: str, opcional: bool = False) -> list[str]:
 def _geojson(origen: str) -> dict:
     try:
         if origen.startswith("https://"):
-            respuesta = httpx.get(origen, follow_redirects=True, timeout=20)
+            respuesta = CLIENTE.get(origen)
             respuesta.raise_for_status()
             return respuesta.json()
         return json.loads(Path(origen).read_text(encoding="utf-8"))

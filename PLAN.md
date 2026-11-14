@@ -82,7 +82,7 @@ Lo que se usa hoy. La columna **Dec.** apunta a la decisión que lo justifica ([
 | Pruebas | Vitest y Testing Library (JS); pytest y ruff (Python); respuestas grabadas para las fuentes externas | todos | Reglas en `docs/PRUEBAS.md`. Sin meta de cobertura ni navegador automatizado hasta que una tarea lo pida (YAGNI). Lo visual se revisa en el navegador. | D-23 |
 | Despliegue de frontends | Cloudflare Pages (landing, app y juego, los tres estáticos) | A | Alternativa: GitHub Pages. Azure queda como opción posterior al MVP ([fase 5](#fase-5--opción-azure-opcional-después-del-mvp)). | D-05, D-21 |
 | Despliegue de servicios | Un contenedor Docker por servicio en Render, Fly o un VPS | A | Los planes gratuitos se suspenden: despertar antes de la demo. Azure los dejaría siempre encendidos (fase 5). | D-05, D-21 |
-| Datos estáticos | Parquet en Cloudflare R2 o GitHub Releases | A, B | El repo solo guarda muestras chicas (`data/muestras/`). | D-05 |
+| Datos estáticos | Parquet publicados como **versión (release) de GitHub** con un `manifest.json`, con `infra/publicar` | A, B | Sin cuenta extra. GitHub responde por rangos y DuckDB lee los Parquet directo por HTTPS (probado el 14/11). Las versiones no se pisan. El repo solo guarda muestras chicas (`data/muestras/`). Alternativa: Cloudflare R2. | D-05 |
 | Entorno local | Docker Compose | A | `docker compose up` levanta api, worker, alertas y base. | — |
 | Datos históricos | Archivo de FIRMS, productos estándar: `MODIS_SP`, `VIIRS_SNPP_SP`, `VIIRS_NOAA20_SP`, `VIIRS_NOAA21_SP` | B | Disponibilidad verificada el 14/11 con la clave del equipo: MODIS 2000-11 a 2026-08; S-NPP 2012-01 a 2026-07; NOAA-20 2018-04 a 2026-07; NOAA-21 2023-03 a 2026-07. Lo posterior sale de los productos NRT. FIRMS también expone área quemada (`BA_MODIS`, `BA_VIIRS`), opcional para validar. | D-03 |
 | Proceso de datos | Python con Polars, DuckDB y GeoPandas | B | Grilla regular de 0,1°. | D-02 |
@@ -214,6 +214,7 @@ Lo que varios carriles usan. Nadie lo cambia sin anunciarlo en el tablero.
 | Muestras con ese esquema | `data/muestras/` | `@leonelcnr` | C, D, E | pendiente |
 | Componente `<Charmy mood outfit size say />` | `packages/charmy/README.md` | `@cosmosnehu77` | D, E | base en `docs/charmy-base/` |
 | Tokens de diseño | `packages/ui/tokens.css` | `@daniace` | D, E | pendiente |
+| Manifiesto de datos publicados (`version`, `archivos[ruta, url, bytes, sha256]`) | `infra/README.md` | `@cosmosnehu77` | C | acordado |
 | Variables de entorno | `.env.example` | `@cosmosnehu77` | todos | borrador en la carpeta del proyecto |
 
 **Cómo se usan para no esperarse:**
@@ -555,6 +556,7 @@ La fase 5 no cubre requisitos nuevos: refuerza RNF-02 y RNF-10 sobre lo ya entre
 | 2026-11-14 | Versión 1.3. Tarea nueva F0-A5: generar el `CLAUDE.md` del proyecto con las reglas para los agentes, con su contenido especificado. F0-X1 pasa a depender de ella. F1-A1 completa los comandos y cada carril suma su `CLAUDE.md` de carpeta. | 2, 5, 6 | — |
 | 2026-11-14 | Versión 1.4, con `REQUISITOS.md` 1.3. Equipo activo de cuatro personas, con sus logins; `@dimidio6` todavía no participa. El carril E se reparte (D-22): componente Charmy al líder, landing al carril C, juego y Charmy completo a la reserva. Se parten F1-E2, F4-E1 y F5-E1 y nacen F1-E4, F4-E2 y F5-E2. Los issues los crea el agente del líder y se completa la columna "Issue". Repo, tablero y `CLAUDE.md` creados. | equipo, 1.3, 3, 4, 5, 6, 7 | `@cosmosnehu77` |
 | 2026-11-14 | Versión 1.5, con `REQUISITOS.md` 1.4. Política de pruebas y YAGNI (D-23, `docs/PRUEBAS.md`, RNF-15): "Pruebas mínimas" en cada issue, prueba primero en la lógica, nada de red en las pruebas, `CI ok` obligatorio y PR siempre contra `main`. Tarea nueva F2-A3. | 1.1, 3, 5, 6, 7 | `@cosmosnehu77` |
+| 2026-11-14 | Datos estáticos: se elige GitHub Releases con manifiesto (`infra/publicar`, F2-A1); R2 queda como alternativa. Contrato nuevo: manifiesto de datos publicados. | 1.1, 4 | `@cosmosnehu77` |
 
 ## 10. Registro de cierres
 

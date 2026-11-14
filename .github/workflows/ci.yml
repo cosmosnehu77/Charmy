@@ -38,7 +38,7 @@ jobs:
           echo "$archivos"
           tocado() { printf '%s\n' "$archivos" | grep -qE "$1" && echo true || echo false; }
           echo "js=$(tocado '^(apps/|packages/|package\.json$|pnpm-lock\.yaml$|pnpm-workspace\.yaml$|turbo\.json$|tsconfig\.base\.json$|\.nvmrc$|\.github/workflows/ci\.yml$)')" >> "$GITHUB_OUTPUT"
-          echo "python=$(tocado '^(services/|pyproject\.toml$|uv\.lock$|\.python-version$|\.github/workflows/ci\.yml$)')" >> "$GITHUB_OUTPUT"
+          echo "python=$(tocado '^(services/|infra/publicar/|pyproject\.toml$|uv\.lock$|\.python-version$|\.github/workflows/ci\.yml$)')" >> "$GITHUB_OUTPUT"
 
   js:
     needs: cambios
@@ -71,10 +71,10 @@ jobs:
           enable-cache: true
       - run: uv sync --all-packages --frozen
       - name: Lint
-        run: uv run ruff check services
+        run: uv run ruff check services infra
       - name: Pruebas
         # pytest sale con 5 cuando no encuentra pruebas. Eso es un error: todo servicio tiene pruebas (RNF-15).
-        run: uv run pytest services
+        run: uv run pytest services infra
 
   ok:
     name: CI ok

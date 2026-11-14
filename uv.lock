@@ -5,6 +5,7 @@ requires-python = ">=3.12"
 [manifest]
 members = [
     "pipeline",
+    "publicar",
 ]
 
 [manifest.dependency-groups]
@@ -87,6 +88,11 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/4d/4e/2a419d0def2908255dd1b7318c48430319859dc92ca156e2f81ff7bcd78b/polars_runtime_32-2.1.0-cp311-abi3-win_amd64.whl", hash = "sha256:f2fe32f48af2395cd6ec52a433a03970a69aab1dbb66a613729fd549ce92c904", size = 53926265, upload-time = "2026-10-25T17:59:03.13Z" },
     { url = "https://files.pythonhosted.org/packages/c8/1b/15ffba3264baf21d2f04c51f54b01159cb6f4fad4e84de1404be552d601f/polars_runtime_32-2.1.0-cp311-abi3-win_arm64.whl", hash = "sha256:0af30dd53a7725f703d0d21dd421a39e0165378bfaa41431008f286608376d71", size = 48636436, upload-time = "2026-10-25T17:59:08.476Z" },
 ]
+
+[[package]]
+name = "publicar"
+version = "0.1.0"
+source = { editable = "infra/publicar" }
 
 [[package]]
 name = "pygments"

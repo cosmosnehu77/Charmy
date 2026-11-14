@@ -84,4 +84,27 @@ Este archivo no copia tablas: apunta a ellas. Qué se construye está en `REQUIS
 
 ## Comandos
 
-El monorepo todavía no existe. Los comandos para instalar, levantar, probar y compilar se completan en la tarea F1-A1.
+Requisitos: Node 22 o más (`.nvmrc`), pnpm (versión en `package.json`), uv y Docker.
+
+```bash
+pnpm install                     # dependencias de JavaScript de todo el monorepo
+uv sync                          # dependencias de Python de todos los servicios (un solo uv.lock)
+pnpm dev --filter <paquete>      # levantar un paquete, p. ej. --filter @charmy/app
+pnpm check --filter <paquete>    # lint, tipos, pruebas y compilación de un paquete y lo que usa
+pnpm check                       # lo mismo para todo el monorepo
+uv run --package <servicio> pytest   # pruebas de un servicio de Python
+uv run ruff check services/<carpeta> # lint de Python
+docker compose up                # base de datos local
+docker compose --profile todo up # base, API, worker y avisos (cuando existan sus Dockerfile)
+```
+
+Cómo se suma una pieza nueva:
+
+- **JavaScript**: una carpeta bajo `apps/` o `packages/` con su `package.json` entra sola. El nombre es `@charmy/<carpeta>`
+  y los scripts usan los nombres `dev`, `build`, `lint`, `typecheck` y `test`, para que Turborepo los encuentre.
+  Las versiones compartidas (TypeScript 5.9) están en la raíz; el `tsconfig.json` extiende `../../tsconfig.base.json`.
+- **Python**: una carpeta bajo `services/` con su `pyproject.toml` entra sola al workspace de uv (Python 3.12).
+  Para que Turborepo también la corra, se le puede agregar un `package.json` mínimo cuyos scripts llamen a `uv run`.
+- Un paquete del monorepo se usa desde otro con `"@charmy/<nombre>": "workspace:*"`.
+- Las dependencias se agregan en el paquete que las usa (`pnpm add <dep> --filter @charmy/<paquete>` o
+  `uv add <dep> --package <servicio>`), nunca en la raíz.

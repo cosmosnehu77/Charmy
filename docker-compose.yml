@@ -1,0 +1,57 @@
+# Entorno local. `docker compose up` levanta solo la base de datos.
+# Cada servicio entra con su perfil cuando su carpeta tiene un Dockerfile:
+#   docker compose --profile api up          (API, carril C)
+#   docker compose --profile vivo up         (API y worker de focos recientes, carril C)
+#   docker compose --profile avisos up       (API y servicio de avisos, carril A)
+#   docker compose --profile todo up         (todo)
+# Las claves salen de .env (copiar .env.example). Nunca se escriben en este archivo.
+
+services:
+  db:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: charmy
+      POSTGRES_PASSWORD: charmy-local
+      POSTGRES_DB: charmy
+    ports:
+      - "5432:5432"
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U charmy"]
+      interval: 5s
+      retries: 10
+
+  api:
+    profiles: ["api", "vivo", "avisos", "todo"]
+    build: ./services/api
+    env_file: [{ path: .env, required: false }]
+    environment:
+      DATABASE_URL: postgresql://charmy:charmy-local@db:5432/charmy
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+
+  worker:
+    profiles: ["vivo", "todo"]
+    build: ./services/worker
+    env_file: [{ path: .env, required: false }]
+    environment:
+      DATABASE_URL: postgresql://charmy:charmy-local@db:5432/charmy
+    depends_on:
+      db:
+        condition: service_healthy
+
+  alertas:
+    profiles: ["avisos", "todo"]
+    build: ./services/alertas
+    env_file: [{ path: .env, required: false }]
+    environment:
+      CHARMY_API_URL: http://api:8000
+    depends_on:
+      - api
+
+volumes:
+  db-data:

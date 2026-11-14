@@ -1,0 +1,14 @@
+# Raíz del workspace de Python (uv). Cada carpeta bajo services/ con su pyproject.toml entra sola.
+# No es un paquete: solo agrupa a los servicios y comparte un único uv.lock.
+[tool.uv.workspace]
+members = ["services/*"]
+
+[dependency-groups]
+dev = ["ruff>=0.9", "pytest>=8"]
+
+[tool.ruff]
+line-length = 110
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]

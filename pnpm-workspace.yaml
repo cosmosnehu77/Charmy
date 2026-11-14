@@ -1,0 +1,5 @@
+# Cada carpeta nueva bajo apps/ o packages/ entra sola al monorepo.
+packages:
+  - "apps/*"
+  - "packages/*"
+  - "packages/contracts/*"

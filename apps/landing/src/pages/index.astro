@@ -2,7 +2,11 @@
 import { charmyHtml } from "@charmy/charmy/core";
 import "../styles/global.css";
 
-// Texto provisorio hasta tener los de F1-F1 (carril F).
+// Textos PROVISORIOS hasta tener los de F1-F1 (#28, carril F).
+// Dominios por defecto de Cloudflare Pages (deploy-web.yml: proyectos charmy-app y charmy-juego).
+const URL_APP = "https://charmy-app.pages.dev";
+const URL_JUEGO = "https://charmy-juego.pages.dev";
+
 const charmy = charmyHtml({
   mood: "saluda",
   outfit: "base",
@@ -10,6 +14,59 @@ const charmy = charmyHtml({
   label: "Charmy, la vizcacha de fuego, saluda",
   say: "¡Hola! Soy Charmy. Te muestro cuándo y dónde se quema el sur.",
 });
+
+const funcionalidades = [
+  {
+    titulo: "Una sola serie desde 2001",
+    texto: "Juntamos los focos de MODIS y VIIRS en una medida común, así el cambio de satélite no parece un cambio del fuego.",
+  },
+  {
+    titulo: "Calendario de quema",
+    texto: "Elegís un área y ves, mes por mes y año por año, cuánto fuego hubo y si este mes está por encima de lo normal.",
+  },
+  {
+    titulo: "Mapa en 2D y 3D",
+    texto: "Dibujás tu zona sobre el mapa o escribís latitud y longitud. Los focos se ven sobre el relieve.",
+  },
+  {
+    titulo: "Modo novato y modo experto",
+    texto: "Una conclusión clara con ayuda de Charmy, o todos los datos, filtros, métricas de validación y descargas en CSV.",
+  },
+  {
+    titulo: "Focos de las últimas horas",
+    texto: "Los focos recientes de NOAA-20 y NOAA-21, con el tiempo y la imagen satelital del lugar.",
+  },
+  {
+    titulo: "Charmy Kids",
+    texto: "Un juego para chicas y chicos: Charmy bombero apaga los focos de un día real y deja un consejo de prevención.",
+  },
+];
+
+const equipo = [
+  { nombre: "Nehuén", rol: "Plataforma y avisos", login: "cosmosnehu77" },
+  { nombre: "Leonel", rol: "Datos y armonización", login: "leonelcnr" },
+  { nombre: "Bruno", rol: "Backend", login: "BrunoAguinaga0" },
+  { nombre: "Daniel", rol: "App, mapa y calendario", login: "daniace" },
+  { nombre: "dimidio6", rol: "Landing y juego", login: "dimidio6" },
+];
+
+const creditos = [
+  {
+    nombre: "NASA FIRMS",
+    url: "https://firms.modaps.eosdis.nasa.gov/",
+    texto: "Focos de calor de MODIS y VIIRS (S-NPP, NOAA-20 y NOAA-21).",
+  },
+  {
+    nombre: "Copernicus Data Space Ecosystem",
+    url: "https://dataspace.copernicus.eu/",
+    texto: "Imágenes de Sentinel-2 (contiene datos modificados de Copernicus Sentinel).",
+  },
+  {
+    nombre: "Meteomatics",
+    url: "https://www.meteomatics.com/",
+    texto: "Viento, temperatura, humedad e índices de riesgo de incendio.",
+  },
+];
 ---
 
 <!doctype html>
@@ -24,26 +81,227 @@ const charmy = charmyHtml({
     />
   </head>
   <body>
-    <main class="portada">
-      <h1>Charmy</h1>
-      <p class="bajada">Focos de calor de MODIS y VIIRS en una sola serie desde 2001, como calendario de quema.</p>
-      <Fragment set:html={charmy} />
+    <header class="portada">
+      <div class="portada-texto">
+        <h1>Charmy</h1>
+        <p class="bajada">
+          Más de veinte años de focos de calor vistos desde el espacio, en un solo calendario de quema.
+        </p>
+        <nav class="accesos" aria-label="Accesos">
+          <a class="boton boton-principal" href={URL_APP}>Abrir la app</a>
+          <a class="boton" href={URL_JUEGO}>Jugar a Charmy Kids</a>
+        </nav>
+      </div>
+      <div class="portada-charmy" data-animar="charmy">
+        <Fragment set:html={charmy} />
+      </div>
+    </header>
+
+    <main>
+      <section id="problema" aria-labelledby="titulo-problema" class="seccion" data-animar="seccion">
+        <h2 id="titulo-problema">El problema</h2>
+        <p>
+          Desde 2000 el satélite MODIS registra los focos de calor del planeta. Desde 2012 lo hace también VIIRS, que
+          ve focos más chicos y por eso cuenta muchos más. Si se ponen una al lado de la otra, parece que el fuego creció
+          justo cuando cambió el satélite.
+        </p>
+        <p>
+          Charmy convierte las dos series a una misma medida. Así podés saber, para cualquier zona, cuándo se quema
+          normalmente y si lo que pasa hoy es normal o excepcional.
+        </p>
+      </section>
+
+      <section id="funcionalidades" aria-labelledby="titulo-funcionalidades" class="seccion" data-animar="seccion">
+        <h2 id="titulo-funcionalidades">Qué hace Charmy</h2>
+        <ul class="tarjetas">
+          {
+            funcionalidades.map((f) => (
+              <li class="tarjeta" data-animar="tarjeta">
+                <h3>{f.titulo}</h3>
+                <p>{f.texto}</p>
+              </li>
+            ))
+          }
+        </ul>
+      </section>
+
+      <section id="equipo" aria-labelledby="titulo-equipo" class="seccion" data-animar="seccion">
+        <h2 id="titulo-equipo">El equipo</h2>
+        <ul class="tarjetas equipo">
+          {
+            equipo.map((p) => (
+              <li class="tarjeta" data-animar="tarjeta">
+                <h3>{p.nombre}</h3>
+                <p>{p.rol}</p>
+                <a href={`https://github.com/${p.login}`}>@{p.login}</a>
+              </li>
+            ))
+          }
+        </ul>
+      </section>
+
+      <section id="creditos" aria-labelledby="titulo-creditos" class="seccion" data-animar="seccion">
+        <h2 id="titulo-creditos">Créditos de los datos</h2>
+        <ul class="creditos">
+          {
+            creditos.map((c) => (
+              <li>
+                <a href={c.url}>{c.nombre}</a>: {c.texto}
+              </li>
+            ))
+          }
+        </ul>
+        <p>
+          Desafío "Harmonization of MODIS and VIIRS Hot Spots", propuesto por CONAE para NASA Space Apps Challenge 2026.
+        </p>
+      </section>
     </main>
+
+    <footer class="pie">
+      <p>
+        Charmy no reemplaza a los servicios de emergencia. Si ves un incendio, llamá al 100 (bomberos, Argentina) o al
+        132 (bomberos, Chile).
+      </p>
+    </footer>
+
+    <script>
+      import { gsap } from "gsap";
+      import { ScrollTrigger } from "gsap/ScrollTrigger";
+
+      gsap.registerPlugin(ScrollTrigger);
+
+      // Con movimiento reducido no se registra ninguna animación: todo queda visible y quieto.
+      gsap.matchMedia().add("(prefers-reduced-motion: no-preference)", () => {
+        gsap.from("[data-animar='charmy']", { scale: 0.8, opacity: 0, duration: 0.8, ease: "back.out(1.6)" });
+        gsap.utils.toArray<HTMLElement>("[data-animar='seccion']").forEach((seccion) => {
+          gsap.from(seccion.querySelectorAll("h2, p, [data-animar='tarjeta']"), {
+            y: 24,
+            opacity: 0,
+            duration: 0.6,
+            stagger: 0.08,
+            ease: "power2.out",
+            scrollTrigger: { trigger: seccion, start: "top 80%" },
+          });
+        });
+      });
+    </script>
   </body>
 </html>
 
 <style>
   .portada {
-    display: grid;
-    justify-items: center;
-    gap: 1rem;
-    max-width: 48rem;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 2rem;
+    max-width: 64rem;
     margin: 0 auto;
     padding: 4rem 1rem;
-    text-align: center;
+  }
+
+  .portada-texto {
+    flex: 1 1 20rem;
+  }
+
+  h1 {
+    font-size: clamp(2.5rem, 8vw, 4.5rem);
+    margin: 0;
+    color: var(--color-acento);
   }
 
   .bajada {
+    font-size: 1.25rem;
     color: var(--color-tinta-suave);
+  }
+
+  .accesos {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    margin-top: 1.5rem;
+  }
+
+  .boton {
+    display: inline-flex;
+    align-items: center;
+    min-height: var(--alto-control-min);
+    padding: 0 1.25rem;
+    border: 1px solid var(--color-borde-control);
+    border-radius: var(--radio-pildora);
+    color: var(--color-tinta);
+    background: var(--color-superficie);
+    font-weight: 600;
+    text-decoration: none;
+  }
+
+  .boton-principal {
+    border-color: var(--color-acento);
+    background: var(--color-acento);
+    color: var(--color-acento-contraste);
+  }
+
+  .boton:focus-visible,
+  a:focus-visible {
+    outline: 3px solid var(--color-foco);
+    outline-offset: 2px;
+  }
+
+  .seccion {
+    max-width: 64rem;
+    margin: 0 auto;
+    padding: 3rem 1rem;
+  }
+
+  .seccion > p {
+    max-width: 42rem;
+    line-height: 1.6;
+  }
+
+  .tarjetas {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
+    gap: 1rem;
+    padding: 0;
+    list-style: none;
+  }
+
+  .tarjeta {
+    padding: 1.25rem;
+    border: 1px solid var(--color-borde);
+    border-radius: var(--radio-tarjeta);
+    background: var(--color-superficie);
+    box-shadow: var(--sombra-tarjeta);
+  }
+
+  .tarjeta h3 {
+    margin: 0 0 0.5rem;
+    font-family: var(--fuente-titulos);
+  }
+
+  .tarjeta p {
+    margin: 0 0 0.5rem;
+    color: var(--color-tinta-suave);
+  }
+
+  .equipo a {
+    font-family: var(--fuente-mono);
+    color: var(--color-acento);
+  }
+
+  .creditos {
+    line-height: 1.8;
+  }
+
+  .creditos a {
+    color: var(--color-acento);
+    font-weight: 600;
+  }
+
+  .pie {
+    padding: 2rem 1rem;
+    background: var(--color-oscuro-fondo);
+    color: var(--color-oscuro-tinta);
+    text-align: center;
   }
 </style>

@@ -16,9 +16,10 @@ SATELITES = {"N20": "NOAA-20", "N21": "NOAA-21"}
 def _foco_de_feature(f: dict) -> Foco:
     p = f["properties"]
     lon, lat = f["geometry"]["coordinates"][:2]
-    frp = f"{p['frp']:.1f}".replace(".", ",")
+    # Un foco NRT puede venir sin FRP (frp: null en el contrato): sigue siendo un foco.
+    frp = "FRP sin dato" if p.get("frp") is None else f"{p['frp']:.1f}".replace(".", ",") + " MW"
     satelite = SATELITES.get(p["satellite"], p["satellite"])
-    detalle = f"{p['instrument']} {satelite}, confianza {p['confidence']}, {frp} MW"
+    detalle = f"{p['instrument']} {satelite}, confianza {p['confidence']}, {frp}"
     if p.get("verdict"):
         detalle += f", veredicto: {p['verdict']}"
     return Foco(id=f["id"], tipo="foco_satelital", lat=lat, lon=lon,
@@ -54,10 +55,17 @@ class ClienteCharmy:
             r = await self._http.get("/live", params={"bbox": zona.bbox_param()})
             r.raise_for_status()
             features = r.json()["features"]
-            return [_foco_de_feature(f) for f in features if not f["properties"].get("fixed_source")]
         except (httpx.HTTPError, KeyError, TypeError, ValueError) as e:
             log.warning("/live no disponible: %s", e)
             return []
+        focos = []
+        for f in features:
+            try:
+                if not f["properties"].get("fixed_source"):
+                    focos.append(_foco_de_feature(f))
+            except (KeyError, TypeError, ValueError, AttributeError) as e:  # uno roto no tapa a los demás
+                log.warning("foco de /live ilegible (%s): %s", f.get("id") if isinstance(f, dict) else f, e)
+        return focos
 
     async def reportes(self, zona: Zona) -> list[Foco]:
         try:

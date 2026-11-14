@@ -95,6 +95,29 @@ def test_focos_en_vivo_de_la_zona_sin_fuentes_fijas():
     assert foco.detalle == "VIIRS NOAA-20, confianza nominal, 4,8 MW, veredicto: probable"
 
 
+def test_un_foco_sin_frp_se_avisa_igual():
+    sin_frp = json.loads(json.dumps(LIVE["features"][0]))
+    sin_frp["id"] = "N21-sin-frp"
+    sin_frp["properties"]["frp"] = None
+
+    def manejador(req):
+        return httpx.Response(200, json={**LIVE, "features": [sin_frp, LIVE["features"][0]]})
+
+    focos = asyncio.run(cliente(manejador).focos_en_vivo(ZONA_DEMO))
+    assert [f.id for f in focos] == ["N21-sin-frp", LIVE["features"][0]["id"]]
+    assert focos[0].detalle == "VIIRS NOAA-20, confianza nominal, FRP sin dato, veredicto: probable"
+
+
+def test_un_foco_malformado_no_tapa_a_los_demas():
+    roto = {"type": "Feature", "id": "roto", "geometry": None, "properties": {}}
+
+    def manejador(req):
+        return httpx.Response(200, json={**LIVE, "features": [roto, LIVE["features"][0]]})
+
+    focos = asyncio.run(cliente(manejador).focos_en_vivo(ZONA_DEMO))
+    assert [f.id for f in focos] == [LIVE["features"][0]["id"]]
+
+
 def test_reportes_con_token_de_servicio():
     def manejador(req):
         assert req.url.path == "/api/v1/reports"

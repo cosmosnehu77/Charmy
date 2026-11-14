@@ -18,7 +18,7 @@ export function atributosFoco(p: PropiedadesFoco): [string, string][] {
     ["Fecha y hora (UTC)", p.acq_datetime.replace("T", " ").slice(0, 16)],
     ["Satélite", `${SATELITES[p.satellite] ?? p.satellite} (${p.instrument})`],
     ["Confianza", p.confidence],
-    ["Potencia radiativa (FRP)", `${decimal.format(p.frp)} MW`],
+    ["Potencia radiativa (FRP)", p.frp == null ? "sin dato" : `${decimal.format(p.frp)} MW`],
     ["Momento", p.daynight === "D" ? "día" : "noche"],
   ];
   if (p.cell_id) filas.push(["Celda de 0,1°", p.cell_id]);

@@ -2,7 +2,7 @@
  * Capas propias del mapa: el área elegida y los focos. Se agregan en cada `style.load`,
  * así sobreviven al cambio entre 2D y 3D.
  */
-import { interfaz, rampaConteo } from "@charmy/ui";
+import { colorSinDato, interfaz, rampaConteo } from "@charmy/ui";
 import type { ExpressionSpecification, Map as MapaMapLibre } from "maplibre-gl";
 import type { ColeccionFocos, Poligono } from "@/consulta/consulta";
 import { VEREDICTOS } from "@/vivo/veredictos";
@@ -10,12 +10,15 @@ import { VEREDICTOS } from "@/vivo/veredictos";
 /** Cortes de potencia radiativa (MW) para el color de los focos, con la rampa YlOrRd de 7 clases. */
 export const CORTES_FRP = [5, 10, 20, 50, 100, 300] as const;
 
-const colorPorFrp: ExpressionSpecification = [
-  "step",
-  ["get", "frp"],
-  rampaConteo[0],
-  ...CORTES_FRP.flatMap((corte, i) => [corte, rampaConteo[i + 1] as string]),
-] as ExpressionSpecification;
+/** Hay focos sin FRP (FIRMS no siempre lo trae): esos van con el color de «sin dato» y el tamaño mínimo. */
+const tieneFrp: ExpressionSpecification = ["==", ["typeof", ["get", "frp"]], "number"];
+
+const colorPorFrp = [
+  "case",
+  tieneFrp,
+  ["step", ["get", "frp"], rampaConteo[0], ...CORTES_FRP.flatMap((corte, i) => [corte, rampaConteo[i + 1] as string])],
+  colorSinDato,
+] as unknown as ExpressionSpecification;
 
 const vacio = { type: "FeatureCollection" as const, features: [] };
 
@@ -60,7 +63,7 @@ export function agregarCapas(
     paint: {
       "circle-color": colorPorFrp,
       // El tamaño también crece con la potencia: el color no va solo (RNF-04).
-      "circle-radius": ["interpolate", ["linear"], ["get", "frp"], 0, 3, 50, 6, 300, 10],
+      "circle-radius": ["interpolate", ["linear"], ["coalesce", ["get", "frp"], 0], 0, 3, 50, 6, 300, 10],
       "circle-stroke-color": interfaz.tinta,
       "circle-stroke-width": 0.75,
       "circle-opacity": 0.9,

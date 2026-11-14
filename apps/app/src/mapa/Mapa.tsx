@@ -10,6 +10,8 @@ import { useFocos } from "@/consulta/useFocos";
 import { useApp } from "@/estado/app";
 import { useConsulta } from "@/estado/consulta";
 import { atributosFoco } from "@/experto/atributos";
+import { useFocosVivo } from "@/vivo/consultas";
+import { useVivo } from "@/vivo/estado";
 import { agregarCapas, datosArea } from "./capas";
 import { esFallaDelEstilo, LIMITES_MVP, perfiles, transformarEstilo } from "./perfiles";
 
@@ -53,11 +55,14 @@ export default function Mapa() {
   const area = useConsulta((s) => s.area);
   const dibujando = useConsulta((s) => s.dibujando);
   const { focos } = useFocos();
+  const vivoVisible = useVivo((s) => s.visible);
+  const { data: vivoDatos } = useFocosVivo();
+  const vivo = vivoVisible ? (vivoDatos ?? null) : null;
   const [falla, setFalla] = useState(false);
 
   // Lo último que hay que dibujar, para volver a agregarlo después de un cambio de estilo.
-  const datos = useRef({ area, focos });
-  datos.current = { area, focos };
+  const datos = useRef({ area, focos, vivo });
+  datos.current = { area, focos, vivo };
 
   // Crear el mapa una sola vez.
   useEffect(() => {
@@ -80,7 +85,7 @@ export default function Mapa() {
     });
     m.on("style.load", () => {
       setFalla(false);
-      agregarCapas(m, datos.current.area, datos.current.focos);
+      agregarCapas(m, datos.current.area, datos.current.focos, datos.current.vivo);
       // Terra Draw ya se detuvo antes de setStyle (ver el efecto del perfil): acá se crea uno nuevo.
       dibujo.current = crearDibujo(m);
       const modo = useConsulta.getState().dibujando;
@@ -101,6 +106,17 @@ export default function Mapa() {
         lista.append(dt, dd);
       }
       new maplibregl.Popup({ maxWidth: "320px" }).setLngLat(e.lngLat).setDOMContent(lista).addTo(m);
+    });
+    // Tocar un foco reciente lo elige en el panel «En vivo» para ver su evidencia.
+    m.on("click", "vivo", (e) => {
+      const id = e.features?.[0]?.properties?.id ?? e.features?.[0]?.id;
+      if (id !== undefined) useVivo.getState().cambiar({ seleccionado: String(id) });
+    });
+    m.on("mouseenter", "vivo", () => {
+      m.getCanvas().style.cursor = "pointer";
+    });
+    m.on("mouseleave", "vivo", () => {
+      m.getCanvas().style.cursor = "";
     });
     m.on("mouseenter", "focos", () => {
       if (useApp.getState().modo === "experto") m.getCanvas().style.cursor = "pointer";
@@ -155,6 +171,13 @@ export default function Mapa() {
       ?.getSource<maplibregl.GeoJSONSource>("focos")
       ?.setData(focos ?? { type: "FeatureCollection", features: [] });
   }, [focos]);
+
+  // Focos en vivo.
+  useEffect(() => {
+    mapa.current
+      ?.getSource<maplibregl.GeoJSONSource>("vivo")
+      ?.setData(vivo ?? { type: "FeatureCollection", features: [] });
+  }, [vivo]);
 
   // Herramienta de dibujo.
   useEffect(() => {

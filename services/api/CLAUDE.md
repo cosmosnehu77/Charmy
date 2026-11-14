@@ -18,7 +18,8 @@ Docs interactivas en `http://localhost:8000/api/v1/docs`.
 - Ninguna clave se lee al importar un módulo: la API tiene que arrancar sin `.env`. Las claves se leen al usarlas.
 - Todo error sale como el esquema `Error` del contrato (`{code, message}`) y nunca como HTML. Mensajes cortos, en
   español y en segunda persona.
-- `/health` también responde sin el prefijo, porque la prueba de vida del despliegue pide `$API_URL/health`.
+- `API_URL` y `VITE_API_URL` son la base **con** el prefijo (`https://<host>/api/v1`). La prueba de humo
+  (`uv run --package humo python -m humo <URL base>`) corre después de cada despliegue y la API tiene que pasarla.
 - FIRMS, Meteomatics, Copernicus y el modelo de lenguaje se consultan solo desde acá o desde el worker, con caché.
 - `services/contexto` (carril B) se monta como router; no se edita desde este carril.
 - La imagen se construye con contexto `services/api` (como en `docker-compose.yml`).

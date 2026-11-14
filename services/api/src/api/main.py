@@ -31,5 +31,3 @@ def health() -> dict[str, str]:
 
 
 app.include_router(v1)
-# La prueba de vida del despliegue pide `$API_URL/health`, sin el prefijo.
-app.add_api_route("/health", health, include_in_schema=False)

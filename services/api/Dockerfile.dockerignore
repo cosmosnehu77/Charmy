@@ -1,10 +1,12 @@
-# Contexto de la imagen de la API: la raíz del repo. Solo entran services/api y services/contexto.
+# Contexto de la imagen de la API: la raíz del repo. Solo entran services/api, services/contexto y services/alertas.
 # Sin negaciones profundas: el builder de Render no las aplica igual que BuildKit local.
 *
 !services
 services/*
 !services/api
 !services/contexto
+!services/alertas
 services/api/tests
 services/contexto/tests
+services/alertas/tests
 **/__pycache__

@@ -12,7 +12,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
-from api import avisos, calendario, hotspots, prediccion, vivo
+from api import avisos, calendario, cap, hotspots, prediccion, vivo
 from api.datos import DatosNoDisponibles, version
 from api.errores import ErrorDeContrato, respuesta
 
@@ -73,6 +73,7 @@ v1.include_router(calendario.router)
 v1.include_router(prediccion.router)
 v1.include_router(vivo.router)
 v1.include_router(avisos.router)
+v1.include_router(cap.router)
 # Contexto del foco (carril B, services/contexto): tiempo con Meteomatics e imagen de Copernicus.
 v1.include_router(tiempo.router)
 v1.include_router(imagen.router)

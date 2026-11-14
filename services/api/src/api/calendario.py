@@ -1,25 +1,20 @@
 """POST /calendar y GET /harmonization/metrics (RF-CAL-01, RF-CAL-02, RF-ARM-04).
 
 Las tablas `calendario` y `metricas` vienen por región de calibración (packages/contracts/datos/esquema.md).
-Un polígono se asigna a la región cuya caja se superpone más con la suya.
+Un polígono se asigna a la región de `regiones.geojson` con la que comparte más superficie.
 """
 
 from typing import Literal
 
 from fastapi import APIRouter
 from pydantic import BaseModel, field_validator
+from shapely.geometry import shape
 
-from api.datos import archivos, conexion
+from api.datos import archivos, conexion, geojson
 from api.errores import ErrorDeContrato
 
 router = APIRouter()
 
-# PROVISORIO: cajas aproximadas (oeste, sur, este, norte) de las regiones de las muestras, hasta que el
-# carril B publique sus geometrías. Chubut (AR-U) y Araucanía (CL-AR).
-REGIONES = {
-    "AR-U": (-72.2, -46.0, -63.5, -42.0),
-    "CL-AR": (-73.7, -39.7, -70.8, -37.5),
-}
 UNIDAD = "dias_celda_con_fuego_equivalente_viirs"
 FUERA_DE_COBERTURA = "Sin datos para esta área: está fuera de la cobertura."
 AVISO_PROVISORIO = " (valores provisorios de ejemplo, no son resultados)"
@@ -48,15 +43,16 @@ class PedidoCalendario(BaseModel):
 
 
 def region_de(poligono: Poligono) -> str | None:
-    longitudes = [p[0] for p in poligono.coordinates[0]]
-    latitudes = [p[1] for p in poligono.coordinates[0]]
-    oeste, sur, este, norte = min(longitudes), min(latitudes), max(longitudes), max(latitudes)
+    area = shape(poligono.model_dump())
+    if not area.is_valid:
+        raise ErrorDeContrato(400, "poligono_invalido", "El área se cruza consigo misma. Dibujala de nuevo.")
     mejor, mejor_area = None, 0.0
-    for region, (r_oeste, r_sur, r_este, r_norte) in REGIONES.items():
-        ancho = min(este, r_este) - max(oeste, r_oeste)
-        alto = min(norte, r_norte) - max(sur, r_sur)
-        if ancho > 0 and alto > 0 and ancho * alto > mejor_area:
-            mejor, mejor_area = region, ancho * alto
+    for region in geojson("regiones")["features"]:
+        geometria = shape(region["geometry"])
+        if geometria.intersects(area):
+            comun = geometria.intersection(area).area
+            if comun > mejor_area:
+                mejor, mejor_area = region["properties"]["region"], comun
     return mejor
 
 
@@ -84,6 +80,9 @@ def calendario(pedido: PedidoCalendario) -> dict:
         .execute(consulta, [archivos("calendario"), region, pedido.from_year, pedido.to_year or 9999])
         .fetchall()
     )
+    if not filas:
+        sin_datos = f"Todavía no hay calendario para la región {region} en esos años."
+        return {"unit": UNIDAD, "baseline": sin_datos, "cells": []}
 
     celdas = []
     for anio, mes, valor, inferior, superior, mediana, percentil, origen, _ in filas:

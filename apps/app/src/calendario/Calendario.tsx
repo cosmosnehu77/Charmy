@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { bboxDeArea, rutaCsv } from "@/consulta/consulta";
 import { useConsulta } from "@/estado/consulta";
-import { urlApi } from "@/lib/api";
+import { ErrorApi, urlApi } from "@/lib/api";
 import {
   armarGrilla,
   CORTES_CANTIDAD,
@@ -75,10 +75,16 @@ export function Calendario() {
       {consulta.isPending && <p className="text-sm text-tinta-suave">Armando el calendario…</p>}
       {consulta.isError && (
         <p className="rounded-control bg-superficie-2 p-2 text-sm">
-          El calendario no está disponible ahora. El mapa y la descarga siguen funcionando.
+          {consulta.error instanceof ErrorApi && consulta.error.estado === 400 && consulta.error.mensaje
+            ? consulta.error.mensaje
+            : "El calendario no está disponible ahora. El mapa y la descarga siguen funcionando."}
         </p>
       )}
-      {consulta.isSuccess && (
+      {consulta.isSuccess && consulta.data.cells.length === 0 && (
+        // Sin celdas, la API explica el motivo en baseline (fuera de cobertura, región sin calendario).
+        <p className="rounded-control bg-superficie-2 p-2 text-sm">{consulta.data.baseline}</p>
+      )}
+      {consulta.isSuccess && consulta.data.cells.length > 0 && (
         <>
           <p className="text-xs text-tinta-suave">
             Cada celda es un mes: días-celda con fuego, en equivalente VIIRS. La anomalía compara con la{" "}

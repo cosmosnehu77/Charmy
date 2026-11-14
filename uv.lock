@@ -55,6 +55,7 @@ dependencies = [
     { name = "duckdb" },
     { name = "fastapi" },
     { name = "httpx" },
+    { name = "shapely" },
     { name = "uvicorn", extra = ["standard"] },
 ]
 
@@ -63,6 +64,7 @@ requires-dist = [
     { name = "duckdb", specifier = ">=2.0.0" },
     { name = "fastapi", specifier = ">=0.162.7" },
     { name = "httpx", specifier = ">=0.28.1" },
+    { name = "shapely", specifier = ">=2.2.0" },
     { name = "uvicorn", extras = ["standard"], specifier = ">=0.54.0" },
 ]
 

@@ -9,13 +9,26 @@ export function urlApi(): string {
   return (import.meta.env.VITE_API_URL ?? "").replace(/\/+$/, "");
 }
 
+/** Error de la API. `mensaje` es el texto para la persona que manda la API ({code, message}), si vino. */
 export class ErrorApi extends Error {
   constructor(
     readonly ruta: string,
     readonly estado: number,
+    readonly codigo?: string,
+    readonly mensaje?: string,
   ) {
     super(`La API respondió ${estado} en ${ruta}`);
   }
+}
+
+async function leerError(respuesta: Response): Promise<{ code?: string; message?: string }> {
+  try {
+    const cuerpo: unknown = await respuesta.json();
+    if (typeof cuerpo === "object" && cuerpo !== null) return cuerpo as { code?: string; message?: string };
+  } catch {
+    // Sin cuerpo JSON: queda el estado.
+  }
+  return {};
 }
 
 export async function pedir<T>(ruta: string, opciones?: RequestInit): Promise<T> {
@@ -25,7 +38,10 @@ export async function pedir<T>(ruta: string, opciones?: RequestInit): Promise<T>
     ...opciones,
     headers: { Accept: "application/json", ...opciones?.headers },
   });
-  if (!respuesta.ok) throw new ErrorApi(ruta, respuesta.status);
+  if (!respuesta.ok) {
+    const { code, message } = await leerError(respuesta);
+    throw new ErrorApi(ruta, respuesta.status, code, typeof message === "string" ? message : undefined);
+  }
   return (await respuesta.json()) as T;
 }
 

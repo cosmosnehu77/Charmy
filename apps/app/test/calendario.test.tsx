@@ -3,7 +3,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import App from "@/App";
-import { armarGrilla, colorCelda, type CeldaCalendario } from "@/calendario/calendario";
+import { armarGrilla, colorCelda, describirCelda, type CeldaCalendario } from "@/calendario/calendario";
 import { Calendario } from "@/calendario/Calendario";
 import { rutaCsv } from "@/consulta/consulta";
 import { useApp } from "@/estado/app";
@@ -160,5 +160,45 @@ describe("calendario (F2-D2)", () => {
     expect(await screen.findByText(/el calendario no está disponible/i)).toBeInTheDocument();
     expect(await screen.findByTestId("mapa")).toBeInTheDocument();
     await waitFor(() => expect(screen.getByText(/0 focos en el área/)).toBeInTheDocument());
+  });
+});
+
+describe("describirCelda: origen de cada valor", () => {
+  const celda = (origin: string) =>
+    ({ year: 2020, month: 3, value: 1, median: 1, percentile: 50, origin }) as unknown as CeldaCalendario;
+  it.each([
+    ["modis_convertido", "MODIS convertido"],
+    ["viirs_medido", "VIIRS medido"],
+    ["viirs_convertido", "VIIRS NOAA-20 convertido"],
+    ["modis_medido", "MODIS medido"],
+  ])("%s se describe como «%s»", (origen, texto) => {
+    expect(describirCelda(celda(origen), 2020, 2)).toContain(texto);
+  });
+  it("un origen desconocido se muestra tal cual, sin inventar", () => {
+    expect(describirCelda(celda("goes_medido"), 2020, 2)).toContain("goes_medido");
+  });
+});
+
+describe("calendario sin celdas o con área inválida", () => {
+  it("si no hay celdas muestra el motivo que manda la API, sin grilla", async () => {
+    fetchSimulado.mockImplementation(async (url) =>
+      String(url).includes("/calendar")
+        ? new Response(JSON.stringify({ unit: "x", baseline: "El área está fuera de la cobertura del MVP (Argentina y Chile).", cells: [] }))
+        : new Response(JSON.stringify(focos)),
+    );
+    montar(<Calendario />);
+    expect(await screen.findByText("El área está fuera de la cobertura del MVP (Argentina y Chile).")).toBeInTheDocument();
+    expect(screen.queryByRole("table")).not.toBeInTheDocument();
+  });
+
+  it("si la API rechaza el área (400) muestra su mensaje", async () => {
+    fetchSimulado.mockImplementation(async (url) =>
+      String(url).includes("/calendar")
+        ? new Response(JSON.stringify({ code: "poligono_invalido", message: "El polígono se cruza consigo mismo." }), { status: 400 })
+        : new Response(JSON.stringify(focos)),
+    );
+    montar(<Calendario />);
+    expect(await screen.findByText(/El polígono se cruza consigo mismo\./)).toBeInTheDocument();
+    expect(screen.queryByText(/no está disponible/)).not.toBeInTheDocument();
   });
 });

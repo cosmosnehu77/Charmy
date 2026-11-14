@@ -5,6 +5,7 @@ por HTTPS. Sin ella, se usan las muestras locales de `data/muestras` (correr des
 Nada se lee al importar.
 """
 
+import json
 import os
 from functools import cache
 from pathlib import Path
@@ -47,6 +48,29 @@ def archivos(tabla: str) -> list[str]:
     if not encontrados:
         raise DatosNoDisponibles(f"No hay archivos de la tabla {tabla}")
     return encontrados
+
+
+@cache
+def _geojson(origen: str) -> dict:
+    try:
+        if origen.startswith("https://"):
+            respuesta = httpx.get(origen, follow_redirects=True, timeout=20)
+            respuesta.raise_for_status()
+            return respuesta.json()
+        return json.loads(Path(origen).read_text(encoding="utf-8"))
+    except (httpx.HTTPError, OSError, ValueError) as error:
+        raise DatosNoDisponibles(f"No se pudo leer {origen}: {error}") from error
+
+
+def geojson(nombre: str) -> dict:
+    """Un GeoJSON de los datos publicados (`regiones`, ...), del manifiesto o de las muestras locales."""
+    url = os.environ.get("DATA_MANIFEST_URL", "").strip()
+    if url:
+        encontrados = [u for ruta, u in _manifiesto(url) if ruta == f"{nombre}.geojson"]
+        if not encontrados:
+            raise DatosNoDisponibles(f"El manifiesto no tiene {nombre}.geojson")
+        return _geojson(encontrados[0])
+    return _geojson(str(MUESTRAS / f"{nombre}.geojson"))
 
 
 def conexion() -> duckdb.DuckDBPyConnection:

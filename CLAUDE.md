@@ -71,9 +71,24 @@ Este archivo no copia tablas: apunta a ellas. Qué se construye está en `REQUIS
 - Colores y tipografías salen de `packages/ui`. Las rampas de color son aptas para daltonismo.
 - Charmy se usa siempre por su componente. No se redibuja ni se copia su SVG en otra carpeta.
 
+## Pruebas y YAGNI (obligatorio, detalle en `docs/PRUEBAS.md`)
+
+- **Terminado = probado.** Cada issue tiene una sección "Pruebas mínimas". Cada punto necesita una prueba
+  automática que pasa, o una verificación manual anotada en el PR si no se puede automatizar. Sin eso no hay PR.
+- **Primero la prueba** en toda lógica (datos, cálculos, filtros, endpoints, mensajes): escríbela, mírala fallar,
+  después escribe el código. Un error encontrado es primero una prueba que lo reproduce.
+- **Nunca se llama a un servicio externo en una prueba** (FIRMS, Meteomatics, Copernicus, NVIDIA, Google News,
+  Telegram). Se usan respuestas grabadas y se prueban también las fallas: tiempo agotado, 429, 5xx.
+- **Pruebas deterministas**: fechas fijas, UTC, sin depender del orden ni de la red.
+- **YAGNI**: solo lo que pide el issue. Nada de opciones, abstracciones o dependencias sin un uso real hoy.
+  Lo que sobra se propone en el tablero o va a la hoja de ruta, no al código.
+- **No se fusiona con el CI en rojo.** No se dice "terminado" sin haber corrido las pruebas y leído el resultado.
+
 ## Calidad
 
-- Antes de abrir el PR, compila y prueba tu paquete.
+- Antes de abrir el PR, corre `pnpm check --filter <paquete>` o `uv run --package <servicio> pytest`.
+- **Todo PR apunta a `main`.** Nunca se apila un PR sobre otra rama: al fusionarse no llega a `main`.
+- Después de fusionar, comprueba que el cambio está en `main`.
 - Commits chicos. Nada de `git add -A` ni de force-push.
 - Después del congelamiento de la fase 3 solo entran correcciones.
 
@@ -90,7 +105,7 @@ Requisitos: Node 22 o más (`.nvmrc`), pnpm (versión en `package.json`), uv y D
 pnpm install                     # dependencias de JavaScript de todo el monorepo
 uv sync                          # dependencias de Python de todos los servicios (un solo uv.lock)
 pnpm dev --filter <paquete>      # levantar un paquete, p. ej. --filter @charmy/app
-pnpm check --filter <paquete>    # lint, tipos, pruebas y compilación de un paquete y lo que usa
+pnpm check --filter <paquete>    # tipos, pruebas y compilación de un paquete y lo que usa
 pnpm check                       # lo mismo para todo el monorepo
 uv run --package <servicio> pytest   # pruebas de un servicio de Python
 uv run ruff check services/<carpeta> # lint de Python

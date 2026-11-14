@@ -6,7 +6,7 @@
 > **Regla de oro.** Todo requisito tiene un ID. Toda tarea de `PLAN.md` apunta a uno o más IDs.
 > Si se agrega, cambia o quita un requisito acá, `PLAN.md` se actualiza en el mismo PR (ver [Cómo cambiar este documento](#8-cómo-cambiar-este-documento)).
 
-**Versión:** 1.3 · **Última actualización:** 14 de noviembre de 2026
+**Versión:** 1.4 · **Última actualización:** 14 de noviembre de 2026
 
 ---
 
@@ -183,6 +183,7 @@ Una vizcacha de fuego, Charmy, acompaña al usuario en toda la experiencia.
 | RNF-11 | **Idioma.** La interfaz está en español. El material de entrega va en el idioma que pida el evento. | Imprescindible |
 | RNF-12 | **Coherencia visual.** Landing, app, juego y avisos comparten la paleta y las tipografías de la base de Charmy. | Importante |
 | RNF-13 | **Fuentes usadas según sus condiciones.** Cada fuente externa se usa por su vía oficial y dentro de sus cuotas. De un sitio sin API ni licencia visible no se copian datos: solo se lo cita y se lo enlaza. | Imprescindible |
+| RNF-15 | **Verificable.** Cada funcionalidad se entrega con pruebas automáticas que demuestran lo que pide su requisito, incluidas las fallas de las fuentes externas, y las pruebas nunca dependen de servicios externos ni de la red. | Imprescindible |
 | RNF-14 | **Tolerante a fuentes caídas.** Si una fuente complementaria (tiempo, imagen satelital, noticias) no responde, esa parte se muestra como no disponible y el resto sigue funcionando. | Imprescindible si existe RF-CTX-01 o RF-CTX-03 |
 
 ## 7. Restricciones y supuestos
@@ -226,3 +227,4 @@ Un requisito sin tarea en `PLAN.md` no se está haciendo. Una tarea sin requisit
 | 2026-11-14 | Versión 1.2. RNF-06 vuelve a exigir que todo servicio con credenciales se consulte desde el servidor, porque las imágenes de Copernicus se consumen por API. Se confirma la vigencia de la cuenta del tiempo. | — |
 | 2026-11-14 | Versión 1.1. Se agrega el grupo CTX (tiempo en el foco, imagen satelital, otros satélites, contraste con estadísticas externas), RNF-13 y RNF-14. Se ajusta RNF-06. Azure queda como opción posterior al MVP. | — |
 | 2026-11-14 | Versión 1.3. El equipo activo pasa a ser de cuatro personas con agente; una quinta puede sumarse después. RNF-09 deja de fijar la cantidad de agentes. No cambia ningún requisito funcional. | `@cosmosnehu77` |
+| 2026-11-14 | Versión 1.4. Se agrega RNF-15: toda funcionalidad se entrega con pruebas automáticas que no dependen de la red. | `@cosmosnehu77` |

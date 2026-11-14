@@ -1,0 +1,93 @@
+# CI de todo el monorepo. Corre solo lo que cambió y termina con "CI ok", que es el chequeo obligatorio de main.
+# "CI ok" siempre corre: si una parte no cambió, cuenta como aprobada. Así un PR que solo toca Python no queda
+# esperando un chequeo de JavaScript que nunca va a llegar. Reglas de pruebas: docs/PRUEBAS.md.
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  cambios:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      js: ${{ steps.ver.outputs.js }}
+      python: ${{ steps.ver.outputs.python }}
+      desde: ${{ steps.ver.outputs.desde }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - id: ver
+        env:
+          BASE: ${{ github.event_name == 'pull_request' && format('origin/{0}', github.base_ref) || github.event.before }}
+        run: |
+          # El primer push de una rama no tiene "before": se compara contra el commit anterior.
+          if ! git cat-file -e "$BASE^{commit}" 2>/dev/null; then BASE=HEAD^; fi
+          echo "desde=$BASE" >> "$GITHUB_OUTPUT"
+          archivos="$(git diff --name-only "$BASE"...HEAD)"
+          echo "$archivos"
+          tocado() { printf '%s\n' "$archivos" | grep -qE "$1" && echo true || echo false; }
+          echo "js=$(tocado '^(apps/|packages/|package\.json$|pnpm-lock\.yaml$|pnpm-workspace\.yaml$|turbo\.json$|tsconfig\.base\.json$|\.nvmrc$|\.github/workflows/ci\.yml$)')" >> "$GITHUB_OUTPUT"
+          echo "python=$(tocado '^(services/|pyproject\.toml$|uv\.lock$|\.python-version$|\.github/workflows/ci\.yml$)')" >> "$GITHUB_OUTPUT"
+
+  js:
+    needs: cambios
+    if: needs.cambios.outputs.js == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Tipos, pruebas y compilación de lo que cambió y de lo que depende de eso
+        run: pnpm turbo run lint typecheck test build --filter="...[${{ needs.cambios.outputs.desde }}]"
+
+  python:
+    needs: cambios
+    if: needs.cambios.outputs.python == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+      # setup-uv no publica la etiqueta de versión mayor (v10): se fija la versión exacta.
+      - uses: astral-sh/setup-uv@v10.3.3
+        with:
+          enable-cache: true
+      - run: uv sync --all-packages --frozen
+      - name: Lint
+        run: uv run ruff check services
+      - name: Pruebas
+        # pytest sale con 5 cuando no encuentra pruebas. Eso es un error: todo servicio tiene pruebas (RNF-15).
+        run: uv run pytest services
+
+  ok:
+    name: CI ok
+    if: always()
+    needs: [cambios, js, python]
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - name: Todo lo que corrió pasó
+        env:
+          RESULTADOS: ${{ join(needs.*.result, ' ') }}
+        run: |
+          echo "Resultados: $RESULTADOS"
+          for r in $RESULTADOS; do
+            case "$r" in success|skipped) ;; *) echo "::error::Algún chequeo falló o se canceló"; exit 1;; esac
+          done

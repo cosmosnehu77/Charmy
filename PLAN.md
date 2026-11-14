@@ -10,7 +10,7 @@
 
 **Fase activa:** 1
 **Líder:** `@cosmosnehu77`
-**Versión:** 1.4 · **Última actualización:** 14 de noviembre de 2026
+**Versión:** 1.5 · **Última actualización:** 14 de noviembre de 2026
 
 ## Objetivo del proyecto
 
@@ -78,7 +78,8 @@ Lo que se usa hoy. La columna **Dec.** apunta a la decisión que lo justifica ([
 | Coordinación | `tabla-agentes`: tablero en un issue fijado, `tools/board`, hooks de Claude Code | todos | Rutas protegidas: `.claude/`, `tools/`, `.github/`, `AGENTS.md`, `PLAN.md`, `CLAUDE.md`. Sumar `REQUISITOS.md` a `CODEOWNERS`. | D-12 |
 | Monorepo JS | pnpm workspaces + Turborepo | A | Los globs `apps/*` y `packages/*` suman solas las carpetas nuevas. | D-12 |
 | Monorepo Python | uv workspace, un solo lockfile | A | La integración Turborepo↔uv es experimental. Plan B: correr con `uv run` directo. | D-12 |
-| CI | GitHub Actions con filtros por carpeta | A | Cada carril solo dispara sus propios chequeos. | — |
+| CI | GitHub Actions: un flujo `CI` que corre solo lo que cambió y un chequeo final `CI ok` | A | Cada carril solo dispara sus propios chequeos. `CI ok` es el chequeo obligatorio de `main`. | D-23 |
+| Pruebas | Vitest y Testing Library (JS); pytest y ruff (Python); respuestas grabadas para las fuentes externas | todos | Reglas en `docs/PRUEBAS.md`. Sin meta de cobertura ni navegador automatizado hasta que una tarea lo pida (YAGNI). Lo visual se revisa en el navegador. | D-23 |
 | Despliegue de frontends | Cloudflare Pages (landing, app y juego, los tres estáticos) | A | Alternativa: GitHub Pages. Azure queda como opción posterior al MVP ([fase 5](#fase-5--opción-azure-opcional-después-del-mvp)). | D-05, D-21 |
 | Despliegue de servicios | Un contenedor Docker por servicio en Render, Fly o un VPS | A | Los planes gratuitos se suspenden: despertar antes de la demo. Azure los dejaría siempre encendidos (fase 5). | D-05, D-21 |
 | Datos estáticos | Parquet en Cloudflare R2 o GitHub Releases | A, B | El repo solo guarda muestras chicas (`data/muestras/`). | D-05 |
@@ -197,6 +198,7 @@ si nada: avisen en el tablero y propongan el PR que actualiza este documento.
 | D-20 | **currentwildfires.com** se usa solo como referencia: comparación manual documentada, con cita y enlace. | No ofrece API ni licencia visible, así que no corresponde copiar ni automatizar la lectura de sus datos. | RF-CTX-06, RNF-13 |
 | D-21 | **Azure no entra en el MVP.** Queda como fase 5 opcional, que se abre solo después de entregar y si hay tiempo. | El equipo lo usó poco y configurarlo lleva más tiempo que el despliegue actual. No conviene arriesgar la entrega. | RNF-02, RNF-10 |
 | D-22 | El equipo activo es de **cuatro personas con agente**. El carril E se reparte: el componente Charmy lo hace el líder, la landing el carril C, y el juego y el Charmy completo quedan en **reserva** para `@dimidio6` o para quien el líder designe. | `@dimidio6` todavía no participa. La reserva junta lo que no es parte del criterio de MVP y no bloquea a nadie: si no se suma, la entrega no se frena. | RNF-09, RF-KID, RF-CHA |
+| D-23 | **Pruebas antes que "terminado" y YAGNI.** Cada issue lleva sus "Pruebas mínimas"; la lógica se escribe con la prueba primero; las fuentes externas se prueban con respuestas grabadas, también cuando fallan; `CI ok` es obligatorio para fusionar. No se construye nada que el issue no pida. | Con cuatro agentes en paralelo, lo que no está probado se rompe en la integración, justo antes de la demo. Y en 48 horas, todo lo que sobra le quita tiempo a lo que se evalúa. | RNF-15, RNF-14, RNF-09 |
 
 ---
 
@@ -326,6 +328,7 @@ el monorepo la toma sola. Ninguna tarea espera a otra persona: la landing arranc
 |---|---|---|---|---|---|---|---|
 | #29 | F2-A1 | Almacenamiento público de los datos estáticos y script de publicación | `@cosmosnehu77` | `infra/` | F1-A2 | RNF-02 | pendiente |
 | #30 | F2-A2 | Prueba de humo del flujo completo en producción, corrida en CI con la colección, y README base | `@cosmosnehu77` | `.github/workflows/`, `README.md` | F1-C1 | RNF-02, RNF-01 | pendiente |
+| #84 | F2-A3 | Calidad: CI en un solo flujo con chequeo obligatorio `CI ok`, política de pruebas (`docs/PRUEBAS.md`) y "Pruebas mínimas" en cada issue | `@cosmosnehu77` | `.github/workflows/`, `docs/PRUEBAS.md` | F1-A2 | RNF-15 | en curso |
 | #31 | F2-B1 | Armonización v1: filtros, días-celda, calibración en cadena y validación dejando un año afuera | `@leonelcnr` | `services/pipeline/` | F1-B1 | RF-ARM-01, RF-ARM-02, RF-ARM-03 | pendiente |
 | #32 | F2-B2 | Agregados de calendario, anomalías y métricas de validación; publicación de los Parquet | `@leonelcnr` | `services/pipeline/` | F2-B1, F2-A1 | RF-CAL-01, RF-CAL-02, RF-CAL-03, RF-ARM-04 | pendiente |
 | #33 | F2-C1 | `/hotspots` con filtros y salida en CSV | `@BrunoAguinaga0` | `services/api/` | F1-C2 (usa F1-B2) | RF-MAP-05, RF-EXP-01 | pendiente |
@@ -499,6 +502,7 @@ Qué tareas cubren cada requisito. Si un requisito de `REQUISITOS.md` no aparece
 | RNF-12 | F1-D1, F4-E1, F4-E2 | 4 |
 | RNF-13 | F0-A5, F0-B2, F1-B3, F4-B1 | 4 |
 | RNF-14 | F3-B3, F3-B4, F3-D4 | 3 |
+| RNF-15 | F2-A3 y la sección "Pruebas mínimas" de cada issue | todas |
 
 La fase 5 no cubre requisitos nuevos: refuerza RNF-02 y RNF-10 sobre lo ya entregado.
 
@@ -511,6 +515,8 @@ La fase 5 no cubre requisitos nuevos: refuerza RNF-02 y RNF-10 sobre lo ya entre
 - **Contratos anunciados.** Todo cambio en un contrato de la [sección 4](#4-contratos-compartidos) se anuncia en el tablero al hacer merge, mencionando a los carriles que lo consumen.
 - **Ramas cortas.** Rama `<issue>-<slug>` desde `main` actualizado, PR con `Closes #N`, merge varias veces por hora. Nada de `git add -A` ni de force-push.
 - **Estado en el issue.** Cada dueño mueve su issue. Al terminar las tareas de la fase publica `[Agente de Nombre] @cosmosnehu77 fase N: terminadas #A #B`.
+- **Pruebas y YAGNI** (D-23, `docs/PRUEBAS.md`): una tarea termina cuando cada punto de "Pruebas mínimas" de su issue tiene su prueba y el CI está en verde. Ninguna prueba llama a la red. Solo se construye lo que pide el issue.
+- **PR siempre contra `main`.** No se apilan PR: un PR fusionado sobre otra rama no llega a `main`.
 - **Reserva.** Las tareas con la etiqueta `reserva` no se toman por cuenta propia: las asigna el líder en el tablero.
 - **Solo el líder** cambia la fase activa, y lo anuncia con `@all`. Hasta entonces nadie adelanta tareas de la fase siguiente, salvo que el líder lo indique en el tablero.
 - **Integración cada 6 horas.** El líder recorre el flujo en producción y publica lo que esté roto, mencionando al dueño.
@@ -547,6 +553,7 @@ La fase 5 no cubre requisitos nuevos: refuerza RNF-02 y RNF-10 sobre lo ya entre
 | 2026-11-14 | Versión 1.2. Copernicus pasa a consumirse por API desde el servidor (D-19): la imagen satelital deja de pedirse desde el navegador, se suma la tarea F3-B4 en el carril B y cambia F3-D4. Cuenta de Meteomatics activa y probada: parámetros confirmados, límite de 1.000 pedidos por día y vencimiento el 22/11. | 1, 3, 4, 5, 6, 8 | — |
 | 2026-11-14 | Versión 1.3. Tarea nueva F0-A5: generar el `CLAUDE.md` del proyecto con las reglas para los agentes, con su contenido especificado. F0-X1 pasa a depender de ella. F1-A1 completa los comandos y cada carril suma su `CLAUDE.md` de carpeta. | 2, 5, 6 | — |
 | 2026-11-14 | Versión 1.4, con `REQUISITOS.md` 1.3. Equipo activo de cuatro personas, con sus logins; `@dimidio6` todavía no participa. El carril E se reparte (D-22): componente Charmy al líder, landing al carril C, juego y Charmy completo a la reserva. Se parten F1-E2, F4-E1 y F5-E1 y nacen F1-E4, F4-E2 y F5-E2. Los issues los crea el agente del líder y se completa la columna "Issue". Repo, tablero y `CLAUDE.md` creados. | equipo, 1.3, 3, 4, 5, 6, 7 | `@cosmosnehu77` |
+| 2026-11-14 | Versión 1.5, con `REQUISITOS.md` 1.4. Política de pruebas y YAGNI (D-23, `docs/PRUEBAS.md`, RNF-15): "Pruebas mínimas" en cada issue, prueba primero en la lógica, nada de red en las pruebas, `CI ok` obligatorio y PR siempre contra `main`. Tarea nueva F2-A3. | 1.1, 3, 5, 6, 7 | `@cosmosnehu77` |
 
 ## 10. Registro de cierres
 

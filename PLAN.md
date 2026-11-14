@@ -10,7 +10,7 @@
 
 **Fase activa:** 4
 **Líder:** `@cosmosnehu77`. Hasta que vuelva (probablemente en la fase 4), **líder interino `@daniace`** (D-28).
-**Versión:** 2.1.1 · **Última actualización:** 14 de noviembre de 2026
+**Versión:** 2.1.2 · **Última actualización:** 14 de noviembre de 2026
 
 ## Objetivo del proyecto
 
@@ -213,6 +213,7 @@ si nada: avisen en el tablero y propongan el PR que actualiza este documento.
 | D-31 | **La predicción pasa a `@dimidio6`.** El código pasa de `services/pipeline/` a `services/prediccion/` (F3-E3) y se prueba TimesFM 2.5 contra LightGBM. LightGBM sigue publicado hasta que TimesFM 2.5 lo supere en la compuerta D-10 con los mismos años de prueba; si no lo supera, queda LightGBM y TimesFM va a la hoja de ruta. TimesFM 3.0 no se usa: sus pesos son de uso no comercial y no productivo. El carril B publica la tabla de entrenamiento celda×mes (F3-B5). El contrato `prediccion` pasa a `@dimidio6`; `/forecast` no cambia de forma sin avisar a `@BrunoAguinaga0`. F3-E3 va después de F3-A1 y F3-A2 y respeta el congelamiento de la fase 3. | Reparte la carga del carril B, que terminó la fase 3, y prueba un modelo preentrenado sin arriesgar lo que ya pasa la compuerta. | RF-PRE-01, RF-PRE-02 |
 | D-32 | **Guion y video al final.** El guion, la grabación y las slides (F0-F1 #11, F1-F1 #28, F3-F1 #55, F4-F1 #62) quedan sin dueño y se hacen al final, con la implementación ya refinada. La fase 3 se cierra sin el guion (su criterio pedía la demo según el guion) y se abre la 4. F3-B5 (#169) y F3-E3 (#170) siguen en la fase 4 con las condiciones de D-31. | El equipo prefiere trabajar la implementación y mostrarla pulida; un guion escrito antes se rehace. | RNF-07, RNF-11 |
 | D-33 | **Reloj propio para las tareas programadas.** El cron de GitHub nunca disparó en este repo (cero corridas `schedule` de `worker-vivo.yml` y `avisos.yml`, aun con el cron cambiado en #166). `.github/workflows/reloj.yml` corre casi 6 horas, dispara `avisos.yml` cada 5 minutos y `worker-vivo.yml` cada 15 con `workflow_dispatch`, y se relanza solo. Los cron de los dos flujos quedan como respaldo. | `workflow_dispatch` sí anda, no pide secretos nuevos (alcanza `GITHUB_TOKEN`) y es gratis en un repo público. Un Cron Trigger de Cloudflare necesitaría un token de GitHub fuera del repo. | RF-VIV-01, RF-ALE-02 |
+| D-34 | **Las tareas de `@dimidio6` pasan a `@daniace`.** `@dimidio6` se quedó sin acceso a internet. Sus tareas abiertas (F3-E3 #170, F4-E1 #60, F4-E2 #61, F5-E1 #68, F5-E2 #69) y sus carpetas (`apps/landing/`, `apps/juego/`, `packages/charmy/`, `services/alertas/`, `services/prediccion/`) pasan a `@daniace`. Cuando `@dimidio6` vuelva, el líder decide en el tablero qué se le devuelve. | Que el pulido de la fase 4 y la predicción no se detengan. | RNF-09 |
 
 ---
 
@@ -385,7 +386,7 @@ A recorre el flujo en producción y publica lo que esté roto.
 | #52 | F3-D4 | Panel de contexto del foco: viento, riesgo de incendio e imagen satelital reciente como capa del mapa, con su fecha, nubosidad y atribución | `@daniace` | `apps/app/` | F2-D1 (usa el mock; datos reales con F3-B3 y F3-B4) | RF-CTX-01, RF-CTX-03, RNF-14 | pendiente |
 | #53 | F3-E1 | Charmy Kids: un nivel jugable con focos de un día real, puntaje, combo y cierre educativo | `@dimidio6` | `apps/juego/` | F1-E4 (usa F1-B2) | RF-KID-01, RF-KID-02, RF-KID-03 | pendiente |
 | #54 | F3-E2 | Charmy completo: los seis estados y los cinco vestuarios | `@dimidio6` | `packages/charmy/` | F2-E1 | RF-CHA-02, RF-CHA-03 | pendiente |
-| #170 | F3-E3 | Predicción en `services/prediccion/`: TimesFM 2.5 contra LightGBM con la compuerta D-10 y los mismos años de prueba (D-31). Después de F3-A1 y F3-A2 | `@dimidio6` | `services/prediccion/` | F3-B5 | RF-PRE-01, RF-PRE-02 | pendiente |
+| #170 | F3-E3 | Predicción en `services/prediccion/`: TimesFM 2.5 contra LightGBM con la compuerta D-10 y los mismos años de prueba (D-31). Después de F3-A1 y F3-A2 | `@daniace` (D-34) | `services/prediccion/` | F3-B5 | RF-PRE-01, RF-PRE-02 | pendiente |
 | #55 | F3-F1 | Grabar la demo y armar las slides | sin asignar, al final (D-32) | `docs/entrega/` | — | RNF-07 | al final |
 
 **Comunicación entre carriles.** El servicio de avisos (A) no comparte base ni código con la API (C): consulta `/live` y
@@ -410,8 +411,8 @@ Si falta tiempo en el carril B, el orden es: fuentes fijas, tiempo, imagen y, po
 | #57 | F4-B1 | Documento del método: armonización, validación, supuestos y fuentes, con el contraste manual de las cifras contra estadísticas públicas externas | `@leonelcnr` | `docs/metodologia/` | fase 3 | RNF-07, RF-ARM-04, RF-CTX-06, RNF-13 | pendiente |
 | #58 | F4-C1 | Datos cacheados para la demo, servicios despiertos y errores claros | `@BrunoAguinaga0` | `services/api/`, `services/worker/` | fase 3 | RNF-02 | pendiente |
 | #59 | F4-D1 | Pulido de la app: accesibilidad, ancho de teléfono y textos | `@daniace` | `apps/app/` | fase 3 | RNF-03, RNF-04 | pendiente |
-| #60 | F4-E1 | Pulido de la landing; enlaces entre las tres piezas | `@dimidio6` | `apps/landing/` | fase 3 | RF-LAN-04, RNF-12 | pendiente |
-| #61 | F4-E2 | Pulido del juego | `@dimidio6` | `apps/juego/` | F3-E1 | RNF-12 | pendiente |
+| #60 | F4-E1 | Pulido de la landing; enlaces entre las tres piezas | `@daniace` (D-34) | `apps/landing/` | fase 3 | RF-LAN-04, RNF-12 | pendiente |
+| #61 | F4-E2 | Pulido del juego | `@daniace` (D-34) | `apps/juego/` | F3-E1 | RNF-12 | pendiente |
 | #62 | F4-F1 | Video o slides finales | sin asignar, al final (D-32) | `docs/entrega/` | F3-F1 | RNF-07, RNF-11 | al final |
 | #63 | F4-X1 | Envío en la plataforma de Space Apps | carril F y `@cosmosnehu77` | — | F4-A1, F4-F1 | RNF-01 | pendiente |
 
@@ -457,8 +458,8 @@ demo), el worker pasa a ser una tarea programada administrada y todo queda en un
 | #65 | F5-B1 | Publicar los Parquet en Blob Storage con lectura pública, CORS y caché; comprobar los pedidos por rango | `@leonelcnr` | `services/pipeline/` | F5-A1 | RNF-02 | pendiente |
 | #66 | F5-A2 | Crear las tres Static Web Apps y sus flujos de despliegue, que compilan en CI y suben la carpeta construida | `@cosmosnehu77` | `.github/workflows/`, `infra/azure/` | F5-A1 | RNF-01 | pendiente |
 | #67 | F5-D1 | Configuración de la app para Static Web Apps (ruta de respaldo y cabeceras) y prueba en la dirección nueva | `@daniace` | `apps/app/` | F5-A2 | RNF-03 | pendiente |
-| #68 | F5-E1 | Configuración de la landing para Static Web Apps y prueba en la dirección nueva | `@dimidio6` | `apps/landing/` | F5-A2 | RNF-12 | pendiente |
-| #69 | F5-E2 | Configuración del juego para Static Web Apps y prueba en la dirección nueva | `@dimidio6` | `apps/juego/` | F5-A2 | RNF-12 | pendiente |
+| #68 | F5-E1 | Configuración de la landing para Static Web Apps y prueba en la dirección nueva | `@daniace` (D-34) | `apps/landing/` | F5-A2 | RNF-12 | pendiente |
+| #69 | F5-E2 | Configuración del juego para Static Web Apps y prueba en la dirección nueva | `@daniace` (D-34) | `apps/juego/` | F5-A2 | RNF-12 | pendiente |
 | #70 | F5-C1 | API en Container Apps con una réplica mínima, worker como tarea programada, secretos y CORS para los orígenes nuevos | `@BrunoAguinaga0` | `services/api/`, `services/worker/` | F5-A1, F5-B1 | RNF-02 | pendiente |
 | #71 | F5-A3 | Avisos en Container Apps | `@cosmosnehu77` | `services/alertas/` | F5-C1 | RF-ALE-02 | pendiente |
 | #72 | F5-A4 | Prueba de humo completa contra Azure, cambio de DNS o de variables, y actualización de la tabla de referencia y de D-21 | `@cosmosnehu77` | `.github/workflows/`, `PLAN.md` | F5-B1, F5-D1, F5-E1, F5-C1 | RNF-02 | pendiente |
@@ -589,6 +590,7 @@ La fase 5 no cubre requisitos nuevos: refuerza RNF-02 y RNF-10 sobre lo ya entre
 | 2026-11-14 | Versión 2.0.4. La predicción pasa a `@dimidio6` en `services/prediccion/` (D-31): TimesFM 2.5 como candidato y LightGBM vigente. Tareas nuevas F3-B5 y F3-E3. | equipo, 1.1, 1.3, 3, 5, 6 | `@leonelcnr` |
 | 2026-11-14 | Versión 2.1. Se cierra la fase 3 y se abre la 4. El guion y el video quedan sin dueño y para el final (D-32). | encabezado, 3, 5, 10 | `@cosmosnehu77` |
 | 2026-11-14 | Versión 2.1.1. Reloj propio para worker-vivo y avisos (D-33). | encabezado, 3 | `@cosmosnehu77` |
+| 2026-11-14 | Versión 2.1.2. Las tareas y carpetas de `@dimidio6` pasan a `@daniace` (D-34). | encabezado, 3, 5 | `@cosmosnehu77` |
 
 ## 10. Registro de cierres
 

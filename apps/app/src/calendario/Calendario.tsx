@@ -58,6 +58,11 @@ export function Calendario() {
         <h2 id="titulo-calendario" className="text-lg font-semibold">
           Calendario de quema
         </h2>
+        {consulta.data?.provisional && (
+          <span className="rounded-pildora border border-aviso-borde px-2 py-0.5 text-xs font-medium text-aviso-texto">
+            Dato de ejemplo
+          </span>
+        )}
         <ToggleGroup type="single" aria-label="Qué mostrar en el calendario" value={vista} onValueChange={(v) => v && setVista(v as Vista)}>
           <ToggleGroupItem value="anomalia">Anomalía</ToggleGroupItem>
           <ToggleGroupItem value="cantidad">Cantidad</ToggleGroupItem>
@@ -81,14 +86,17 @@ export function Calendario() {
         </p>
       )}
       {consulta.isSuccess && consulta.data.cells.length === 0 && (
-        // Sin celdas, la API explica el motivo en baseline (fuera de cobertura, región sin calendario).
-        <p className="rounded-control bg-superficie-2 p-2 text-sm">{consulta.data.baseline}</p>
+        // Sin celdas, la API explica el motivo en message (fuera de cobertura, región sin calendario).
+        <p className="rounded-control bg-superficie-2 p-2 text-sm">
+          {consulta.data.message ?? "No hay calendario para esta área y estos años."}
+        </p>
       )}
       {consulta.isSuccess && consulta.data.cells.length > 0 && (
         <>
           <p className="text-xs text-tinta-suave">
             Cada celda es un mes: días-celda con fuego, en equivalente VIIRS. La anomalía compara con la{" "}
-            {consulta.data.baseline}.
+            {consulta.data.baseline}
+            {consulta.data.region ? `, región ${consulta.data.region}` : ""}.
           </p>
           <Leyenda vista={vista} />
           <div className="overflow-x-auto">

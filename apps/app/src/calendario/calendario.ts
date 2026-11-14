@@ -56,11 +56,13 @@ const ORIGENES: Record<string, string> = {
 
 const numero = new Intl.NumberFormat("es-AR", { maximumFractionDigits: 1 });
 export const formatear = (n: number) => numero.format(n);
+/** Con signo explícito y el signo menos tipográfico: «+18», «−3», «0». */
+const conSigno = (n: number) => (n > 0 ? `+${formatear(n)}` : n < 0 ? `−${formatear(-n)}` : "0");
 
 /** Texto completo de una celda, para lectores de pantalla y para el tooltip. */
 export function describirCelda(celda: CeldaCalendario | null, year: number, mes: number): string {
   const cuando = `${MESES_LARGOS[mes]} de ${year}`;
   if (!celda) return `${cuando}: sin dato`;
   const origen = ORIGENES[celda.origin] ?? celda.origin;
-  return `${cuando}: ${formatear(celda.value)} días-celda con fuego, percentil ${Math.round(celda.percentile)} (mediana ${formatear(celda.median)}), ${origen}`;
+  return `${cuando}: ${formatear(celda.value)} días-celda con fuego, anomalía ${conSigno(celda.anomaly)}, percentil ${Math.round(celda.percentile)} (mediana ${formatear(celda.median)}), ${origen}`;
 }

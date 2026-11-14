@@ -1,6 +1,7 @@
 # Despliegue de la API al entrar cambios en main. La plataforma (Render, Fly o un VPS, ver PLAN.md) construye
 # la imagen desde services/api/Dockerfile; este flujo solo la avisa con un "deploy hook".
-# Secreto del repo: API_DEPLOY_HOOK (URL que da la plataforma). Variable del repo: API_URL, para la prueba de vida.
+# Secreto del repo: API_DEPLOY_HOOK (URL que da la plataforma). Variable del repo: API_URL, la base con su prefijo
+# (https://<host>/api/v1, igual que VITE_API_URL), para la prueba de vida y la de humo.
 name: Despliegue API
 
 on:
@@ -52,3 +53,11 @@ jobs:
             sleep 15
           done
           echo "::error::La API no respondió /health después de 10 minutos"; exit 1
+      - uses: astral-sh/setup-uv@v10.3.3
+        if: steps.existe.outputs.si == 'true' && env.HAY_HOOK == 'true' && vars.API_URL != ''
+      - name: Prueba de humo
+        if: steps.existe.outputs.si == 'true' && env.HAY_HOOK == 'true' && vars.API_URL != ''
+        env:
+          API_URL: ${{ vars.API_URL }}
+        # /health da ok, /calendar de la Comarca Andina trae meses y el CSV tiene el encabezado del contrato.
+        run: uv run --package humo python -m humo "$API_URL"

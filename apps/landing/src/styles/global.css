@@ -1,0 +1,16 @@
+/* Colores, tipografías y formas salen de @charmy/ui. Acá no se definen valores propios. */
+@import "@charmy/ui/tokens.css";
+@import "@charmy/ui/fonts.css";
+@import "@charmy/charmy/charmy.css";
+
+body {
+  margin: 0;
+  background: var(--color-fondo);
+  color: var(--color-tinta);
+  font-family: var(--fuente-texto);
+}
+
+h1,
+h2 {
+  font-family: var(--fuente-titulos);
+}

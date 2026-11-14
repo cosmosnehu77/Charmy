@@ -8,9 +8,9 @@
 > Si alguien cambia una tecnología, una skill o un componente, se actualiza la tabla y las tareas afectadas
 > en el mismo PR (ver [Cómo mantener este plan](#2-cómo-mantener-este-plan)).
 
-**Fase activa:** 1
+**Fase activa:** 2
 **Líder:** `@cosmosnehu77`
-**Versión:** 1.6 · **Última actualización:** 14 de noviembre de 2026
+**Versión:** 1.7 · **Última actualización:** 14 de noviembre de 2026
 
 ## Objetivo del proyecto
 
@@ -562,6 +562,7 @@ La fase 5 no cubre requisitos nuevos: refuerza RNF-02 y RNF-10 sobre lo ya entre
 | 2026-11-14 | Versión 1.5, con `REQUISITOS.md` 1.4. Política de pruebas y YAGNI (D-23, `docs/PRUEBAS.md`, RNF-15): "Pruebas mínimas" en cada issue, prueba primero en la lógica, nada de red en las pruebas, `CI ok` obligatorio y PR siempre contra `main`. Tarea nueva F2-A3. | 1.1, 3, 5, 6, 7 | `@cosmosnehu77` |
 | 2026-11-14 | Datos estáticos: se elige GitHub Releases con manifiesto (`infra/publicar`, F2-A1); R2 queda como alternativa. Contrato nuevo: manifiesto de datos publicados. | 1.1, 4 | `@cosmosnehu77` |
 | 2026-11-14 | Versión 1.6. Relevo por límite de uso y lockfiles al día solos (D-24, F1-A3): `tools/relevo`, skill `relevo`, `AGENTS.md` §7 y flujo `al-dia.yml`. `tools/al-dia` ya no corre scripts de instalación. | 1.2, 3, 5, 7 | `@cosmosnehu77` |
+| 2026-11-14 | Versión 1.7. Se abre la fase 2. Las tareas de la fase 1 que siguen abiertas (#21, #25, #27, #28) continúan en paralelo: ninguna comparte carpeta con una tarea de otro dueño de la fase 2. | encabezado | `@cosmosnehu77` |
 
 ## 10. Registro de cierres
 

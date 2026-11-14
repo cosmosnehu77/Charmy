@@ -2,6 +2,7 @@ import { CircleHelp, Flame, Mountain, Map as MapaIcono } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { type Modo, type PerfilMapa, useApp } from "@/estado/app";
+import { URL_JUEGO, URL_LANDING } from "@/lib/enlaces";
 import { EstadoApi } from "./EstadoApi";
 
 export function Encabezado() {
@@ -13,6 +14,14 @@ export function Encabezado() {
         <h1 className="text-xl font-extrabold tracking-tight">Charmy</h1>
       </div>
       <EstadoApi />
+      <nav aria-label="Otras partes de Charmy" className="flex gap-3 text-sm">
+        <a className="text-tinta-suave underline-offset-2 hover:text-tinta hover:underline" href={URL_LANDING}>
+          Qué es Charmy
+        </a>
+        <a className="text-tinta-suave underline-offset-2 hover:text-tinta hover:underline" href={URL_JUEGO}>
+          Charmy Kids
+        </a>
+      </nav>
       <div className="ml-auto flex flex-wrap items-center gap-2">
         {modo === "novato" && recorridoVisto && (
           <Button variant="ghost" size="sm" onClick={() => marcarRecorrido(false)}>

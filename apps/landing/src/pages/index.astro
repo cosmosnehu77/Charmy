@@ -6,6 +6,7 @@ import "../styles/global.css";
 // Dominios por defecto de Cloudflare Pages (deploy-web.yml: proyectos charmy-app y charmy-juego).
 const URL_APP = "https://charmy-app.pages.dev";
 const URL_JUEGO = "https://charmy-juego.pages.dev";
+const URL_METODO = "https://github.com/cosmosnehu77/Charmy/blob/main/docs/metodologia/README.md";
 
 const charmy = charmyHtml({
   mood: "saluda",
@@ -151,6 +152,10 @@ const creditos = [
             ))
           }
         </ul>
+        <p>
+          Cómo se arma la serie, cómo se valida y sus límites:
+          <a href={URL_METODO}>documento del método</a>.
+        </p>
         <p>
           Desafío "Harmonization of MODIS and VIIRS Hot Spots", propuesto por CONAE para NASA Space Apps Challenge 2026.
         </p>

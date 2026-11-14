@@ -32,6 +32,11 @@ describe("landing", () => {
     expect(enlaces).toContain("https://charmy-juego.pages.dev");
   });
 
+  it("enlaza al documento del método", () => {
+    const enlaces = Array.from(doc.querySelectorAll("a"), (a) => a.getAttribute("href"));
+    expect(enlaces).toContain("https://github.com/cosmosnehu77/Charmy/blob/main/docs/metodologia/README.md");
+  });
+
   it("los créditos nombran FIRMS, Copernicus y Meteomatics", () => {
     const creditos = doc.getElementById("creditos")?.textContent ?? "";
     expect(creditos).toContain("FIRMS");

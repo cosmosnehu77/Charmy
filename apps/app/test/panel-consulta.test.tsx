@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { render, screen, waitFor } from "@testing-library/react";
+import { act, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { PanelConsulta } from "@/consulta/PanelConsulta";
 import { useApp } from "@/estado/app";
@@ -152,5 +152,18 @@ describe("tope de /hotspots (#127)", () => {
     await elegirPunto("-42.9", "-71.3");
     await screen.findByText(/1 foco/);
     expect(screen.queryByText(/mostramos los primeros/i)).not.toBeInTheDocument();
+  });
+});
+
+describe("espera larga de /hotspots", () => {
+  it("si tarda más de 8 s, avisa que el servidor se puede estar despertando", async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    fetchSimulado.mockImplementation(() => new Promise(() => {}));
+    montar();
+    await elegirPunto("-42.9", "-71.3");
+    expect(screen.queryByText(/se está despertando/i)).not.toBeInTheDocument();
+    await act(async () => vi.advanceTimersByTime(9000));
+    expect(screen.getByText(/se está despertando/i)).toBeInTheDocument();
+    vi.useRealTimers();
   });
 });

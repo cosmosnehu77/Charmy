@@ -1,9 +1,14 @@
 import { useId } from "react";
+import { bboxDeArea } from "@/consulta/consulta";
+import { useConsulta } from "@/estado/consulta";
 import { AvisoEmergencias } from "@/components/AvisoEmergencias";
 import { Button } from "@/components/ui/button";
 import { useFocosVivo, useEvidencia } from "./consultas";
 import { useVivo } from "./estado";
 import { ETIQUETAS_EVIDENCIA, TIPOS_EVIDENCIA, veredicto } from "./veredictos";
+
+/** La lista es una ayuda accesible al mapa: más de esto no se puede recorrer. */
+const MAXIMO_LISTA = 50;
 
 const hora = new Intl.DateTimeFormat("es-AR", {
   day: "numeric",
@@ -67,9 +72,17 @@ export function PanelVivo() {
   const id = useId();
   const { visible, seleccionado, cambiar } = useVivo();
   const vivo = useFocosVivo();
-  const focos = [...(vivo.data?.features ?? [])].sort((a, b) =>
-    b.properties.acq_datetime.localeCompare(a.properties.acq_datetime),
-  );
+  const area = useConsulta((s) => s.area);
+  // Con un área elegida, la lista muestra solo sus focos; el mapa sigue mostrando todos.
+  const caja = area ? bboxDeArea(area) : null;
+  const focos = [...(vivo.data?.features ?? [])]
+    .filter((f) => {
+      if (!caja) return true;
+      const [lon, lat] = f.geometry.coordinates;
+      return lon !== undefined && lat !== undefined && lon >= caja[0] && lon <= caja[2] && lat >= caja[1] && lat <= caja[3];
+    })
+    .sort((a, b) => b.properties.acq_datetime.localeCompare(a.properties.acq_datetime));
+  const visibles = focos.slice(0, MAXIMO_LISTA);
 
   return (
     <section aria-labelledby={`${id}-titulo`} className="flex flex-col gap-3">
@@ -97,11 +110,13 @@ export function PanelVivo() {
       {visible && vivo.isSuccess && (
         <>
           <p className="text-xs text-tinta-suave">
-            {focos.length === 1 ? "1 foco" : `${focos.length} focos`} de VIIRS (NOAA-20 y NOAA-21). Tocá uno para ver
-            por qué tiene ese veredicto.
+            {focos.length === 1 ? "1 foco" : `${focos.length} focos`} de VIIRS{caja ? " en el área" : ""} (NOAA-20 y
+            NOAA-21).{" "}
+            {focos.length > MAXIMO_LISTA ? `Mostramos los ${MAXIMO_LISTA} más nuevos; el mapa los muestra todos. ` : ""}
+            Tocá uno para ver por qué tiene ese veredicto.
           </p>
           <ul aria-label="Focos recientes" className="flex max-h-64 flex-col gap-1 overflow-y-auto">
-            {focos.map((f) => {
+            {visibles.map((f) => {
               const v = veredicto(f.properties.verdict);
               return (
                 <li key={f.id}>

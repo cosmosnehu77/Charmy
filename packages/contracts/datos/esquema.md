@@ -12,6 +12,7 @@ Los nombres de campo siguen al OpenAPI (`docs/repo-inicial/openapi.yaml`), así 
 | `serie` | **estable** | F2-B1, `pipeline.armonizacion` (en `data/muestras`, todavía provisoria) |
 | `calendario` | **estable** | F2-B2, `pipeline.armonizacion` (en `data/muestras`, todavía provisorio) |
 | `metricas` | **estable** | F2-B1, `pipeline.armonizacion` (en `data/muestras`, todavía provisoria) |
+| `fuentes_fijas` | **estable** | F3-B1, `pipeline.fuentes_fijas` |
 
 ## Grilla
 
@@ -110,6 +111,20 @@ predicen sus meses. Coincide con `/harmonization/metrics`.
 | `n_months` | int32 | Meses predichos en la validación |
 | `provisional` | bool | Como en `serie` |
 
+## `fuentes_fijas`
+
+Celdas con calor que no es quema: antorchas de gas, industria, volcanes (RF-ARM-05). Se publica como
+`fuentes_fijas.csv` para que el worker la lea sin DuckDB (F3-C3, señal "fuente fija" de D-09). Es una señal: no
+borra focos.
+
+| Columna | Tipo | Descripción |
+|---|---|---|
+| `cell_id` | string | Celda de 0,1° marcada, igual que en `focos` |
+
+Una celda entra si, con los focos VIIRS del histórico, algún punto de 0,01° (~1 km) tiene focos en al menos 30
+días, de 5 años y de 6 meses del año distintos, o si la mayoría de sus focos traen `type` 1, 2 o 3 de FIRMS. No
+dice qué tipo de fuente es: si hace falta, se suma una columna sin romper nada.
+
 ## Muestras (`data/muestras/`)
 
 Las genera `uv run --package pipeline python -m pipeline.muestras <csv>... --out data/muestras --dia <fecha>`.
@@ -137,4 +152,4 @@ Las genera `uv run --package pipeline python -m pipeline.muestras <csv>... --out
 ## Publicación
 
 `pipeline.armonizacion` deja en `--out` lo que se publica: `serie.parquet`, `calendario.parquet`,
-`metricas.parquet` y `regiones.geojson`. Se suben con `publicar` (`infra/README.md`) como `datos-AAAA-MM-DD`.
+`metricas.parquet` y `regiones.geojson`; `pipeline.fuentes_fijas`, `fuentes_fijas.csv`. Se suben con `publicar` (`infra/README.md`) como `datos-AAAA-MM-DD`.

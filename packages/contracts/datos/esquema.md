@@ -8,14 +8,29 @@ Los nombres de campo siguen al OpenAPI (`docs/repo-inicial/openapi.yaml`), así 
 | Tabla | Estado | La escribe |
 |---|---|---|
 | `focos` | **estable** | F1-B1, `services/pipeline` (`pipeline.firms`) |
-| `serie` | borrador | F2-B1 (hoy, muestra provisoria) |
+| `regiones` | **estable** | F2-B1, `pipeline.regiones` |
+| `serie` | **estable** | F2-B1, `pipeline.armonizacion` (en `data/muestras`, todavía provisoria) |
 | `calendario` | borrador | F2-B2 |
-| `metricas` | borrador | F2-B2 |
+| `metricas` | **estable** | F2-B1, `pipeline.armonizacion` (en `data/muestras`, todavía provisoria) |
 
 ## Grilla
 
 Celdas regulares de 0,1°. `cell_id` es la esquina suroeste con un decimal, `"<lat>_<lon>"`, por ejemplo
 `"-45.4_-71.3"` para un foco en lat −45,37, lon −71,22. Es la unidad de los días-celda (D-02).
+
+## `regiones`
+
+Regiones de calibración: las 23 provincias de Argentina (la Ciudad de Buenos Aires va dentro de `AR-B`) y las 16
+regiones de Chile. `regiones.geojson` es una `FeatureCollection` de polígonos con `properties`:
+
+| Propiedad | Tipo | Descripción |
+|---|---|---|
+| `region` | string | Código ISO 3166-2, por ejemplo `AR-U` (Chubut) o `CL-AR` (La Araucanía). Es el `region` de las otras tablas |
+| `nombre` | string | Nombre de la provincia o región |
+| `pais` | string | `Argentina` o `Chile` |
+
+Fuente: Natural Earth, admin 1 a 1:10m (dominio público), simplificada a ~1 km y sin la Antártida. Una celda
+pertenece a la región que contiene su centro; las celdas en el mar o en otros países no entran en la serie.
 
 ## `focos`
 
@@ -47,18 +62,20 @@ Clave única: (`satellite`, `acq_datetime`, `latitude`, `longitude`). Si un foco
 En GeoJSON (`/hotspots`) cada foco es un `Feature` de tipo `Point` con `[longitude, latitude]` y el resto de las
 columnas en `properties`.
 
-## `serie` (borrador, F2-B1)
+## `serie`
 
-Días-celda con fuego por región y mes, en "equivalente VIIRS" (D-02, D-03).
+Días-celda con fuego por región y mes, en "equivalente VIIRS S-NPP" (D-02, D-03). Antes se filtran los focos
+según D-04. Cada (celda, día UTC) cuenta una vez por sensor; Terra y Aqua cuentan juntos como MODIS. Los meses sin
+fuego valen 0.
 
 | Columna | Tipo | Descripción |
 |---|---|---|
-| `region` | string | Identificador de la región de calibración |
+| `region` | string | Código de `regiones` |
 | `year`, `month` | int16, int8 | Período |
-| `source` | string | `harmonized`, `modis`, `viirs` |
+| `source` | string | `harmonized`; `modis` (MODIS medido) o `viirs` (S-NPP medido), para verlos por separado (RF-ARM-04) |
 | `value` | float64 | Días-celda con fuego |
-| `lower`, `upper` | float64 | Intervalo de incertidumbre (RF-ARM-03) |
-| `origin` | string | `viirs_medido`, `modis_medido` (solo en `source = modis`) o `modis_convertido` |
+| `lower`, `upper` | float64 | Intervalo del 90 % (RF-ARM-03). En lo medido son iguales a `value` |
+| `origin` | string | `modis_convertido` (hasta 2011), `viirs_medido` (mientras hay S-NPP), `viirs_convertido` (NOAA-20 llevado a S-NPP, después de S-NPP) o `modis_medido` (solo en `source = modis`) |
 | `provisional` | bool | `true` si el valor es de ejemplo y no un resultado. La app lo tiene que mostrar como tal |
 
 ## `calendario` (borrador, F2-B2)
@@ -71,16 +88,19 @@ Lo de `serie` más la comparación con la historia (RF-CAL-02). Coincide con `Ca
 | `median` | float64 | Mediana histórica del mismo mes |
 | `percentile` | float64 | Posición del valor en la historia de ese mes, 0–100 |
 
-## `metricas` (borrador, F2-B2)
+## `metricas`
 
-Validación dejando un año afuera, por región (RF-ARM-04). Coincide con `/harmonization/metrics`.
+Validación dejando un año afuera, por región (RF-ARM-04): para cada año de solape se calibra sin ese año y se
+predicen sus meses. Coincide con `/harmonization/metrics`.
 
 | Columna | Tipo | Descripción |
 |---|---|---|
 | `region` | string | Región de calibración |
 | `pair` | string | Tramo de la cadena: `modis_snpp` o `noaa20_snpp` |
-| `r2`, `bias`, `mae` | float64 | Métricas sobre los años dejados afuera |
-| `n_months` | int32 | Meses de solape usados |
+| `r2` | float64 | 1 − SSres/SStot de las predicciones de los años dejados afuera |
+| `bias` | float64 | Sesgo relativo: Σ(predicho − medido) / Σ medido |
+| `mae` | float64 | Error medio absoluto, en días-celda |
+| `n_months` | int32 | Meses predichos en la validación |
 | `provisional` | bool | Como en `serie` |
 
 ## Muestras (`data/muestras/`)
@@ -93,6 +113,7 @@ Las genera `uv run --package pipeline python -m pipeline.muestras <csv>... --out
 | `focos.geojson` | Los mismos focos en GeoJSON | Real |
 | `serie.parquet`, `calendario.parquet`, `metricas.parquet` | Tablas de arriba para `AR-U` (Chubut) y `CL-AR` (Araucanía) | **Provisorio**: `provisional = true` |
 | `dia-juego.json` | Focos VIIRS de un día, para el juego (RF-KID-02) | Real |
+| `regiones.geojson` | Tabla `regiones` (39 regiones, ~190 KB) | Real |
 
 `dia-juego.json`:
 

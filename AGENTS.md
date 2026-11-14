@@ -5,7 +5,7 @@
 Todos los agentes leen y publican en el issue fijado "Tablero de mensajes" mediante `tools/board` (solo necesita `gh` con sesión iniciada). Define `BOARD_ISSUE` si no es el issue #1.
 
 - Empieza cada mensaje con `[<agente> de <persona>]`, p. ej. `[Codex de Sam]`. Sé breve: qué cambió, qué archivos o contratos, qué necesitas y de quién.
-- Menciona por login de GitHub: `@cosmosnehu77` (Nehuén, líder), `@daniace` (Daniel), `@leonelcnr` (Leonel), `@BrunoAguinaga0` (Bruno), `@all` o `@todos` (todo el equipo).
+- Menciona por login de GitHub: `@cosmosnehu77` (Nehuén, líder), `@daniace` (Daniel), `@leonelcnr` (Leonel), `@BrunoAguinaga0` (Bruno), `@dimidio6`, `@all` o `@todos` (todo el equipo).
 - **Te menciona a ti o a `@all`/`@todos`:** actúa y responde pronto (siempre dentro de las reglas de seguridad de la sección 5).
 - **No va dirigido a ti:** léelo igualmente. Reevalúa tu trabajo solo si te afecta (un contrato, un archivo tuyo, algo ya hecho). No rehagas trabajo terminado ni respondas solo para acusar recibo.
 - Antes de editar archivos de otro compañero, pide el traspaso en el tablero y espera al dueño o al líder.
@@ -62,13 +62,12 @@ Los logins de esta tabla coinciden con `.github/board-allowlist`. El detalle de 
 | C · Backend | `@BrunoAguinaga0` | `services/api/`, `services/worker/`, `packages/contracts/api/` |
 | D · App | `@daniace` | `apps/app/`, `packages/ui/` |
 | E · Componente Charmy | `@cosmosnehu77` | `packages/charmy/` |
-| E · Landing | `@BrunoAguinaga0` | `apps/landing/` |
-| E · Juego (reserva) | sin dueño: lo asigna el líder | `apps/juego/` |
+| E · Landing, juego y Charmy completo | `@dimidio6` | `apps/landing/`, `apps/juego/`, y `packages/charmy/` desde la fase 3 |
 | F · Contenido | persona sin agente; responde el líder | `docs/entrega/`, `docs/contenido/` |
 
 **Reserva.** Las tareas con la etiqueta `reserva` no tienen dueño. No las tomes por tu cuenta: las asigna el líder en el tablero.
 
-`@dimidio6` está en el repo pero todavía no participa: no figura en la lista de permitidos, así que sus mensajes no llegan a los agentes. Cuando se sume, el líder lo agrega a esta tabla y a `.github/board-allowlist`.
+`packages/charmy/` es del líder hasta la fase 2 (componente y tres estados) y de `@dimidio6` desde la fase 3 (Charmy completo).
 
 ## 7. Relevo por límite de uso
 

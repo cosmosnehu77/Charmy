@@ -9,6 +9,7 @@ Dueño: `@cosmosnehu77` (carril A). Qué se despliega y dónde está en `PLAN.md
 | `deploy-web.yml` | `main` con cambios en `apps/` o `packages/`, o a mano | Compila landing, app y juego y los publica en Cloudflare Pages (`charmy-landing`, `charmy-app`, `charmy-juego`). |
 | `deploy-api.yml` | `main` con cambios en `services/api/` o `services/contexto/`, o a mano | Avisa a la plataforma de la API con su "deploy hook", espera a que responda `/health` y corre la prueba de humo. |
 | `avisos.yml` | Cada 5 minutos, o a mano | Una corrida del servicio de avisos (D-30): guarda los estados de los botones tocados y manda por Telegram los avisos nuevos de la zona. Sin sus secretos, solo avisa que faltan. |
+| `reloj.yml` | A mano, al cambiar el archivo en `main`, y cada 3 horas si el cron de GitHub anda | Reloj de D-33: corre casi 6 horas, dispara `avisos.yml` cada 5 minutos y `worker-vivo.yml` cada 15, y se relanza solo. Para pararlo, cancelar su corrida en Actions. |
 
 Cada pieza que todavía no existe se salta sola, así que los flujos se pueden dejar activos desde el primer día.
 

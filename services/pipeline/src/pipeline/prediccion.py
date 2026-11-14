@@ -175,9 +175,16 @@ def mensual(focos: pl.LazyFrame, fijas: list[str]) -> pl.DataFrame:
     return grilla.join(conteo, on=CLAVE, how="left").with_columns(pl.col("dias").fill_null(0.0)).sort(CLAVE)
 
 
+def entrenamiento(m: pl.DataFrame) -> pl.DataFrame:
+    """Tabla `entrenamiento` del contrato (F3-B5): la entrada del modelo, para entrenar sin los focos."""
+    return m.select(
+        "cell_id", month=pl.col("mes").dt.strftime("%Y-%m"), fire_days=pl.col("dias").cast(pl.Int16)
+    )
+
+
 def main(argv: list[str] | None = None) -> int:
     p = argparse.ArgumentParser(
-        description="Predicción a 1-3 meses con compuerta: focos -> prediccion.parquet"
+        description="Predicción a 1-3 meses con compuerta: focos -> entrenamiento y prediccion"
     )
     p.add_argument("--focos", type=Path, required=True, help="Carpeta de focos de pipeline.firms")
     p.add_argument("--out", type=Path, required=True)
@@ -185,12 +192,14 @@ def main(argv: list[str] | None = None) -> int:
     focos = pl.scan_parquet(args.focos / "*.parquet")
     columnas = ["satellite", "latitude", "longitude", "cell_id", "type", "acq_datetime"]
     fijas = mascara(focos.select(columnas))["cell_id"].to_list()
-    resultado = entrenar_y_validar(mensual(focos, fijas))
+    m = mensual(focos, fijas)
+    args.out.mkdir(parents=True, exist_ok=True)
+    entrenamiento(m).write_parquet(args.out / "entrenamiento.parquet")
+    resultado = entrenar_y_validar(m)
     print("mejora sobre la climatología por horizonte:", resultado.mejora)
     if resultado.prediccion.is_empty():
         print("ningún horizonte pasa la compuerta (D-10): no se publica predicción")
         return 0
-    args.out.mkdir(parents=True, exist_ok=True)
     resultado.prediccion.write_parquet(args.out / "prediccion.parquet")
     print(f"{resultado.prediccion.height} filas en {args.out / 'prediccion.parquet'}")
     return 0

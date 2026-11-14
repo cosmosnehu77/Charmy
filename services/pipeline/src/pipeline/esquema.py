@@ -26,6 +26,7 @@ ESQUEMAS = {
         "provisional": pl.Boolean,
     },
     "fuentes_fijas": {"cell_id": pl.String},
+    "entrenamiento": {"cell_id": pl.String, "month": pl.String, "fire_days": pl.Int16},
     "prediccion": {
         "cell_id": pl.String,
         "month": pl.String,

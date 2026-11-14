@@ -14,6 +14,7 @@ Los nombres de campo siguen al OpenAPI (`docs/repo-inicial/openapi.yaml`), así 
 | `metricas` | **estable** | F2-B1, `pipeline.armonizacion` (en `data/muestras`, todavía provisoria) |
 | `fuentes_fijas` | **estable** | F3-B1, `pipeline.fuentes_fijas` |
 | `prediccion` | **estable** | F3-B2, `pipeline.prediccion` (solo si pasa la compuerta D-10) |
+| `entrenamiento` | **estable** | F3-B5, `pipeline.prediccion` |
 
 ## Grilla
 
@@ -143,6 +144,21 @@ pasaron la compuerta (D-10, RF-PRE-02): mejorar el error absoluto medio de la cl
 | `skill_vs_climatology` | float64 | Mejora relativa del MAE sobre la climatología en la prueba, para ese horizonte |
 | `model` | string | Modelo, p. ej. `lightgbm-v1` |
 
+## `entrenamiento`
+
+La entrada del modelo de predicción, para entrenar y probar modelos sin bajar los focos ni rearmar la armonización
+(F3-B5, D-31). Es exactamente la tabla con la que `pipeline.prediccion` entrena LightGBM: días con fuego de S-NPP
+por celda y mes, sin las celdas de `fuentes_fijas`, solo en meses completos (S-NPP vio focos en al menos el 90 %
+de los días) y solo en celdas con fuego en al menos 5 años. Los meses sin fuego van con `fire_days = 0`.
+
+| Columna | Tipo | Descripción |
+|---|---|---|
+| `cell_id` | string | Celda de 0,1° |
+| `month` | string | Mes, `"AAAA-MM"` |
+| `fire_days` | int16 | Días del mes con al menos un foco en la celda (0 a 31) |
+
+Un mes que no está para ninguna celda es un mes incompleto de S-NPP: falta el dato, no es cero.
+
 ## Muestras (`data/muestras/`)
 
 Las genera `uv run --package pipeline python -m pipeline.muestras <csv>... --out data/muestras --dia <fecha>`.
@@ -171,4 +187,4 @@ Las genera `uv run --package pipeline python -m pipeline.muestras <csv>... --out
 
 `pipeline.armonizacion` deja en `--out` lo que se publica: `serie.parquet`, `calendario.parquet`,
 `metricas.parquet` y `regiones.geojson`; `pipeline.fuentes_fijas`, `fuentes_fijas.csv`; `pipeline.prediccion`,
-`prediccion.parquet` (si pasa la compuerta). Se suben con `publicar` (`infra/README.md`) como `datos-AAAA-MM-DD`.
+`entrenamiento.parquet` y `prediccion.parquet` (este último, si pasa la compuerta). Se suben con `publicar` (`infra/README.md`) como `datos-AAAA-MM-DD`.

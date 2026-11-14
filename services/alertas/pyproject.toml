@@ -1,0 +1,13 @@
+[project]
+name = "alertas"
+version = "0.1.0"
+description = "Carril E (D-28): avisos a entidades por Telegram con el viento en el lugar, y feed CAP por zona."
+requires-python = ">=3.12"
+dependencies = [
+    "aiogram>=3.31.0",
+    "httpx>=0.28.1",
+]
+
+[build-system]
+requires = ["uv_build>=0.9,<0.14"]
+build-backend = "uv_build"

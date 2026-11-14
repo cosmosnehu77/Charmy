@@ -1,12 +1,13 @@
-"""Pruebas mínimas de F3-B2 (#45). Datos sintéticos con fecha fija: ninguna prueba llama a FIRMS."""
+"""Pruebas mínimas de F3-B2 (#45) y F3-B5 (#169). Datos sintéticos con fecha fija y sin llamar a FIRMS."""
 
 import math
 import random
-from datetime import date
+from datetime import UTC, date, datetime, timedelta
 
 import polars as pl
 from pipeline.esquema import ESQUEMAS
-from pipeline.prediccion import entrenar_y_validar, filas, particion
+from pipeline.prediccion import entrenamiento, entrenar_y_validar, filas, particion
+from pipeline.prediccion import mensual as mensual_snpp
 
 
 def mensual(persistencia: float, celdas: int = 40, semilla: int = 3) -> pl.DataFrame:
@@ -76,3 +77,53 @@ def test_compuerta_publica_si_supera_a_la_climatologia_y_con_su_incertidumbre():
 def test_determinismo():
     m = mensual(0.9, celdas=10)
     assert entrenar_y_validar(m).prediccion.equals(entrenar_y_validar(m).prediccion)
+
+
+# --- F3-B5: tabla de entrenamiento publicada -------------------------------------------------------------
+
+FONDO, MENSUAL, POCOS, FIJA = "-30.0_-60.0", "-31.0_-61.0", "-32.0_-62.0", "-33.0_-63.0"
+
+
+def _focos_snpp() -> pl.LazyFrame:
+    """2015-2020: fondo y fija con fuego diario, otra celda el día 1 de cada mes y otra solo en dos años.
+
+    En junio de 2018 S-NPP ve focos solo hasta el día 9: es un mes incompleto (corte del satélite).
+    """
+    filas_ = []
+    dia = datetime(2015, 1, 1, 3, tzinfo=UTC)
+    while dia.year <= 2020:
+        corte = dia.year == 2018 and dia.month == 6 and dia.day >= 10
+        celdas = [] if corte else [FONDO, FIJA]
+        if dia.day == 1:
+            celdas.append(MENSUAL)
+            if dia.year in (2016, 2017):
+                celdas.append(POCOS)
+        filas_ += [("N", "VIIRS", "nominal", None, 0, c, dia) for c in celdas]
+        dia += timedelta(days=1)
+    esquema = {
+        "satellite": pl.String,
+        "instrument": pl.String,
+        "confidence": pl.String,
+        "confidence_pct": pl.Int8,
+        "type": pl.Int8,
+        "cell_id": pl.String,
+        "acq_datetime": pl.Datetime("us", "UTC"),
+    }
+    return pl.DataFrame(filas_, schema=esquema, orient="row").lazy()
+
+
+def test_tabla_de_entrenamiento_cumple_el_esquema_y_es_la_entrada_del_modelo():
+    m = mensual_snpp(_focos_snpp(), [FIJA])
+    tabla = entrenamiento(m)
+    assert tabla.schema == ESQUEMAS["entrenamiento"]
+    # La misma tabla que entrena el modelo, con el mes como texto y los días como entero.
+    assert tabla.height == m.height
+    assert tabla["fire_days"].cast(pl.Float64).to_list() == m["dias"].to_list()
+
+
+def test_tabla_de_entrenamiento_sin_meses_incompletos_ni_fuentes_fijas_ni_celdas_con_pocos_anios():
+    tabla = entrenamiento(mensual_snpp(_focos_snpp(), [FIJA]))
+    assert set(tabla["cell_id"]) == {FONDO, MENSUAL}
+    assert "2018-06" not in tabla["month"].to_list()
+    assert tabla.filter(pl.col("cell_id") == FONDO).height == 6 * 12 - 1
+    assert tabla.filter(pl.col("cell_id") == MENSUAL)["fire_days"].unique().to_list() == [1]

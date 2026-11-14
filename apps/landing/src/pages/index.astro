@@ -1,0 +1,49 @@
+---
+import { charmyHtml } from "@charmy/charmy/core";
+import "../styles/global.css";
+
+// Texto provisorio hasta tener los de F1-F1 (carril F).
+const charmy = charmyHtml({
+  mood: "saluda",
+  outfit: "base",
+  size: 200,
+  label: "Charmy, la vizcacha de fuego, saluda",
+  say: "¡Hola! Soy Charmy. Te muestro cuándo y dónde se quema el sur.",
+});
+---
+
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Charmy · Calendario de quema</title>
+    <meta
+      name="description"
+      content="Focos de calor de MODIS y VIIRS armonizados desde 2001, como calendario de quema sobre un mapa."
+    />
+  </head>
+  <body>
+    <main class="portada">
+      <h1>Charmy</h1>
+      <p class="bajada">Focos de calor de MODIS y VIIRS en una sola serie desde 2001, como calendario de quema.</p>
+      <Fragment set:html={charmy} />
+    </main>
+  </body>
+</html>
+
+<style>
+  .portada {
+    display: grid;
+    justify-items: center;
+    gap: 1rem;
+    max-width: 48rem;
+    margin: 0 auto;
+    padding: 4rem 1rem;
+    text-align: center;
+  }
+
+  .bajada {
+    color: var(--color-tinta-suave);
+  }
+</style>

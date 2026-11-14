@@ -3,7 +3,7 @@ from pathlib import Path
 
 import polars as pl
 import pytest
-from pipeline.firms import COLUMNAS, cargar, escribir, leer_csv
+from pipeline.firms import COLUMNAS, cargar, convertir, escribir, leer_csv
 
 FIX = Path(__file__).parent / "fixtures"
 
@@ -59,3 +59,15 @@ def test_escribe_un_archivo_por_satelite_y_anio_con_todas_las_columnas(tmp_path)
 def test_orden_estable():
     rutas = list(FIX.glob("*.csv"))
     assert cargar(rutas).equals(cargar(list(reversed(rutas))))
+
+
+def test_convertir_por_partes_da_lo_mismo_que_cargar_todo(tmp_path):
+    """El histórico completo no entra en memoria: convertir va de a un archivo y de a un satélite-año."""
+    rutas = list(FIX.glob("*.csv"))
+    escribir(cargar(rutas), tmp_path / "junto")
+    convertir([FIX], tmp_path / "partes")  # una carpeta se recorre entera
+    nombres = sorted(p.name for p in (tmp_path / "partes").glob("*.parquet"))
+    assert nombres == sorted(p.name for p in (tmp_path / "junto").glob("*.parquet"))
+    for n in nombres:
+        assert pl.read_parquet(tmp_path / "partes" / n).equals(pl.read_parquet(tmp_path / "junto" / n)), n
+    assert not (tmp_path / "partes" / ".partes").exists()

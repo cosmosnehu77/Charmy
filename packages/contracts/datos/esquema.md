@@ -104,8 +104,8 @@ predicen sus meses. Coincide con `/harmonization/metrics`.
 |---|---|---|
 | `region` | string | Región de calibración |
 | `pair` | string | Tramo de la cadena: `modis_snpp` o `noaa20_snpp` |
-| `r2` | float64 | 1 − SSres/SStot de las predicciones de los años dejados afuera |
-| `bias` | float64 | Sesgo relativo: Σ(predicho − medido) / Σ medido |
+| `r2` | float64, nulo | 1 − SSres/SStot de las predicciones de los años dejados afuera. Nulo si no hubo fuego en el solape (0/0) |
+| `bias` | float64, nulo | Sesgo relativo: Σ(predicho − medido) / Σ medido. Nulo si no hubo fuego en el solape |
 | `mae` | float64 | Error medio absoluto, en días-celda |
 | `n_months` | int32 | Meses predichos en la validación |
 | `provisional` | bool | Como en `serie` |

@@ -83,8 +83,19 @@ def geojson(nombre: str) -> dict:
     return _geojson(str(MUESTRAS / f"{nombre}.geojson"))
 
 
-def conexion() -> duckdb.DuckDBPyConnection:
+@cache
+def _base() -> duckdb.DuckDBPyConnection:
+    # Una sola base en memoria para todo el proceso: guarda los metadatos de los Parquet remotos.
+    # Abrir los metadatos de decenas de archivos por HTTPS es lo que más tarda en /hotspots.
     con = duckdb.connect()
-    con.execute("SET TimeZone = 'UTC'")
-    con.execute("SET enable_progress_bar = false")
+    con.execute("SET GLOBAL parquet_metadata_cache = true")
+    con.execute("SET GLOBAL enable_http_metadata_cache = true")
     return con
+
+
+def conexion() -> duckdb.DuckDBPyConnection:
+    """Un cursor propio por pedido (los pedidos corren en hilos distintos) sobre la base compartida."""
+    cursor = _base().cursor()
+    cursor.execute("SET TimeZone = 'UTC'")
+    cursor.execute("SET enable_progress_bar = false")
+    return cursor

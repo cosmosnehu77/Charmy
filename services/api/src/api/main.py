@@ -3,8 +3,11 @@
 Ninguna clave se lee al importar: la API arranca sin .env.
 """
 
+import os
+
 from fastapi import APIRouter, FastAPI, Request
 from fastapi.exceptions import RequestValidationError
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
@@ -14,6 +17,15 @@ from api.errores import ErrorDeContrato, respuesta
 
 app = FastAPI(
     title="Charmy API", version="0.1.0", docs_url="/api/v1/docs", openapi_url="/api/v1/openapi.json"
+)
+# Orígenes de los frontends publicados, separados por coma (CORS_ORIGINS). Localhost se permite en cualquier
+# puerto para desarrollo. No es un secreto: se lee al crear la app.
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[o.strip() for o in os.environ.get("CORS_ORIGINS", "").split(",") if o.strip()],
+    allow_origin_regex=r"http://(localhost|127\.0\.0\.1)(:\d+)?",
+    allow_methods=["GET", "POST"],
+    allow_headers=["Content-Type"],
 )
 v1 = APIRouter(prefix="/api/v1")
 

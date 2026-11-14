@@ -53,11 +53,14 @@ jobs:
         run: |
           pnpm install --frozen-lockfile
           pnpm turbo run build --filter="@charmy/${{ matrix.pieza }}"
+      # Sin cloudflare/wrangler-action: instala wrangler con pnpm en la raíz del workspace y pnpm lo rechaza
+      # (ERR_PNPM_ADDING_TO_ROOT). npx lo baja a su caché sin tocar node_modules ni el lockfile.
       - name: Publicar en Cloudflare Pages
         if: steps.existe.outputs.si == 'true' && env.HAY_CLOUDFLARE == 'true'
-        uses: cloudflare/wrangler-action@v4
-        with:
-          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          preCommands: npx wrangler pages project create charmy-${{ matrix.pieza }} --production-branch main || true
-          command: pages deploy apps/${{ matrix.pieza }}/dist --project-name charmy-${{ matrix.pieza }} --branch main
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          PROYECTO: charmy-${{ matrix.pieza }}
+        run: |
+          npx --yes wrangler@4 pages project create "$PROYECTO" --production-branch main || true
+          npx --yes wrangler@4 pages deploy "apps/${{ matrix.pieza }}/dist" --project-name "$PROYECTO" --branch main

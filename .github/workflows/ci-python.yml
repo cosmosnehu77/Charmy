@@ -1,0 +1,41 @@
+# CI de Python: solo corre si cambió algo de services/ o del workspace de uv.
+name: CI Python
+
+on:
+  pull_request:
+    paths: &rutas
+      - "services/**"
+      - "pyproject.toml"
+      - "uv.lock"
+      - ".python-version"
+      - ".github/workflows/ci-python.yml"
+  push:
+    branches: [main]
+    paths: *rutas
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-python-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+      # setup-uv no publica la etiqueta de versión mayor (v10): se fija la versión exacta.
+      - uses: astral-sh/setup-uv@v10.3.3
+        with:
+          enable-cache: true
+      - run: uv sync --all-packages --frozen
+      - name: Lint
+        run: if [ -d services ]; then uv run ruff check services; else echo "todavía no hay servicios"; fi
+      - name: Pruebas
+        # pytest sale con 5 cuando no encuentra pruebas: no es un error mientras los servicios son esqueletos.
+        run: |
+          if [ -d services ]; then
+            uv run pytest services || [ $? -eq 5 ]
+          fi

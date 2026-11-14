@@ -1,0 +1,54 @@
+# Despliegue de la API al entrar cambios en main. La plataforma (Render, Fly o un VPS, ver PLAN.md) construye
+# la imagen desde services/api/Dockerfile; este flujo solo la avisa con un "deploy hook".
+# Secreto del repo: API_DEPLOY_HOOK (URL que da la plataforma). Variable del repo: API_URL, para la prueba de vida.
+name: Despliegue API
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "services/api/**"
+      - "services/contexto/**"
+      - "uv.lock"
+      - ".github/workflows/deploy-api.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy-api
+  cancel-in-progress: false
+
+jobs:
+  api:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      HAY_HOOK: ${{ secrets.API_DEPLOY_HOOK != '' }}
+    steps:
+      - uses: actions/checkout@v7
+      - name: ¿Existe la API?
+        id: existe
+        run: |
+          if [ -f services/api/Dockerfile ]; then echo "si=true" >> "$GITHUB_OUTPUT"
+          else echo "services/api/Dockerfile todavía no existe: se salta."; echo "si=false" >> "$GITHUB_OUTPUT"; fi
+      - name: Aviso si falta el hook
+        if: steps.existe.outputs.si == 'true' && env.HAY_HOOK != 'true'
+        run: echo "::warning::Falta el secreto API_DEPLOY_HOOK; no se despliega la API."
+      - name: Disparar el despliegue
+        if: steps.existe.outputs.si == 'true' && env.HAY_HOOK == 'true'
+        env:
+          HOOK: ${{ secrets.API_DEPLOY_HOOK }}
+        run: curl -fsS -X POST "$HOOK" > /dev/null
+      - name: Prueba de vida
+        if: steps.existe.outputs.si == 'true' && env.HAY_HOOK == 'true' && vars.API_URL != ''
+        env:
+          API_URL: ${{ vars.API_URL }}
+        # La plataforma tarda en construir y los planes gratuitos arrancan en frío: hasta 10 minutos.
+        run: |
+          for i in $(seq 1 40); do
+            if curl -fsS "$API_URL/health" > /dev/null; then echo "API viva"; exit 0; fi
+            sleep 15
+          done
+          echo "::error::La API no respondió /health después de 10 minutos"; exit 1

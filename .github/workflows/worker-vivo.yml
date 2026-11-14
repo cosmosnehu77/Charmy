@@ -1,0 +1,43 @@
+# Worker de focos recientes (services/worker, F3-C1 y F3-C3): una vuelta cada 15 minutos.
+# Consulta FIRMS como máximo cada 30 minutos (D-13): el control está en la base, así que una vuelta temprana o
+# repetida no pide de más. Guarda los focos verificados en Postgres y /live los lee de ahí.
+# Secretos del repo: FIRMS_MAP_KEY, DATABASE_URL (Supabase) y NVIDIA_API_KEY. Variable opcional: DATA_MANIFEST_URL.
+name: Worker en vivo
+
+on:
+  schedule:
+    - cron: "*/15 * * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: worker-vivo
+  cancel-in-progress: false
+
+jobs:
+  vuelta:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      HAY_SECRETOS: ${{ secrets.FIRMS_MAP_KEY != '' && secrets.DATABASE_URL != '' }}
+    steps:
+      - name: Aviso si faltan secretos
+        if: env.HAY_SECRETOS != 'true'
+        run: echo "::warning::Faltan los secretos FIRMS_MAP_KEY o DATABASE_URL; el worker no corre."
+      - uses: actions/checkout@v7
+        if: env.HAY_SECRETOS == 'true'
+      - uses: astral-sh/setup-uv@v10.3.3
+        if: env.HAY_SECRETOS == 'true'
+        with:
+          enable-cache: true
+      - name: Una vuelta del worker
+        if: env.HAY_SECRETOS == 'true'
+        env:
+          FIRMS_MAP_KEY: ${{ secrets.FIRMS_MAP_KEY }}
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          NVIDIA_API_KEY: ${{ secrets.NVIDIA_API_KEY }}
+          DATA_MANIFEST_URL: ${{ vars.DATA_MANIFEST_URL || 'https://github.com/cosmosnehu77/Charmy/releases/download/datos-muestras-2/manifest.json' }}
+        # El worker nunca imprime claves: la de FIRMS sale como *** en los errores.
+        run: uv run --package worker python -m worker

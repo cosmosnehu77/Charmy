@@ -10,7 +10,7 @@
 
 **Fase activa:** 3
 **Líder:** `@cosmosnehu77`. Hasta que vuelva (probablemente en la fase 4), **líder interino `@daniace`** (D-28).
-**Versión:** 2.0.2 · **Última actualización:** 14 de noviembre de 2026
+**Versión:** 2.0.4 · **Última actualización:** 14 de noviembre de 2026
 
 ## Objetivo del proyecto
 
@@ -35,10 +35,10 @@ de avisos) pasan a `@dimidio6` con la carpeta `services/alertas/`.
 | Carril | Persona | Qué hace | Carpetas propias |
 |---|---|---|---|
 | **A · Plataforma y avisos** | `@cosmosnehu77` (líder; interino `@daniace`, D-28) | Repo, CI, despliegue, integración. El servicio de avisos de la fase 3 pasa a `@dimidio6` con `services/alertas/` (D-28). | archivos de raíz, `.github/workflows/`, `infra/`, `README.md` |
-| **B · Datos** | `@leonelcnr` | Armonización, calendario, validación, fuentes fijas, tiempo e imagen satelital en el foco, predicción. | `services/pipeline/`, `services/contexto/`, `data/muestras/`, `packages/contracts/datos/`, `docs/metodologia/` |
+| **B · Datos** | `@leonelcnr` | Armonización, calendario, validación, fuentes fijas, tiempo e imagen satelital en el foco, predicción con LightGBM hasta que pase a `@dimidio6` (D-31). | `services/pipeline/`, `services/contexto/`, `data/muestras/`, `packages/contracts/datos/`, `docs/metodologia/` |
 | **C · Backend** | `@BrunoAguinaga0` | Contrato de la API, API, focos en vivo, verificación, reportes. | `services/api/`, `services/worker/`, `packages/contracts/api/` |
 | **D · App** | `@daniace` | Mapa, calendario, modos novato y experto, tokens de diseño. | `apps/app/`, `packages/ui/` |
-| **E · Experiencia** | `@dimidio6`, salvo el componente (tabla de abajo) | Componente Charmy, landing, juego. En la fase 3, el servicio de avisos (D-28). | `packages/charmy/`, `apps/landing/`, `apps/juego/`, `services/alertas/` |
+| **E · Experiencia** | `@dimidio6`, salvo el componente (tabla de abajo) | Componente Charmy, landing, juego. En la fase 3, el servicio de avisos (D-28) y la predicción (D-31). | `packages/charmy/`, `apps/landing/`, `apps/juego/`, `services/alertas/`, `services/prediccion/` |
 | **F · Contenido** | persona sin agente | Arte, textos, guion, video, reglas del evento, contacto con entidades. | `docs/entrega/`, `docs/contenido/` |
 
 **Cómo se reparte el carril E** (decisiones D-22 y D-25):
@@ -48,6 +48,7 @@ de avisos) pasan a `@dimidio6` con la carpeta `services/alertas/`.
 | Componente Charmy | `packages/charmy/` | `@cosmosnehu77` | F0-E1, F1-E1, F1-E3, F2-E1 |
 | Landing | `apps/landing/` | `@dimidio6` (el esqueleto, F1-E2, lo hizo `@BrunoAguinaga0`) | F2-E2, F4-E1, F5-E1 |
 | Juego y Charmy completo | `apps/juego/`, y `packages/charmy/` desde la fase 3 | `@dimidio6` | F1-E4, F3-E1, F3-E2, F4-E2, F5-E2 |
+| Predicción (D-31) | `services/prediccion/` | `@dimidio6` | F3-E3 |
 
 Tareas abiertas de las fases 1 a 4 al sumarse `@dimidio6`: `@leonelcnr` 7, `@daniace` 7, `@BrunoAguinaga0` 6,
 `@dimidio6` 6 y `@cosmosnehu77` 5, que además cierra fases, revisa las rutas protegidas y recorre la integración
@@ -90,7 +91,7 @@ Lo que se usa hoy. La columna **Dec.** apunta a la decisión que lo justifica ([
 | Tiempo y riesgo de incendio | API de Meteomatics, desde `services/contexto` | B | Parámetros probados el 14/11 con la cuenta del equipo: `wind_speed_10m:ms`, `wind_dir_10m:d`, `t_2m:C`, `relative_humidity_2m:p`, `forest_fire_warning:idx` y `fosberg_fire_weather_index:idx`. Un pedido admite varios parámetros, varias horas y un área. **Límites: 1.000 pedidos por día**, 250 por minuto y 10 en paralelo, así que la caché es obligatoria (por celda de 0,1° y por media hora). Tiene histórico desde 1900. **La cuenta vence el 22/11/2026.** Credenciales en `METEOMATICS_USER` y `METEOMATICS_PASSWORD`, solo en el servidor. | D-18 |
 | Imagen satelital | Sentinel-2 L2A de Copernicus Data Space por API, desde `services/contexto`: Catalog API para encontrar la escena reciente más despejada y Process API para generar la imagen | B | Entrada con un cliente OAuth (`client_credentials`) creado en el Dashboard de Copernicus; el token se pide a `identity.dataspace.copernicus.eu` y las APIs están en `sh.dataspace.copernicus.eu`. Solo desde el servidor. Cuenta gratuita: 10.000 unidades de proceso y 50.000 pedidos por mes, 300 por minuto. Cada imagen generada se guarda en caché para no gastar cuota dos veces. Dos estilos: color real y falso color, que resalta lo quemado. Las rutas exactas de Catalog y Process se confirman al crear el cliente. | D-19 |
 | Estadísticas de referencia | currentwildfires.com | B | Sin API ni licencia visible: solo comparación manual, cita y enlace. No se copian datos. Usa FIRMS, EFFIS, GWIS y filtra antorchas e industria, igual que Charmy. | D-20 |
-| Modelo de predicción | LightGBM | B | Solo si supera a la climatología. Alternativa: Prophet por región. | D-10 |
+| Modelo de predicción | LightGBM (vigente); candidato: TimesFM 2.5 | E (D-31) | Solo si supera a la climatología. LightGBM sigue publicado hasta que TimesFM 2.5 (Apache-2.0) lo supere en la compuerta con los mismos años de prueba. TimesFM 3.0 no: sus pesos son de uso no comercial y no productivo, y la app es pública. Alternativa: Prophet por región. | D-10, D-31 |
 | API | FastAPI + DuckDB sobre Parquet + httpx | C | OpenAPI automático. | D-05 |
 | Base operativa | Postgres (Supabase) para reportes y estados | C | Alternativa: SQLite. El login de Supabase solo hace falta si entra RF-ALE-05. | D-08 |
 | Focos en vivo | API de área de FIRMS, fuentes `VIIRS_NOAA20_NRT` y `VIIRS_NOAA21_NRT` | C | S-NPP no publica datos nuevos desde el 2/11/2026. Límite: 5.000 transacciones cada 10 min, de 1 a 5 días por consulta. La clave del equipo ya existe y funciona: va en `FIRMS_MAP_KEY` del `.env` local y de la plataforma, nunca en el repo ni en el tablero. | D-13 |
@@ -147,6 +148,7 @@ Las skills de `.claude/skills/` son rutas protegidas: cada dueño abre su PR y e
 | Worker en vivo | `services/worker/` | `@BrunoAguinaga0` | API | — |
 | Contexto del foco | `services/contexto/` | `@leonelcnr` | API | Paquete de Python que expone los routers de `/weather` (Meteomatics) y `/imagery` (Copernicus). La API lo monta con una línea: no es un servicio aparte que desplegar. |
 | Avisos | `services/alertas/` | `@dimidio6` (D-28) | entidades | Usa solo la API pública y un token de servicio |
+| Predicción | `services/prediccion/` | `@dimidio6` (D-31) | API (`/forecast`) | Entrena con la tabla celda×mes del carril B y escribe `prediccion.parquet` según el esquema, solo si pasa la compuerta D-10 |
 | Infraestructura | `infra/`, `.github/workflows/`, raíz | `@cosmosnehu77` | todos | `.env.example` |
 | Base de Charmy | `docs/charmy-base/` | carril F y `@cosmosnehu77` | E | Fuente del diseño aprobado |
 
@@ -208,6 +210,7 @@ si nada: avisen en el tablero y propongan el PR que actualiza este documento.
 | D-28 | **Líder interino.** `@cosmosnehu77` se queda sin uso de tokens y vuelve probablemente en la fase 4. `@daniace` es líder interino con todos los poderes del líder (fases, rutas protegidas como dueño de código, reasignaciones y decisiones). F3-A1 y F3-A2 y la carpeta `services/alertas/` pasan a `@dimidio6`, que tenía la menor carga de la fase 3; el bot de Telegram (parte de F0-A3) va con F3-A1. Lo que solo puede hacer el dueño del repo (secretos de Actions, permisos) espera a `@cosmosnehu77`. | Que la implementación no se detenga y la carga quede pareja. | RNF-09 |
 | D-29 | **Las pruebas corren en cada commit y cada servicio tiene las suyas.** Un hook `pre-commit` versionado (`.githooks/`, se activa con `pnpm install`) corre las pruebas de los paquetes JS y de los servicios de Python que toca el commit, y rechaza un servicio sin pruebas. El CI falla si un servicio que cambió en el PR no tiene pruebas. Los despliegues (`deploy-api`, `deploy-web`) esperan a que `CI ok` del mismo commit esté en verde: nunca se publica un commit en rojo. Saltear el hook con `--no-verify` no está permitido. | `CI ok` corría `pytest` sobre todos los servicios juntos: `services/api` y `services/worker` cerraron tareas sin una sola prueba y el CI quedó en verde. | RNF-15 |
 | D-30 | **Los avisos corren en GitHub Actions.** El servicio de avisos (`services/alertas`) corre una vez cada 5 minutos en `.github/workflows/avisos.yml`, igual que el worker de vivo: guarda los estados de los botones tocados desde la corrida anterior y manda los avisos nuevos. No guarda nada entre corridas: `POST /alerts` dice si un aviso ya se mandó. Los secretos (`TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID`, `CHARMY_SERVICE_TOKEN`) van en Actions. El costo: un botón cambia el estado en la corrida siguiente, no al instante. | Gratis en un repo público y sin otra cuenta. Un Background Worker de Render no tiene plan gratis, el Web Service gratis se duerme, y Cloudflare Containers pide un plan pago. | RF-ALE-02, RF-ALE-03 |
+| D-31 | **La predicción pasa a `@dimidio6`.** El código pasa de `services/pipeline/` a `services/prediccion/` (F3-E3) y se prueba TimesFM 2.5 contra LightGBM. LightGBM sigue publicado hasta que TimesFM 2.5 lo supere en la compuerta D-10 con los mismos años de prueba; si no lo supera, queda LightGBM y TimesFM va a la hoja de ruta. TimesFM 3.0 no se usa: sus pesos son de uso no comercial y no productivo. El carril B publica la tabla de entrenamiento celda×mes (F3-B5). El contrato `prediccion` pasa a `@dimidio6`; `/forecast` no cambia de forma sin avisar a `@BrunoAguinaga0`. F3-E3 va después de F3-A1 y F3-A2 y respeta el congelamiento de la fase 3. | Reparte la carga del carril B, que terminó la fase 3, y prueba un modelo preentrenado sin arriesgar lo que ya pasa la compuerta. | RF-PRE-01, RF-PRE-02 |
 
 ---
 
@@ -370,6 +373,7 @@ A recorre el flujo en producción y publica lo que esté roto.
 | #43 | F3-B3 | Tiempo en el foco: paquete con `/weather` sobre Meteomatics, con caché por celda y media hora (el límite es de 1.000 pedidos por día), copia de respaldo de lo leído que se usa si la fuente falla o la cuenta vence (D-26) y respuesta clara si no hay copia | `@leonelcnr` | `services/contexto/` | F1-C1, F0-B2 | RF-CTX-01, RNF-14 | pendiente |
 | #44 | F3-B4 | Imagen satelital del foco: `/imagery` sobre las APIs de Copernicus, con búsqueda de la escena reciente más despejada, estilos de color real y falso color, caché de imágenes y respuesta clara si no hay imagen o se agota la cuota | `@leonelcnr` | `services/contexto/` | F3-B3, F0-B2 | RF-CTX-03, RNF-14 | pendiente |
 | #45 | F3-B2 | Predicción a 1–3 meses con compuerta contra la climatología | `@leonelcnr` | `services/pipeline/` | F2-B2 | RF-PRE-01, RF-PRE-02 | pendiente |
+| #169 | F3-B5 | Tabla de entrenamiento celda×mes publicada como dato para la predicción (D-31) | `@leonelcnr` | `services/pipeline/`, `packages/contracts/datos/` | F3-B2 | RF-PRE-01 | pendiente |
 | #46 | F3-C1 | Worker de focos recientes con caché y `/live` | `@BrunoAguinaga0` | `services/worker/`, `services/api/` | F2-C1 | RF-VIV-01 | pendiente |
 | #47 | F3-C2 | Reportes ciudadanos y estado de avisos: `POST` y `GET /reports`, `PATCH /alerts/{id}` | `@BrunoAguinaga0` | `services/api/` | F2-C1 | RF-ALE-01, RF-ALE-03, RNF-05 | pendiente |
 | #48 | F3-C3 | Verificación: señales, noticias, etiquetado con el modelo de lenguaje y `/live/{id}/evidence` | `@BrunoAguinaga0` | `services/worker/` | F3-C1 (fuentes fijas con F3-B1) | RF-VIV-02, RF-VIV-03, RF-VIV-04 | pendiente |
@@ -379,6 +383,7 @@ A recorre el flujo en producción y publica lo que esté roto.
 | #52 | F3-D4 | Panel de contexto del foco: viento, riesgo de incendio e imagen satelital reciente como capa del mapa, con su fecha, nubosidad y atribución | `@daniace` | `apps/app/` | F2-D1 (usa el mock; datos reales con F3-B3 y F3-B4) | RF-CTX-01, RF-CTX-03, RNF-14 | pendiente |
 | #53 | F3-E1 | Charmy Kids: un nivel jugable con focos de un día real, puntaje, combo y cierre educativo | `@dimidio6` | `apps/juego/` | F1-E4 (usa F1-B2) | RF-KID-01, RF-KID-02, RF-KID-03 | pendiente |
 | #54 | F3-E2 | Charmy completo: los seis estados y los cinco vestuarios | `@dimidio6` | `packages/charmy/` | F2-E1 | RF-CHA-02, RF-CHA-03 | pendiente |
+| #170 | F3-E3 | Predicción en `services/prediccion/`: TimesFM 2.5 contra LightGBM con la compuerta D-10 y los mismos años de prueba (D-31). Después de F3-A1 y F3-A2 | `@dimidio6` | `services/prediccion/` | F3-B5 | RF-PRE-01, RF-PRE-02 | pendiente |
 | #55 | F3-F1 | Grabar la demo y armar las slides | carril F | `docs/entrega/` | — | RNF-07 | pendiente |
 
 **Comunicación entre carriles.** El servicio de avisos (A) no comparte base ni código con la API (C): consulta `/live` y
@@ -497,7 +502,7 @@ Qué tareas cubren cada requisito. Si un requisito de `REQUISITOS.md` no aparece
 | RF-ALE-02, 04, 06 | F3-A1, F3-A2, F3-D3 | 3 |
 | RF-ALE-05 | sin tarea (deseable) | hoja de ruta |
 | RF-ALE-07 | cumplido por diseño (D-14) | — |
-| RF-PRE-01, 02 | F3-B2 | 3, con compuerta |
+| RF-PRE-01, 02 | F3-B2, F3-B5, F3-E3 | 3, con compuerta |
 | RF-KID-01, 02, 03 | F1-B2, F1-E4, F3-E1 | 3 |
 | RF-KID-04, 05 | sin tarea | hoja de ruta |
 | RF-CTX-01 | F0-B2, F3-B3, F3-D4 | 3 |
@@ -579,6 +584,7 @@ La fase 5 no cubre requisitos nuevos: refuerza RNF-02 y RNF-10 sobre lo ya entre
 | 2026-11-14 | Versión 2.0.1. Las tablas de carriles y de componentes reflejan D-28: `services/alertas/` y el servicio de avisos pasan a `@dimidio6`; la de componentes también le da `packages/charmy/` desde la fase 3. | equipo, 1.3 | `@daniace` |
 | 2026-11-14 | Versión 2.0.2. Pruebas en cada commit y por servicio (D-29, tarea F3-A3). | 3, 5 | `@daniace` |
 | 2026-11-14 | Versión 2.0.3. Los avisos corren en GitHub Actions cada 5 minutos (D-30, #150). | 1.1, 3 | `@dimidio6` |
+| 2026-11-14 | Versión 2.0.4. La predicción pasa a `@dimidio6` en `services/prediccion/` (D-31): TimesFM 2.5 como candidato y LightGBM vigente. Tareas nuevas F3-B5 y F3-E3. | equipo, 1.1, 1.3, 3, 5, 6 | `@leonelcnr` |
 
 ## 10. Registro de cierres
 

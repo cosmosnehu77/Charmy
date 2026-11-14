@@ -64,6 +64,7 @@ Los logins de esta tabla coinciden con `.github/board-allowlist`. El detalle de 
 | D · App | `@daniace` | `apps/app/`, `packages/ui/` |
 | E · Componente Charmy | `@cosmosnehu77` | `packages/charmy/` |
 | E · Landing, juego y Charmy completo | `@dimidio6` | `apps/landing/`, `apps/juego/`, y `packages/charmy/` desde la fase 3 |
+| E · Predicción (D-31) | `@dimidio6` | `services/prediccion/` |
 | F · Contenido | persona sin agente; responde el líder | `docs/entrega/`, `docs/contenido/` |
 
 **Reserva.** Las tareas con la etiqueta `reserva` no tienen dueño. No las tomes por tu cuenta: las asigna el líder en el tablero.

@@ -21,5 +21,9 @@ Docs interactivas en `http://localhost:8000/api/v1/docs`.
 - `API_URL` y `VITE_API_URL` son la base **con** el prefijo (`https://<host>/api/v1`). La prueba de humo
   (`uv run --package humo python -m humo <URL base>`) corre después de cada despliegue y la API tiene que pasarla.
 - FIRMS, Meteomatics, Copernicus y el modelo de lenguaje se consultan solo desde acá o desde el worker, con caché.
+- Los datos precalculados salen de `DATA_MANIFEST_URL` (release con `manifest.json`, DuckDB lee los Parquet por
+  HTTPS). Sin esa variable se usan las muestras de `data/muestras/`: levantá la API desde la raíz del repo.
+- Las consultas a DuckDB van con parámetros (`?`), nunca armando SQL con lo que manda el usuario.
+- Si los datos no se pueden leer, la respuesta es 503 `datos_no_disponibles`, no un 500.
 - `services/contexto` (carril B) se monta como router; no se edita desde este carril.
 - La imagen se construye con contexto `services/api` (como en `docker-compose.yml`).

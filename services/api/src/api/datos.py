@@ -21,14 +21,24 @@ class DatosNoDisponibles(Exception):
 
 
 @cache
-def _manifiesto(url: str) -> tuple[tuple[str, str], ...]:
+def _leer_manifiesto(url: str) -> tuple[str, tuple[tuple[str, str], ...]]:
     try:
         respuesta = httpx.get(url, follow_redirects=True, timeout=20)
         respuesta.raise_for_status()
-        archivos = respuesta.json()["archivos"]
+        manifiesto = respuesta.json()
+        return manifiesto["version"], tuple((a["ruta"], a["url"]) for a in manifiesto["archivos"])
     except (httpx.HTTPError, ValueError, KeyError) as error:
         raise DatosNoDisponibles(f"No se pudo leer el manifiesto de datos: {error}") from error
-    return tuple((a["ruta"], a["url"]) for a in archivos)
+
+
+def _manifiesto(url: str) -> tuple[tuple[str, str], ...]:
+    return _leer_manifiesto(url)[1]
+
+
+def version() -> str:
+    """Versión de los datos que se sirven: la del manifiesto, o `muestras` si se usan las locales."""
+    url = os.environ.get("DATA_MANIFEST_URL", "").strip()
+    return _leer_manifiesto(url)[0] if url else "muestras"
 
 
 def archivos(tabla: str) -> list[str]:

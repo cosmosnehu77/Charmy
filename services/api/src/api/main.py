@@ -12,7 +12,7 @@ from fastapi.responses import JSONResponse
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from api import calendario, hotspots
-from api.datos import DatosNoDisponibles
+from api.datos import DatosNoDisponibles, version
 from api.errores import ErrorDeContrato, respuesta
 
 app = FastAPI(
@@ -60,7 +60,11 @@ async def datos_no_disponibles(_: Request, __: DatosNoDisponibles) -> JSONRespon
 
 @v1.get("/health", operation_id="getHealth", tags=["meta"])
 def health() -> dict[str, str]:
-    return {"status": "ok"}
+    try:
+        return {"status": "ok", "data_version": version()}
+    except DatosNoDisponibles:
+        # La API sigue viva aunque el manifiesto no responda: /health no depende de los datos.
+        return {"status": "ok"}
 
 
 v1.include_router(hotspots.router)

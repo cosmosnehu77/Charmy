@@ -16,8 +16,9 @@ from api.errores import ErrorDeContrato
 router = APIRouter()
 
 UNIDAD = "dias_celda_con_fuego_equivalente_viirs"
+BASE = "mediana del mismo mes en los años anteriores al último"
 FUERA_DE_COBERTURA = "Sin datos para esta área: está fuera de la cobertura."
-AVISO_PROVISORIO = " (valores provisorios de ejemplo, no son resultados)"
+SOLAPAMIENTO = "modis_snpp 2012-01/2026-07; noaa20_snpp 2018-04/2026-07"
 
 
 class Poligono(BaseModel):
@@ -67,10 +68,11 @@ def calendario(pedido: PedidoCalendario) -> dict:
 
     region = region_de(pedido.area)
     if region is None:
-        return {"unit": UNIDAD, "baseline": FUERA_DE_COBERTURA, "cells": []}
+        respuesta = {"unit": UNIDAD, "baseline": BASE, "provisional": False}
+        return respuesta | {"message": FUERA_DE_COBERTURA, "cells": []}
 
     consulta = """
-        SELECT year, month, value, lower, upper, median, percentile, origin, provisional
+        SELECT year, month, value, lower, upper, median, anomaly, percentile, origin, provisional
         FROM read_parquet(?, union_by_name = true)
         WHERE region = ? AND year >= ? AND year <= ?
         ORDER BY year, month
@@ -82,19 +84,19 @@ def calendario(pedido: PedidoCalendario) -> dict:
     )
     if not filas:
         sin_datos = f"Todavía no hay calendario para la región {region} en esos años."
-        return {"unit": UNIDAD, "baseline": sin_datos, "cells": []}
+        respuesta = {"unit": UNIDAD, "baseline": BASE, "region": region, "provisional": False}
+        return respuesta | {"message": sin_datos, "cells": []}
 
     celdas = []
-    for anio, mes, valor, inferior, superior, mediana, percentil, origen, _ in filas:
-        celda = {"year": anio, "month": mes, "value": valor, "median": mediana, "percentile": percentil}
-        celda["origin"] = origen
+    for anio, mes, valor, inferior, superior, mediana, anomalia, percentil, origen, _ in filas:
+        celda = {"year": anio, "month": mes, "value": valor, "median": mediana, "anomaly": anomalia}
+        celda["percentile"], celda["origin"] = percentil, origen
         if inferior is not None and superior is not None:
             celda["lower"], celda["upper"] = inferior, superior
         celdas.append(celda)
 
     provisorio = any(fila[-1] for fila in filas)
-    baseline = f"mediana histórica de cada mes, región {region}" + (AVISO_PROVISORIO if provisorio else "")
-    return {"unit": UNIDAD, "baseline": baseline, "cells": celdas}
+    return {"unit": UNIDAD, "baseline": BASE, "region": region, "provisional": provisorio, "cells": celdas}
 
 
 @router.get("/harmonization/metrics", operation_id="getHarmonizationMetrics", tags=["meta"])
@@ -111,16 +113,16 @@ def metricas() -> dict:
         )
         .fetchall()
     )
-    provisorio = any(fila[-1] for fila in filas)
     metodo = (
         "calibración en cadena MODIS → VIIRS S-NPP y NOAA-20 → S-NPP por región y mes, "
         "validada dejando un año afuera (D-03)"
     )
     return {
-        "method": metodo + (AVISO_PROVISORIO if provisorio else ""),
-        "overlap": "MODIS y S-NPP 2012-2026; NOAA-20 y S-NPP 2018-2026",
+        "method": metodo,
+        "overlap": SOLAPAMIENTO,
         "regions": [
-            {"region": f"{region} {par}", "r2": r2, "bias": sesgo, "mae": mae, "n_months": meses}
-            for region, par, r2, sesgo, mae, meses, _ in filas
+            {"region": region, "pair": par, "r2": r2, "bias": sesgo, "mae": mae, "n_months": meses}
+            | {"provisional": provisorio}
+            for region, par, r2, sesgo, mae, meses, provisorio in filas
         ],
     }

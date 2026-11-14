@@ -8,9 +8,9 @@
 > Si alguien cambia una tecnología, una skill o un componente, se actualiza la tabla y las tareas afectadas
 > en el mismo PR (ver [Cómo mantener este plan](#2-cómo-mantener-este-plan)).
 
-**Fase activa:** 3
+**Fase activa:** 4
 **Líder:** `@cosmosnehu77`. Hasta que vuelva (probablemente en la fase 4), **líder interino `@daniace`** (D-28).
-**Versión:** 2.0.4 · **Última actualización:** 14 de noviembre de 2026
+**Versión:** 2.1 · **Última actualización:** 14 de noviembre de 2026
 
 ## Objetivo del proyecto
 
@@ -211,6 +211,7 @@ si nada: avisen en el tablero y propongan el PR que actualiza este documento.
 | D-29 | **Las pruebas corren en cada commit y cada servicio tiene las suyas.** Un hook `pre-commit` versionado (`.githooks/`, se activa con `pnpm install`) corre las pruebas de los paquetes JS y de los servicios de Python que toca el commit, y rechaza un servicio sin pruebas. El CI falla si un servicio que cambió en el PR no tiene pruebas. Los despliegues (`deploy-api`, `deploy-web`) esperan a que `CI ok` del mismo commit esté en verde: nunca se publica un commit en rojo. Saltear el hook con `--no-verify` no está permitido. | `CI ok` corría `pytest` sobre todos los servicios juntos: `services/api` y `services/worker` cerraron tareas sin una sola prueba y el CI quedó en verde. | RNF-15 |
 | D-30 | **Los avisos corren en GitHub Actions.** El servicio de avisos (`services/alertas`) corre una vez cada 5 minutos en `.github/workflows/avisos.yml`, igual que el worker de vivo: guarda los estados de los botones tocados desde la corrida anterior y manda los avisos nuevos. No guarda nada entre corridas: `POST /alerts` dice si un aviso ya se mandó. Los secretos (`TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID`, `CHARMY_SERVICE_TOKEN`) van en Actions. El costo: un botón cambia el estado en la corrida siguiente, no al instante. | Gratis en un repo público y sin otra cuenta. Un Background Worker de Render no tiene plan gratis, el Web Service gratis se duerme, y Cloudflare Containers pide un plan pago. | RF-ALE-02, RF-ALE-03 |
 | D-31 | **La predicción pasa a `@dimidio6`.** El código pasa de `services/pipeline/` a `services/prediccion/` (F3-E3) y se prueba TimesFM 2.5 contra LightGBM. LightGBM sigue publicado hasta que TimesFM 2.5 lo supere en la compuerta D-10 con los mismos años de prueba; si no lo supera, queda LightGBM y TimesFM va a la hoja de ruta. TimesFM 3.0 no se usa: sus pesos son de uso no comercial y no productivo. El carril B publica la tabla de entrenamiento celda×mes (F3-B5). El contrato `prediccion` pasa a `@dimidio6`; `/forecast` no cambia de forma sin avisar a `@BrunoAguinaga0`. F3-E3 va después de F3-A1 y F3-A2 y respeta el congelamiento de la fase 3. | Reparte la carga del carril B, que terminó la fase 3, y prueba un modelo preentrenado sin arriesgar lo que ya pasa la compuerta. | RF-PRE-01, RF-PRE-02 |
+| D-32 | **Guion y video al final.** El guion, la grabación y las slides (F0-F1 #11, F1-F1 #28, F3-F1 #55, F4-F1 #62) quedan sin dueño y se hacen al final, con la implementación ya refinada. La fase 3 se cierra sin el guion (su criterio pedía la demo según el guion) y se abre la 4. F3-B5 (#169) y F3-E3 (#170) siguen en la fase 4 con las condiciones de D-31. | El equipo prefiere trabajar la implementación y mostrarla pulida; un guion escrito antes se rehace. | RNF-07, RNF-11 |
 
 ---
 
@@ -272,7 +273,7 @@ entre paréntesis, lo que se puede usar mientras tanto. Estados: `pendiente`, `e
 | #8 | F0-C1 | Crear la clave del modelo de lenguaje, la base de datos y el host de la API | `@BrunoAguinaga0` | fuera del repo | — | RNF-10 | pendiente |
 | #9 | F0-D1 | Probar que el mapa base y el relieve cargan sin clave; anotar en su issue qué se conserva del prototipo anterior | `@daniace` | — | — | RF-MAP-06 | pendiente |
 | #10 | F0-E1 | Revisar `docs/charmy-base/` y anotar en su issue qué capas y animaciones faltan para el componente | `@cosmosnehu77` | — | F0-A2 | RF-CHA-01 | pendiente |
-| #11 | F0-F1 | Confirmar las reglas del evento (código y arte previos, formato e idioma de la entrega, hora de cierre) y escribir el guion v0 de la demo | carril F | `docs/entrega/` | — | RNF-11 | pendiente |
+| #11 | F0-F1 | Confirmar las reglas del evento (código y arte previos, formato e idioma de la entrega, hora de cierre) y escribir el guion v0 de la demo | sin asignar, al final (D-32) | `docs/entrega/` | — | RNF-11 | al final |
 | #12 | F0-X1 | **Cada persona activa:** aceptar la invitación al repo, `gh auth login`, clonar, `tools/board check` y revisar los issues de **su carril**; si algo está mal repartido, avisar en el tablero | todos | — | F0-A2, F0-A5 | RNF-09 | pendiente |
 | #13 | F0-A4 | Completar la columna "Issue" de este plan (**hecho** al crear los issues) y abrir la fase 1 en el tablero | `@cosmosnehu77` | `PLAN.md` | F0-X1 | RNF-09 | hecha |
 
@@ -328,7 +329,7 @@ protección alcanza solo al `CLAUDE.md` de la raíz.
 | #25 | F1-E2 | Esqueleto de la landing | `@BrunoAguinaga0` | `apps/landing/` | — (importa a Charmy cuando F1-E1 está en `main`) | RF-CHA-04 | pendiente |
 | #26 | F1-E3 | Skill `charmy` | `@cosmosnehu77` | `.claude/skills/charmy/` | F1-E1 | RNF-09 | pendiente |
 | #27 | F1-E4 | Esqueleto del juego | `@dimidio6` | `apps/juego/` | — (importa a Charmy cuando F1-E1 está en `main`) | RF-CHA-04 | pendiente |
-| #28 | F1-F1 | Guion de la demo de 3 minutos y textos de la landing | carril F | `docs/entrega/`, `docs/contenido/` | — | RF-LAN-01 | pendiente |
+| #28 | F1-F1 | Guion de la demo de 3 minutos y textos de la landing | sin asignar, al final (D-32) | `docs/entrega/`, `docs/contenido/` | — | RF-LAN-01 | al final |
 
 **Independencia en esta fase.** Nadie espera a F1-A1: los workspaces usan globs, así que cada persona crea su carpeta y
 el monorepo la toma sola. Ninguna tarea espera a otra persona: la landing arranca sin Charmy y lo importa cuando F1-E1 entra en `main`.
@@ -384,7 +385,7 @@ A recorre el flujo en producción y publica lo que esté roto.
 | #53 | F3-E1 | Charmy Kids: un nivel jugable con focos de un día real, puntaje, combo y cierre educativo | `@dimidio6` | `apps/juego/` | F1-E4 (usa F1-B2) | RF-KID-01, RF-KID-02, RF-KID-03 | pendiente |
 | #54 | F3-E2 | Charmy completo: los seis estados y los cinco vestuarios | `@dimidio6` | `packages/charmy/` | F2-E1 | RF-CHA-02, RF-CHA-03 | pendiente |
 | #170 | F3-E3 | Predicción en `services/prediccion/`: TimesFM 2.5 contra LightGBM con la compuerta D-10 y los mismos años de prueba (D-31). Después de F3-A1 y F3-A2 | `@dimidio6` | `services/prediccion/` | F3-B5 | RF-PRE-01, RF-PRE-02 | pendiente |
-| #55 | F3-F1 | Grabar la demo y armar las slides | carril F | `docs/entrega/` | — | RNF-07 | pendiente |
+| #55 | F3-F1 | Grabar la demo y armar las slides | sin asignar, al final (D-32) | `docs/entrega/` | — | RNF-07 | al final |
 
 **Comunicación entre carriles.** El servicio de avisos (A) no comparte base ni código con la API (C): consulta `/live` y
 `/reports` y devuelve el estado con `PATCH /alerts/{id}`. La app (D) y los avisos (A) se construyen contra el mock y se
@@ -410,7 +411,7 @@ Si falta tiempo en el carril B, el orden es: fuentes fijas, tiempo, imagen y, po
 | #59 | F4-D1 | Pulido de la app: accesibilidad, ancho de teléfono y textos | `@daniace` | `apps/app/` | fase 3 | RNF-03, RNF-04 | pendiente |
 | #60 | F4-E1 | Pulido de la landing; enlaces entre las tres piezas | `@dimidio6` | `apps/landing/` | fase 3 | RF-LAN-04, RNF-12 | pendiente |
 | #61 | F4-E2 | Pulido del juego | `@dimidio6` | `apps/juego/` | F3-E1 | RNF-12 | pendiente |
-| #62 | F4-F1 | Video o slides finales | carril F | `docs/entrega/` | F3-F1 | RNF-07, RNF-11 | pendiente |
+| #62 | F4-F1 | Video o slides finales | sin asignar, al final (D-32) | `docs/entrega/` | F3-F1 | RNF-07, RNF-11 | al final |
 | #63 | F4-X1 | Envío en la plataforma de Space Apps | carril F y `@cosmosnehu77` | — | F4-A1, F4-F1 | RNF-01 | pendiente |
 
 ### Fase 5 — Opción Azure (opcional, después del MVP)
@@ -585,6 +586,7 @@ La fase 5 no cubre requisitos nuevos: refuerza RNF-02 y RNF-10 sobre lo ya entre
 | 2026-11-14 | Versión 2.0.2. Pruebas en cada commit y por servicio (D-29, tarea F3-A3). | 3, 5 | `@daniace` |
 | 2026-11-14 | Versión 2.0.3. Los avisos corren en GitHub Actions cada 5 minutos (D-30, #150). | 1.1, 3 | `@dimidio6` |
 | 2026-11-14 | Versión 2.0.4. La predicción pasa a `@dimidio6` en `services/prediccion/` (D-31): TimesFM 2.5 como candidato y LightGBM vigente. Tareas nuevas F3-B5 y F3-E3. | equipo, 1.1, 1.3, 3, 5, 6 | `@leonelcnr` |
+| 2026-11-14 | Versión 2.1. Se cierra la fase 3 y se abre la 4. El guion y el video quedan sin dueño y para el final (D-32). | encabezado, 3, 5, 10 | `@cosmosnehu77` |
 
 ## 10. Registro de cierres
 
@@ -593,7 +595,7 @@ La fase 5 no cubre requisitos nuevos: refuerza RNF-02 y RNF-10 sobre lo ya entre
 | 0 | 2026-11-14 | Abierta la fase 1 por decisión del líder. Siguen abiertas, sin bloquear a nadie: F0-A3 (#5), F0-B1 (#6), F0-B2 (#7), F0-C1 (#8), F0-D1 (#9), F0-F1 (#11) y F0-X1 (#12). F0-E1 (#10) se cierra junto con F1-E1. |
 | 1 | 2026-11-14 | Se abrió la fase 2 con F1 en paralelo (v1.7). |
 | 2 | 2026-11-14 | Humo 3 de 3 contra producción y las tres piezas en Cloudflare Pages; flujo área → focos → calendario → CSV verificado por `@dimidio6` (#112). Los datos todavía son las muestras (`datos-muestras-2`): los reales llegan con el histórico de FIRMS (#6). Cierra `@cosmosnehu77` antes de pasar el mando (D-28). |
-| 3 | | |
+| 3 | 2026-11-14 | Terminadas las tareas de los carriles A a E. Sin guion: el guion y el video quedan para el final (D-32). Siguen en la fase 4 #169 y #170 (D-31). Pendiente: los cron de `worker-vivo.yml` y `avisos.yml` no disparan; se corren a mano. |
 | 4 | | |
 | 5 (opcional) | | |
 

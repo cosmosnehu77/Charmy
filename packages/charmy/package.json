@@ -1,10 +1,12 @@
 {
   "name": "@charmy/charmy",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "description": "Componente de Charmy, la vizcacha de fuego: <Charmy mood outfit size say />.",
   "type": "module",
-  "sideEffects": false,
+  "sideEffects": [
+    "*.css"
+  ],
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
@@ -13,21 +15,26 @@
     "./core": {
       "types": "./dist/core.d.ts",
       "import": "./dist/core.js"
-    }
+    },
+    "./charmy.css": "./dist/charmy.css"
   },
-  "files": ["dist"],
+  "files": [
+    "dist"
+  ],
   "scripts": {
-    "build": "tsc -p tsconfig.build.json",
+    "build": "tsc -p tsconfig.build.json && node scripts/css.mjs",
     "dev": "tsc -p tsconfig.build.json --watch --preserveWatchOutput",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test": "vitest run",
     "muestrario": "node scripts/muestrario.mjs"
   },
   "peerDependencies": {
-    "react": ">=18"
+    "react": ">=19"
   },
   "peerDependenciesMeta": {
-    "react": { "optional": true }
+    "react": {
+      "optional": true
+    }
   },
   "devDependencies": {
     "@types/react": "19.3.0",

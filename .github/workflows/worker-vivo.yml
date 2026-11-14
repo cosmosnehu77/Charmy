@@ -6,7 +6,8 @@ name: Worker en vivo
 
 on:
   schedule:
-    - cron: "*/15 * * * *"
+    # Fuera del minuto 0: es cuando GitHub más atrasa o saltea corridas programadas.
+    - cron: "7-59/15 * * * *"
   workflow_dispatch:
 
 permissions:

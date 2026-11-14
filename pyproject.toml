@@ -2,7 +2,7 @@
 # infra/publicar es la herramienta de publicación de datos del carril A.
 # No es un paquete: solo agrupa a los servicios y comparte un único uv.lock.
 [tool.uv.workspace]
-members = ["services/*", "infra/publicar"]
+members = ["services/*", "infra/publicar", "infra/humo"]
 
 [dependency-groups]
 dev = ["ruff>=0.9", "pytest>=8"]

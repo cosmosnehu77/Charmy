@@ -23,6 +23,7 @@ jobs:
     outputs:
       js: ${{ steps.ver.outputs.js }}
       python: ${{ steps.ver.outputs.python }}
+      humo: ${{ steps.ver.outputs.humo }}
       desde: ${{ steps.ver.outputs.desde }}
     steps:
       - uses: actions/checkout@v7
@@ -39,7 +40,8 @@ jobs:
           echo "$archivos"
           tocado() { printf '%s\n' "$archivos" | grep -qE "$1" && echo true || echo false; }
           echo "js=$(tocado '^(apps/|packages/|package\.json$|pnpm-lock\.yaml$|pnpm-workspace\.yaml$|turbo\.json$|tsconfig\.base\.json$|\.nvmrc$|\.github/workflows/ci\.yml$)')" >> "$GITHUB_OUTPUT"
-          echo "python=$(tocado '^(services/|infra/publicar/|pyproject\.toml$|uv\.lock$|\.python-version$|\.github/workflows/ci\.yml$)')" >> "$GITHUB_OUTPUT"
+          echo "python=$(tocado '^(services/|infra/|pyproject\.toml$|uv\.lock$|\.python-version$|\.github/workflows/ci\.yml$)')" >> "$GITHUB_OUTPUT"
+          echo "humo=$(tocado '^(infra/humo/|packages/contracts/api/openapi\.yaml$|\.github/workflows/ci\.yml$)')" >> "$GITHUB_OUTPUT"
 
   js:
     needs: cambios
@@ -77,10 +79,34 @@ jobs:
         # pytest sale con 5 cuando no encuentra pruebas. Eso es un error: todo servicio tiene pruebas (RNF-15).
         run: uv run pytest services infra
 
+  humo:
+    # La prueba de humo contra el mock del contrato: si el contrato cambia y la prueba ya no lo cumple
+    # (o al revés), falla acá y no el día del despliegue. Después de cada despliegue corre en deploy-api.yml.
+    needs: cambios
+    if: needs.cambios.outputs.humo == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+      - uses: astral-sh/setup-uv@v10.3.3
+        with:
+          enable-cache: true
+      - name: Levantar el mock (Prism, puerto 4010)
+        run: |
+          pnpm --filter @charmy/contracts-api mock > prism.log 2>&1 &
+          for i in $(seq 1 90); do curl -fs http://localhost:4010/health > /dev/null && exit 0; sleep 1; done
+          cat prism.log; echo "::error::El mock no arrancó"; exit 1
+      - name: Prueba de humo contra el mock
+        run: uv run --package humo python -m humo http://localhost:4010
+
   ok:
     name: CI ok
     if: always()
-    needs: [cambios, js, python]
+    needs: [cambios, js, python, humo]
     runs-on: ubuntu-latest
     timeout-minutes: 2
     steps:

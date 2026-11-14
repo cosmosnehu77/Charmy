@@ -38,7 +38,7 @@ de avisos) pasan a `@dimidio6` con la carpeta `services/alertas/`.
 | **B · Datos** | `@leonelcnr` | Armonización, calendario, validación, fuentes fijas, tiempo e imagen satelital en el foco, predicción. | `services/pipeline/`, `services/contexto/`, `data/muestras/`, `packages/contracts/datos/`, `docs/metodologia/` |
 | **C · Backend** | `@BrunoAguinaga0` | Contrato de la API, API, focos en vivo, verificación, reportes. | `services/api/`, `services/worker/`, `packages/contracts/api/` |
 | **D · App** | `@daniace` | Mapa, calendario, modos novato y experto, tokens de diseño. | `apps/app/`, `packages/ui/` |
-| **E · Experiencia** | `@dimidio6`, salvo el componente (tabla de abajo) | Componente Charmy, landing, juego. | `packages/charmy/`, `apps/landing/`, `apps/juego/` |
+| **E · Experiencia** | `@dimidio6`, salvo el componente (tabla de abajo) | Componente Charmy, landing, juego. En la fase 3, el servicio de avisos (D-28). | `packages/charmy/`, `apps/landing/`, `apps/juego/`, `services/alertas/` |
 | **F · Contenido** | persona sin agente | Arte, textos, guion, video, reglas del evento, contacto con entidades. | `docs/entrega/`, `docs/contenido/` |
 
 **Cómo se reparte el carril E** (decisiones D-22 y D-25):
@@ -137,7 +137,7 @@ Las skills de `.claude/skills/` son rutas protegidas: cada dueño abre su PR y e
 | Landing | `apps/landing/` | `@dimidio6` | público | — |
 | App | `apps/app/` | `@daniace` | público | Consume la API y `packages/charmy` |
 | Juego | `apps/juego/` | `@dimidio6` | público | Consume `data/muestras/dia-juego.json` |
-| Componente Charmy | `packages/charmy/` | `@cosmosnehu77` | app, landing, juego | `packages/charmy/README.md`: `<Charmy mood outfit size say />` |
+| Componente Charmy | `packages/charmy/` | `@dimidio6` desde la fase 3 (hasta la 2, `@cosmosnehu77`) | app, landing, juego | `packages/charmy/README.md`: `<Charmy mood outfit size say />` |
 | Tokens de diseño | `packages/ui/` | `@daniace` | app, landing, juego | `packages/ui/tokens.css` |
 | Contrato de API | `packages/contracts/api/` | `@BrunoAguinaga0` | A, D, E | `openapi.yaml` + mock |
 | Esquema de datos | `packages/contracts/datos/` | `@leonelcnr` | C, D, E | `esquema.md` (columnas de Parquet y GeoJSON) |
@@ -146,7 +146,7 @@ Las skills de `.claude/skills/` son rutas protegidas: cada dueño abre su PR y e
 | API | `services/api/` | `@BrunoAguinaga0` | app, alertas, juego | Implementa el OpenAPI |
 | Worker en vivo | `services/worker/` | `@BrunoAguinaga0` | API | — |
 | Contexto del foco | `services/contexto/` | `@leonelcnr` | API | Paquete de Python que expone los routers de `/weather` (Meteomatics) y `/imagery` (Copernicus). La API lo monta con una línea: no es un servicio aparte que desplegar. |
-| Avisos | `services/alertas/` | `@cosmosnehu77` | entidades | Usa solo la API pública y un token de servicio |
+| Avisos | `services/alertas/` | `@dimidio6` (D-28) | entidades | Usa solo la API pública y un token de servicio |
 | Infraestructura | `infra/`, `.github/workflows/`, raíz | `@cosmosnehu77` | todos | `.env.example` |
 | Base de Charmy | `docs/charmy-base/` | carril F y `@cosmosnehu77` | E | Fuente del diseño aprobado |
 
@@ -573,7 +573,7 @@ La fase 5 no cubre requisitos nuevos: refuerza RNF-02 y RNF-10 sobre lo ya entre
 | 2026-11-14 | Versión 1.8. Se suma `@dimidio6` (D-25): carril E salvo el componente Charmy. Recibe la reserva (F1-E4, F3-E1, F3-E2, F4-E2, F5-E2) y la landing de `@BrunoAguinaga0` (F2-E2, F4-E1, F5-E1). Ya no hay tareas en reserva. Tarea F2-A4. | equipo, 1.3, 3, 5 | `@cosmosnehu77` |
 | 2026-11-14 | Versión 1.9. Respaldo de lo leído de Meteomatics para cuando la API falle o la cuenta venza (D-26, cambia F3-B3). Cloudflare Pages pasa a `@dimidio6` en la tarea nueva F2-E3 (D-27). | 3, 5 | `@cosmosnehu77` |
 | 2026-11-14 | Versión 2.0. Se cierra la fase 2 y se abre la 3. `@daniace` queda como líder interino hasta que vuelva `@cosmosnehu77` (D-28); F3-A1 y F3-A2 pasan a `@dimidio6`. | encabezado, equipo, 3, 5, 10 | `@cosmosnehu77` |
-| 2026-11-14 | Versión 2.0.1. La tabla de carriles refleja D-28: `services/alertas/` y el servicio de avisos pasan a `@dimidio6`. | equipo | `@daniace` |
+| 2026-11-14 | Versión 2.0.1. Las tablas de carriles y de componentes reflejan D-28: `services/alertas/` y el servicio de avisos pasan a `@dimidio6`; la de componentes también le da `packages/charmy/` desde la fase 3. | equipo, 1.3 | `@daniace` |
 
 ## 10. Registro de cierres
 

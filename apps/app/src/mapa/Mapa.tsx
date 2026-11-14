@@ -80,7 +80,7 @@ export default function Mapa() {
     m.on("style.load", () => {
       setFalla(false);
       agregarCapas(m, datos.current.area, datos.current.focos);
-      dibujo.current?.stop();
+      // Terra Draw ya se detuvo antes de setStyle (ver el efecto del perfil): acá se crea uno nuevo.
       dibujo.current = crearDibujo(m);
       const modo = useConsulta.getState().dibujando;
       if (modo) dibujo.current.setMode(modo);
@@ -99,6 +99,10 @@ export default function Mapa() {
     const m = mapa.current;
     if (!m) return;
     const config = perfiles[perfil];
+    // Terra Draw se detiene antes de cambiar el estilo, mientras sus fuentes existen. Si se detiene después,
+    // su limpieza falla (las fuentes ya no están), corta el style.load y el dibujo queda inactivo.
+    dibujo.current?.stop();
+    dibujo.current = null;
     m.setStyle(config.estilo, { diff: false, transformStyle: transformarEstilo(perfil) });
     m.setMaxPitch(config.inclinacionMax);
     m.easeTo({ pitch: config.inclinacion, bearing: config.relieve ? m.getBearing() : 0, duration: 600 });

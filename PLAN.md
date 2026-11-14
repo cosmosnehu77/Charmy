@@ -10,7 +10,7 @@
 
 **Fase activa:** 2
 **Líder:** `@cosmosnehu77`
-**Versión:** 1.7 · **Última actualización:** 14 de noviembre de 2026
+**Versión:** 1.8 · **Última actualización:** 14 de noviembre de 2026
 
 ## Objetivo del proyecto
 
@@ -24,8 +24,8 @@ Space Apps antes del cierre del domingo 15 de noviembre de 2026.
 ## Equipo y carriles
 
 Cada persona tiene un **carril**: un conjunto de carpetas que solo ella y su agente tocan.
-Hoy trabajan **cuatro personas con agente**. `@dimidio6` está en el repo pero todavía no participa: no tiene tareas
-asignadas ni figura en la lista de permitidos del tablero. Lo que le tocaría queda en [reserva](#reserva).
+Trabajan **cinco personas con agente**. `@dimidio6` se sumó en la fase 2 y tomó el carril E salvo el componente Charmy
+(decisión D-25).
 
 | Carril | Persona | Qué hace | Carpetas propias |
 |---|---|---|---|
@@ -33,32 +33,28 @@ asignadas ni figura en la lista de permitidos del tablero. Lo que le tocaría qu
 | **B · Datos** | `@leonelcnr` | Armonización, calendario, validación, fuentes fijas, tiempo e imagen satelital en el foco, predicción. | `services/pipeline/`, `services/contexto/`, `data/muestras/`, `packages/contracts/datos/`, `docs/metodologia/` |
 | **C · Backend** | `@BrunoAguinaga0` | Contrato de la API, API, focos en vivo, verificación, reportes. | `services/api/`, `services/worker/`, `packages/contracts/api/` |
 | **D · App** | `@daniace` | Mapa, calendario, modos novato y experto, tokens de diseño. | `apps/app/`, `packages/ui/` |
-| **E · Experiencia** | repartido (tabla de abajo) | Componente Charmy, landing, juego. | `packages/charmy/`, `apps/landing/`, `apps/juego/` |
+| **E · Experiencia** | `@dimidio6`, salvo el componente (tabla de abajo) | Componente Charmy, landing, juego. | `packages/charmy/`, `apps/landing/`, `apps/juego/` |
 | **F · Contenido** | persona sin agente | Arte, textos, guion, video, reglas del evento, contacto con entidades. | `docs/entrega/`, `docs/contenido/` |
 
-**Cómo se reparte el carril E** mientras el equipo activo es de cuatro (decisión D-22):
+**Cómo se reparte el carril E** (decisiones D-22 y D-25):
 
 | Parte | Carpeta | Quién | Tareas |
 |---|---|---|---|
 | Componente Charmy | `packages/charmy/` | `@cosmosnehu77` | F0-E1, F1-E1, F1-E3, F2-E1 |
-| Landing | `apps/landing/` | `@BrunoAguinaga0` | F1-E2, F2-E2, F4-E1, F5-E1 |
-| Juego y Charmy completo | `apps/juego/`, y `packages/charmy/` en la fase 3 | reserva | F1-E4, F3-E1, F3-E2, F4-E2, F5-E2 |
+| Landing | `apps/landing/` | `@dimidio6` (el esqueleto, F1-E2, lo hizo `@BrunoAguinaga0`) | F2-E2, F4-E1, F5-E1 |
+| Juego y Charmy completo | `apps/juego/`, y `packages/charmy/` desde la fase 3 | `@dimidio6` | F1-E4, F3-E1, F3-E2, F4-E2, F5-E2 |
 
-Carga de las fases 1 a 4, en tareas: `@BrunoAguinaga0` 12, `@cosmosnehu77` 10, `@leonelcnr` 10, `@daniace` 9,
-reserva 4 y contenido 4. Las de `@BrunoAguinaga0` incluyen la landing, que cae en las fases 1 y 2, cuando el backend
-ya tiene el contrato escrito y trabaja contra muestras. Las de `@daniace` son menos porque la app es el camino crítico
-de la demo. El líder suma el componente Charmy en las fases 1 y 2, cuando la plataforma pide poco, y además cierra
-fases, revisa las rutas protegidas y recorre la integración cada 6 horas.
+Tareas abiertas de las fases 1 a 4 al sumarse `@dimidio6`: `@leonelcnr` 7, `@daniace` 7, `@BrunoAguinaga0` 6,
+`@dimidio6` 6 y `@cosmosnehu77` 5, que además cierra fases, revisa las rutas protegidas y recorre la integración
+cada 6 horas. `@BrunoAguinaga0` queda solo con el backend, que en las fases 2 y 3 es camino crítico.
 
 ### Reserva
 
 Las tareas en **reserva** tienen su issue con la etiqueta `reserva` y sin persona asignada. Ninguna es parte del
 [criterio de MVP](REQUISITOS.md#criterio-de-mvp) ni bloquea a otra tarea.
 
-- **Si `@dimidio6` se suma:** el líder lo agrega a `AGENTS.md` y a `.github/board-allowlist`, le asigna los issues de
-  la reserva y lo anuncia en el tablero. Si se suma antes de la fase 2, recibe además el componente Charmy, para
-  descargar al líder.
-- **Si no se suma:** al abrir la fase 3, el líder ofrece la reserva en el tablero a quien tenga sus tareas al día.
+- **Hoy no hay tareas en reserva:** las tenía `@dimidio6` y se le asignaron al sumarse (D-25).
+- Si una persona deja de participar, el líder pasa sus tareas a la reserva y las ofrece en el tablero.
   Nadie la toma por su cuenta. Lo que quede sin dueño pasa a la hoja de ruta: el juego se muestra como prototipo y
   Charmy queda con sus tres estados animados.
 
@@ -133,9 +129,9 @@ Las skills de `.claude/skills/` son rutas protegidas: cada dueño abre su PR y e
 
 | Componente | Carpeta | Dueño | Lo consumen | Contrato |
 |---|---|---|---|---|
-| Landing | `apps/landing/` | `@BrunoAguinaga0` | público | — |
+| Landing | `apps/landing/` | `@dimidio6` | público | — |
 | App | `apps/app/` | `@daniace` | público | Consume la API y `packages/charmy` |
-| Juego | `apps/juego/` | reserva | público | Consume `data/muestras/dia-juego.json` |
+| Juego | `apps/juego/` | `@dimidio6` | público | Consume `data/muestras/dia-juego.json` |
 | Componente Charmy | `packages/charmy/` | `@cosmosnehu77` | app, landing, juego | `packages/charmy/README.md`: `<Charmy mood outfit size say />` |
 | Tokens de diseño | `packages/ui/` | `@daniace` | app, landing, juego | `packages/ui/tokens.css` |
 | Contrato de API | `packages/contracts/api/` | `@BrunoAguinaga0` | A, D, E | `openapi.yaml` + mock |
@@ -201,6 +197,7 @@ si nada: avisen en el tablero y propongan el PR que actualiza este documento.
 | D-22 | El equipo activo es de **cuatro personas con agente**. El carril E se reparte: el componente Charmy lo hace el líder, la landing el carril C, y el juego y el Charmy completo quedan en **reserva** para `@dimidio6` o para quien el líder designe. | `@dimidio6` todavía no participa. La reserva junta lo que no es parte del criterio de MVP y no bloquea a nadie: si no se suma, la entrega no se frena. | RNF-09, RF-KID, RF-CHA |
 | D-23 | **Pruebas antes que "terminado" y YAGNI.** Cada issue lleva sus "Pruebas mínimas"; la lógica se escribe con la prueba primero; las fuentes externas se prueban con respuestas grabadas, también cuando fallan; `CI ok` es obligatorio para fusionar. No se construye nada que el issue no pida. | Con cuatro agentes en paralelo, lo que no está probado se rompe en la integración, justo antes de la demo. Y en 48 horas, todo lo que sobra le quita tiempo a lo que se evalúa. | RNF-15, RNF-14, RNF-09 |
 | D-24 | **Relevo y lockfiles sin bloqueo.** Al ~90 % de uso de tokens, el agente deja la tarea con `tools/relevo dejar` y otra persona la sigue por un rato, solo en las carpetas de esa tarea, hasta que el dueño vuelve (`AGENTS.md` §7). Los PR abiertos que chocan solo en `uv.lock` o `pnpm-lock.yaml` los pone al día el flujo `al-dia.yml`. | Con un límite de uso por persona y cuatro personas en paralelo, una tarea parada frena a quien depende de ella. Y cada PR que suma un paquete choca en el lockfile con los demás: es mecánico, no tiene por qué esperar a nadie. | RNF-09, RNF-15 |
+| D-25 | `@dimidio6` se suma con agente y toma el carril E salvo el componente Charmy: el juego y el Charmy completo, que estaban en reserva, y la landing desde F2-E2. `@BrunoAguinaga0` queda solo con el backend. | Reparte la carga (6–7 tareas abiertas por persona en las fases 1 a 4) y libera al backend, que es camino crítico en las fases 2 y 3. Reemplaza el reparto de D-22. | RNF-09, RF-KID, RF-CHA, RF-LAN |
 
 ---
 
@@ -299,7 +296,7 @@ protección alcanza solo al `CLAUDE.md` de la raíz.
 ### Fase 1 — Cimientos y contratos (h 0–4)
 
 **Objetivo:** un monorepo que despliega y contratos que permiten trabajar en paralelo.
-**Criterio de cierre:** `main` compila y pasa CI; landing, app y API responden en producción con un "hola" (también el juego, si la reserva ya tiene dueño); los contratos de la [sección 4](#4-contratos-compartidos) están en estado "acordado" y anunciados en el tablero.
+**Criterio de cierre:** `main` compila y pasa CI; landing, app y API responden en producción con un "hola" y el juego también; los contratos de la [sección 4](#4-contratos-compartidos) están en estado "acordado" y anunciados en el tablero.
 
 | Issue | ID | Tarea | Dueño | Carpetas | Depende de | Requisitos | Estado |
 |---|---|---|---|---|---|---|---|
@@ -317,7 +314,7 @@ protección alcanza solo al `CLAUDE.md` de la raíz.
 | #24 | F1-E1 | Componente Charmy con su API final a partir de `docs/charmy-base/`, todavía sin animar | `@cosmosnehu77` | `packages/charmy/` | — | RF-CHA-01 | pendiente |
 | #25 | F1-E2 | Esqueleto de la landing | `@BrunoAguinaga0` | `apps/landing/` | — (importa a Charmy cuando F1-E1 está en `main`) | RF-CHA-04 | pendiente |
 | #26 | F1-E3 | Skill `charmy` | `@cosmosnehu77` | `.claude/skills/charmy/` | F1-E1 | RNF-09 | pendiente |
-| #27 | F1-E4 | Esqueleto del juego | reserva | `apps/juego/` | — (importa a Charmy cuando F1-E1 está en `main`) | RF-CHA-04 | pendiente |
+| #27 | F1-E4 | Esqueleto del juego | `@dimidio6` | `apps/juego/` | — (importa a Charmy cuando F1-E1 está en `main`) | RF-CHA-04 | pendiente |
 | #28 | F1-F1 | Guion de la demo de 3 minutos y textos de la landing | carril F | `docs/entrega/`, `docs/contenido/` | — | RF-LAN-01 | pendiente |
 
 **Independencia en esta fase.** Nadie espera a F1-A1: los workspaces usan globs, así que cada persona crea su carpeta y
@@ -333,6 +330,7 @@ el monorepo la toma sola. Ninguna tarea espera a otra persona: la landing arranc
 | #29 | F2-A1 | Almacenamiento público de los datos estáticos y script de publicación | `@cosmosnehu77` | `infra/` | F1-A2 | RNF-02 | pendiente |
 | #30 | F2-A2 | Prueba de humo del flujo completo en producción, corrida en CI con la colección, y README base | `@cosmosnehu77` | `.github/workflows/`, `README.md` | F1-C1 | RNF-02, RNF-01 | pendiente |
 | #84 | F2-A3 | Calidad: CI en un solo flujo con chequeo obligatorio `CI ok`, política de pruebas (`docs/PRUEBAS.md`) y "Pruebas mínimas" en cada issue | `@cosmosnehu77` | `.github/workflows/`, `docs/PRUEBAS.md` | F1-A2 | RNF-15 | en curso |
+| #99 | F2-A4 | Sumar a `@dimidio6` (tablero, `AGENTS.md`, este plan) y rebalancear el carril E | `@cosmosnehu77` | rutas protegidas | — | RNF-09 | en curso |
 | #31 | F2-B1 | Armonización v1: filtros, días-celda, calibración en cadena y validación dejando un año afuera | `@leonelcnr` | `services/pipeline/` | F1-B1 | RF-ARM-01, RF-ARM-02, RF-ARM-03 | pendiente |
 | #32 | F2-B2 | Agregados de calendario, anomalías y métricas de validación; publicación de los Parquet | `@leonelcnr` | `services/pipeline/` | F2-B1, F2-A1 | RF-CAL-01, RF-CAL-02, RF-CAL-03, RF-ARM-04 | pendiente |
 | #33 | F2-C1 | `/hotspots` con filtros y salida en CSV | `@BrunoAguinaga0` | `services/api/` | F1-C2 (usa F1-B2) | RF-MAP-05, RF-EXP-01 | pendiente |
@@ -340,7 +338,7 @@ el monorepo la toma sola. Ninguna tarea espera a otra persona: la landing arranc
 | #35 | F2-D1 | Selección de área (dibujo y latitud/longitud), fechas y filtros sobre el mapa | `@daniace` | `apps/app/` | F1-D2 (usa el mock de F1-C1) | RF-MAP-01, RF-MAP-02, RF-MAP-04, RF-MAP-05 | pendiente |
 | #36 | F2-D2 | Calendario año × mes con anomalía y rampas accesibles; descarga del CSV | `@daniace` | `apps/app/` | F2-D1 | RF-CAL-01, RF-CAL-02, RF-CAL-03, RF-CAL-05, RF-EXP-01 | pendiente |
 | #37 | F2-E1 | Charmy: tres estados animados (saluda, explica, alerta), globo de diálogo y movimiento reducido | `@cosmosnehu77` | `packages/charmy/` | F1-E1 | RF-CHA-02, RF-CHA-06 | pendiente |
-| #38 | F2-E2 | Landing completa: portada con Charmy, problema, funcionalidades, equipo, créditos y accesos | `@BrunoAguinaga0` | `apps/landing/` | F1-E2 (textos de F1-F1) | RF-LAN-01, RF-LAN-02, RF-LAN-03, RF-LAN-04 | pendiente |
+| #38 | F2-E2 | Landing completa: portada con Charmy, problema, funcionalidades, equipo, créditos y accesos | `@dimidio6` | `apps/landing/` | F1-E2 (textos de F1-F1) | RF-LAN-01, RF-LAN-02, RF-LAN-03, RF-LAN-04 | pendiente |
 | #39 | F2-F1 | Frases de Charmy para la app y retoques del arte | carril F | `docs/contenido/`, `docs/charmy-base/` | — | RF-CHA-07 | pendiente |
 
 **Comunicación entre carriles.** B → C: cuando F2-B2 publica, avisa en el tablero la ruta de los datos; C cambia una
@@ -367,8 +365,8 @@ A recorre el flujo en producción y publica lo que esté roto.
 | #50 | F3-D2 | Modo experto: selector de serie, panel de validación, atributos originales, descargas extra, reproducción temporal | `@daniace` | `apps/app/` | F2-D2 | RF-MOD-02, RF-ARM-04, RF-EXP-02, RF-MAP-07 | pendiente |
 | #51 | F3-D3 | Capa de focos recientes con veredicto y evidencia; formulario de reporte | `@daniace` | `apps/app/` | F2-D1 (usa el mock; datos reales con F3-C1 a C3) | RF-VIV-01, RF-VIV-02, RF-ALE-01, RF-ALE-06 | pendiente |
 | #52 | F3-D4 | Panel de contexto del foco: viento, riesgo de incendio e imagen satelital reciente como capa del mapa, con su fecha, nubosidad y atribución | `@daniace` | `apps/app/` | F2-D1 (usa el mock; datos reales con F3-B3 y F3-B4) | RF-CTX-01, RF-CTX-03, RNF-14 | pendiente |
-| #53 | F3-E1 | Charmy Kids: un nivel jugable con focos de un día real, puntaje, combo y cierre educativo | reserva | `apps/juego/` | F1-E4 (usa F1-B2) | RF-KID-01, RF-KID-02, RF-KID-03 | pendiente |
-| #54 | F3-E2 | Charmy completo: los seis estados y los cinco vestuarios | reserva | `packages/charmy/` | F2-E1 | RF-CHA-02, RF-CHA-03 | pendiente |
+| #53 | F3-E1 | Charmy Kids: un nivel jugable con focos de un día real, puntaje, combo y cierre educativo | `@dimidio6` | `apps/juego/` | F1-E4 (usa F1-B2) | RF-KID-01, RF-KID-02, RF-KID-03 | pendiente |
+| #54 | F3-E2 | Charmy completo: los seis estados y los cinco vestuarios | `@dimidio6` | `packages/charmy/` | F2-E1 | RF-CHA-02, RF-CHA-03 | pendiente |
 | #55 | F3-F1 | Grabar la demo y armar las slides | carril F | `docs/entrega/` | — | RNF-07 | pendiente |
 
 **Comunicación entre carriles.** El servicio de avisos (A) no comparte base ni código con la API (C): consulta `/live` y
@@ -377,7 +375,7 @@ conectan a lo real cuando C lo anuncia. La verificación (C) usa la máscara de 
 mientras tanto usa la muestra. El tiempo y la imagen satelital del foco (B) son un paquete en su propia carpeta: cuando está listo, B avisa
 en el tablero y C lo monta en la API con una línea. La app (D) consume los dos por la API, primero contra el mock.
 
-**Tope de tiempo.** Si a la hora 28 el juego no es jugable de punta a punta, se muestra como prototipo en la landing; lo mismo si la reserva sigue sin dueño.
+**Tope de tiempo.** Si a la hora 28 el juego no es jugable de punta a punta, se muestra como prototipo en la landing.
 Si la predicción no supera la compuerta, no se muestra. Si falta tiempo en el carril D, cae primero F3-D4, después
 F3-D3, y se conservan F3-D1 y F3-D2. Aunque caiga F3-D4, Meteomatics sigue visible en el aviso de Telegram (F3-A1).
 Si falta tiempo en el carril B, el orden es: fuentes fijas, tiempo, imagen y, por último, predicción.
@@ -393,8 +391,8 @@ Si falta tiempo en el carril B, el orden es: fuentes fijas, tiempo, imagen y, po
 | #57 | F4-B1 | Documento del método: armonización, validación, supuestos y fuentes, con el contraste manual de las cifras contra estadísticas públicas externas | `@leonelcnr` | `docs/metodologia/` | fase 3 | RNF-07, RF-ARM-04, RF-CTX-06, RNF-13 | pendiente |
 | #58 | F4-C1 | Datos cacheados para la demo, servicios despiertos y errores claros | `@BrunoAguinaga0` | `services/api/`, `services/worker/` | fase 3 | RNF-02 | pendiente |
 | #59 | F4-D1 | Pulido de la app: accesibilidad, ancho de teléfono y textos | `@daniace` | `apps/app/` | fase 3 | RNF-03, RNF-04 | pendiente |
-| #60 | F4-E1 | Pulido de la landing; enlaces entre las tres piezas | `@BrunoAguinaga0` | `apps/landing/` | fase 3 | RF-LAN-04, RNF-12 | pendiente |
-| #61 | F4-E2 | Pulido del juego | reserva | `apps/juego/` | F3-E1 | RNF-12 | pendiente |
+| #60 | F4-E1 | Pulido de la landing; enlaces entre las tres piezas | `@dimidio6` | `apps/landing/` | fase 3 | RF-LAN-04, RNF-12 | pendiente |
+| #61 | F4-E2 | Pulido del juego | `@dimidio6` | `apps/juego/` | F3-E1 | RNF-12 | pendiente |
 | #62 | F4-F1 | Video o slides finales | carril F | `docs/entrega/` | F3-F1 | RNF-07, RNF-11 | pendiente |
 | #63 | F4-X1 | Envío en la plataforma de Space Apps | carril F y `@cosmosnehu77` | — | F4-A1, F4-F1 | RNF-01 | pendiente |
 
@@ -440,8 +438,8 @@ demo), el worker pasa a ser una tarea programada administrada y todo queda en un
 | #65 | F5-B1 | Publicar los Parquet en Blob Storage con lectura pública, CORS y caché; comprobar los pedidos por rango | `@leonelcnr` | `services/pipeline/` | F5-A1 | RNF-02 | pendiente |
 | #66 | F5-A2 | Crear las tres Static Web Apps y sus flujos de despliegue, que compilan en CI y suben la carpeta construida | `@cosmosnehu77` | `.github/workflows/`, `infra/azure/` | F5-A1 | RNF-01 | pendiente |
 | #67 | F5-D1 | Configuración de la app para Static Web Apps (ruta de respaldo y cabeceras) y prueba en la dirección nueva | `@daniace` | `apps/app/` | F5-A2 | RNF-03 | pendiente |
-| #68 | F5-E1 | Configuración de la landing para Static Web Apps y prueba en la dirección nueva | `@BrunoAguinaga0` | `apps/landing/` | F5-A2 | RNF-12 | pendiente |
-| #69 | F5-E2 | Configuración del juego para Static Web Apps y prueba en la dirección nueva | reserva | `apps/juego/` | F5-A2 | RNF-12 | pendiente |
+| #68 | F5-E1 | Configuración de la landing para Static Web Apps y prueba en la dirección nueva | `@dimidio6` | `apps/landing/` | F5-A2 | RNF-12 | pendiente |
+| #69 | F5-E2 | Configuración del juego para Static Web Apps y prueba en la dirección nueva | `@dimidio6` | `apps/juego/` | F5-A2 | RNF-12 | pendiente |
 | #70 | F5-C1 | API en Container Apps con una réplica mínima, worker como tarea programada, secretos y CORS para los orígenes nuevos | `@BrunoAguinaga0` | `services/api/`, `services/worker/` | F5-A1, F5-B1 | RNF-02 | pendiente |
 | #71 | F5-A3 | Avisos en Container Apps | `@cosmosnehu77` | `services/alertas/` | F5-C1 | RF-ALE-02 | pendiente |
 | #72 | F5-A4 | Prueba de humo completa contra Azure, cambio de DNS o de variables, y actualización de la tabla de referencia y de D-21 | `@cosmosnehu77` | `.github/workflows/`, `PLAN.md` | F5-B1, F5-D1, F5-E1, F5-C1 | RNF-02 | pendiente |
@@ -478,7 +476,7 @@ Qué tareas cubren cada requisito. Si un requisito de `REQUISITOS.md` no aparece
 | RF-EXP-02 | F3-D2 | 3 |
 | RF-MOD-01, 02, 03 | F3-D1, F3-D2 | 3 |
 | RF-CHA-01, 04 | F0-E1, F1-E1, F1-E2, F1-E4 | 1 |
-| RF-CHA-02, 03, 06 | F2-E1, F3-E2 (reserva) | 2 (mínimo) / 3 |
+| RF-CHA-02, 03, 06 | F2-E1, F3-E2 | 2 (mínimo) / 3 |
 | RF-CHA-05 | F3-D1 | 3 |
 | RF-CHA-07 | F2-F1 | 2 |
 | RF-LAN-01 a 04 | F1-F1, F2-E2, F4-E1 | 2 |
@@ -488,7 +486,7 @@ Qué tareas cubren cada requisito. Si un requisito de `REQUISITOS.md` no aparece
 | RF-ALE-05 | sin tarea (deseable) | hoja de ruta |
 | RF-ALE-07 | cumplido por diseño (D-14) | — |
 | RF-PRE-01, 02 | F3-B2 | 3, con compuerta |
-| RF-KID-01, 02, 03 | F1-B2, F1-E4, F3-E1 (reserva) | 3, si la reserva tiene dueño |
+| RF-KID-01, 02, 03 | F1-B2, F1-E4, F3-E1 | 3 |
 | RF-KID-04, 05 | sin tarea | hoja de ruta |
 | RF-CTX-01 | F0-B2, F3-B3, F3-D4 | 3 |
 | RF-CTX-02 | F3-A1 | 3 |
@@ -563,6 +561,7 @@ La fase 5 no cubre requisitos nuevos: refuerza RNF-02 y RNF-10 sobre lo ya entre
 | 2026-11-14 | Datos estáticos: se elige GitHub Releases con manifiesto (`infra/publicar`, F2-A1); R2 queda como alternativa. Contrato nuevo: manifiesto de datos publicados. | 1.1, 4 | `@cosmosnehu77` |
 | 2026-11-14 | Versión 1.6. Relevo por límite de uso y lockfiles al día solos (D-24, F1-A3): `tools/relevo`, skill `relevo`, `AGENTS.md` §7 y flujo `al-dia.yml`. `tools/al-dia` ya no corre scripts de instalación. | 1.2, 3, 5, 7 | `@cosmosnehu77` |
 | 2026-11-14 | Versión 1.7. Se abre la fase 2. Las tareas de la fase 1 que siguen abiertas (#21, #25, #27, #28) continúan en paralelo: ninguna comparte carpeta con una tarea de otro dueño de la fase 2. | encabezado | `@cosmosnehu77` |
+| 2026-11-14 | Versión 1.8. Se suma `@dimidio6` (D-25): carril E salvo el componente Charmy. Recibe la reserva (F1-E4, F3-E1, F3-E2, F4-E2, F5-E2) y la landing de `@BrunoAguinaga0` (F2-E2, F4-E1, F5-E1). Ya no hay tareas en reserva. Tarea F2-A4. | equipo, 1.3, 3, 5 | `@cosmosnehu77` |
 
 ## 10. Registro de cierres
 

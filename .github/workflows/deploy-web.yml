@@ -1,0 +1,63 @@
+# Despliegue de landing, app y juego en Cloudflare Pages al entrar cambios en main.
+# Cada pieza se salta sola si su carpeta todavía no existe o si faltan los secretos de Cloudflare.
+# Secretos del repo: CLOUDFLARE_API_TOKEN, CLOUDFLARE_ACCOUNT_ID. Variable del repo: VITE_API_URL.
+name: Despliegue web
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "apps/**"
+      - "packages/**"
+      - "pnpm-lock.yaml"
+      - ".github/workflows/deploy-web.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  pages:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    concurrency:
+      group: deploy-web-${{ matrix.pieza }}
+      cancel-in-progress: false
+    strategy:
+      fail-fast: false
+      matrix:
+        pieza: [landing, app, juego]
+    env:
+      HAY_CLOUDFLARE: ${{ secrets.CLOUDFLARE_API_TOKEN != '' && secrets.CLOUDFLARE_ACCOUNT_ID != '' }}
+    steps:
+      - uses: actions/checkout@v7
+      - name: ¿Existe la pieza?
+        id: existe
+        run: |
+          if [ -f "apps/${{ matrix.pieza }}/package.json" ]; then echo "si=true" >> "$GITHUB_OUTPUT"
+          else echo "apps/${{ matrix.pieza }} todavía no existe: se salta."; echo "si=false" >> "$GITHUB_OUTPUT"; fi
+      - name: Aviso si faltan secretos
+        if: steps.existe.outputs.si == 'true' && env.HAY_CLOUDFLARE != 'true'
+        run: echo "::warning::Faltan CLOUDFLARE_API_TOKEN o CLOUDFLARE_ACCOUNT_ID; no se despliega ${{ matrix.pieza }}."
+      - uses: pnpm/action-setup@v6
+        if: steps.existe.outputs.si == 'true' && env.HAY_CLOUDFLARE == 'true'
+      - uses: actions/setup-node@v7
+        if: steps.existe.outputs.si == 'true' && env.HAY_CLOUDFLARE == 'true'
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - name: Compilar
+        if: steps.existe.outputs.si == 'true' && env.HAY_CLOUDFLARE == 'true'
+        env:
+          VITE_API_URL: ${{ vars.VITE_API_URL }}
+        run: |
+          pnpm install --frozen-lockfile
+          pnpm turbo run build --filter="@charmy/${{ matrix.pieza }}"
+      - name: Publicar en Cloudflare Pages
+        if: steps.existe.outputs.si == 'true' && env.HAY_CLOUDFLARE == 'true'
+        uses: cloudflare/wrangler-action@v4
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          preCommands: npx wrangler pages project create charmy-${{ matrix.pieza }} --production-branch main || true
+          command: pages deploy apps/${{ matrix.pieza }}/dist --project-name charmy-${{ matrix.pieza }} --branch main

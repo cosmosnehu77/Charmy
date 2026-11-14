@@ -5,6 +5,7 @@
 import { interfaz, rampaConteo } from "@charmy/ui";
 import type { ExpressionSpecification, Map as MapaMapLibre } from "maplibre-gl";
 import type { ColeccionFocos, Poligono } from "@/consulta/consulta";
+import { VEREDICTOS } from "@/vivo/veredictos";
 
 /** Cortes de potencia radiativa (MW) para el color de los focos, con la rampa YlOrRd de 7 clases. */
 export const CORTES_FRP = [5, 10, 20, 50, 100, 300] as const;
@@ -22,10 +23,24 @@ export function datosArea(area: Poligono | null) {
   return area ? { type: "Feature" as const, geometry: area, properties: {} } : vacio;
 }
 
-export function agregarCapas(m: MapaMapLibre, area: Poligono | null, focos: ColeccionFocos | null) {
+/** Color de cada foco reciente según su veredicto (RF-VIV-02); en la lista va también en texto. */
+const colorPorVeredicto = [
+  "match",
+  ["get", "verdict"],
+  ...Object.entries(VEREDICTOS).flatMap(([clave, v]) => [clave, v.color]),
+  VEREDICTOS.sin_confirmar?.color ?? interfaz.tintaSuave,
+] as unknown as ExpressionSpecification;
+
+export function agregarCapas(
+  m: MapaMapLibre,
+  area: Poligono | null,
+  focos: ColeccionFocos | null,
+  vivo: ColeccionFocos | null,
+) {
   if (m.getSource("area")) return;
   m.addSource("area", { type: "geojson", data: datosArea(area) });
   m.addSource("focos", { type: "geojson", data: focos ?? vacio });
+  m.addSource("vivo", { type: "geojson", data: vivo ?? vacio, promoteId: "id" });
   m.addLayer({
     id: "area-relleno",
     type: "fill",
@@ -49,6 +64,18 @@ export function agregarCapas(m: MapaMapLibre, area: Poligono | null, focos: Cole
       "circle-stroke-color": interfaz.tinta,
       "circle-stroke-width": 0.75,
       "circle-opacity": 0.9,
+    },
+  });
+  // Focos de las últimas 48 horas: más grandes, con borde blanco, para distinguirlos del histórico.
+  m.addLayer({
+    id: "vivo",
+    type: "circle",
+    source: "vivo",
+    paint: {
+      "circle-color": colorPorVeredicto,
+      "circle-radius": 7,
+      "circle-stroke-color": interfaz.superficie,
+      "circle-stroke-width": 2,
     },
   });
 }

@@ -8,7 +8,7 @@ Los nombres de campo siguen al OpenAPI (`docs/repo-inicial/openapi.yaml`), así 
 | Tabla | Estado | La escribe |
 |---|---|---|
 | `focos` | **estable** | F1-B1, `services/pipeline` (`pipeline.firms`) |
-| `serie` | borrador | F2-B1 |
+| `serie` | borrador | F2-B1 (hoy, muestra provisoria) |
 | `calendario` | borrador | F2-B2 |
 | `metricas` | borrador | F2-B2 |
 
@@ -58,7 +58,8 @@ Días-celda con fuego por región y mes, en "equivalente VIIRS" (D-02, D-03).
 | `source` | string | `harmonized`, `modis`, `viirs` |
 | `value` | float64 | Días-celda con fuego |
 | `lower`, `upper` | float64 | Intervalo de incertidumbre (RF-ARM-03) |
-| `origin` | string | `viirs_medido` o `modis_convertido` |
+| `origin` | string | `viirs_medido`, `modis_medido` (solo en `source = modis`) o `modis_convertido` |
+| `provisional` | bool | `true` si el valor es de ejemplo y no un resultado. La app lo tiene que mostrar como tal |
 
 ## `calendario` (borrador, F2-B2)
 
@@ -66,7 +67,7 @@ Lo de `serie` más la comparación con la historia (RF-CAL-02). Coincide con `Ca
 
 | Columna | Tipo | Descripción |
 |---|---|---|
-| `year`, `month`, `value`, `lower`, `upper`, `origin` | | Como en `serie` |
+| `region`, `year`, `month`, `value`, `lower`, `upper`, `origin`, `provisional` | | Como en `serie`, solo `source = harmonized` |
 | `median` | float64 | Mediana histórica del mismo mes |
 | `percentile` | float64 | Posición del valor en la historia de ese mes, 0–100 |
 
@@ -80,3 +81,27 @@ Validación dejando un año afuera, por región (RF-ARM-04). Coincide con `/harm
 | `pair` | string | Tramo de la cadena: `modis_snpp` o `noaa20_snpp` |
 | `r2`, `bias`, `mae` | float64 | Métricas sobre los años dejados afuera |
 | `n_months` | int32 | Meses de solape usados |
+| `provisional` | bool | Como en `serie` |
+
+## Muestras (`data/muestras/`)
+
+Las genera `uv run --package pipeline python -m pipeline.muestras <csv>... --out data/muestras --dia <fecha>`.
+
+| Archivo | Contenido | ¿Real? |
+|---|---|---|
+| `focos.parquet` | Tabla `focos` en un solo archivo, con `satellite` y `year` como columnas | Real: FIRMS NRT del 7 al 14/11/2026, sur de Argentina y Chile |
+| `focos.geojson` | Los mismos focos en GeoJSON | Real |
+| `serie.parquet`, `calendario.parquet`, `metricas.parquet` | Tablas de arriba para `AR-U` (Chubut) y `CL-AR` (Araucanía) | **Provisorio**: `provisional = true` |
+| `dia-juego.json` | Focos VIIRS de un día, para el juego (RF-KID-02) | Real |
+
+`dia-juego.json`:
+
+```json
+{
+  "fecha": "2026-11-12",
+  "fuente": "NASA FIRMS, VIIRS NOAA-20 y NOAA-21 (NRT)",
+  "provisional": false,
+  "bbox": [-76, -56, -62, -35],
+  "focos": [{ "lat": -52.52, "lon": -70.24, "hora_utc": "04:04", "frp": 1.37, "confidence": "nominal" }]
+}
+```

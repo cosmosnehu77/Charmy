@@ -1,18 +1,6 @@
-"""Botones de estado del aviso (RF-ALE-03). La API va simulada."""
+"""Botones de estado del aviso (RF-ALE-03). El PATCH /alerts del toque se prueba en test_corrida.py."""
 
-import asyncio
-
-from alertas.botones import al_tocar, botones
-
-
-class ApiFalsa:
-    def __init__(self, responde: bool = True):
-        self.responde = responde
-        self.parches = []
-
-    async def actualizar_alerta(self, alert_id, status):
-        self.parches.append((alert_id, status))
-        return self.responde
+from alertas.botones import botones, leer_dato
 
 
 def test_cada_aviso_trae_los_cuatro_estados():
@@ -21,22 +9,11 @@ def test_cada_aviso_trae_los_cuatro_estados():
     assert all(len(d.encode()) <= 64 for _, d in teclado)  # límite de callback_data de Telegram
 
 
-def test_tocar_un_boton_llama_a_patch_alerts():
-    api = ApiFalsa()
-    _, dato = botones("muestra-a-0001")[1]
-    respuesta = asyncio.run(al_tocar(api, dato))
-    assert api.parches == [("muestra-a-0001", "en_camino")]
-    assert respuesta == "Listo: quedó como «En camino»."
+def test_el_dato_del_boton_dice_alerta_y_estado():
+    assert leer_dato(botones("muestra-a-0001")[1][1]) == ("muestra-a-0001", "en_camino")
 
 
-def test_si_la_api_falla_lo_dice():
-    api = ApiFalsa(responde=False)
-    _, dato = botones("a-1")[0]
-    assert asyncio.run(al_tocar(api, dato)) == "No pude guardar el estado. Probá de nuevo en un rato."
-
-
-def test_un_dato_que_no_es_un_boton_nuestro_no_llama_a_la_api():
-    api = ApiFalsa()
-    assert asyncio.run(al_tocar(api, "otra:cosa")) is None
-    assert asyncio.run(al_tocar(api, "e:a-1:borrar")) is None
-    assert api.parches == []
+def test_un_dato_que_no_es_un_boton_nuestro_se_ignora():
+    assert leer_dato("otra:cosa") is None
+    assert leer_dato("e:a-1:borrar") is None
+    assert leer_dato("e::visto") is None

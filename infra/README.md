@@ -8,6 +8,7 @@ Dueño: `@cosmosnehu77` (carril A). Qué se despliega y dónde está en `PLAN.md
 | `al-dia.yml` | `main` con cambios en `uv.lock` o `pnpm-lock.yaml`, o a mano | Pone al día los PR abiertos que chocan **solo** en lockfiles (con `tools/al-dia` de `main`), pushea y vuelve a correr su CI. En un conflicto real, comenta en el PR mencionando a quien lo abrió. |
 | `deploy-web.yml` | `main` con cambios en `apps/` o `packages/`, o a mano | Compila landing, app y juego y los publica en Cloudflare Pages (`charmy-landing`, `charmy-app`, `charmy-juego`). |
 | `deploy-api.yml` | `main` con cambios en `services/api/` o `services/contexto/`, o a mano | Avisa a la plataforma de la API con su "deploy hook", espera a que responda `/health` y corre la prueba de humo. |
+| `avisos.yml` | Cada 5 minutos, o a mano | Una corrida del servicio de avisos (D-30): guarda los estados de los botones tocados y manda por Telegram los avisos nuevos de la zona. Sin sus secretos, solo avisa que faltan. |
 
 Cada pieza que todavía no existe se salta sola, así que los flujos se pueden dejar activos desde el primer día.
 
@@ -20,9 +21,14 @@ Cada pieza que todavía no existe se salta sola, así que los flujos se pueden d
 | `API_DEPLOY_HOOK` | secreto | La plataforma de la API (en Render: Settings → Deploy Hook). |
 | `VITE_API_URL` | variable | Dirección pública de la API (o del mock mientras no exista). |
 | `API_URL` | variable | La misma dirección, con su prefijo (`https://<host>/api/v1`), para la prueba de vida y la de humo. |
+| `TELEGRAM_BOT_TOKEN` | secreto | @BotFather → `/mybots` → el bot de avisos → *API Token* (forma `<número>:<clave>`). |
+| `TELEGRAM_CHAT_ID` | secreto | ID del grupo de la entidad de demostración (número negativo). Lo saca `getUpdates` después de sumar el bot al grupo. |
+| `CHARMY_SERVICE_TOKEN` | secreto | El mismo valor que tiene la API en su plataforma. Lo genera el carril C. |
+| `CHARMY_API_URL` | variable | Dirección pública de la API **sin** `/api/v1`, para los avisos. Si falta, se usa la de Render. |
 
-Las claves de FIRMS, Meteomatics, Copernicus, NVIDIA y Telegram **no** van en GitHub: se cargan en la plataforma
-de la API y de los avisos, porque solo el servidor las usa (RNF-06).
+Las claves de Meteomatics y Copernicus **no** van en GitHub: se cargan en la plataforma de la API, porque solo el
+servidor las usa (RNF-06). Las excepciones son las tareas programadas que corren en Actions: el worker de vivo (FIRMS,
+NVIDIA y la base) y los avisos (Telegram y el token de servicio, D-30).
 
 ## Datos publicados (F2-A1)
 

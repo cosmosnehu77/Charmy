@@ -42,10 +42,11 @@ export function PanelValidacion() {
           <p className="text-xs text-tinta-suave">
             Método: {consulta.data.method}. Solape de cada tramo: {consulta.data.overlap}.
           </p>
-          <div className="overflow-x-auto">
+          {/* Muchas regiones: la tabla se desplaza dentro de su caja, con el encabezado fijo. */}
+          <div className="max-h-80 overflow-auto">
             <table className="w-full min-w-[32rem] text-left font-mono text-xs">
               <caption className="sr-only">Métricas de validación por región y tramo de calibración</caption>
-              <thead className="text-tinta-suave">
+              <thead className="sticky top-0 bg-card text-tinta-suave">
                 <tr>
                   <th scope="col" className="py-1 font-medium">Región</th>
                   <th scope="col" className="py-1 font-medium">Tramo</th>

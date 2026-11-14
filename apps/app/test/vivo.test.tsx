@@ -170,3 +170,50 @@ describe("reporte ciudadano (RF-ALE-01, RF-ALE-06)", () => {
     expect(within(form).getByLabelText(/Qué ves/)).toHaveValue("Humo");
   });
 });
+
+describe("lista de focos recientes con muchos focos", () => {
+  const muchos = (n: number, lat: number, lon: number) =>
+    Array.from({ length: n }, (_, i) => ({
+      type: "Feature",
+      id: `N20-${String(i).padStart(4, "0")}`,
+      geometry: { type: "Point", coordinates: [lon, lat] },
+      properties: {
+        acq_datetime: `2026-11-14T${String(i % 24).padStart(2, "0")}:00:00Z`,
+        satellite: "N20",
+        instrument: "VIIRS",
+        confidence: "nominal",
+        frp: 5,
+        daynight: "D",
+        verdict: "probable",
+      },
+    }));
+  const conVivo = (features: unknown[]) =>
+    fetchSimulado.mockImplementation(async (url) => {
+      const u = String(url);
+      if (u.includes("/live")) return new Response(JSON.stringify({ ...vivo, features }));
+      if (u.includes("/health")) return new Response(JSON.stringify({ status: "ok" }));
+      return new Response(JSON.stringify({ type: "FeatureCollection", features: [] }));
+    });
+
+  it("muestra como máximo los 50 más nuevos y dice cuántos hay", async () => {
+    conVivo(muchos(120, -30, -65));
+    montar();
+    await userEvent.setup().click(screen.getByRole("checkbox", { name: /focos de las últimas 48 horas/i }));
+    const lista = await screen.findByRole("list", { name: "Focos recientes" });
+    expect(within(lista).getAllByRole("listitem")).toHaveLength(50);
+    expect(screen.getByText(/120 focos de VIIRS/)).toBeInTheDocument();
+    expect(screen.getByText(/mostramos los 50 más nuevos/i)).toBeInTheDocument();
+  });
+
+  it("con un área elegida, la lista muestra solo los focos de esa área", async () => {
+    conVivo([...muchos(3, -42.5, -71.3), ...muchos(10, -30, -65)]);
+    useConsulta.setState({
+      area: { type: "Polygon", coordinates: [[[-71.6, -42.2], [-71.0, -42.2], [-71.0, -42.8], [-71.6, -42.8], [-71.6, -42.2]]] },
+    });
+    montar();
+    await userEvent.setup().click(screen.getByRole("checkbox", { name: /focos de las últimas 48 horas/i }));
+    const lista = await screen.findByRole("list", { name: "Focos recientes" });
+    expect(within(lista).getAllByRole("listitem")).toHaveLength(3);
+    expect(screen.getByText(/3 focos de VIIRS en el área/)).toBeInTheDocument();
+  });
+});

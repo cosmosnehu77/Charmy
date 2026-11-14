@@ -1,5 +1,5 @@
 import { Pentagon, Square, Trash2 } from "lucide-react";
-import { type FormEvent, useId, useState } from "react";
+import { type FormEvent, useEffect, useId, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { type ModoDibujo, useConsulta } from "@/estado/consulta";
 import { areaDesdePunto, type Confianza, type Fuente, INICIO_DATOS, leerPunto, type Momento, validarPunto } from "./consulta";
@@ -209,8 +209,21 @@ function Resultado({
   /** Mes de la reproducción temporal (AAAA-MM), si está activa. */
   mes: string | null;
 }) {
+  // El servidor gratuito se duerme: si la búsqueda tarda, se explica por qué (RNF-02).
+  const [demora, setDemora] = useState(false);
+  useEffect(() => {
+    if (!cargando) {
+      setDemora(false);
+      return;
+    }
+    const id = setTimeout(() => setDemora(true), 8000);
+    return () => clearTimeout(id);
+  }, [cargando]);
   let texto = "Elegí un área para ver sus focos.";
-  if (hayArea && cargando) texto = "Buscando focos…";
+  if (hayArea && cargando)
+    texto = demora
+      ? "Buscando focos… La primera búsqueda puede tardar: el servidor se está despertando."
+      : "Buscando focos…";
   else if (fallo) texto = "Los focos no están disponibles ahora. Probá de nuevo en un rato.";
   else if (focos !== null) {
     const donde = mes ? `en el área en ${nombreMes(mes)}` : "en el área y el período";

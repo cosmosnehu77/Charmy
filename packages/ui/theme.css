@@ -1,0 +1,67 @@
+/*
+ * Tema de Tailwind v4 a partir de tokens.css.
+ * Uso:  @import "tailwindcss";  @import "@charmy/ui/theme.css";
+ * Da clases como bg-fondo, text-tinta-suave, border-borde, bg-acento, font-titulos, rounded-tarjeta.
+ * Incluye también los nombres que esperan los componentes de shadcn/ui (background, primary, ring…).
+ */
+@import "./tokens.css";
+
+@theme inline {
+  --color-charmy-pelaje: var(--charmy-pelaje);
+  --color-charmy-llama: var(--charmy-llama);
+  --color-charmy-llama-nucleo: var(--charmy-llama-nucleo);
+  --color-charmy-chaqueta: var(--charmy-chaqueta);
+  --color-charmy-sombrero: var(--charmy-sombrero);
+  --color-charmy-cielo: var(--charmy-cielo);
+
+  --color-fondo: var(--color-fondo);
+  --color-superficie: var(--color-superficie);
+  --color-superficie-2: var(--color-superficie-2);
+  --color-tinta: var(--color-tinta);
+  --color-tinta-suave: var(--color-tinta-suave);
+  --color-borde: var(--color-borde);
+  --color-borde-suave: var(--color-borde-suave);
+  --color-borde-control: var(--color-borde-control);
+  --color-acento: var(--color-acento);
+  --color-acento-contraste: var(--color-acento-contraste);
+  --color-exito: var(--color-exito);
+  --color-peligro: var(--color-peligro);
+  --color-aviso-texto: var(--color-aviso-texto);
+  --color-aviso-borde: var(--color-aviso-borde);
+  --color-oscuro-fondo: var(--color-oscuro-fondo);
+  --color-oscuro-fondo-2: var(--color-oscuro-fondo-2);
+  --color-oscuro-tinta: var(--color-oscuro-tinta);
+  --color-oscuro-tinta-suave: var(--color-oscuro-tinta-suave);
+  --color-oscuro-acento: var(--color-oscuro-acento);
+
+  /* Nombres de shadcn/ui */
+  --color-background: var(--color-fondo);
+  --color-foreground: var(--color-tinta);
+  --color-card: var(--color-superficie);
+  --color-card-foreground: var(--color-tinta);
+  --color-popover: var(--color-superficie);
+  --color-popover-foreground: var(--color-tinta);
+  --color-primary: var(--color-tinta);
+  --color-primary-foreground: var(--color-superficie);
+  --color-secondary: var(--color-superficie-2);
+  --color-secondary-foreground: var(--color-tinta);
+  --color-muted: var(--color-superficie-2);
+  --color-muted-foreground: var(--color-tinta-suave);
+  --color-accent: var(--color-superficie-2);
+  --color-accent-foreground: var(--color-tinta);
+  --color-destructive: var(--color-peligro);
+  --color-border: var(--color-borde);
+  --color-input: var(--color-borde-control);
+  --color-ring: var(--color-foco);
+
+  --font-titulos: var(--fuente-titulos);
+  --font-sans: var(--fuente-texto);
+  --font-mono: var(--fuente-mono);
+
+  --radius-control: var(--radio-control);
+  --radius-tarjeta: var(--radio-tarjeta);
+  --radius-sm: calc(var(--radio-control) - 2px);
+  --radius-md: var(--radio-control);
+  --radius-lg: var(--radio-tarjeta);
+  --shadow-tarjeta: var(--sombra-tarjeta);
+}

@@ -1,13 +1,13 @@
 # apps/landing: reglas para los agentes
 
-Landing de Charmy en Astro, estática. Dueño: `@BrunoAguinaga0` (carril E, por D-22). Cloudflare Pages publica
+Landing de Charmy en Astro, estática. Dueño: `@dimidio6` (carril E, por D-25). Cloudflare Pages publica
 `apps/landing/dist` al entrar cambios en `main` (`deploy-web.yml`).
 
 ## Comandos
 
 ```bash
 pnpm dev --filter @charmy/landing     # http://localhost:4321
-pnpm check --filter @charmy/landing   # tipos (astro check) y compilación
+pnpm check --filter @charmy/landing   # tipos (astro check), pruebas y compilación
 pnpm --filter @charmy/landing preview # sirve dist/ como en producción
 ```
 
@@ -19,3 +19,5 @@ pnpm --filter @charmy/landing preview # sirve dist/ como en producción
 - Sin Google Fonts ni scripts de terceros: todo se sirve desde el propio sitio.
 - Textos en español, cortos y con voseo. Los textos finales llegan de F1-F1 (carril F); hasta entonces son provisorios.
 - Página estática sin React. Si hace falta interacción, va con islas de Astro o con GSAP (tabla de PLAN.md).
+- Las pruebas renderizan la página con el Container API de Astro (`test/portada.test.ts`).
+- Toda animación de GSAP va dentro de `gsap.matchMedia()` con `(prefers-reduced-motion: no-preference)`.

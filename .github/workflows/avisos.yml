@@ -1,0 +1,45 @@
+# Servicio de avisos (services/alertas, F3-A1): una corrida cada 5 minutos, gratis en un repo público.
+# Cada corrida guarda los estados de los botones tocados desde la anterior (PATCH /alerts) y manda los avisos de
+# focos y reportes nuevos de la zona. No guarda nada entre corridas: POST /alerts dice si un aviso ya se mandó.
+# Secretos del repo: TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID y CHARMY_SERVICE_TOKEN (el mismo que la API).
+# Variable opcional: CHARMY_API_URL (sin /api/v1).
+name: Avisos
+
+on:
+  schedule:
+    - cron: "*/5 * * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: avisos
+  cancel-in-progress: false
+
+jobs:
+  corrida:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      HAY_SECRETOS: >-
+        ${{ secrets.TELEGRAM_BOT_TOKEN != '' && secrets.TELEGRAM_CHAT_ID != '' && secrets.CHARMY_SERVICE_TOKEN != '' }}
+    steps:
+      - name: Aviso si faltan secretos
+        if: env.HAY_SECRETOS != 'true'
+        run: echo "::warning::Faltan TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID o CHARMY_SERVICE_TOKEN; los avisos no corren."
+      - uses: actions/checkout@v7
+        if: env.HAY_SECRETOS == 'true'
+      - uses: astral-sh/setup-uv@v10.3.3
+        if: env.HAY_SECRETOS == 'true'
+        with:
+          enable-cache: true
+      - name: Una corrida de los avisos
+        if: env.HAY_SECRETOS == 'true'
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          CHARMY_SERVICE_TOKEN: ${{ secrets.CHARMY_SERVICE_TOKEN }}
+          CHARMY_API_URL: ${{ vars.CHARMY_API_URL || 'https://charmy-j36m.onrender.com' }}
+        # Los tokens no se imprimen; si apareciera uno, GitHub tapa los secretos en el registro.
+        run: uv run --package alertas python -m alertas

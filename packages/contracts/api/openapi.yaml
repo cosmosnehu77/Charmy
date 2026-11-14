@@ -59,7 +59,9 @@ paths:
           schema: { type: string, enum: [geojson, csv], default: geojson }
       responses:
         '200':
-          description: Focos
+          description: |
+            Focos. El GeoJSON trae como máximo 20.000 (los primeros por fecha); si hay más, suma `truncated: true` y
+            `total`. El CSV es una descarga y trae todos.
           content:
             application/geo+json:
               schema: { $ref: '#/components/schemas/HotspotCollection' }
@@ -745,6 +747,10 @@ components:
         features:
           type: array
           items: { $ref: '#/components/schemas/Hotspot' }
+        truncated:
+          type: boolean
+          description: Solo en /hotspots y solo si hubo más de 20.000 focos; `features` trae los primeros 20.000
+        total: { type: integer, description: 'Cantidad de focos sin cortar; acompaña a `truncated`' }
     Hotspot:
       type: object
       required: [type, id, geometry, properties]

@@ -14,6 +14,7 @@ from api.errores import ErrorDeContrato
 router = APIRouter()
 
 NIVELES = ["low", "nominal", "high"]
+TOPE = 20_000
 ENCABEZADO_CSV = [
     "latitude",
     "longitude",
@@ -70,19 +71,25 @@ def listar(
         # D-04: solo vegetación. Los focos NRT no traen `type` y se conservan.
         condiciones.append("(type = 0 OR type IS NULL)")
 
+    origen = f"FROM read_parquet(?, union_by_name = true) WHERE {' AND '.join(condiciones)}"
     consulta = f"""
         SELECT latitude, longitude, strftime(acq_datetime, '%Y-%m-%dT%H:%M:%SZ') AS acq_datetime,
                satellite, instrument, confidence, confidence_pct, frp, daynight, cell_id
-        FROM read_parquet(?, union_by_name = true)
-        WHERE {" AND ".join(condiciones)}
+        {origen}
         ORDER BY acq_datetime, satellite, latitude, longitude
     """
     con = conexion()
-    filas = con.execute(consulta, [archivos("focos"), *parametros]).fetchall()
+    parametros = [archivos("focos"), *parametros]
 
     if format == "csv":
-        return _csv(filas)
-    return JSONResponse(_geojson(filas), media_type="application/geo+json")
+        return _csv(con.execute(consulta, parametros).fetchall())
+    # El mapa recibe como máximo TOPE focos; la descarga en CSV trae todos.
+    filas = con.execute(consulta + " LIMIT ?", [*parametros, TOPE + 1]).fetchall()
+    respuesta = _geojson(filas[:TOPE])
+    if len(filas) > TOPE:
+        total = con.execute(f"SELECT count(*) {origen}", parametros).fetchone()[0]
+        respuesta |= {"truncated": True, "total": total}
+    return JSONResponse(respuesta, media_type="application/geo+json")
 
 
 def _geojson(filas: list[tuple]) -> dict:

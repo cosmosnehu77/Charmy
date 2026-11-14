@@ -10,7 +10,7 @@
 
 **Fase activa:** 1
 **Líder:** `@cosmosnehu77`
-**Versión:** 1.5 · **Última actualización:** 14 de noviembre de 2026
+**Versión:** 1.6 · **Última actualización:** 14 de noviembre de 2026
 
 ## Objetivo del proyecto
 
@@ -124,6 +124,7 @@ Lo que se usa hoy. La columna **Dec.** apunta a la decisión que lo justifica ([
 | `code-review` | incluida | todos | Revisar el diff antes de abrir el PR. | Nivel bajo o medio: es un hackathon. |
 | `security-review` | incluida | A | Buscar secretos antes de hacer público el repo (F4-A1). | — |
 | `run` | incluida | todos | Levantar la app y comprobar el cambio en vivo. | — |
+| `relevo` | `.claude/skills/relevo/` | todos | Dejar, tomar y devolver una tarea cuando una persona se queda sin uso de tokens (D-24). | La parte mecánica la hace `tools/relevo`. |
 | `fewer-permission-prompts` | incluida | todos | Menos pedidos de permiso durante el evento. | Toca `.claude/settings.json`, ruta protegida: un solo PR del líder. |
 
 Las skills de `.claude/skills/` son rutas protegidas: cada dueño abre su PR y el líder lo revisa.
@@ -199,6 +200,7 @@ si nada: avisen en el tablero y propongan el PR que actualiza este documento.
 | D-21 | **Azure no entra en el MVP.** Queda como fase 5 opcional, que se abre solo después de entregar y si hay tiempo. | El equipo lo usó poco y configurarlo lleva más tiempo que el despliegue actual. No conviene arriesgar la entrega. | RNF-02, RNF-10 |
 | D-22 | El equipo activo es de **cuatro personas con agente**. El carril E se reparte: el componente Charmy lo hace el líder, la landing el carril C, y el juego y el Charmy completo quedan en **reserva** para `@dimidio6` o para quien el líder designe. | `@dimidio6` todavía no participa. La reserva junta lo que no es parte del criterio de MVP y no bloquea a nadie: si no se suma, la entrega no se frena. | RNF-09, RF-KID, RF-CHA |
 | D-23 | **Pruebas antes que "terminado" y YAGNI.** Cada issue lleva sus "Pruebas mínimas"; la lógica se escribe con la prueba primero; las fuentes externas se prueban con respuestas grabadas, también cuando fallan; `CI ok` es obligatorio para fusionar. No se construye nada que el issue no pida. | Con cuatro agentes en paralelo, lo que no está probado se rompe en la integración, justo antes de la demo. Y en 48 horas, todo lo que sobra le quita tiempo a lo que se evalúa. | RNF-15, RNF-14, RNF-09 |
+| D-24 | **Relevo y lockfiles sin bloqueo.** Al ~90 % de uso de tokens, el agente deja la tarea con `tools/relevo dejar` y otra persona la sigue por un rato, solo en las carpetas de esa tarea, hasta que el dueño vuelve (`AGENTS.md` §7). Los PR abiertos que chocan solo en `uv.lock` o `pnpm-lock.yaml` los pone al día el flujo `al-dia.yml`. | Con un límite de uso por persona y cuatro personas en paralelo, una tarea parada frena a quien depende de ella. Y cada PR que suma un paquete choca en el lockfile con los demás: es mecánico, no tiene por qué esperar a nadie. | RNF-09, RNF-15 |
 
 ---
 
@@ -303,6 +305,7 @@ protección alcanza solo al `CLAUDE.md` de la raíz.
 |---|---|---|---|---|---|---|---|
 | #14 | F1-A1 | Raíz del monorepo: workspaces de pnpm y uv, Turborepo, `.env.example`, `docker-compose.yml` base; completar en `CLAUDE.md` los comandos del monorepo | `@cosmosnehu77` | archivos de raíz | — | RNF-01, RNF-08 | pendiente |
 | #15 | F1-A2 | CI por carpeta y despliegue automático de landing, app, juego y API | `@cosmosnehu77` | `.github/workflows/`, `infra/` | F1-A1 | RNF-01 | pendiente |
+| #92 | F1-A3 | Relevo por límite de uso (`tools/relevo`, skill `relevo`) y lockfiles al día solos en los PR abiertos (`al-dia.yml`) | `@cosmosnehu77` | `tools/`, `.github/workflows/`, `.claude/skills/relevo/` | F2-A3 | RNF-09, RNF-15 | en curso |
 | #16 | F1-B1 | Carga de FIRMS a Parquet y esquema de datos | `@leonelcnr` | `services/pipeline/`, `packages/contracts/datos/` | — | RF-ARM-01 | pendiente |
 | #17 | F1-B2 | Muestras chicas con el esquema final: focos, serie, calendario, métricas y un día real para el juego. Los valores provisorios van marcados | `@leonelcnr` | `data/muestras/` | — | RNF-09 | pendiente |
 | #18 | F1-B3 | Skill `firms-data`: FIRMS, Meteomatics y Copernicus, con las condiciones de uso de cada fuente | `@leonelcnr` | `.claude/skills/firms-data/` | — | RNF-09, RNF-13 | pendiente |
@@ -519,6 +522,7 @@ La fase 5 no cubre requisitos nuevos: refuerza RNF-02 y RNF-10 sobre lo ya entre
 - **Pruebas y YAGNI** (D-23, `docs/PRUEBAS.md`): una tarea termina cuando cada punto de "Pruebas mínimas" de su issue tiene su prueba y el CI está en verde. Ninguna prueba llama a la red. Solo se construye lo que pide el issue.
 - **PR siempre contra `main`.** No se apilan PR: un PR fusionado sobre otra rama no llega a `main`.
 - **Rama al día con `tools/al-dia`** antes de abrir el PR y cada vez que GitHub marca conflictos. Resuelve solo los choques de lockfiles; los lockfiles nunca se editan a mano.
+- **Relevo** (D-24, `AGENTS.md` §7): cerca del 90 % de uso de tokens se deja la tarea con `tools/relevo dejar`; la toma quien confirme el líder, solo en las carpetas de esa tarea, hasta que el dueño vuelve.
 - **Reserva.** Las tareas con la etiqueta `reserva` no se toman por cuenta propia: las asigna el líder en el tablero.
 - **Solo el líder** cambia la fase activa, y lo anuncia con `@all`. Hasta entonces nadie adelanta tareas de la fase siguiente, salvo que el líder lo indique en el tablero.
 - **Integración cada 6 horas.** El líder recorre el flujo en producción y publica lo que esté roto, mencionando al dueño.
@@ -557,6 +561,7 @@ La fase 5 no cubre requisitos nuevos: refuerza RNF-02 y RNF-10 sobre lo ya entre
 | 2026-11-14 | Versión 1.4, con `REQUISITOS.md` 1.3. Equipo activo de cuatro personas, con sus logins; `@dimidio6` todavía no participa. El carril E se reparte (D-22): componente Charmy al líder, landing al carril C, juego y Charmy completo a la reserva. Se parten F1-E2, F4-E1 y F5-E1 y nacen F1-E4, F4-E2 y F5-E2. Los issues los crea el agente del líder y se completa la columna "Issue". Repo, tablero y `CLAUDE.md` creados. | equipo, 1.3, 3, 4, 5, 6, 7 | `@cosmosnehu77` |
 | 2026-11-14 | Versión 1.5, con `REQUISITOS.md` 1.4. Política de pruebas y YAGNI (D-23, `docs/PRUEBAS.md`, RNF-15): "Pruebas mínimas" en cada issue, prueba primero en la lógica, nada de red en las pruebas, `CI ok` obligatorio y PR siempre contra `main`. Tarea nueva F2-A3. | 1.1, 3, 5, 6, 7 | `@cosmosnehu77` |
 | 2026-11-14 | Datos estáticos: se elige GitHub Releases con manifiesto (`infra/publicar`, F2-A1); R2 queda como alternativa. Contrato nuevo: manifiesto de datos publicados. | 1.1, 4 | `@cosmosnehu77` |
+| 2026-11-14 | Versión 1.6. Relevo por límite de uso y lockfiles al día solos (D-24, F1-A3): `tools/relevo`, skill `relevo`, `AGENTS.md` §7 y flujo `al-dia.yml`. `tools/al-dia` ya no corre scripts de instalación. | 1.2, 3, 5, 7 | `@cosmosnehu77` |
 
 ## 10. Registro de cierres
 

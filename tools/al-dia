@@ -2,6 +2,7 @@
 # Pone la rama actual al día con origin/main antes de abrir un PR o cuando GitHub marca conflictos.
 # Los conflictos en pnpm-lock.yaml y uv.lock se resuelven solos regenerando el lockfile (pasan cada vez que dos
 # PR agregan dependencias). Cualquier otro conflicto se deja para resolver a mano y el script se detiene.
+# Nunca corre scripts de instalación: así también lo usa el flujo .github/workflows/al-dia.yml con permiso de escritura.
 # Uso: tools/al-dia            (después: correr las pruebas y git push)
 set -euo pipefail
 
@@ -23,7 +24,8 @@ else
     exit 1
   fi
   if printf '%s\n' "$conflictos" | grep -qx 'pnpm-lock\.yaml'; then
-    pnpm install --no-frozen-lockfile >/dev/null   # pnpm entiende las marcas de conflicto y rearma el lockfile
+    # pnpm entiende las marcas de conflicto y rearma el lockfile, sin instalar ni correr scripts.
+    pnpm install --lockfile-only --ignore-scripts >/dev/null
     git add pnpm-lock.yaml
   fi
   if printf '%s\n' "$conflictos" | grep -qx 'uv\.lock'; then
@@ -35,6 +37,6 @@ else
 fi
 
 # Los lockfiles tienen que quedar coherentes con los package.json y pyproject.toml.
-pnpm install --frozen-lockfile >/dev/null
+pnpm install --frozen-lockfile --lockfile-only --ignore-scripts >/dev/null
 uv lock --check -q
-echo "al-dia: listo. Corré las pruebas y después: git push"
+echo "al-dia: listo. Corré pnpm install y uv sync --all-packages, las pruebas y después: git push"

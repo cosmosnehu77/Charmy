@@ -23,6 +23,8 @@ Docs interactivas en `http://localhost:8000/api/v1/docs`.
 - FIRMS, Meteomatics, Copernicus y el modelo de lenguaje se consultan solo desde acá o desde el worker, con caché.
 - Los datos precalculados salen de `DATA_MANIFEST_URL` (release con `manifest.json`, DuckDB lee los Parquet por
   HTTPS). Sin esa variable se usan las muestras de `data/muestras/`: levantá la API desde la raíz del repo.
+- CORS: los orígenes de los frontends publicados van en `CORS_ORIGINS` (separados por coma); localhost se
+  permite en cualquier puerto. Métodos GET y POST, cabecera `Content-Type`.
 - Las consultas a DuckDB van con parámetros (`?`), nunca armando SQL con lo que manda el usuario.
 - Si los datos no se pueden leer, la respuesta es 503 `datos_no_disponibles`, no un 500.
 - `services/contexto` (carril B) se monta como router; no se edita desde este carril.

@@ -27,5 +27,6 @@ Docs interactivas en `http://localhost:8000/api/v1/docs`.
   permite en cualquier puerto. Métodos GET y POST, cabecera `Content-Type`.
 - Las consultas a DuckDB van con parámetros (`?`), nunca armando SQL con lo que manda el usuario.
 - Si los datos no se pueden leer, la respuesta es 503 `datos_no_disponibles`, no un 500.
+- `/live` lee de Postgres (`DATABASE_URL`) lo que guarda `services/worker`; la API nunca llama a FIRMS.
 - `services/contexto` (carril B) se monta como router; no se edita desde este carril.
 - La imagen se construye con contexto `services/api` (como en `docker-compose.yml`).

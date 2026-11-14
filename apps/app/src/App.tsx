@@ -4,6 +4,7 @@ import { AvisoEmergencias } from "@/components/AvisoEmergencias";
 import { Encabezado } from "@/components/Encabezado";
 import { PanelConsulta } from "@/consulta/PanelConsulta";
 import { useApp } from "@/estado/app";
+import { PanelValidacion } from "@/experto/PanelValidacion";
 import { Recorrido } from "@/novato/Recorrido";
 
 // MapLibre pesa: se carga aparte para que el resto de la app aparezca enseguida (RNF-03).
@@ -11,6 +12,7 @@ const Mapa = lazy(() => import("@/mapa/Mapa"));
 
 export default function App() {
   const perfilMapa = useApp((s) => s.perfilMapa);
+  const modo = useApp((s) => s.modo);
   const mostrarRecorrido = useApp((s) => s.modo === "novato" && !s.recorridoVisto);
   return (
     <div className="flex h-full flex-col">
@@ -48,6 +50,7 @@ export default function App() {
         </main>
         <div className="border-t bg-card md:max-h-[45%] md:overflow-y-auto">
           <Calendario />
+          {modo === "experto" && <PanelValidacion />}
         </div>
         </div>
       </div>

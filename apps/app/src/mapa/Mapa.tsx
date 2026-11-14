@@ -9,6 +9,7 @@ import { bboxDeArea, type Poligono } from "@/consulta/consulta";
 import { useFocos } from "@/consulta/useFocos";
 import { useApp } from "@/estado/app";
 import { useConsulta } from "@/estado/consulta";
+import { atributosFoco } from "@/experto/atributos";
 import { agregarCapas, datosArea } from "./capas";
 import { esFallaDelEstilo, LIMITES_MVP, perfiles, transformarEstilo } from "./perfiles";
 
@@ -84,6 +85,28 @@ export default function Mapa() {
       dibujo.current = crearDibujo(m);
       const modo = useConsulta.getState().dibujando;
       if (modo) dibujo.current.setMode(modo);
+    });
+    // Modo experto: tocar un foco muestra sus atributos originales (RF-MOD-02).
+    m.on("click", "focos", (e) => {
+      const foco = e.features?.[0];
+      if (!foco || useApp.getState().modo !== "experto") return;
+      const lista = document.createElement("dl");
+      lista.className = "grid grid-cols-[auto_1fr] gap-x-3 gap-y-0.5 font-mono text-xs";
+      for (const [nombre, valor] of atributosFoco(foco.properties as Parameters<typeof atributosFoco>[0])) {
+        const dt = document.createElement("dt");
+        dt.className = "text-tinta-suave";
+        dt.textContent = nombre;
+        const dd = document.createElement("dd");
+        dd.textContent = valor;
+        lista.append(dt, dd);
+      }
+      new maplibregl.Popup({ maxWidth: "320px" }).setLngLat(e.lngLat).setDOMContent(lista).addTo(m);
+    });
+    m.on("mouseenter", "focos", () => {
+      if (useApp.getState().modo === "experto") m.getCanvas().style.cursor = "pointer";
+    });
+    m.on("mouseleave", "focos", () => {
+      m.getCanvas().style.cursor = "";
     });
     mapa.current = m;
     return () => {

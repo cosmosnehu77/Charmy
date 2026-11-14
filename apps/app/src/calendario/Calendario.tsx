@@ -6,6 +6,7 @@ import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { bboxDeArea, rutaCsv } from "@/consulta/consulta";
 import { useApp } from "@/estado/app";
 import { useConsulta } from "@/estado/consulta";
+import { Descargas } from "@/experto/Descargas";
 import { conclusionDelArea } from "@/novato/conclusion";
 import { ErrorApi, urlApi } from "@/lib/api";
 import {
@@ -159,6 +160,7 @@ export function Calendario() {
               </tbody>
             </table>
           </div>
+          {!novato && <Descargas calendario={consulta.data} desdeAnio={desdeAnio} hastaAnio={hastaAnio} vista={vista} />}
         </>
       )}
     </section>

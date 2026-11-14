@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { type ModoDibujo, useConsulta } from "@/estado/consulta";
 import { areaDesdePunto, type Confianza, type Fuente, INICIO_DATOS, leerPunto, type Momento, validarPunto } from "./consulta";
 import { useApp } from "@/estado/app";
+import { nombreMes, Reproduccion } from "@/experto/Reproduccion";
 import { BuscarLocalidad } from "@/novato/BuscarLocalidad";
 import { useFocos } from "./useFocos";
 
@@ -197,6 +198,7 @@ function Resultado({
   fallo,
   hayArea,
   total,
+  mes,
 }: {
   focos: number | null;
   cargando: boolean;
@@ -204,11 +206,16 @@ function Resultado({
   hayArea: boolean;
   /** Cantidad sin cortar cuando /hotspots llegó al tope (truncated). */
   total: number | null;
+  /** Mes de la reproducción temporal (AAAA-MM), si está activa. */
+  mes: string | null;
 }) {
   let texto = "Elegí un área para ver sus focos.";
   if (hayArea && cargando) texto = "Buscando focos…";
   else if (fallo) texto = "Los focos no están disponibles ahora. Probá de nuevo en un rato.";
-  else if (focos !== null) texto = focos === 1 ? "1 foco en el área y el período." : `${focos} focos en el área y el período.`;
+  else if (focos !== null) {
+    const donde = mes ? `en el área en ${nombreMes(mes)}` : "en el área y el período";
+    texto = focos === 1 ? `1 foco ${donde}.` : `${focos} focos ${donde}.`;
+  }
   return (
     <div role="status" className="flex flex-col gap-1 rounded-control bg-superficie-2 p-2 text-sm">
       <p>{texto}</p>
@@ -225,18 +232,21 @@ function Resultado({
 export function PanelConsulta() {
   const { focos, errorFechas, consulta, hayArea } = useFocos();
   const modo = useApp((s) => s.modo);
+  const mesReproduccion = useConsulta((s) => s.mesReproduccion);
   return (
     <div className="flex flex-col gap-5">
       <Area />
       <Fechas error={errorFechas} />
       {/* Serie, confianza y potencia son términos técnicos: solo en el modo experto (RF-MOD-01). */}
       {modo === "experto" && <Filtros />}
+      {modo === "experto" && hayArea && !errorFechas && <Reproduccion />}
       <Resultado
         focos={focos?.features.length ?? null}
         cargando={consulta.isFetching}
         fallo={consulta.isError}
         hayArea={hayArea && !errorFechas}
         total={consulta.data?.truncated ? (consulta.data.total ?? null) : null}
+        mes={mesReproduccion}
       />
     </div>
   );

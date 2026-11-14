@@ -23,6 +23,7 @@ info:
     | `no_existe` | 404 | La ruta o el recurso no existen |
     | `metodo_no_permitido` | 405 | La ruta no acepta ese método |
     | `demasiados_reportes` | 429 | Más de 5 reportes en 10 minutos desde la misma conexión |
+    | `error_interno` | 500 | Un error inesperado del servidor; el detalle queda en su registro |
     | `datos_no_disponibles` | 503 | No se pueden leer los datos o la base no responde |
     | `fuente_no_disponible` | 503 | Meteomatics o Copernicus no responden y no hay copia (`/weather`, `/imagery`) |
     | `sin_prediccion` | 404 | `/forecast`: ese plazo no superó a la climatología o no hay predicción publicada |

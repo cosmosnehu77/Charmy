@@ -28,6 +28,9 @@ Docs interactivas en `http://localhost:8000/api/v1/docs`.
   permite en cualquier puerto. Métodos GET y POST, cabecera `Content-Type`.
 - Las consultas a DuckDB van con parámetros (`?`), nunca armando SQL con lo que manda el usuario.
 - Si los datos no se pueden leer, la respuesta es 503 `datos_no_disponibles`, no un 500.
+- Copia local (F4-C1): al arrancar, la API baja en segundo plano los archivos del manifiesto a `data/copia`
+  (controla el `sha256`) y los lee del disco. Si el release no responde, el histórico sigue con esa copia.
+- Un error inesperado sale como 500 `error_interno`, sin detalles; el detalle queda en el registro.
 - `/live` lee de Postgres (`DATABASE_URL`) lo que guarda `services/worker`; la API nunca llama a FIRMS.
 - `GET /reports`, `POST /alerts` y `PATCH /alerts/{id}` piden `CHARMY_SERVICE_TOKEN` (Bearer); `POST /reports`
   es público. Los reportes no guardan IP ni datos personales (RNF-05). Las tablas llevan RLS activado.

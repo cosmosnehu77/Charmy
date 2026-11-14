@@ -5,7 +5,7 @@ from datetime import UTC, datetime, timedelta
 import polars as pl
 from pipeline.esquema import ESQUEMAS
 from pipeline.firms import _celda
-from pipeline.fuentes_fijas import main, mascara
+from pipeline.fuentes_fijas import estaticas, main, mascara
 
 
 def _celda_de(lat, lon):
@@ -64,6 +64,16 @@ def test_quema_agricola_que_se_repite_cada_anio_no_es_fuente_fija():
     assert mascara(focos(quema)).is_empty()
 
 
+def test_pocos_dias_por_anio_durante_muchos_anios_no_es_fuente_fija():
+    # 3 días por año en 15 años suman 45 días, repartidos en todos los meses: lo que cuenta es la frecuencia.
+    raro = [
+        (-27.5, -59.5, datetime(anio, 1 + (anio + k) % 12, 10 + k, 4, tzinfo=UTC))
+        for anio in range(2012, 2027)
+        for k in range(3)
+    ]
+    assert mascara(focos(raro)).is_empty()
+
+
 def test_foco_sobre_antorcha_conocida_de_comodoro_queda_marcado():
     m = mascara(focos(cada_semana(*ANTORCHA)))
     nuevo = focos(
@@ -75,6 +85,12 @@ def test_foco_sobre_antorcha_conocida_de_comodoro_queda_marcado():
 def test_celda_que_firms_ya_marca_como_estatica_entra():
     estatica = [(-34.15, -58.98, datetime(2020, 3, d, 4, tzinfo=UTC)) for d in (1, 2)]
     assert mascara(focos(estatica, tipo=2))["cell_id"].to_list() == [_celda_de(-34.15, -58.98)]
+
+
+def test_estaticas_son_solo_las_que_marca_firms():
+    estatica = [(-34.15, -58.98, datetime(2020, 3, d, 4, tzinfo=UTC)) for d in (1, 2)]
+    f = focos(cada_semana(*ANTORCHA)).vstack(focos(estatica, tipo=2))
+    assert estaticas(f) == [_celda_de(-34.15, -58.98)]
 
 
 def test_modis_no_cuenta_para_la_mascara():

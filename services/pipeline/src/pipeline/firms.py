@@ -1,5 +1,5 @@
 """Carga los CSV de FIRMS (archivo SP o NRT, MODIS o VIIRS) a la tabla `focos` de
-packages/contracts/datos/esquema.md, en Parquet particionado por satélite y año.
+packages/contracts/datos/esquema.md, en un Parquet por satélite y año.
 
 Uso: uv run --package pipeline python -m pipeline.firms <csv>... --out data/focos
 """
@@ -122,13 +122,13 @@ def cargar(rutas: list[Path]) -> pl.DataFrame:
 
 
 def escribir(df: pl.DataFrame, salida: Path) -> None:
-    """Escribe focos/satellite=<s>/year=<a>/*.parquet. No pisa una carpeta con datos."""
+    """Escribe focos/<satellite>-<year>.parquet con todas las columnas adentro. No pisa datos."""
     if salida.exists() and any(salida.iterdir()):
         raise FileExistsError(f"{salida} ya tiene datos: bórrala o elige otra carpeta")
     salida.mkdir(parents=True, exist_ok=True)
-    df.with_columns(year=pl.col("acq_datetime").dt.year()).write_parquet(
-        salida, partition_by=["satellite", "year"]
-    )
+    con_anio = df.with_columns(year=pl.col("acq_datetime").dt.year())
+    for (satelite, anio), parte in con_anio.partition_by("satellite", "year", as_dict=True).items():
+        parte.write_parquet(salida / f"{satelite}-{anio}.parquet")
 
 
 def main(argv: list[str] | None = None) -> int:

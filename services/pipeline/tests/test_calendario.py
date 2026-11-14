@@ -6,6 +6,7 @@ from datetime import UTC, datetime
 import polars as pl
 from pipeline.armonizacion import calendario, dias_celda_mensuales, main
 from pipeline.esquema import ESQUEMAS
+from pipeline.firms import escribir
 
 
 def serie_mano(valores):
@@ -87,8 +88,8 @@ def test_parquet_publicados_cumplen_el_esquema(tmp_path):
                         }
                     )
     focos = tmp_path / "focos"
-    pl.DataFrame(filas).with_columns(pl.col("confidence_pct", "type").cast(pl.Int8)).write_parquet(
-        focos, partition_by=["satellite", "year"]
+    escribir(
+        pl.DataFrame(filas).with_columns(pl.col("confidence_pct", "type").cast(pl.Int8)).drop("year"), focos
     )
     regiones = tmp_path / "regiones.geojson"
     cuadro = [[-72, -46], [-71, -46], [-71, -45], [-72, -45], [-72, -46]]

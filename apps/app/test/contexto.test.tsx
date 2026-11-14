@@ -169,3 +169,48 @@ describe("imagen que no carga", () => {
     expect(within(panel).queryByLabelText(/mostrar la imagen en el mapa/i)).not.toBeInTheDocument();
   });
 });
+
+describe("/weather real de services/contexto (#141)", () => {
+  const conTiempo = (t: unknown) =>
+    fetchSimulado.mockImplementation(async (url) => {
+      const u = String(url);
+      if (u.includes("/weather")) return new Response(JSON.stringify(t));
+      if (u.includes("/imagery/latest")) return new Response(JSON.stringify(imagen));
+      if (u.includes("/health")) return new Response(JSON.stringify({ status: "ok" }));
+      return new Response(JSON.stringify({ type: "FeatureCollection", features: [] }));
+    });
+  const sinEtiqueta = (indice: number) => ({
+    ...tiempo,
+    now: { ...tiempo.now, fire_risk_index: indice, fire_risk_label: undefined },
+  });
+
+  it("sin etiqueta, explica el índice de 0 a 1: desde 0,5 el riesgo sube", async () => {
+    conTiempo(sinEtiqueta(0.72));
+    montar();
+    const panel = await screen.findByRole("region", { name: "Contexto del lugar" });
+    expect(
+      await within(panel).findByText(
+        (_, el) => el?.tagName === "P" && /riesgo de incendio: por encima de lo habitual \(índice 0,72 de 1\)/i.test(el.textContent ?? ""),
+      ),
+    ).toBeInTheDocument();
+  });
+
+  it("con índice bajo dice que está por debajo", async () => {
+    conTiempo(sinEtiqueta(0.2));
+    montar();
+    const panel = await screen.findByRole("region", { name: "Contexto del lugar" });
+    expect(
+      await within(panel).findByText(
+        (_, el) => el?.tagName === "P" && /riesgo de incendio: bajo \(índice 0,2 de 1\)/i.test(el.textContent ?? ""),
+      ),
+    ).toBeInTheDocument();
+  });
+
+  it("si es la copia de respaldo (D-26), lo avisa con su fecha", async () => {
+    conTiempo({ ...tiempo, stale: true, message: "Meteomatics no responde: son los datos guardados del 14/11 a las 09:00." });
+    montar();
+    const panel = await screen.findByRole("region", { name: "Contexto del lugar" });
+    expect(await within(panel).findByText(/son los datos guardados del 14\/11 a las 09:00/)).toBeInTheDocument();
+    expect(within(panel).getByText(/copia/i)).toBeInTheDocument();
+  });
+});

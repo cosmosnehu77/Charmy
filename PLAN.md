@@ -8,7 +8,7 @@
 > Si alguien cambia una tecnología, una skill o un componente, se actualiza la tabla y las tareas afectadas
 > en el mismo PR (ver [Cómo mantener este plan](#2-cómo-mantener-este-plan)).
 
-**Fase activa:** 0
+**Fase activa:** 1
 **Líder:** `@cosmosnehu77`
 **Versión:** 1.4 · **Última actualización:** 14 de noviembre de 2026
 
@@ -259,7 +259,7 @@ entre paréntesis, lo que se puede usar mientras tanto. Estados: `pendiente`, `e
 | #10 | F0-E1 | Revisar `docs/charmy-base/` y anotar en su issue qué capas y animaciones faltan para el componente | `@cosmosnehu77` | — | F0-A2 | RF-CHA-01 | pendiente |
 | #11 | F0-F1 | Confirmar las reglas del evento (código y arte previos, formato e idioma de la entrega, hora de cierre) y escribir el guion v0 de la demo | carril F | `docs/entrega/` | — | RNF-11 | pendiente |
 | #12 | F0-X1 | **Cada persona activa:** aceptar la invitación al repo, `gh auth login`, clonar, `tools/board check` y revisar los issues de **su carril**; si algo está mal repartido, avisar en el tablero | todos | — | F0-A2, F0-A5 | RNF-09 | pendiente |
-| #13 | F0-A4 | Completar la columna "Issue" de este plan (**hecho** al crear los issues) y abrir la fase 1 en el tablero | `@cosmosnehu77` | `PLAN.md` | F0-X1 | RNF-09 | en curso |
+| #13 | F0-A4 | Completar la columna "Issue" de este plan (**hecho** al crear los issues) y abrir la fase 1 en el tablero | `@cosmosnehu77` | `PLAN.md` | F0-X1 | RNF-09 | hecha |
 
 **Issues.** El agente del líder creó un issue por tarea el 14/11: el título empieza con el ID, lleva las etiquetas
 `fase-N` y `carril-x` y tiene asignado a su dueño. Las tareas del carril F y las de la reserva no tienen persona
@@ -552,7 +552,7 @@ La fase 5 no cubre requisitos nuevos: refuerza RNF-02 y RNF-10 sobre lo ya entre
 
 | Fase | Cerrada el | Notas |
 |---|---|---|
-| 0 | | |
+| 0 | 2026-11-14 | Abierta la fase 1 por decisión del líder. Siguen abiertas, sin bloquear a nadie: F0-A3 (#5), F0-B1 (#6), F0-B2 (#7), F0-C1 (#8), F0-D1 (#9), F0-F1 (#11) y F0-X1 (#12). F0-E1 (#10) se cierra junto con F1-E1. |
 | 1 | | |
 | 2 | | |
 | 3 | | |

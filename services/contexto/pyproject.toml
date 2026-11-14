@@ -1,0 +1,13 @@
+[project]
+name = "contexto"
+version = "0.1.0"
+description = "Carril B: contexto del foco (/weather con Meteomatics) como router que monta la API"
+requires-python = ">=3.12"
+dependencies = [
+    "fastapi>=0.162.7",
+    "httpx>=0.28.1",
+]
+
+[build-system]
+requires = ["uv_build>=0.9,<0.14"]
+build-backend = "uv_build"

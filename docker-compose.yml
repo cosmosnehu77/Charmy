@@ -24,7 +24,7 @@ services:
 
   api:
     profiles: ["api", "vivo", "avisos", "todo"]
-    build: ./services/api
+    build: { context: ., dockerfile: services/api/Dockerfile }
     env_file: [{ path: .env, required: false }]
     environment:
       DATABASE_URL: postgresql://charmy:charmy-local@db:5432/charmy

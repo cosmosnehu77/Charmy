@@ -61,6 +61,14 @@ def test_orden_estable():
     assert cargar(rutas).equals(cargar(list(reversed(rutas))))
 
 
+def test_archivos_ordenados_por_lugar(tmp_path):
+    # La API filtra por bbox: con las filas ordenadas por lugar, DuckDB saltea los grupos fuera del área.
+    convertir([FIX], tmp_path / "focos")
+    for ruta in (tmp_path / "focos").glob("*.parquet"):
+        df = pl.read_parquet(ruta)
+        assert df.equals(df.sort("latitude", "longitude", "acq_datetime")), ruta.name
+
+
 def test_convertir_por_partes_da_lo_mismo_que_cargar_todo(tmp_path):
     """El histórico completo no entra en memoria: convertir va de a un archivo y de a un satélite-año."""
     rutas = list(FIX.glob("*.csv"))

@@ -5,7 +5,7 @@
             "description": "Serie armonizada precalculada (Parquet)",
             "item": [
                 {
-                    "id": "99075374-becd-4e79-b9e1-79f5f4e8d166",
+                    "id": "d7b3c3f0-4120-492c-9fd8-617739005a2f",
                     "name": "Focos dentro de un área y un rango de fechas",
                     "request": {
                         "name": "Focos dentro de un área y un rango de fechas",
@@ -87,7 +87,7 @@
                     },
                     "response": [
                         {
-                            "id": "d3ec5c66-12b2-4a81-adb7-df25cde4014f",
+                            "id": "af7075f9-f073-4ad7-b6eb-1a22b36ff23e",
                             "name": "Focos. El GeoJSON trae como máximo 20.000 (los primeros por fecha); si hay más, suma `truncated: true` y\n`total`. El CSV es una descarga y trae todos.",
                             "originalRequest": {
                                 "url": {
@@ -172,12 +172,12 @@
                                     "value": "application/geo+json"
                                 }
                             ],
-                            "body": "{\n  \"type\": \"FeatureCollection\",\n  \"features\": [\n    {\n      \"type\": \"Feature\",\n      \"id\": \"<string>\",\n      \"geometry\": {\n        \"type\": \"Point\",\n        \"coordinates\": [\n          \"<number>\",\n          \"<number>\"\n        ]\n      },\n      \"properties\": {\n        \"acq_datetime\": \"<dateTime>\",\n        \"satellite\": \"Aqua\",\n        \"instrument\": \"VIIRS\",\n        \"confidence\": \"low\",\n        \"frp\": \"<number>\",\n        \"daynight\": \"N\",\n        \"cell_id\": \"<string>\",\n        \"fixed_source\": \"<boolean>\",\n        \"verdict\": \"fuente_fija\"\n      }\n    },\n    {\n      \"type\": \"Feature\",\n      \"id\": \"<string>\",\n      \"geometry\": {\n        \"type\": \"Point\",\n        \"coordinates\": [\n          \"<number>\",\n          \"<number>\"\n        ]\n      },\n      \"properties\": {\n        \"acq_datetime\": \"<dateTime>\",\n        \"satellite\": \"N21\",\n        \"instrument\": \"MODIS\",\n        \"confidence\": \"nominal\",\n        \"frp\": \"<number>\",\n        \"daynight\": \"N\",\n        \"cell_id\": \"<string>\",\n        \"fixed_source\": \"<boolean>\",\n        \"verdict\": \"sin_confirmar\"\n      }\n    }\n  ],\n  \"truncated\": \"<boolean>\",\n  \"total\": \"<integer>\"\n}",
+                            "body": "{\n  \"type\": \"FeatureCollection\",\n  \"features\": [\n    {\n      \"type\": \"Feature\",\n      \"id\": \"<string>\",\n      \"geometry\": {\n        \"type\": \"Point\",\n        \"coordinates\": [\n          \"<number>\",\n          \"<number>\"\n        ]\n      },\n      \"properties\": {\n        \"acq_datetime\": \"<dateTime>\",\n        \"satellite\": \"N\",\n        \"instrument\": \"MODIS\",\n        \"confidence\": \"low\",\n        \"frp\": \"<number>\",\n        \"daynight\": \"D\",\n        \"cell_id\": \"<string>\",\n        \"fixed_source\": \"<boolean>\",\n        \"verdict\": \"fuente_fija\"\n      }\n    },\n    {\n      \"type\": \"Feature\",\n      \"id\": \"<string>\",\n      \"geometry\": {\n        \"type\": \"Point\",\n        \"coordinates\": [\n          \"<number>\",\n          \"<number>\"\n        ]\n      },\n      \"properties\": {\n        \"acq_datetime\": \"<dateTime>\",\n        \"satellite\": \"Aqua\",\n        \"instrument\": \"VIIRS\",\n        \"confidence\": \"low\",\n        \"frp\": \"<number>\",\n        \"daynight\": \"D\",\n        \"cell_id\": \"<string>\",\n        \"fixed_source\": \"<boolean>\",\n        \"verdict\": \"confirmado\"\n      }\n    }\n  ],\n  \"truncated\": \"<boolean>\",\n  \"total\": \"<integer>\"\n}",
                             "cookie": [],
                             "_postman_previewlanguage": "json"
                         },
                         {
-                            "id": "f36ed17d-e370-4cc3-b262-eeeb427d9186",
+                            "id": "9e72caa8-0101-4cbc-b288-d54832665c1c",
                             "name": "Parámetros inválidos",
                             "originalRequest": {
                                 "url": {
@@ -267,7 +267,7 @@
                             "_postman_previewlanguage": "json"
                         },
                         {
-                            "id": "436e8c91-d606-4e27-9d19-8c07ea7c59ac",
+                            "id": "05207b52-a359-4527-b522-8ed26396e488",
                             "name": "No se pueden leer los datos ahora. El resto de la app sigue funcionando.",
                             "originalRequest": {
                                 "url": {
@@ -363,7 +363,7 @@
                     }
                 },
                 {
-                    "id": "0f11dd74-b58c-44c2-80bd-9546fc6b2b0e",
+                    "id": "9a6047cb-deb3-4035-81ba-cafc6e4b1122",
                     "name": "Calendario de actividad de quema armonizado para un polígono",
                     "request": {
                         "name": "Calendario de actividad de quema armonizado para un polígono",
@@ -403,7 +403,7 @@
                     },
                     "response": [
                         {
-                            "id": "105fd6b2-35c7-4de2-a65d-fee16246b71c",
+                            "id": "e4405489-5dcd-40eb-acd6-cf0d84c6209d",
                             "name": "Matriz de calendario con anomalías para la región de calibración que comparte más superficie con el\nárea. Si el área está fuera de la cobertura o la región no tiene datos en esos años, `cells` viene\nvacío y `message` dice por qué.",
                             "originalRequest": {
                                 "url": {
@@ -446,12 +446,12 @@
                                     "value": "application/json"
                                 }
                             ],
-                            "body": "{\n  \"unit\": \"<string>\",\n  \"baseline\": \"<string>\",\n  \"provisional\": \"<boolean>\",\n  \"cells\": [\n    {\n      \"year\": \"<integer>\",\n      \"month\": \"<integer>\",\n      \"value\": \"<number>\",\n      \"median\": \"<number>\",\n      \"anomaly\": \"<number>\",\n      \"percentile\": \"<number>\",\n      \"origin\": \"viirs_convertido\",\n      \"lower\": \"<number>\",\n      \"upper\": \"<number>\"\n    },\n    {\n      \"year\": \"<integer>\",\n      \"month\": \"<integer>\",\n      \"value\": \"<number>\",\n      \"median\": \"<number>\",\n      \"anomaly\": \"<number>\",\n      \"percentile\": \"<number>\",\n      \"origin\": \"modis_convertido\",\n      \"lower\": \"<number>\",\n      \"upper\": \"<number>\"\n    }\n  ],\n  \"region\": \"<string>\",\n  \"message\": \"<string>\"\n}",
+                            "body": "{\n  \"unit\": \"<string>\",\n  \"baseline\": \"<string>\",\n  \"provisional\": \"<boolean>\",\n  \"cells\": [\n    {\n      \"year\": \"<integer>\",\n      \"month\": \"<integer>\",\n      \"value\": \"<number>\",\n      \"median\": \"<number>\",\n      \"anomaly\": \"<number>\",\n      \"percentile\": \"<number>\",\n      \"origin\": \"modis_medido\",\n      \"lower\": \"<number>\",\n      \"upper\": \"<number>\"\n    },\n    {\n      \"year\": \"<integer>\",\n      \"month\": \"<integer>\",\n      \"value\": \"<number>\",\n      \"median\": \"<number>\",\n      \"anomaly\": \"<number>\",\n      \"percentile\": \"<number>\",\n      \"origin\": \"modis_medido\",\n      \"lower\": \"<number>\",\n      \"upper\": \"<number>\"\n    }\n  ],\n  \"region\": \"<string>\",\n  \"message\": \"<string>\"\n}",
                             "cookie": [],
                             "_postman_previewlanguage": "json"
                         },
                         {
-                            "id": "87088c56-d445-4797-8aed-60cf6f3d6711",
+                            "id": "04e7f8be-e42b-4bc6-819b-5b24cdfe90e9",
                             "name": "Parámetros inválidos",
                             "originalRequest": {
                                 "url": {
@@ -499,7 +499,7 @@
                             "_postman_previewlanguage": "json"
                         },
                         {
-                            "id": "d28d10af-9660-4ce6-9252-cb4c7d76cfaf",
+                            "id": "ec18a836-f95c-4bbf-8d5b-22edfbd23380",
                             "name": "No se pueden leer los datos ahora. El resto de la app sigue funcionando.",
                             "originalRequest": {
                                 "url": {
@@ -553,7 +553,7 @@
                     }
                 },
                 {
-                    "id": "ced29c98-211d-4739-9e0a-107251fb21d2",
+                    "id": "8644ceca-94ba-4e1d-ba55-7c5b0b774a43",
                     "name": "Actividad esperada para los próximos meses (solo si el modelo supera la climatología)",
                     "request": {
                         "name": "Actividad esperada para los próximos meses (solo si el modelo supera la climatología)",
@@ -599,7 +599,7 @@
                     },
                     "response": [
                         {
-                            "id": "b975f824-cdda-4172-9354-41793065691e",
+                            "id": "f4d04b6a-a19f-4854-9360-4c0875929211",
                             "name": "Pronóstico por celda",
                             "originalRequest": {
                                 "url": {
@@ -665,12 +665,12 @@
             "description": "Focos recientes y contexto del lugar",
             "item": [
                 {
-                    "id": "85a6654c-8d47-42dc-b8b0-4b7262213461",
+                    "id": "b0009416-fef5-4940-b152-48ef4bc67880",
                     "name": "Focos de las últimas horas con estado de verificación",
                     "request": {
                         "name": "Focos de las últimas horas con estado de verificación",
                         "description": {
-                            "content": "Solo NOAA-20 (`N20`) y NOAA-21 (`N21`): S-NPP (`N`) no publica datos nuevos desde el 2/11/2026.\nEl `id` de cada foco sirve para pedir `/live/{hotspot_id}/evidence` mientras el foco esté en `/live`.\nEl worker consulta FIRMS cada 30 minutos. Si la última consulta falló, la respuesta trae los focos de la\nanterior con `stale: true`, su fecha en `fetched_at` y un `message`. Sin ninguna consulta exitosa, 503.\n",
+                            "content": "Solo NOAA-20 (`N20`) y NOAA-21 (`N21`): S-NPP (`N`) no publica datos nuevos desde el 2/11/2026.\nEl `id` de cada foco sirve para pedir `/live/{hotspot_id}/evidence` mientras el foco esté en `/live`.\nEl worker consulta FIRMS cada 30 minutos. Si la última consulta falló, la respuesta trae los focos de la\nanterior con `stale: true`, su fecha en `fetched_at` y un `message`. Sin ninguna consulta exitosa, 503.\n`verdict` y `fixed_source` los calcula la verificación del worker (D-09); faltan en un foco recién llegado.\n",
                             "type": "text/plain"
                         },
                         "url": {
@@ -714,7 +714,7 @@
                     },
                     "response": [
                         {
-                            "id": "18c0fde8-94db-4878-a94b-fa493827b964",
+                            "id": "47ea4aff-9f4d-4955-82c8-7d1626af97b5",
                             "name": "Focos en vivo",
                             "originalRequest": {
                                 "url": {
@@ -763,12 +763,12 @@
                                     "value": "application/geo+json"
                                 }
                             ],
-                            "body": "{\n  \"features\": [\n    {\n      \"type\": \"Feature\",\n      \"id\": \"<string>\",\n      \"geometry\": {\n        \"type\": \"Point\",\n        \"coordinates\": [\n          \"<number>\",\n          \"<number>\"\n        ]\n      },\n      \"properties\": {\n        \"acq_datetime\": \"<dateTime>\",\n        \"satellite\": \"N21\",\n        \"instrument\": \"VIIRS\",\n        \"confidence\": \"nominal\",\n        \"frp\": \"<number>\",\n        \"daynight\": \"D\",\n        \"cell_id\": \"<string>\",\n        \"fixed_source\": \"<boolean>\",\n        \"verdict\": \"sin_confirmar\"\n      }\n    },\n    {\n      \"type\": \"Feature\",\n      \"id\": \"<string>\",\n      \"geometry\": {\n        \"type\": \"Point\",\n        \"coordinates\": [\n          \"<number>\",\n          \"<number>\"\n        ]\n      },\n      \"properties\": {\n        \"acq_datetime\": \"<dateTime>\",\n        \"satellite\": \"Aqua\",\n        \"instrument\": \"MODIS\",\n        \"confidence\": \"nominal\",\n        \"frp\": \"<number>\",\n        \"daynight\": \"N\",\n        \"cell_id\": \"<string>\",\n        \"fixed_source\": \"<boolean>\",\n        \"verdict\": \"confirmado\"\n      }\n    }\n  ],\n  \"fetched_at\": \"<dateTime>\",\n  \"stale\": \"<boolean>\",\n  \"type\": \"FeatureCollection\",\n  \"truncated\": \"<boolean>\",\n  \"total\": \"<integer>\",\n  \"message\": \"<string>\"\n}",
+                            "body": "{\n  \"features\": [\n    {\n      \"type\": \"Feature\",\n      \"id\": \"<string>\",\n      \"geometry\": {\n        \"type\": \"Point\",\n        \"coordinates\": [\n          \"<number>\",\n          \"<number>\"\n        ]\n      },\n      \"properties\": {\n        \"acq_datetime\": \"<dateTime>\",\n        \"satellite\": \"N21\",\n        \"instrument\": \"MODIS\",\n        \"confidence\": \"low\",\n        \"frp\": \"<number>\",\n        \"daynight\": \"N\",\n        \"cell_id\": \"<string>\",\n        \"fixed_source\": \"<boolean>\",\n        \"verdict\": \"fuente_fija\"\n      }\n    },\n    {\n      \"type\": \"Feature\",\n      \"id\": \"<string>\",\n      \"geometry\": {\n        \"type\": \"Point\",\n        \"coordinates\": [\n          \"<number>\",\n          \"<number>\"\n        ]\n      },\n      \"properties\": {\n        \"acq_datetime\": \"<dateTime>\",\n        \"satellite\": \"N\",\n        \"instrument\": \"VIIRS\",\n        \"confidence\": \"high\",\n        \"frp\": \"<number>\",\n        \"daynight\": \"N\",\n        \"cell_id\": \"<string>\",\n        \"fixed_source\": \"<boolean>\",\n        \"verdict\": \"confirmado\"\n      }\n    }\n  ],\n  \"fetched_at\": \"<dateTime>\",\n  \"stale\": \"<boolean>\",\n  \"type\": \"FeatureCollection\",\n  \"truncated\": \"<boolean>\",\n  \"total\": \"<integer>\",\n  \"message\": \"<string>\"\n}",
                             "cookie": [],
                             "_postman_previewlanguage": "json"
                         },
                         {
-                            "id": "b0e75043-dd40-43dd-9a07-0be2216fd0b0",
+                            "id": "cc7a37fc-01ac-4028-8984-c1db80f101f2",
                             "name": "Parámetros inválidos",
                             "originalRequest": {
                                 "url": {
@@ -822,7 +822,7 @@
                             "_postman_previewlanguage": "json"
                         },
                         {
-                            "id": "fe53826f-13d5-4ce0-85b2-e5e22a9bd5d0",
+                            "id": "d867a22e-1b78-46b5-9b2c-8cbbcb097385",
                             "name": "No se pueden leer los datos ahora. El resto de la app sigue funcionando.",
                             "originalRequest": {
                                 "url": {
@@ -882,11 +882,14 @@
                     }
                 },
                 {
-                    "id": "f87a327a-84a6-443c-8229-c63dfe65c34b",
+                    "id": "a8a7a5c0-be91-481a-a527-44c74b7d87d9",
                     "name": "Señales y evidencia usadas para el veredicto",
                     "request": {
                         "name": "Señales y evidencia usadas para el veredicto",
-                        "description": {},
+                        "description": {
+                            "content": "El veredicto sale de reglas sobre cuatro señales (satélite, fuente fija, noticias y reportes con el estado\nque marcó la entidad), no del modelo de lenguaje, que solo etiqueta titulares (D-09, RF-VIV-04). Sin\nnoticias, la señal de noticias vale 0 y nunca vuelve falso un foco. 404 si el foco ya no está en `/live`\no todavía no se verificó.\n",
+                            "type": "text/plain"
+                        },
                         "url": {
                             "path": [
                                 "live",
@@ -922,7 +925,7 @@
                     },
                     "response": [
                         {
-                            "id": "fbc37258-ded3-4adf-9da9-a518f35f99e6",
+                            "id": "c465ec01-203b-4070-b911-e7e91dad8171",
                             "name": "Evidencia",
                             "originalRequest": {
                                 "url": {
@@ -965,12 +968,12 @@
                                     "value": "application/json"
                                 }
                             ],
-                            "body": "{\n  \"verdict\": \"confirmado\",\n  \"score\": \"<number>\",\n  \"signals\": {\n    \"satellite\": \"<number>\",\n    \"fixed_source\": \"<number>\",\n    \"news\": \"<number>\",\n    \"reports\": \"<number>\"\n  },\n  \"evidence\": [\n    {\n      \"kind\": \"reporte\",\n      \"title\": \"<string>\",\n      \"label\": \"contradice\",\n      \"url\": \"<uri>\"\n    },\n    {\n      \"kind\": \"entidad\",\n      \"title\": \"<string>\",\n      \"label\": \"sin_informacion\",\n      \"url\": \"<uri>\"\n    }\n  ]\n}",
+                            "body": "{\n  \"verdict\": \"fuente_fija\",\n  \"score\": \"<number>\",\n  \"signals\": {\n    \"satellite\": \"<number>\",\n    \"fixed_source\": \"<number>\",\n    \"news\": \"<number>\",\n    \"reports\": \"<number>\"\n  },\n  \"evidence\": [\n    {\n      \"kind\": \"satelite\",\n      \"title\": \"<string>\",\n      \"label\": \"apoya\",\n      \"url\": \"<uri>\"\n    },\n    {\n      \"kind\": \"reporte\",\n      \"title\": \"<string>\",\n      \"label\": \"apoya\",\n      \"url\": \"<uri>\"\n    }\n  ]\n}",
                             "cookie": [],
                             "_postman_previewlanguage": "json"
                         },
                         {
-                            "id": "b5244168-f805-44b4-9eaf-df6171d0af25",
+                            "id": "c5bbbfba-3f11-42d4-8be0-f09c746bccc9",
                             "name": "No existe",
                             "originalRequest": {
                                 "url": {
@@ -1016,6 +1019,54 @@
                             "body": "{\n  \"code\": \"<string>\",\n  \"message\": \"<string>\"\n}",
                             "cookie": [],
                             "_postman_previewlanguage": "json"
+                        },
+                        {
+                            "id": "c730ebd1-0649-47c7-8021-d5f1e09cf4f8",
+                            "name": "No se pueden leer los datos ahora. El resto de la app sigue funcionando.",
+                            "originalRequest": {
+                                "url": {
+                                    "path": [
+                                        "live",
+                                        ":hotspot_id",
+                                        "evidence"
+                                    ],
+                                    "host": [
+                                        "{{baseUrl}}"
+                                    ],
+                                    "query": [],
+                                    "variable": [
+                                        {
+                                            "disabled": false,
+                                            "description": {
+                                                "content": "(Required) ",
+                                                "type": "text/plain"
+                                            },
+                                            "type": "any",
+                                            "value": "<string>",
+                                            "key": "hotspot_id"
+                                        }
+                                    ]
+                                },
+                                "header": [
+                                    {
+                                        "key": "Accept",
+                                        "value": "application/json"
+                                    }
+                                ],
+                                "method": "GET",
+                                "body": {}
+                            },
+                            "status": "Service Unavailable",
+                            "code": 503,
+                            "header": [
+                                {
+                                    "key": "Content-Type",
+                                    "value": "application/json"
+                                }
+                            ],
+                            "body": "{\n  \"code\": \"<string>\",\n  \"message\": \"<string>\"\n}",
+                            "cookie": [],
+                            "_postman_previewlanguage": "json"
                         }
                     ],
                     "event": [],
@@ -1024,7 +1075,7 @@
                     }
                 },
                 {
-                    "id": "ca65539b-c62f-44b9-bfe8-557610ee5b19",
+                    "id": "38c7ae4a-1e2d-414f-81e9-1448e3c77240",
                     "name": "Tiempo actual, pronóstico e índice de riesgo de incendio en un punto",
                     "request": {
                         "name": "Tiempo actual, pronóstico e índice de riesgo de incendio en un punto",
@@ -1082,7 +1133,7 @@
                     },
                     "response": [
                         {
-                            "id": "f47538bc-556b-4dae-a351-91102215445b",
+                            "id": "74c2efa9-c81d-4506-82fd-02e77d549903",
                             "name": "Tiempo en el punto",
                             "originalRequest": {
                                 "url": {
@@ -1140,12 +1191,12 @@
                                     "value": "application/json"
                                 }
                             ],
-                            "body": "{\n  \"source\": \"<string>\",\n  \"fetched_at\": \"<dateTime>\",\n  \"now\": {\n    \"time\": \"<dateTime>\",\n    \"wind_speed_ms\": \"<number>\",\n    \"wind_dir_deg\": \"<number>\",\n    \"temperature_c\": \"<number>\",\n    \"relative_humidity_pct\": \"<number>\",\n    \"fire_risk_index\": \"<number>\",\n    \"fire_risk_label\": \"muy_alto\"\n  },\n  \"forecast\": [\n    {\n      \"time\": \"<dateTime>\",\n      \"wind_speed_ms\": \"<number>\",\n      \"wind_dir_deg\": \"<number>\",\n      \"temperature_c\": \"<number>\",\n      \"relative_humidity_pct\": \"<number>\",\n      \"fire_risk_index\": \"<number>\",\n      \"fire_risk_label\": \"moderado\"\n    },\n    {\n      \"time\": \"<dateTime>\",\n      \"wind_speed_ms\": \"<number>\",\n      \"wind_dir_deg\": \"<number>\",\n      \"temperature_c\": \"<number>\",\n      \"relative_humidity_pct\": \"<number>\",\n      \"fire_risk_index\": \"<number>\",\n      \"fire_risk_label\": \"bajo\"\n    }\n  ]\n}",
+                            "body": "{\n  \"source\": \"<string>\",\n  \"fetched_at\": \"<dateTime>\",\n  \"now\": {\n    \"time\": \"<dateTime>\",\n    \"wind_speed_ms\": \"<number>\",\n    \"wind_dir_deg\": \"<number>\",\n    \"temperature_c\": \"<number>\",\n    \"relative_humidity_pct\": \"<number>\",\n    \"fire_risk_index\": \"<number>\",\n    \"fire_risk_label\": \"moderado\"\n  },\n  \"forecast\": [\n    {\n      \"time\": \"<dateTime>\",\n      \"wind_speed_ms\": \"<number>\",\n      \"wind_dir_deg\": \"<number>\",\n      \"temperature_c\": \"<number>\",\n      \"relative_humidity_pct\": \"<number>\",\n      \"fire_risk_index\": \"<number>\",\n      \"fire_risk_label\": \"extremo\"\n    },\n    {\n      \"time\": \"<dateTime>\",\n      \"wind_speed_ms\": \"<number>\",\n      \"wind_dir_deg\": \"<number>\",\n      \"temperature_c\": \"<number>\",\n      \"relative_humidity_pct\": \"<number>\",\n      \"fire_risk_index\": \"<number>\",\n      \"fire_risk_label\": \"moderado\"\n    }\n  ]\n}",
                             "cookie": [],
                             "_postman_previewlanguage": "json"
                         },
                         {
-                            "id": "7be38390-336b-4f14-9ea6-a4bbbcb0f6c4",
+                            "id": "9eb97ab2-2f5f-425a-9431-ad2a76cc499e",
                             "name": "Parámetros inválidos",
                             "originalRequest": {
                                 "url": {
@@ -1208,7 +1259,7 @@
                             "_postman_previewlanguage": "json"
                         },
                         {
-                            "id": "30ccdc71-fa85-4e2b-b763-5debeae2253a",
+                            "id": "f4c58f4e-3df6-4d3e-88ac-710bcb39d155",
                             "name": "La fuente de datos del tiempo no responde. El resto de la app sigue funcionando.",
                             "originalRequest": {
                                 "url": {
@@ -1277,7 +1328,7 @@
                     }
                 },
                 {
-                    "id": "82582dd8-a612-4d49-b2e7-523057a1bbbf",
+                    "id": "e1b55363-316e-46b1-9a86-0dbc0450bb5b",
                     "name": "Imagen satelital óptica más reciente y despejada alrededor de un punto",
                     "request": {
                         "name": "Imagen satelital óptica más reciente y despejada alrededor de un punto",
@@ -1363,7 +1414,7 @@
                     },
                     "response": [
                         {
-                            "id": "d2374a14-4467-4f76-b200-ec417520d7a1",
+                            "id": "d2100d97-77c3-4df5-9e5c-10da5be98f23",
                             "name": "Datos de la imagen y dónde pedirla",
                             "originalRequest": {
                                 "url": {
@@ -1449,12 +1500,12 @@
                                     "value": "application/json"
                                 }
                             ],
-                            "body": "{\n  \"image_id\": \"<string>\",\n  \"image_url\": \"<string>\",\n  \"bbox\": [\n    \"<number>\",\n    \"<number>\",\n    \"<number>\",\n    \"<number>\"\n  ],\n  \"acquired_at\": \"<dateTime>\",\n  \"cloud_cover_pct\": \"<number>\",\n  \"style\": \"color_real\",\n  \"source\": \"<string>\",\n  \"attribution\": \"<string>\"\n}",
+                            "body": "{\n  \"image_id\": \"<string>\",\n  \"image_url\": \"<string>\",\n  \"bbox\": [\n    \"<number>\",\n    \"<number>\",\n    \"<number>\",\n    \"<number>\"\n  ],\n  \"acquired_at\": \"<dateTime>\",\n  \"cloud_cover_pct\": \"<number>\",\n  \"style\": \"falso_color\",\n  \"source\": \"<string>\",\n  \"attribution\": \"<string>\"\n}",
                             "cookie": [],
                             "_postman_previewlanguage": "json"
                         },
                         {
-                            "id": "8361f5e6-bf84-463a-8362-447880f1f4c8",
+                            "id": "7f77d9f0-0b72-46d9-89fe-d05827bc8df4",
                             "name": "Parámetros inválidos",
                             "originalRequest": {
                                 "url": {
@@ -1545,7 +1596,7 @@
                             "_postman_previewlanguage": "json"
                         },
                         {
-                            "id": "203ac30a-d378-4cad-9fab-5c23798ed59d",
+                            "id": "b0936320-4a26-41a0-8b03-c77f39843a3e",
                             "name": "No hay una imagen lo bastante despejada en los últimos 30 días para ese lugar.",
                             "originalRequest": {
                                 "url": {
@@ -1636,7 +1687,7 @@
                             "_postman_previewlanguage": "json"
                         },
                         {
-                            "id": "83a19826-fd57-4ce7-a8ac-d033f0490735",
+                            "id": "2aa4aa6a-4909-4426-b57a-797e669c08a9",
                             "name": "La fuente de imágenes no responde o se agotó la cuota. El resto de la app sigue funcionando.",
                             "originalRequest": {
                                 "url": {
@@ -1733,7 +1784,7 @@
                     }
                 },
                 {
-                    "id": "8c48548e-6acf-443e-9b4b-81150732adb5",
+                    "id": "e42170b2-004e-4e4c-a69b-292ec8e8dc27",
                     "name": "La imagen ya generada, servida desde la caché",
                     "request": {
                         "name": "La imagen ya generada, servida desde la caché",
@@ -1761,7 +1812,7 @@
                     },
                     "response": [
                         {
-                            "id": "5e9e6692-3a3f-4ebc-99ce-c88d5478c8b2",
+                            "id": "98605232-1f89-4e15-a500-8344f2e5e58f",
                             "name": "Imagen",
                             "originalRequest": {
                                 "url": {
@@ -1797,7 +1848,7 @@
                             "_postman_previewlanguage": "text"
                         },
                         {
-                            "id": "4934cbe8-c2b4-451d-a8f7-53ed2094ba4b",
+                            "id": "2ad9620c-4ea3-44ec-b23f-513e3ddc3bc8",
                             "name": "No existe",
                             "originalRequest": {
                                 "url": {
@@ -1845,7 +1896,7 @@
             "description": "Reportes ciudadanos y avisos a entidades",
             "item": [
                 {
-                    "id": "049683d5-bda8-4775-ae1b-4736cdbbfe19",
+                    "id": "2fed1551-eaee-4bc7-97d3-f0779a9beba0",
                     "name": "Reportes ciudadanos recientes dentro de un área",
                     "request": {
                         "name": "Reportes ciudadanos recientes dentro de un área",
@@ -1902,7 +1953,7 @@
                     },
                     "response": [
                         {
-                            "id": "d8525e78-80d4-430f-b1a7-8553d397de85",
+                            "id": "bcf372e8-3499-43cd-97f4-07436643421c",
                             "name": "Reportes, del más viejo al más nuevo",
                             "originalRequest": {
                                 "url": {
@@ -1959,12 +2010,12 @@
                                     "value": "application/json"
                                 }
                             ],
-                            "body": "[\n  {\n    \"id\": \"<string>\",\n    \"lat\": \"<number>\",\n    \"lon\": \"<number>\",\n    \"status\": \"controlado\",\n    \"created_at\": \"<dateTime>\",\n    \"description\": \"<string>\",\n    \"photo_url\": \"<uri>\"\n  },\n  {\n    \"id\": \"<string>\",\n    \"lat\": \"<number>\",\n    \"lon\": \"<number>\",\n    \"status\": \"falso\",\n    \"created_at\": \"<dateTime>\",\n    \"description\": \"<string>\",\n    \"photo_url\": \"<uri>\"\n  }\n]",
+                            "body": "[\n  {\n    \"id\": \"<string>\",\n    \"lat\": \"<number>\",\n    \"lon\": \"<number>\",\n    \"status\": \"en_camino\",\n    \"created_at\": \"<dateTime>\",\n    \"description\": \"<string>\",\n    \"photo_url\": \"<uri>\"\n  },\n  {\n    \"id\": \"<string>\",\n    \"lat\": \"<number>\",\n    \"lon\": \"<number>\",\n    \"status\": \"falso\",\n    \"created_at\": \"<dateTime>\",\n    \"description\": \"<string>\",\n    \"photo_url\": \"<uri>\"\n  }\n]",
                             "cookie": [],
                             "_postman_previewlanguage": "json"
                         },
                         {
-                            "id": "6cb9ed09-f5bd-4438-af96-6d3a4012c264",
+                            "id": "4451ec6e-f10f-4259-a112-85234e668fdc",
                             "name": "Parámetros inválidos",
                             "originalRequest": {
                                 "url": {
@@ -2026,7 +2077,7 @@
                             "_postman_previewlanguage": "json"
                         },
                         {
-                            "id": "707243fb-ab56-43a4-8c64-597dae1e11cb",
+                            "id": "fd11c908-1fa1-46ae-87d2-cfa6021d6e13",
                             "name": "Falta el token de servicio o no es válido",
                             "originalRequest": {
                                 "url": {
@@ -2088,7 +2139,7 @@
                             "_postman_previewlanguage": "json"
                         },
                         {
-                            "id": "6e144943-72e5-43da-a9f0-5945d368cb3a",
+                            "id": "9f5f2747-9af9-48c5-a7c9-6925bbf9951a",
                             "name": "No se pueden leer los datos ahora. El resto de la app sigue funcionando.",
                             "originalRequest": {
                                 "url": {
@@ -2156,7 +2207,7 @@
                     }
                 },
                 {
-                    "id": "688169ae-10e2-4f00-bdc3-7b43855e7348",
+                    "id": "699328bf-8eb1-4a26-a4cd-fb5f3a811d19",
                     "name": "Reporte ciudadano anónimo",
                     "request": {
                         "name": "Reporte ciudadano anónimo",
@@ -2199,7 +2250,7 @@
                     },
                     "response": [
                         {
-                            "id": "292a9270-2052-4d04-ad02-9b8c947e97a2",
+                            "id": "45f3986b-5c19-4a25-aacf-fba367187c7b",
                             "name": "Reporte creado como \"sin verificar\"",
                             "originalRequest": {
                                 "url": {
@@ -2247,7 +2298,7 @@
                             "_postman_previewlanguage": "json"
                         },
                         {
-                            "id": "2b3f5c1e-a970-472e-b0c3-d9c61957e970",
+                            "id": "57725e70-dfd4-4ba4-a817-c2670443f072",
                             "name": "Parámetros inválidos",
                             "originalRequest": {
                                 "url": {
@@ -2295,7 +2346,7 @@
                             "_postman_previewlanguage": "json"
                         },
                         {
-                            "id": "f6d84c92-cf50-44c1-b767-f8731ead65b4",
+                            "id": "fb0086bd-62e5-47ad-bd7c-a7af72ff95f8",
                             "name": "Demasiados reportes desde esta conexión",
                             "originalRequest": {
                                 "url": {
@@ -2343,7 +2394,7 @@
                             "_postman_previewlanguage": "json"
                         },
                         {
-                            "id": "e559a376-55d7-478d-a35d-147df99779de",
+                            "id": "44cd99b8-8603-4fbf-9d88-6e62c775a463",
                             "name": "No se pueden leer los datos ahora. El resto de la app sigue funcionando.",
                             "originalRequest": {
                                 "url": {
@@ -2397,7 +2448,7 @@
                     }
                 },
                 {
-                    "id": "eb842c2a-2998-4afd-9906-b50328952362",
+                    "id": "e74cc5e4-9544-45af-8030-80ef11cd1d6d",
                     "name": "El servicio de avisos registra un aviso antes de mandarlo",
                     "request": {
                         "name": "El servicio de avisos registra un aviso antes de mandarlo",
@@ -2428,7 +2479,7 @@
                         "method": "POST",
                         "body": {
                             "mode": "raw",
-                            "raw": "{\n  \"zone_id\": \"<string>\",\n  \"kind\": \"reporte_ciudadano\",\n  \"hotspot_id\": \"<string>\",\n  \"report_id\": \"<string>\"\n}",
+                            "raw": "{\n  \"zone_id\": \"<string>\",\n  \"kind\": \"foco_satelital\",\n  \"hotspot_id\": \"<string>\",\n  \"report_id\": \"<string>\"\n}",
                             "options": {
                                 "raw": {
                                     "headerFamily": "json",
@@ -2448,7 +2499,7 @@
                     },
                     "response": [
                         {
-                            "id": "85e72296-afc1-4402-8b5f-5de081cd1ed9",
+                            "id": "499b9f7c-38ca-4f80-850f-ec460afcdaf2",
                             "name": "El aviso ya existía para esa zona y ese foco o reporte",
                             "originalRequest": {
                                 "url": {
@@ -2482,7 +2533,7 @@
                                 "method": "POST",
                                 "body": {
                                     "mode": "raw",
-                                    "raw": "{\n  \"zone_id\": \"<string>\",\n  \"kind\": \"reporte_ciudadano\",\n  \"hotspot_id\": \"<string>\",\n  \"report_id\": \"<string>\"\n}",
+                                    "raw": "{\n  \"zone_id\": \"<string>\",\n  \"kind\": \"foco_satelital\",\n  \"hotspot_id\": \"<string>\",\n  \"report_id\": \"<string>\"\n}",
                                     "options": {
                                         "raw": {
                                             "headerFamily": "json",
@@ -2499,12 +2550,12 @@
                                     "value": "application/json"
                                 }
                             ],
-                            "body": "{\n  \"id\": \"<string>\",\n  \"zone_id\": \"<string>\",\n  \"kind\": \"foco_satelital\",\n  \"status\": \"falso\",\n  \"created_at\": \"<dateTime>\",\n  \"hotspot_id\": \"<string>\",\n  \"report_id\": \"<string>\",\n  \"note\": \"<string>\"\n}",
+                            "body": "{\n  \"id\": \"<string>\",\n  \"zone_id\": \"<string>\",\n  \"kind\": \"foco_satelital\",\n  \"status\": \"controlado\",\n  \"created_at\": \"<dateTime>\",\n  \"hotspot_id\": \"<string>\",\n  \"report_id\": \"<string>\",\n  \"note\": \"<string>\"\n}",
                             "cookie": [],
                             "_postman_previewlanguage": "json"
                         },
                         {
-                            "id": "807965eb-2e6d-4eed-aa3c-0ad8366ded78",
+                            "id": "0e3fb69a-ab5f-4530-b1d8-251f59d1cf73",
                             "name": "Aviso nuevo",
                             "originalRequest": {
                                 "url": {
@@ -2538,7 +2589,7 @@
                                 "method": "POST",
                                 "body": {
                                     "mode": "raw",
-                                    "raw": "{\n  \"zone_id\": \"<string>\",\n  \"kind\": \"reporte_ciudadano\",\n  \"hotspot_id\": \"<string>\",\n  \"report_id\": \"<string>\"\n}",
+                                    "raw": "{\n  \"zone_id\": \"<string>\",\n  \"kind\": \"foco_satelital\",\n  \"hotspot_id\": \"<string>\",\n  \"report_id\": \"<string>\"\n}",
                                     "options": {
                                         "raw": {
                                             "headerFamily": "json",
@@ -2555,12 +2606,12 @@
                                     "value": "application/json"
                                 }
                             ],
-                            "body": "{\n  \"id\": \"<string>\",\n  \"zone_id\": \"<string>\",\n  \"kind\": \"foco_satelital\",\n  \"status\": \"falso\",\n  \"created_at\": \"<dateTime>\",\n  \"hotspot_id\": \"<string>\",\n  \"report_id\": \"<string>\",\n  \"note\": \"<string>\"\n}",
+                            "body": "{\n  \"id\": \"<string>\",\n  \"zone_id\": \"<string>\",\n  \"kind\": \"foco_satelital\",\n  \"status\": \"controlado\",\n  \"created_at\": \"<dateTime>\",\n  \"hotspot_id\": \"<string>\",\n  \"report_id\": \"<string>\",\n  \"note\": \"<string>\"\n}",
                             "cookie": [],
                             "_postman_previewlanguage": "json"
                         },
                         {
-                            "id": "14f84d7c-0ffe-402b-bae9-f186967af954",
+                            "id": "970fbce0-8a7a-496f-b661-b964014d5a79",
                             "name": "Parámetros inválidos",
                             "originalRequest": {
                                 "url": {
@@ -2594,7 +2645,7 @@
                                 "method": "POST",
                                 "body": {
                                     "mode": "raw",
-                                    "raw": "{\n  \"zone_id\": \"<string>\",\n  \"kind\": \"reporte_ciudadano\",\n  \"hotspot_id\": \"<string>\",\n  \"report_id\": \"<string>\"\n}",
+                                    "raw": "{\n  \"zone_id\": \"<string>\",\n  \"kind\": \"foco_satelital\",\n  \"hotspot_id\": \"<string>\",\n  \"report_id\": \"<string>\"\n}",
                                     "options": {
                                         "raw": {
                                             "headerFamily": "json",
@@ -2616,7 +2667,7 @@
                             "_postman_previewlanguage": "json"
                         },
                         {
-                            "id": "34e29f21-f2e7-4312-88c5-c889fd5f0c45",
+                            "id": "8ebbb0e8-e44d-458e-a7a9-3d970bde389d",
                             "name": "Falta el token de servicio o no es válido",
                             "originalRequest": {
                                 "url": {
@@ -2650,7 +2701,7 @@
                                 "method": "POST",
                                 "body": {
                                     "mode": "raw",
-                                    "raw": "{\n  \"zone_id\": \"<string>\",\n  \"kind\": \"reporte_ciudadano\",\n  \"hotspot_id\": \"<string>\",\n  \"report_id\": \"<string>\"\n}",
+                                    "raw": "{\n  \"zone_id\": \"<string>\",\n  \"kind\": \"foco_satelital\",\n  \"hotspot_id\": \"<string>\",\n  \"report_id\": \"<string>\"\n}",
                                     "options": {
                                         "raw": {
                                             "headerFamily": "json",
@@ -2672,7 +2723,7 @@
                             "_postman_previewlanguage": "json"
                         },
                         {
-                            "id": "23290f0f-d69c-43aa-8453-451090283495",
+                            "id": "de0e1609-1eec-49e0-9fca-683e2119395f",
                             "name": "No se pueden leer los datos ahora. El resto de la app sigue funcionando.",
                             "originalRequest": {
                                 "url": {
@@ -2706,7 +2757,7 @@
                                 "method": "POST",
                                 "body": {
                                     "mode": "raw",
-                                    "raw": "{\n  \"zone_id\": \"<string>\",\n  \"kind\": \"reporte_ciudadano\",\n  \"hotspot_id\": \"<string>\",\n  \"report_id\": \"<string>\"\n}",
+                                    "raw": "{\n  \"zone_id\": \"<string>\",\n  \"kind\": \"foco_satelital\",\n  \"hotspot_id\": \"<string>\",\n  \"report_id\": \"<string>\"\n}",
                                     "options": {
                                         "raw": {
                                             "headerFamily": "json",
@@ -2734,7 +2785,7 @@
                     }
                 },
                 {
-                    "id": "a87ef4e4-7644-4952-9482-e8ae5322519b",
+                    "id": "e56536bf-4f0c-4866-9583-dcae56e4701b",
                     "name": "La entidad actualiza el estado de una alerta (alimenta la verificación)",
                     "request": {
                         "name": "La entidad actualiza el estado de una alerta (alimenta la verificación)",
@@ -2797,7 +2848,7 @@
                     },
                     "response": [
                         {
-                            "id": "027d6f1e-9ba0-4c3a-a5b7-7dd24d125004",
+                            "id": "6a76152e-e470-46f3-b00e-37303aea8639",
                             "name": "Alerta actualizada",
                             "originalRequest": {
                                 "url": {
@@ -2860,12 +2911,12 @@
                                     "value": "application/json"
                                 }
                             ],
-                            "body": "{\n  \"id\": \"<string>\",\n  \"zone_id\": \"<string>\",\n  \"kind\": \"foco_satelital\",\n  \"status\": \"falso\",\n  \"created_at\": \"<dateTime>\",\n  \"hotspot_id\": \"<string>\",\n  \"report_id\": \"<string>\",\n  \"note\": \"<string>\"\n}",
+                            "body": "{\n  \"id\": \"<string>\",\n  \"zone_id\": \"<string>\",\n  \"kind\": \"foco_satelital\",\n  \"status\": \"controlado\",\n  \"created_at\": \"<dateTime>\",\n  \"hotspot_id\": \"<string>\",\n  \"report_id\": \"<string>\",\n  \"note\": \"<string>\"\n}",
                             "cookie": [],
                             "_postman_previewlanguage": "json"
                         },
                         {
-                            "id": "7076eb3e-3712-4742-81e2-63f461c0c501",
+                            "id": "218d145d-9a43-4060-a4ea-09d889cb0f8c",
                             "name": "Parámetros inválidos",
                             "originalRequest": {
                                 "url": {
@@ -2933,7 +2984,7 @@
                             "_postman_previewlanguage": "json"
                         },
                         {
-                            "id": "a8c6e453-d92d-4bf7-b20e-5b0b6819c91a",
+                            "id": "58f438f1-eadd-492e-8100-028c1289bf11",
                             "name": "Falta el token de servicio o no es válido",
                             "originalRequest": {
                                 "url": {
@@ -3001,7 +3052,7 @@
                             "_postman_previewlanguage": "json"
                         },
                         {
-                            "id": "5b4d14fe-7385-4e47-a6e6-a98d0a918993",
+                            "id": "605088d8-43d9-4349-a46e-e2b0206235fd",
                             "name": "No existe",
                             "originalRequest": {
                                 "url": {
@@ -3069,7 +3120,7 @@
                             "_postman_previewlanguage": "json"
                         },
                         {
-                            "id": "03ac63a7-0fe7-40a1-ac40-9b80111390cd",
+                            "id": "770065bb-8f33-412e-806c-16c38e3189d9",
                             "name": "No se pueden leer los datos ahora. El resto de la app sigue funcionando.",
                             "originalRequest": {
                                 "url": {
@@ -3143,7 +3194,7 @@
                     }
                 },
                 {
-                    "id": "fb4aa5a5-2dd1-409f-875a-057bf1d84c0b",
+                    "id": "9b11c1d2-e0c1-41d7-aa10-77ebc9f7aa27",
                     "name": "Feed CAP 1.2 de una zona",
                     "request": {
                         "name": "Feed CAP 1.2 de una zona",
@@ -3171,7 +3222,7 @@
                     },
                     "response": [
                         {
-                            "id": "266228b8-fe94-4fcb-b58b-b8115129bd83",
+                            "id": "d3fb9ccc-9e8c-466c-a177-f0c4b4241f1c",
                             "name": "Alertas en formato OASIS CAP 1.2",
                             "originalRequest": {
                                 "url": {
@@ -3207,7 +3258,7 @@
                             "_postman_previewlanguage": "xml"
                         },
                         {
-                            "id": "cc94952b-bb6f-47a1-803b-1fcdc7fc4745",
+                            "id": "73de6b71-965e-4e51-a397-12d0a3e42621",
                             "name": "No existe",
                             "originalRequest": {
                                 "url": {
@@ -3255,7 +3306,7 @@
             "description": "Estado del servicio y métricas",
             "item": [
                 {
-                    "id": "d82645e4-4176-4bfe-8c9c-8dc43f5cfb72",
+                    "id": "2b46b914-c9cc-4bc4-9191-750d83d2d8a4",
                     "name": "Métricas de validación de la armonización por región",
                     "request": {
                         "name": "Métricas de validación de la armonización por región",
@@ -3283,7 +3334,7 @@
                     },
                     "response": [
                         {
-                            "id": "10e15580-3dfd-4511-88c2-97b53b101d3f",
+                            "id": "a86fdcf5-319e-45dd-8424-91d5038735f0",
                             "name": "Métricas",
                             "originalRequest": {
                                 "url": {
@@ -3314,12 +3365,12 @@
                                     "value": "application/json"
                                 }
                             ],
-                            "body": "{\n  \"method\": \"<string>\",\n  \"overlap\": \"<string>\",\n  \"regions\": [\n    {\n      \"region\": \"<string>\",\n      \"pair\": \"modis_snpp\",\n      \"r2\": \"<number,null>\",\n      \"bias\": \"<number,null>\",\n      \"mae\": \"<number>\",\n      \"n_months\": \"<integer>\",\n      \"provisional\": \"<boolean>\"\n    },\n    {\n      \"region\": \"<string>\",\n      \"pair\": \"modis_snpp\",\n      \"r2\": \"<number,null>\",\n      \"bias\": \"<number,null>\",\n      \"mae\": \"<number>\",\n      \"n_months\": \"<integer>\",\n      \"provisional\": \"<boolean>\"\n    }\n  ]\n}",
+                            "body": "{\n  \"method\": \"<string>\",\n  \"overlap\": \"<string>\",\n  \"regions\": [\n    {\n      \"region\": \"<string>\",\n      \"pair\": \"noaa20_snpp\",\n      \"r2\": \"<number,null>\",\n      \"bias\": \"<number,null>\",\n      \"mae\": \"<number>\",\n      \"n_months\": \"<integer>\",\n      \"provisional\": \"<boolean>\"\n    },\n    {\n      \"region\": \"<string>\",\n      \"pair\": \"noaa20_snpp\",\n      \"r2\": \"<number,null>\",\n      \"bias\": \"<number,null>\",\n      \"mae\": \"<number>\",\n      \"n_months\": \"<integer>\",\n      \"provisional\": \"<boolean>\"\n    }\n  ]\n}",
                             "cookie": [],
                             "_postman_previewlanguage": "json"
                         },
                         {
-                            "id": "e942604c-1a9d-459b-acb0-24db324de6f7",
+                            "id": "652d1388-8a1b-483e-a2f1-eeb631d8ce64",
                             "name": "No se pueden leer los datos ahora. El resto de la app sigue funcionando.",
                             "originalRequest": {
                                 "url": {
@@ -3361,7 +3412,7 @@
                     }
                 },
                 {
-                    "id": "0fbde86e-fe9d-41b9-95e1-946dede02bf9",
+                    "id": "b3623384-4075-467a-97e7-84538efa55b3",
                     "name": "Estado del servicio y antigüedad de los datos",
                     "request": {
                         "name": "Estado del servicio y antigüedad de los datos",
@@ -3388,7 +3439,7 @@
                     },
                     "response": [
                         {
-                            "id": "c4b837b1-9d01-42f7-8e5f-dd9fbe4d0652",
+                            "id": "4604b069-414b-4641-a156-ddae88361859",
                             "name": "OK",
                             "originalRequest": {
                                 "url": {
@@ -3451,7 +3502,7 @@
         }
     ],
     "info": {
-        "_postman_id": "8dffbacb-42b7-485d-9720-047e565e5f51",
+        "_postman_id": "4a6a8b20-4589-4d70-bf70-e9bff51d8882",
         "name": "Charmy API",
         "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
         "description": {

@@ -13,6 +13,7 @@ from fastapi.responses import JSONResponse
 
 from api.base import conectar
 from api.datos import DatosNoDisponibles
+from api.errores import ErrorDeContrato
 from api.hotspots import leer_bbox
 
 router = APIRouter()
@@ -33,8 +34,8 @@ def listar(
         filas = con.execute(
             """
             SELECT id, latitude, longitude, acq_datetime, satellite, instrument, confidence, frp,
-                   daynight, cell_id
-            FROM focos_vivo
+                   daynight, cell_id, to_jsonb(f) ->> 'verdict', (to_jsonb(f) ->> 'fixed_source')::boolean
+            FROM focos_vivo AS f
             WHERE longitude BETWEEN %s AND %s AND latitude BETWEEN %s AND %s AND acq_datetime >= %s
             ORDER BY acq_datetime, satellite, latitude, longitude
             """,
@@ -59,7 +60,9 @@ def listar(
     return JSONResponse(respuesta, media_type="application/geo+json")
 
 
-def _feature(id_, lat, lon, cuando, satelite, instrumento, confianza, frp, diaonoche, celda) -> dict:
+def _feature(id_, lat, lon, cuando, satelite, instrumento, confianza, frp, diaonoche, celda, veredicto, fija):
+    # `verdict` y `fixed_source` los suma la verificación del worker (F3-C3); faltan hasta su primera vuelta.
+    verificacion = {k: v for k, v in (("fixed_source", fija), ("verdict", veredicto)) if v is not None}
     return {
         "type": "Feature",
         "id": id_,
@@ -72,5 +75,25 @@ def _feature(id_, lat, lon, cuando, satelite, instrumento, confianza, frp, diaon
             "frp": frp,
             "daynight": diaonoche,
             "cell_id": celda,
-        },
+        }
+        | verificacion,
     }
+
+
+@router.get("/live/{hotspot_id}/evidence", operation_id="getEvidence", tags=["vivo"])
+def evidencia(hotspot_id: str) -> dict:
+    with conectar() as con:
+        fila = con.execute(
+            """
+            SELECT to_jsonb(f) ->> 'verdict', (to_jsonb(f) ->> 'score')::float, to_jsonb(f) -> 'signals',
+                   to_jsonb(f) -> 'evidence'
+            FROM focos_vivo AS f WHERE id = %s
+            """,
+            [hotspot_id],
+        ).fetchone()
+    if fila is None or fila[0] is None:
+        raise ErrorDeContrato(
+            404, "no_existe", "Ese foco ya no está entre los recientes o todavía no se verificó."
+        )
+    veredicto, puntaje, senales, pruebas = fila
+    return {"verdict": veredicto, "score": puntaje, "signals": senales, "evidence": pruebas}

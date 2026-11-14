@@ -212,6 +212,7 @@ paths:
         El `id` de cada foco sirve para pedir `/live/{hotspot_id}/evidence` mientras el foco esté en `/live`.
         El worker consulta FIRMS cada 30 minutos. Si la última consulta falló, la respuesta trae los focos de la
         anterior con `stale: true`, su fecha en `fetched_at` y un `message`. Sin ninguna consulta exitosa, 503.
+        `verdict` y `fixed_source` los calcula la verificación del worker (D-09); faltan en un foco recién llegado.
       parameters:
         - $ref: '#/components/parameters/bbox'
         - name: hours
@@ -272,6 +273,11 @@ paths:
       operationId: getEvidence
       tags: [vivo]
       summary: Señales y evidencia usadas para el veredicto
+      description: |
+        El veredicto sale de reglas sobre cuatro señales (satélite, fuente fija, noticias y reportes con el estado
+        que marcó la entidad), no del modelo de lenguaje, que solo etiqueta titulares (D-09, RF-VIV-04). Sin
+        noticias, la señal de noticias vale 0 y nunca vuelve falso un foco. 404 si el foco ya no está en `/live`
+        o todavía no se verificó.
       parameters:
         - name: hotspot_id
           in: path
@@ -299,6 +305,7 @@ paths:
                         url: https://example.org/noticia-de-ejemplo
                         label: apoya
         '404': { $ref: '#/components/responses/NotFound' }
+        '503': { $ref: '#/components/responses/DatosNoDisponibles' }
   /weather:
     get:
       operationId: getWeather

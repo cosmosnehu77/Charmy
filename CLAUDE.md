@@ -84,6 +84,8 @@ Este archivo no copia tablas: apunta a ellas. Qué se construye está en `REQUIS
 - **Pruebas deterministas**: fechas fijas, UTC, sin depender del orden ni de la red.
 - **YAGNI**: solo lo que pide el issue. Nada de opciones, abstracciones o dependencias sin un uso real hoy.
   Lo que sobra se propone en el tablero o va a la hoja de ruta, no al código.
+- **Cada commit corre las pruebas** de lo que toca (hook `pre-commit`, se activa con `pnpm install`; D-29). No se
+  saltea con `--no-verify`. Un servicio de Python sin pruebas no se commitea ni pasa el CI.
 - **No se fusiona con el CI en rojo.** No se dice "terminado" sin haber corrido las pruebas y leído el resultado.
 
 ## Calidad

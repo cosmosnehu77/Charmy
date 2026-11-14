@@ -1,0 +1,34 @@
+#!/usr/bin/env bash
+# Antes de cada commit corre las pruebas unitarias de lo que el commit toca (D-29, docs/PRUEBAS.md):
+# - JavaScript: las pruebas de los paquetes que cambiaron y de los que dependen de ellos (Turborepo, con caché).
+# - Python: las de cada servicio que cambió. Un servicio sin pruebas no se puede commitear (RNF-15).
+# Se activa solo con `pnpm install` (script `prepare` de la raíz). Prueba el árbol de trabajo, no solo lo que está
+# en el índice: si algo sin commitear rompe una prueba, también frena el commit.
+# Saltearlo con --no-verify no está permitido: el CI vuelve a correr todo y el PR queda en rojo.
+set -uo pipefail
+
+cambiados="$(git diff --cached --name-only)"
+[ -n "$cambiados" ] || exit 0
+
+if printf '%s\n' "$cambiados" | grep -qE '^(apps|packages)/'; then
+  echo "pre-commit: pruebas de JavaScript de lo que cambió"
+  if ! pnpm turbo run test --filter="...[HEAD]" --output-logs=errors-only; then
+    echo "pre-commit: fallan pruebas de JavaScript. Arreglalas antes de commitear." >&2
+    exit 1
+  fi
+fi
+
+servicios="$(printf '%s\n' "$cambiados" | grep -oE '^(services/[^/]+|infra/(humo|publicar))/' | sort -u)"
+for dir in $servicios; do
+  [ -f "$dir/pyproject.toml" ] || continue
+  echo "pre-commit: pruebas de $dir"
+  uv run pytest -q "$dir"
+  rc=$?
+  if [ "$rc" -eq 5 ]; then
+    echo "pre-commit: $dir no tiene pruebas. Toda funcionalidad se entrega con pruebas (RNF-15)." >&2
+    exit 1
+  elif [ "$rc" -ne 0 ]; then
+    echo "pre-commit: fallan pruebas de $dir. Arreglalas antes de commitear." >&2
+    exit 1
+  fi
+done

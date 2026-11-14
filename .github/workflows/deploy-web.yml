@@ -15,9 +15,34 @@ on:
 
 permissions:
   contents: read
+  checks: read   # leer el resultado de "CI ok"
 
 jobs:
+  ci:
+    # Nunca se publica un commit con el CI en rojo (D-29): espera el chequeo "CI ok" de este mismo commit.
+    # Si un push más nuevo canceló ese CI, este despliegue falla y lo hace el del commit nuevo.
+    name: Esperar CI ok
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: El CI de este commit pasó
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SHA: ${{ github.sha }}
+        run: |
+          for i in $(seq 1 85); do
+            r="$(gh api "repos/$GITHUB_REPOSITORY/commits/$SHA/check-runs?check_name=CI%20ok" \
+                  --jq '.check_runs | sort_by(.started_at) | last | "\(.status) \(.conclusion)"' || true)"
+            case "$r" in
+              "completed success") echo "CI ok en verde"; exit 0 ;;
+              completed*) echo "::error::CI ok terminó en '${r#completed }': no se despliega $SHA"; exit 1 ;;
+            esac
+            sleep 20
+          done
+          echo "::error::CI ok no terminó en 28 minutos: no se despliega $SHA"; exit 1
+
   pages:
+    needs: ci
     runs-on: ubuntu-latest
     timeout-minutes: 15
     concurrency:

@@ -19,7 +19,7 @@ export default function App() {
   const modo = useApp((s) => s.modo);
   const mostrarRecorrido = useApp((s) => s.modo === "novato" && !s.recorridoVisto);
   return (
-    <div className="flex h-full flex-col">
+    <div className="flex min-h-full flex-col md:h-full">
       <a
         href="#mapa"
         className="sr-only focus:not-sr-only focus:absolute focus:left-2 focus:top-2 focus:z-50 focus:rounded-control focus:bg-card focus:p-2"
@@ -27,7 +27,7 @@ export default function App() {
         Ir al mapa
       </a>
       <Encabezado />
-      <div className="flex min-h-0 flex-1 flex-col md:flex-row">
+      <div className="flex flex-1 flex-col md:min-h-0 md:flex-row">
         <aside
           aria-label="Área y período"
           className="order-2 flex flex-col gap-4 border-t bg-card p-4 md:order-1 md:w-80 md:overflow-y-auto md:border-t-0 md:border-r"
@@ -44,11 +44,12 @@ export default function App() {
             <AvisoEmergencias />
           </div>
         </aside>
-        <div className="order-1 flex min-h-0 flex-1 flex-col md:order-2">
+        {/* En móvil la columna se «disuelve» (contents) para ordenar: mapa, controles, calendario. */}
+        <div className="contents md:order-2 md:flex md:min-h-0 md:flex-1 md:flex-col">
         <main
           id="mapa"
           aria-label={`Mapa ${perfilMapa.toUpperCase()}`}
-          className="relative min-h-[50vh] flex-1 bg-charmy-cielo md:min-h-0"
+          className="relative order-1 h-[55vh] bg-charmy-cielo md:order-none md:h-auto md:min-h-0 md:flex-1"
         >
           <Suspense
             fallback={
@@ -59,7 +60,7 @@ export default function App() {
           </Suspense>
           {mostrarRecorrido && <Recorrido />}
         </main>
-        <div className="border-t bg-card md:max-h-[45%] md:overflow-y-auto">
+        <div className="order-3 border-t bg-card md:order-none md:max-h-[45%] md:overflow-y-auto">
           <Seguro nombre="El calendario">
             <Calendario />
           </Seguro>

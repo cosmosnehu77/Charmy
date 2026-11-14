@@ -52,6 +52,10 @@ COLUMNAS = [
 ]
 
 
+# Grupos de filas chicos: con los focos ordenados por lugar, un bbox lee pocos grupos por HTTPS (#6, API).
+FILAS_POR_GRUPO = 15_000
+
+
 def _celda(col: str) -> pl.Expr:
     # Esquina suroeste de la celda de 0,1°; el épsilon evita que -45.4 caiga en -45.5 por redondeo binario.
     return ((pl.col(col) * 10 + 1e-9).floor() / 10).round(1).cast(pl.String)
@@ -117,11 +121,12 @@ def cargar(rutas: list[Path]) -> pl.DataFrame:
 
 
 def cargar_partes(df: pl.DataFrame) -> pl.DataFrame:
-    """Quita duplicados (gana SP sobre NRT) y deja el orden estable de la clave única."""
+    """Quita duplicados (gana SP sobre NRT) y ordena por lugar, con la clave única completa: orden estable."""
     return (
         df.sort("product", descending=True)  # "sp" antes que "nrt"
         .unique(["satellite", "acq_datetime", "latitude", "longitude"], keep="first")
-        .sort("acq_datetime", "satellite", "latitude", "longitude")
+        # Por lugar: la API filtra por bbox y DuckDB saltea los grupos de filas que quedan afuera.
+        .sort("latitude", "longitude", "acq_datetime", "satellite")
         .select(COLUMNAS)
     )
 
@@ -133,7 +138,7 @@ def escribir(df: pl.DataFrame, salida: Path) -> None:
     salida.mkdir(parents=True, exist_ok=True)
     con_anio = df.with_columns(year=pl.col("acq_datetime").dt.year())
     for (satelite, anio), parte in con_anio.partition_by("satellite", "year", as_dict=True).items():
-        parte.write_parquet(salida / f"{satelite}-{anio}.parquet")
+        parte.write_parquet(salida / f"{satelite}-{anio}.parquet", row_group_size=FILAS_POR_GRUPO)
 
 
 def convertir(entradas: list[Path], salida: Path) -> int:
@@ -156,7 +161,7 @@ def convertir(entradas: list[Path], salida: Path) -> int:
     for carpeta in sorted(partes.iterdir()):
         df = cargar_partes(pl.read_parquet(carpeta / "*.parquet"))
         df.with_columns(year=pl.col("acq_datetime").dt.year()).write_parquet(
-            salida / f"{carpeta.name}.parquet"
+            salida / f"{carpeta.name}.parquet", row_group_size=FILAS_POR_GRUPO
         )
         total += df.height
     shutil.rmtree(partes)

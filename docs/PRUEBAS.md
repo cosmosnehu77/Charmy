@@ -17,6 +17,7 @@ Una tarea está terminada cuando:
    cambiaron y de los que dependen de ellos, y las de cada servicio de Python que cambió. Un servicio sin pruebas no
    se puede commitear, y el CI también lo rechaza. El hook se activa con `pnpm install`; no se saltea con `--no-verify`.
 3. El CI del PR está en verde. Un PR con el CI en rojo no se fusiona, aunque "ande en local".
+   Tampoco se despliega: los flujos de despliegue esperan a que `CI ok` de ese commit en `main` esté en verde.
 4. El PR apunta a `main`. **Nunca se apilan PR** (un PR cuya base es otra rama): al fusionarse, su contenido no
    llega a `main` y hay que rehacerlo.
 5. La rama está al día con `main`: se corre `tools/al-dia` antes de abrir el PR y cada vez que GitHub marca

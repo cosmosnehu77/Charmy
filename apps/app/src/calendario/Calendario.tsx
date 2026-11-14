@@ -20,7 +20,7 @@ import {
   formatear,
   MESES,
   type Vista,
-} from "./calendario";
+} from "./grilla";
 import { useCalendario } from "./useCalendario";
 
 function Leyenda({ vista }: { vista: Vista }) {

@@ -2,7 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useConsulta } from "@/estado/consulta";
 import { pedir } from "@/lib/api";
 import { validarFechas } from "@/consulta/consulta";
-import type { RespuestaCalendario } from "./calendario";
+import type { RespuestaCalendario } from "./grilla";
 
 /** POST /calendar con el área y los años del período elegido. */
 export function useCalendario() {

@@ -3,7 +3,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import App from "@/App";
-import { armarGrilla, colorCelda, describirCelda, type CeldaCalendario } from "@/calendario/calendario";
+import { armarGrilla, colorCelda, describirCelda, type CeldaCalendario } from "@/calendario/grilla";
 import { Calendario } from "@/calendario/Calendario";
 import { rutaCsv } from "@/consulta/consulta";
 import { useApp } from "@/estado/app";

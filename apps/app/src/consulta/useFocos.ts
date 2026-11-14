@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { useMemo } from "react";
 import { useConsulta } from "@/estado/consulta";
-import { filtrarPorMes } from "@/experto/reproduccion";
+import { filtrarPorMes } from "@/experto/meses";
 import { pedir } from "@/lib/api";
 import { bboxDeArea, type ColeccionFocos, filtrarFocos, rutaFocos, validarFechas } from "./consulta";
 

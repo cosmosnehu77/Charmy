@@ -2,7 +2,7 @@
  * Conclusión del área en lenguaje simple para el modo novato (RF-MOD-01): sin siglas ni percentiles.
  * Usa el mismo calendario que la tabla.
  */
-import { comparacionSimple, MESES_LARGOS, type RespuestaCalendario } from "@/calendario/calendario";
+import { comparacionSimple, MESES_LARGOS, type RespuestaCalendario } from "@/calendario/grilla";
 
 export function conclusionDelArea(cal: RespuestaCalendario): string {
   if (cal.cells.length === 0) return cal.message ?? "Todavía no hay datos de fuego para esta zona.";

@@ -21,20 +21,17 @@ interface AccionesConsulta {
   cambiar: (parcial: Partial<DatosConsulta>) => void;
 }
 
-const restarDias = (fecha: string, dias: number) => {
-  const d = new Date(`${fecha}T00:00:00Z`);
-  d.setUTCDate(d.getUTCDate() - dias);
-  return d.toISOString().slice(0, 10);
-};
-
 export const hoyUtc = () => new Date().toISOString().slice(0, 10);
 
-/** Por defecto: la última semana, serie armonizada y confianza nominal o alta (D-04). */
+/**
+ * Por defecto: los últimos 5 años calendario (el calendario necesita varios años para comparar),
+ * serie armonizada y confianza nominal o alta (D-04).
+ */
 export function estadoInicialConsulta(hoy: string): DatosConsulta {
   return {
     hoy,
     area: null,
-    desde: restarDias(hoy, 7),
+    desde: `${Number(hoy.slice(0, 4)) - 4}-01-01`,
     hasta: hoy,
     fuente: "harmonized",
     confianzaMin: "nominal",

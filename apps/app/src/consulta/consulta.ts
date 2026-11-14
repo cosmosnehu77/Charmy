@@ -77,6 +77,11 @@ export function rutaFocos(p: ParametrosFocos): string {
   return `/hotspots?${q.toString()}`;
 }
 
+/** Ruta de la descarga en CSV: los mismos parámetros que el mapa, con format=csv (RF-EXP-01). */
+export function rutaCsv(p: ParametrosFocos): string {
+  return `${rutaFocos(p)}&format=csv`;
+}
+
 export interface FiltrosLocales {
   /** Potencia radiativa mínima, en MW. */
   frpMin: number;

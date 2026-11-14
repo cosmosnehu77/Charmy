@@ -15,6 +15,8 @@ export interface DatosConsulta {
   momento: Momento;
   /** Herramienta de dibujo activa en el mapa, o null. */
   dibujando: ModoDibujo | null;
+  /** Mes (AAAA-MM) que muestra la reproducción temporal, o null para todo el período (RF-MAP-07). */
+  mesReproduccion: string | null;
 }
 
 interface AccionesConsulta {
@@ -38,6 +40,7 @@ export function estadoInicialConsulta(hoy: string): DatosConsulta {
     frpMin: 0,
     momento: "todos",
     dibujando: null,
+    mesReproduccion: null,
   };
 }
 

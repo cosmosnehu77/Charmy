@@ -1,0 +1,40 @@
+#!/usr/bin/env bash
+# Pone la rama actual al día con origin/main antes de abrir un PR o cuando GitHub marca conflictos.
+# Los conflictos en pnpm-lock.yaml y uv.lock se resuelven solos regenerando el lockfile (pasan cada vez que dos
+# PR agregan dependencias). Cualquier otro conflicto se deja para resolver a mano y el script se detiene.
+# Uso: tools/al-dia            (después: correr las pruebas y git push)
+set -euo pipefail
+
+cd "$(git rev-parse --show-toplevel)"
+rama="$(git rev-parse --abbrev-ref HEAD)"
+[ "$rama" != main ] || { echo "al-dia: estás en main; se usa desde la rama de tu tarea" >&2; exit 1; }
+git diff --quiet && git diff --cached --quiet || { echo "al-dia: hay cambios sin commit; commitealos primero" >&2; exit 1; }
+
+git fetch -q origin main
+if git merge -q --no-edit origin/main; then
+  echo "al-dia: $rama ya incluye origin/main"
+else
+  conflictos="$(git diff --name-only --diff-filter=U)"
+  otros="$(printf '%s\n' "$conflictos" | grep -vxE 'pnpm-lock\.yaml|uv\.lock' || true)"
+  if [ -n "$otros" ]; then
+    echo "al-dia: hay conflictos que se resuelven a mano (el merge quedó a medias):" >&2
+    printf '  %s\n' $otros >&2
+    echo "al-dia: resolvelos, 'git add' y 'git commit', o 'git merge --abort' para volver atrás" >&2
+    exit 1
+  fi
+  if printf '%s\n' "$conflictos" | grep -qx 'pnpm-lock\.yaml'; then
+    pnpm install --no-frozen-lockfile >/dev/null   # pnpm entiende las marcas de conflicto y rearma el lockfile
+    git add pnpm-lock.yaml
+  fi
+  if printf '%s\n' "$conflictos" | grep -qx 'uv\.lock'; then
+    git checkout --theirs uv.lock && uv lock -q      # parte del de main y suma lo de esta rama
+    git add uv.lock
+  fi
+  git commit -q --no-edit
+  echo "al-dia: conflictos de lockfile resueltos en $rama"
+fi
+
+# Los lockfiles tienen que quedar coherentes con los package.json y pyproject.toml.
+pnpm install --frozen-lockfile >/dev/null
+uv lock --check -q
+echo "al-dia: listo. Corré las pruebas y después: git push"

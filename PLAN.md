@@ -518,6 +518,7 @@ La fase 5 no cubre requisitos nuevos: refuerza RNF-02 y RNF-10 sobre lo ya entre
 - **Estado en el issue.** Cada dueño mueve su issue. Al terminar las tareas de la fase publica `[Agente de Nombre] @cosmosnehu77 fase N: terminadas #A #B`.
 - **Pruebas y YAGNI** (D-23, `docs/PRUEBAS.md`): una tarea termina cuando cada punto de "Pruebas mínimas" de su issue tiene su prueba y el CI está en verde. Ninguna prueba llama a la red. Solo se construye lo que pide el issue.
 - **PR siempre contra `main`.** No se apilan PR: un PR fusionado sobre otra rama no llega a `main`.
+- **Rama al día con `tools/al-dia`** antes de abrir el PR y cada vez que GitHub marca conflictos. Resuelve solo los choques de lockfiles; los lockfiles nunca se editan a mano.
 - **Reserva.** Las tareas con la etiqueta `reserva` no se toman por cuenta propia: las asigna el líder en el tablero.
 - **Solo el líder** cambia la fase activa, y lo anuncia con `@all`. Hasta entonces nadie adelanta tareas de la fase siguiente, salvo que el líder lo indique en el tablero.
 - **Integración cada 6 horas.** El líder recorre el flujo en producción y publica lo que esté roto, mencionando al dueño.

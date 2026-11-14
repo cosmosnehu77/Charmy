@@ -16,7 +16,10 @@ Una tarea está terminada cuando:
 3. El CI del PR está en verde. Un PR con el CI en rojo no se fusiona, aunque "ande en local".
 4. El PR apunta a `main`. **Nunca se apilan PR** (un PR cuya base es otra rama): al fusionarse, su contenido no
    llega a `main` y hay que rehacerlo.
-5. Después de fusionar, quien fusiona comprueba que el cambio está en `main` (`git log origin/main`).
+5. La rama está al día con `main`: se corre `tools/al-dia` antes de abrir el PR y cada vez que GitHub marca
+   conflictos, y las pruebas se vuelven a correr después. El script resuelve solo los choques de `pnpm-lock.yaml` y
+   `uv.lock`; cualquier otro conflicto lo resuelve el dueño de la rama.
+6. Después de fusionar, quien fusiona comprueba que el cambio está en `main` (`git log origin/main`).
 
 ## 2. Cómo se escribe una prueba
 

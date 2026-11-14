@@ -88,6 +88,9 @@ Este archivo no copia tablas: apunta a ellas. Qué se construye está en `REQUIS
 
 - Antes de abrir el PR, corre `pnpm check --filter <paquete>` o `uv run --package <servicio> pytest`.
 - **Todo PR apunta a `main`.** Nunca se apila un PR sobre otra rama: al fusionarse no llega a `main`.
+- **Antes de abrir el PR, y cada vez que GitHub marque conflictos, corre `tools/al-dia`.** Trae `main` a tu rama y
+  resuelve solo los choques de `pnpm-lock.yaml` y `uv.lock` (pasan cada vez que dos PR agregan dependencias).
+  Nunca resuelvas un lockfile a mano. Si el script se detiene, el conflicto es real: resuélvelo, o pide ayuda en el tablero.
 - Después de fusionar, comprueba que el cambio está en `main`.
 - Commits chicos. Nada de `git add -A` ni de force-push.
 - Después del congelamiento de la fase 3 solo entran correcciones.

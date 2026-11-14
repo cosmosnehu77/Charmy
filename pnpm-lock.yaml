@@ -175,6 +175,9 @@ importers:
 
   apps/app:
     dependencies:
+      '@charmy/charmy':
+        specifier: workspace:*
+        version: link:../../packages/charmy
       '@charmy/contracts-api':
         specifier: workspace:*
         version: link:../../packages/contracts/api

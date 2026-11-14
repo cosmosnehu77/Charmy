@@ -2,6 +2,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { PanelConsulta } from "@/consulta/PanelConsulta";
+import { useApp } from "@/estado/app";
 import { estadoInicialConsulta, useConsulta } from "@/estado/consulta";
 
 const respuesta = {
@@ -42,6 +43,8 @@ beforeEach(() => {
   fetchSimulado.mockResolvedValue(new Response(JSON.stringify(respuesta), { status: 200 }));
   vi.stubGlobal("fetch", fetchSimulado);
   useConsulta.setState({ ...estadoInicialConsulta("2026-11-14") });
+  // Los filtros técnicos (serie, confianza, potencia, momento) se ven solo en el modo experto.
+  useApp.setState({ modo: "experto" });
 });
 afterEach(() => {
   vi.unstubAllEnvs();

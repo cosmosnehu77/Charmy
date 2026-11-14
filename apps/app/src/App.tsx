@@ -4,12 +4,14 @@ import { AvisoEmergencias } from "@/components/AvisoEmergencias";
 import { Encabezado } from "@/components/Encabezado";
 import { PanelConsulta } from "@/consulta/PanelConsulta";
 import { useApp } from "@/estado/app";
+import { Recorrido } from "@/novato/Recorrido";
 
 // MapLibre pesa: se carga aparte para que el resto de la app aparezca enseguida (RNF-03).
 const Mapa = lazy(() => import("@/mapa/Mapa"));
 
 export default function App() {
   const perfilMapa = useApp((s) => s.perfilMapa);
+  const mostrarRecorrido = useApp((s) => s.modo === "novato" && !s.recorridoVisto);
   return (
     <div className="flex h-full flex-col">
       <a
@@ -42,6 +44,7 @@ export default function App() {
           >
             <Mapa />
           </Suspense>
+          {mostrarRecorrido && <Recorrido />}
         </main>
         <div className="border-t bg-card md:max-h-[45%] md:overflow-y-auto">
           <Calendario />

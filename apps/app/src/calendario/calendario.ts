@@ -46,6 +46,14 @@ export function colorTexto(fondo: string): string {
   return contraste(interfaz.tinta, fondo) >= contraste(interfaz.superficie, fondo) ? interfaz.tinta : interfaz.superficie;
 }
 
+/** Cómo se obtuvo cada valor (esquema.md). Un origen nuevo que no esté acá se muestra tal cual. */
+const ORIGENES: Record<string, string> = {
+  modis_convertido: "MODIS convertido",
+  modis_medido: "MODIS medido",
+  viirs_medido: "VIIRS medido",
+  viirs_convertido: "VIIRS NOAA-20 convertido",
+};
+
 const numero = new Intl.NumberFormat("es-AR", { maximumFractionDigits: 1 });
 export const formatear = (n: number) => numero.format(n);
 
@@ -53,6 +61,6 @@ export const formatear = (n: number) => numero.format(n);
 export function describirCelda(celda: CeldaCalendario | null, year: number, mes: number): string {
   const cuando = `${MESES_LARGOS[mes]} de ${year}`;
   if (!celda) return `${cuando}: sin dato`;
-  const origen = celda.origin === "modis_convertido" ? "MODIS convertido" : "VIIRS medido";
+  const origen = ORIGENES[celda.origin] ?? celda.origin;
   return `${cuando}: ${formatear(celda.value)} días-celda con fuego, percentil ${Math.round(celda.percentile)} (mediana ${formatear(celda.median)}), ${origen}`;
 }

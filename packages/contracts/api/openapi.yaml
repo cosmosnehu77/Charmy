@@ -700,6 +700,7 @@ paths:
                       <scope>Public</scope>
                     </alert>
         '404': { $ref: '#/components/responses/NotFound' }
+        '503': { $ref: '#/components/responses/DatosNoDisponibles' }
   /harmonization/metrics:
     get:
       operationId: getHarmonizationMetrics

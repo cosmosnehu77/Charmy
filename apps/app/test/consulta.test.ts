@@ -124,3 +124,30 @@ describe("filtrarFocos: intensidad y momento del día (RF-MAP-05)", () => {
     expect(ids(filtrarFocos(coleccion, { frpMin: 10, momento: "D" }))).toEqual(["c"]);
   });
 });
+
+describe("focos sin FRP (frp null, decisión del 14/11)", () => {
+  const sinFrp = {
+    type: "FeatureCollection" as const,
+    features: [
+      {
+        type: "Feature" as const,
+        id: "x",
+        geometry: { type: "Point" as const, coordinates: [-71.3, -42.9] },
+        properties: {
+          acq_datetime: "2026-11-12T18:00:00Z",
+          satellite: "N20" as const,
+          instrument: "VIIRS" as const,
+          confidence: "nominal" as const,
+          frp: null as unknown as number,
+          daynight: "D" as const,
+        },
+      },
+    ],
+  };
+  it("sin filtro de potencia, el foco sin FRP se muestra", () => {
+    expect(filtrarFocos(sinFrp, { frpMin: 0, momento: "todos" }).features).toHaveLength(1);
+  });
+  it("con potencia mínima, el foco sin FRP no pasa el filtro", () => {
+    expect(filtrarFocos(sinFrp, { frpMin: 5, momento: "todos" }).features).toHaveLength(0);
+  });
+});

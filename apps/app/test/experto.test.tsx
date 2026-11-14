@@ -169,3 +169,10 @@ describe("atributos originales del foco (RF-MOD-02)", () => {
     expect(filas["Celda de 0,1°"]).toBe("-429_-713");
   });
 });
+
+describe("atributos de un foco sin FRP", () => {
+  it("dice «sin dato» en la potencia", () => {
+    const p = { ...foco("a", "2025-01-10T18:00:00Z").properties, frp: null as unknown as number };
+    expect(Object.fromEntries(atributosFoco(p))["Potencia radiativa (FRP)"]).toBe("sin dato");
+  });
+});

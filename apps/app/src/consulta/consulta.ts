@@ -97,7 +97,9 @@ export function filtrarFocos(coleccion: ColeccionFocos, f: FiltrosLocales): Cole
     ...coleccion,
     features: coleccion.features.filter(
       (foco) =>
-        foco.properties.frp >= f.frpMin && (f.momento === "todos" || foco.properties.daynight === f.momento),
+        // Un foco sin FRP (null) se muestra salvo que se pida una potencia mínima.
+        (foco.properties.frp ?? 0) >= f.frpMin &&
+        (f.momento === "todos" || foco.properties.daynight === f.momento),
     ),
   };
 }

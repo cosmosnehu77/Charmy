@@ -209,6 +209,8 @@ paths:
       description: |
         Solo NOAA-20 (`N20`) y NOAA-21 (`N21`): S-NPP (`N`) no publica datos nuevos desde el 2/11/2026.
         El `id` de cada foco sirve para pedir `/live/{hotspot_id}/evidence` mientras el foco esté en `/live`.
+        El worker consulta FIRMS cada 30 minutos. Si la última consulta falló, la respuesta trae los focos de la
+        anterior con `stale: true`, su fecha en `fetched_at` y un `message`. Sin ninguna consulta exitosa, 503.
       parameters:
         - $ref: '#/components/parameters/bbox'
         - name: hours
@@ -219,12 +221,24 @@ paths:
           description: Focos en vivo
           content:
             application/geo+json:
-              schema: { $ref: '#/components/schemas/HotspotCollection' }
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/HotspotCollection'
+                  - type: object
+                    required: [fetched_at, stale]
+                    properties:
+                      fetched_at: { type: string, format: date-time, description: Última consulta exitosa a FIRMS }
+                      stale:
+                        type: boolean
+                        description: true si la última consulta a FIRMS falló o pasó más de una hora sin una exitosa
+                      message: { type: string, description: 'Solo con `stale: true`: de cuándo son los focos' }
               examples:
                 muestra:
                   summary: Muestra provisoria (valores inventados)
                   value:
                     type: FeatureCollection
+                    fetched_at: '2026-11-14T05:30:00Z'
+                    stale: false
                     features:
                       - type: Feature
                         id: N21-2026-11-14T05:12:00Z--45.86100--67.51200

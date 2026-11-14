@@ -11,7 +11,8 @@ uv run --package worker python -m worker --cada 30  # sigue corriendo, una vuelt
 docker compose --profile vivo up                    # base, API y worker en contenedores
 ```
 
-Necesita `DATABASE_URL` y `FIRMS_MAP_KEY` en el entorno.
+Necesita `DATABASE_URL` y `FIRMS_MAP_KEY`. Para la verificación también `NVIDIA_API_KEY` y `DATA_MANIFEST_URL`
+(regiones y máscara de fuentes fijas); sin ellas, esas señales quedan sin información y el resto sigue.
 
 ## Reglas
 
@@ -25,3 +26,7 @@ Necesita `DATABASE_URL` y `FIRMS_MAP_KEY` en el entorno.
 - La imagen se construye con contexto `services/worker` (como en `docker-compose.yml`).
 - Cuidá el cupo de la clave (5.000 transacciones cada 10 minutos, compartido con el pipeline): un pedido de un área
   grande cuenta como varios. Para mirar el uso: `mapserver/mapkey_status/?MAP_KEY=…` (no gasta cupo).
+- Verificación (D-09, `verificacion.py`): el veredicto sale de reglas sobre las señales. El modelo de lenguaje
+  (NVIDIA, `noticias.MODELO`) solo etiqueta titulares. Sin noticias nunca baja un veredicto.
+- Noticias: solo las 8 provincias con más focos, con caché de 2 horas por provincia (`noticias_vivo`), para
+  cuidar el cupo del modelo.

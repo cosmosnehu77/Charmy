@@ -106,6 +106,32 @@ describe("animación", () => {
   it("respeta el movimiento reducido", () => {
     expect(CHARMY_CSS).toContain("prefers-reduced-motion: reduce");
   });
+
+  // Reglas del CSS que animan algo: selector + bloque con "animation:" (sin contar los @keyframes ni el apagado).
+  const reglasAnimadas = () =>
+    [...CHARMY_CSS.replace(/\/\*[\s\S]*?\*\//g, "").matchAll(/([^{}]+)\{[^}]*animation:\s*charmy-[^}]*\}/g)].map(
+      (m) => m[1]!.trim(),
+    );
+
+  it.each(MOODS)("el estado %s tiene animación propia y sus partes animadas se ven en ese estado", (mood) => {
+    const propias = reglasAnimadas().filter((sel) => sel.includes(`[data-mood="${mood}"]`));
+    expect(propias.length).toBeGreaterThan(0);
+    const visibles = capasVisibles(mood, "base");
+    for (const sel of propias) {
+      for (const [, capa] of sel.matchAll(/data-capa="(\w+)"/g)) {
+        expect(visibles[capa as keyof typeof visibles], `${mood}: ${capa}`).toBe(1);
+      }
+    }
+  });
+
+  it("toda animación cuelga de .charmy, así el movimiento reducido y animate={false} la apagan", () => {
+    for (const sel of reglasAnimadas()) {
+      if (sel.includes("charmy-globo")) continue; // el globo tiene su propio apagado
+      expect(sel.startsWith(".charmy"), sel).toBe(true);
+    }
+    expect(CHARMY_CSS).toMatch(/\.charmy\[data-animado="no"\] \*[^{]*\{ animation: none !important; \}/);
+    expect(CHARMY_CSS).toMatch(/prefers-reduced-motion: reduce\) \{\s*\.charmy \*, \.charmy-globo \{ animation: none !important; \}/);
+  });
 });
 
 describe("charmyHtml", () => {

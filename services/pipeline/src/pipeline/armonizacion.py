@@ -47,16 +47,19 @@ def dias_celda_mensuales(
     `regiones` suma con ceros las que no tuvieron ningún foco.
     """
     dias = (
-        focos.select(
+        focos.lazy()
+        .select(
             grupo=pl.col("satellite").replace_strict(GRUPOS),
             dia=pl.col("acq_datetime").dt.date(),
             cell_id="cell_id",
         )
         .unique()
-        .join(celda_region, on="cell_id")
+        .join(celda_region.lazy(), on="cell_id")
     )
-    conteo = dias.group_by("region", "grupo", mes=pl.col("dia").dt.truncate("1mo")).agg(
-        value=pl.len().cast(pl.Float64)
+    conteo = (
+        dias.group_by("region", "grupo", mes=pl.col("dia").dt.truncate("1mo"))
+        .agg(value=pl.len().cast(pl.Float64))
+        .collect()
     )
     # Grilla completa: cada grupo cubre de su primer a su último mes con datos, en todas las regiones.
     rangos = conteo.group_by("grupo").agg(desde=pl.col("mes").min(), hasta=pl.col("mes").max())
@@ -241,7 +244,16 @@ def main(argv: list[str] | None = None) -> int:
     args = p.parse_args(argv)
     # Solo las columnas que usa la armonización: con el histórico completo, leer todo no entra en memoria.
     columnas = ["satellite", "instrument", "confidence", "confidence_pct", "type", "cell_id", "acq_datetime"]
-    focos = filtrar(pl.scan_parquet(args.focos / "*.parquet").select(columnas)).collect()
+    # D-02 cuenta (satélite, día, celda) una vez: deduplicar cada archivo antes de juntarlos baja la memoria.
+    focos = pl.concat(
+        [
+            filtrar(pl.scan_parquet(ruta).select(columnas))
+            .select("satellite", "cell_id", acq_datetime=pl.col("acq_datetime").dt.truncate("1d"))
+            .unique()
+            .collect()
+            for ruta in sorted(args.focos.glob("*.parquet"))
+        ]
+    )
     regiones = json.loads(args.regiones.read_text())
     codigos = [f["properties"]["region"] for f in regiones["features"]]
     m = dias_celda_mensuales(focos, region_de_celdas(focos["cell_id"], regiones), codigos)

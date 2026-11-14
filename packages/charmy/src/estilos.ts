@@ -43,6 +43,36 @@ export const CHARMY_CSS = `
 .charmy[data-mood="alerta"] [data-parte="exclamacion"] { animation: charmy-rebote 1s ease-in-out infinite; }
 @keyframes charmy-rebote { 0%, 100% { transform: translateY(0); } 40% { transform: translateY(-5px); } }
 
+/* idle: parpadea despacio, una vez cada cuatro segundos */
+.charmy[data-mood="idle"] [data-capa="eyesOpen"] {
+  transform-box: fill-box; transform-origin: 50% 50%;
+  animation: charmy-parpadeo 4s ease-in-out infinite;
+}
+@keyframes charmy-parpadeo { 0%, 92%, 100% { transform: scaleY(1); } 96% { transform: scaleY(0.1); } }
+
+/* festeja: los dos brazos arriba se mueven desde el hombro y los brillos titilan en orden (solo opacidad:
+   cada brillo tiene su posición en su propio transform) */
+.charmy[data-mood="festeja"] [data-capa="armLUp"] {
+  transform-box: view-box; transform-origin: 74px 146px;
+  animation: charmy-festejo-izq 0.5s ease-in-out infinite alternate;
+}
+.charmy[data-mood="festeja"] [data-capa="armRUp"] {
+  transform-box: view-box; transform-origin: 166px 146px;
+  animation: charmy-festejo-der 0.5s ease-in-out infinite alternate;
+}
+@keyframes charmy-festejo-izq { from { transform: rotate(8deg); } to { transform: rotate(-8deg); } }
+@keyframes charmy-festejo-der { from { transform: rotate(-8deg); } to { transform: rotate(8deg); } }
+.charmy[data-mood="festeja"] [data-capa="sparkle"] path { animation: charmy-brillo 1.4s ease-in-out infinite; }
+.charmy[data-mood="festeja"] [data-capa="sparkle"] path:nth-of-type(2) { animation-delay: 0.35s; }
+.charmy[data-mood="festeja"] [data-capa="sparkle"] path:nth-of-type(3) { animation-delay: 0.7s; }
+.charmy[data-mood="festeja"] [data-capa="sparkle"] path:nth-of-type(4) { animation-delay: 1.05s; }
+@keyframes charmy-brillo { 0%, 100% { opacity: 0.25; } 50% { opacity: 1; } }
+
+/* pensando: las burbujas de pensamiento se encienden de la más chica a la más grande */
+.charmy[data-mood="pensando"] [data-capa="think"] circle { animation: charmy-punto 1.8s ease-in-out infinite; }
+.charmy[data-mood="pensando"] [data-capa="think"] circle:nth-of-type(2) { animation-delay: 0.3s; }
+.charmy[data-mood="pensando"] [data-capa="think"] circle:nth-of-type(3) { animation-delay: 0.6s; }
+
 /* Globo de diálogo */
 .charmy-con-globo { display: inline-flex; align-items: center; gap: 0.75rem; }
 .charmy-con-globo[data-globo="arriba"] { flex-direction: column-reverse; align-items: flex-start; gap: 0.5rem; }

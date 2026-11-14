@@ -3,6 +3,8 @@ import { type FormEvent, useId, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { type ModoDibujo, useConsulta } from "@/estado/consulta";
 import { areaDesdePunto, type Confianza, type Fuente, INICIO_DATOS, leerPunto, type Momento, validarPunto } from "./consulta";
+import { useApp } from "@/estado/app";
+import { BuscarLocalidad } from "@/novato/BuscarLocalidad";
 import { useFocos } from "./useFocos";
 
 const control =
@@ -65,6 +67,7 @@ function Area() {
             : "Hacé clic en cada vértice y doble clic en el último para cerrar."}
         </p>
       )}
+      <BuscarLocalidad />
       <form onSubmit={usarPunto} className="flex flex-col gap-2" noValidate>
         <p className="text-sm text-tinta-suave">O escribí un punto y un radio:</p>
         <div className="grid grid-cols-2 gap-2">
@@ -197,11 +200,13 @@ function Resultado({ focos, cargando, fallo, hayArea }: { focos: number | null; 
 
 export function PanelConsulta() {
   const { focos, errorFechas, consulta, hayArea } = useFocos();
+  const modo = useApp((s) => s.modo);
   return (
     <div className="flex flex-col gap-5">
       <Area />
       <Fechas error={errorFechas} />
-      <Filtros />
+      {/* Serie, confianza y potencia son términos técnicos: solo en el modo experto (RF-MOD-01). */}
+      {modo === "experto" && <Filtros />}
       <Resultado
         focos={focos?.features.length ?? null}
         cargando={consulta.isFetching}

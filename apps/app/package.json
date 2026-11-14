@@ -12,6 +12,7 @@
     "test": "vitest run"
   },
   "dependencies": {
+    "@charmy/charmy": "workspace:*",
     "@charmy/contracts-api": "workspace:*",
     "@charmy/ui": "workspace:*",
     "@tanstack/react-query": "5.107.1",

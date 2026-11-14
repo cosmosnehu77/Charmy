@@ -7,7 +7,10 @@ export type PerfilMapa = "2d" | "3d";
 interface EstadoApp {
   modo: Modo;
   perfilMapa: PerfilMapa;
+  /** El recorrido de Charmy se muestra solo la primera vez en modo novato (RF-CHA-05). */
+  recorridoVisto: boolean;
   cambiarModo: (modo: Modo) => void;
+  marcarRecorrido: (visto: boolean) => void;
   cambiarPerfilMapa: (perfil: PerfilMapa) => void;
 }
 
@@ -28,7 +31,9 @@ export const useApp = create<EstadoApp>()(
     (set) => ({
       modo: "novato",
       perfilMapa: perfilInicial(),
+      recorridoVisto: false,
       cambiarModo: (modo) => set({ modo }),
+      marcarRecorrido: (recorridoVisto) => set({ recorridoVisto }),
       cambiarPerfilMapa: (perfilMapa) => set({ perfilMapa }),
     }),
     { name: "charmy-app", version: 1 },

@@ -135,3 +135,22 @@ describe("panel de consulta (F2-D1)", () => {
     expect(await screen.findByText(/no están disponibles/i)).toBeInTheDocument();
   });
 });
+
+describe("tope de /hotspots (#127)", () => {
+  it("si la respuesta viene cortada, avisa cuántos hay y pide achicar la búsqueda", async () => {
+    fetchSimulado.mockResolvedValue(
+      new Response(JSON.stringify({ ...respuesta, truncated: true, total: 31234 }), { status: 200 }),
+    );
+    montar();
+    await elegirPunto("-42.9", "-71.3");
+    expect(await screen.findByText(/mostramos los primeros 20\.000 de 31\.234 focos/i)).toBeInTheDocument();
+    expect(screen.getByText(/achicá el área o el período/i)).toBeInTheDocument();
+  });
+
+  it("sin truncated no muestra el aviso", async () => {
+    montar();
+    await elegirPunto("-42.9", "-71.3");
+    await screen.findByText(/1 foco/);
+    expect(screen.queryByText(/mostramos los primeros/i)).not.toBeInTheDocument();
+  });
+});

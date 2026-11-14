@@ -1,4 +1,5 @@
 import { lazy, Suspense } from "react";
+import { Calendario } from "@/calendario/Calendario";
 import { AvisoEmergencias } from "@/components/AvisoEmergencias";
 import { Encabezado } from "@/components/Encabezado";
 import { PanelConsulta } from "@/consulta/PanelConsulta";
@@ -28,10 +29,11 @@ export default function App() {
             <AvisoEmergencias />
           </div>
         </aside>
+        <div className="order-1 flex min-h-0 flex-1 flex-col md:order-2">
         <main
           id="mapa"
           aria-label={`Mapa ${perfilMapa.toUpperCase()}`}
-          className="relative order-1 min-h-[50vh] flex-1 bg-charmy-cielo md:order-2 md:min-h-0"
+          className="relative min-h-[50vh] flex-1 bg-charmy-cielo md:min-h-0"
         >
           <Suspense
             fallback={
@@ -41,6 +43,10 @@ export default function App() {
             <Mapa />
           </Suspense>
         </main>
+        <div className="border-t bg-card md:max-h-[45%] md:overflow-y-auto">
+          <Calendario />
+        </div>
+        </div>
       </div>
     </div>
   );

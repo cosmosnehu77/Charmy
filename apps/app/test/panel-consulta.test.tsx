@@ -95,9 +95,9 @@ describe("panel de consulta (F2-D1)", () => {
     const u = await elegirPunto("-42.9", "-71.3");
     await waitFor(() => expect(fetchSimulado).toHaveBeenCalledTimes(1));
     fetchSimulado.mockClear();
-    // «desde» queda en 2026-11-07 (valor inicial) y «hasta» pasa a ser anterior.
+    // «desde» queda en 2022-01-01 (valor inicial) y «hasta» pasa a ser anterior.
     await u.clear(screen.getByLabelText("Hasta"));
-    await u.type(screen.getByLabelText("Hasta"), "2026-11-01");
+    await u.type(screen.getByLabelText("Hasta"), "2021-06-01");
     expect(await screen.findByRole("alert")).toHaveTextContent(/desde.*hasta/i);
     expect(fetchSimulado).not.toHaveBeenCalled();
   });
@@ -111,7 +111,7 @@ describe("panel de consulta (F2-D1)", () => {
       expect(urlsPedidas().some((x) => x.searchParams.get("source") === "viirs" && x.searchParams.get("min_confidence") === "high")).toBe(true),
     );
     const ultima = urlsPedidas().at(-1);
-    expect(ultima?.searchParams.get("from")).toBe("2026-11-07");
+    expect(ultima?.searchParams.get("from")).toBe("2022-01-01"); // por defecto, los últimos 5 años calendario
     expect(ultima?.searchParams.get("to")).toBe("2026-11-14");
   });
 

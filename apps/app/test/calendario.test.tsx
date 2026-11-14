@@ -63,7 +63,8 @@ beforeEach(() => {
   responder();
   vi.stubGlobal("fetch", fetchSimulado);
   useConsulta.setState({ ...estadoInicialConsulta("2026-11-14"), desde: "2025-01-01", area });
-  useApp.setState({ modo: "novato", perfilMapa: "2d" });
+  // Estas pruebas miran el calendario técnico (modo experto); el de novato está en novato.test.tsx.
+  useApp.setState({ modo: "experto", perfilMapa: "2d" });
 });
 afterEach(() => {
   vi.unstubAllEnvs();

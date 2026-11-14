@@ -1,7 +1,7 @@
 # @charmy/charmy
 
 Charmy, la vizcacha de fuego. Es el **contrato** del componente (`PLAN.md` §4): la API de abajo es estable y la
-usan la app, la landing y el juego. Dueño: `@cosmosnehu77`. Un cambio de API se anuncia en el tablero.
+usan la app, la landing y el juego. Dueño: `@dimidio6` (desde la fase 3; antes `@cosmosnehu77`). Un cambio de API se anuncia en el tablero.
 
 El dibujo sale del diseño aprobado en `docs/charmy-base/` (decisión D-07).
 
@@ -77,8 +77,11 @@ Son solo CSS (`src/estilos.ts`), sin JavaScript por cuadro. Se apagan solas con 
 | `saluda` | El brazo saluda desde el hombro y laten las líneas de movimiento. |
 | `explica` | Señala con el brazo, mueve la boca y los puntos del globo se encienden en orden. |
 | `alerta` | Se encienden las puntas de las orejas y rebota el signo de exclamación. Sin parpadeos rápidos. |
+| `idle` | Parpadea despacio, una vez cada cuatro segundos. |
+| `festeja` | Mueve los dos brazos arriba y los brillos titilan en orden. |
+| `pensando` | Las burbujas de pensamiento se encienden de la más chica a la más grande. |
 
-Los demás estados (`idle`, `festeja`, `pensando`) se animan en F3-E2. Para sumar una animación: cada capa tiene
+Los seis estados están animados. Para sumar una animación: cada capa tiene
 `data-capa="<nombre>"` y las partes móviles `data-parte` (`llama-cola`, `orejas-llama`, `exclamacion`); el `<svg>`
 lleva `class="charmy"`, `data-mood` y `data-outfit`. Una capa animada nunca tiene `transform` propio en su `<g>`:
 el CSS lo pisaría (hay una prueba que lo controla). `CAPAS_DE(mood, outfit)` devuelve las capas prendidas.

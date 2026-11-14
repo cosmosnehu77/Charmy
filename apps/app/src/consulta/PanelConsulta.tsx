@@ -3,7 +3,12 @@ import { type FormEvent, useId, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { type ModoDibujo, useConsulta } from "@/estado/consulta";
 import { areaDesdePunto, type Confianza, type Fuente, INICIO_DATOS, leerPunto, type Momento, validarPunto } from "./consulta";
+import { useApp } from "@/estado/app";
+import { BuscarLocalidad } from "@/novato/BuscarLocalidad";
 import { useFocos } from "./useFocos";
+
+/** Tope de focos por respuesta de /hotspots en GeoJSON (decisión del 14/11, #127). */
+const LIMITE_FOCOS = 20_000;
 
 const control =
   "min-h-9 w-full rounded-control border border-input bg-card px-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring";
@@ -65,6 +70,7 @@ function Area() {
             : "Hacé clic en cada vértice y doble clic en el último para cerrar."}
         </p>
       )}
+      <BuscarLocalidad />
       <form onSubmit={usarPunto} className="flex flex-col gap-2" noValidate>
         <p className="text-sm text-tinta-suave">O escribí un punto y un radio:</p>
         <div className="grid grid-cols-2 gap-2">
@@ -183,30 +189,54 @@ function Filtros() {
   );
 }
 
-function Resultado({ focos, cargando, fallo, hayArea }: { focos: number | null; cargando: boolean; fallo: boolean; hayArea: boolean }) {
+const enteros = new Intl.NumberFormat("es-AR");
+
+function Resultado({
+  focos,
+  cargando,
+  fallo,
+  hayArea,
+  total,
+}: {
+  focos: number | null;
+  cargando: boolean;
+  fallo: boolean;
+  hayArea: boolean;
+  /** Cantidad sin cortar cuando /hotspots llegó al tope (truncated). */
+  total: number | null;
+}) {
   let texto = "Elegí un área para ver sus focos.";
   if (hayArea && cargando) texto = "Buscando focos…";
   else if (fallo) texto = "Los focos no están disponibles ahora. Probá de nuevo en un rato.";
   else if (focos !== null) texto = focos === 1 ? "1 foco en el área y el período." : `${focos} focos en el área y el período.`;
   return (
-    <p role="status" className="rounded-control bg-superficie-2 p-2 text-sm">
-      {texto}
-    </p>
+    <div role="status" className="flex flex-col gap-1 rounded-control bg-superficie-2 p-2 text-sm">
+      <p>{texto}</p>
+      {total !== null && !cargando && !fallo && (
+        <p className="text-aviso-texto">
+          Hay muchos focos: mostramos los primeros {enteros.format(LIMITE_FOCOS)} de {enteros.format(total)} focos.
+          Para verlos todos, achicá el área o el período. El CSV los trae completos.
+        </p>
+      )}
+    </div>
   );
 }
 
 export function PanelConsulta() {
   const { focos, errorFechas, consulta, hayArea } = useFocos();
+  const modo = useApp((s) => s.modo);
   return (
     <div className="flex flex-col gap-5">
       <Area />
       <Fechas error={errorFechas} />
-      <Filtros />
+      {/* Serie, confianza y potencia son términos técnicos: solo en el modo experto (RF-MOD-01). */}
+      {modo === "experto" && <Filtros />}
       <Resultado
         focos={focos?.features.length ?? null}
         cargando={consulta.isFetching}
         fallo={consulta.isError}
         hayArea={hayArea && !errorFechas}
+        total={consulta.data?.truncated ? (consulta.data.total ?? null) : null}
       />
     </div>
   );

@@ -1,0 +1,12 @@
+[project]
+name = "pipeline"
+version = "0.1.0"
+description = "Carril B: carga de FIRMS y armonización de focos de MODIS y VIIRS"
+requires-python = ">=3.12"
+dependencies = [
+    "polars>=2.1.0",
+]
+
+[build-system]
+requires = ["uv_build>=0.9,<0.14"]
+build-backend = "uv_build"

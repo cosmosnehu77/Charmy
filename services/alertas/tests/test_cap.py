@@ -30,6 +30,8 @@ def test_el_feed_valida_contra_cap_1_2_y_trae_un_info_por_aviso():
     raiz = leer(armar_cap(ZONA_DEMO, avisos, ENVIADO))
 
     assert raiz.findtext("cap:sent", namespaces=NS) == "2026-11-14T21:00:00-00:00"
+    # Feed no oficial de un hackathon: no se presenta como alerta operativa (decisión del líder).
+    assert raiz.findtext("cap:status", namespaces=NS) == "Exercise"
     infos = raiz.findall("cap:info", NS)
     assert [i.findtext("cap:event", namespaces=NS) for i in infos] == ["Foco de calor satelital",
                                                                        "Reporte de un vecino"]

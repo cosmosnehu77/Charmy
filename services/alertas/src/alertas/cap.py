@@ -68,7 +68,7 @@ def armar_cap(zona: Zona, avisos: list[AvisoCap], enviado: datetime) -> str:
         ("identifier", f"charmy-{zona.id}-{enviado.astimezone(UTC):%Y%m%dT%H%M%SZ}"),
         ("sender", "charmy"),
         ("sent", _fecha(enviado)),
-        ("status", "Actual"),
+        ("status", "Exercise"),  # feed no oficial de un hackathon; "Actual" si una entidad lo adopta
         ("msgType", "Alert"),
         ("scope", "Public"),
         ("note", f"Focos satelitales y reportes de vecinos sin confirmar. {aviso_emergencias(zona)}"),

@@ -76,3 +76,8 @@ export function transformarEstilo(perfil: PerfilMapa) {
     };
   };
 }
+
+/** ¿El error que emitió MapLibre es que no cargó el estilo base? Las teselas sueltas no cuentan. */
+export function esFallaDelEstilo(error: unknown, urlEstilo: string): boolean {
+  return typeof error === "object" && error !== null && "url" in error && error.url === urlEstilo;
+}

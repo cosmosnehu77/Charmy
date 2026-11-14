@@ -2,7 +2,7 @@ import { type EstadoApi as Estado, useEstadoApi } from "@/lib/consultas";
 import { cn } from "@/lib/utils";
 
 const textos: Record<Estado, { texto: string; punto: string }> = {
-  "sin-configurar": { texto: "Datos de muestra", punto: "bg-charmy-llama-nucleo" },
+  "sin-configurar": { texto: "Sin servidor configurado", punto: "bg-charmy-llama-nucleo" },
   conectando: { texto: "Conectando…", punto: "bg-borde-control" },
   conectada: { texto: "Datos en línea", punto: "bg-exito" },
   "no-disponible": { texto: "Servidor no disponible", punto: "bg-peligro" },

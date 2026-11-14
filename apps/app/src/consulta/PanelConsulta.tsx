@@ -1,0 +1,213 @@
+import { Pentagon, Square, Trash2 } from "lucide-react";
+import { type FormEvent, useId, useState } from "react";
+import { Button } from "@/components/ui/button";
+import { type ModoDibujo, useConsulta } from "@/estado/consulta";
+import { areaDesdePunto, type Confianza, type Fuente, INICIO_DATOS, leerPunto, type Momento, validarPunto } from "./consulta";
+import { useFocos } from "./useFocos";
+
+const control =
+  "min-h-9 w-full rounded-control border border-input bg-card px-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring";
+const etiqueta = "flex flex-col gap-1 text-sm font-medium";
+
+function Campo({ label, children }: { label: string; children: (id: string) => React.ReactNode }) {
+  const id = useId();
+  return (
+    <div className={etiqueta}>
+      <label htmlFor={id}>{label}</label>
+      {children(id)}
+    </div>
+  );
+}
+
+function Area() {
+  const { area, dibujando, cambiar } = useConsulta();
+  const [lat, setLat] = useState("");
+  const [lon, setLon] = useState("");
+  const [radio, setRadio] = useState("25");
+  const [error, setError] = useState<string | null>(null);
+
+  const usarPunto = (e: FormEvent) => {
+    e.preventDefault();
+    const problema = validarPunto(lat, lon);
+    setError(problema);
+    if (problema) return;
+    const [la, lo] = leerPunto(lat, lon);
+    cambiar({ area: areaDesdePunto(la, lo, Number(radio)), dibujando: null });
+  };
+
+  const dibujar = (modo: ModoDibujo) => cambiar({ dibujando: dibujando === modo ? null : modo });
+
+  return (
+    <section aria-labelledby="titulo-area" className="flex flex-col gap-3">
+      <h2 id="titulo-area" className="text-lg font-semibold">
+        Área
+      </h2>
+      <div className="flex flex-wrap gap-2">
+        <Button variant="outline" size="sm" aria-pressed={dibujando === "rectangle"} onClick={() => dibujar("rectangle")}>
+          <Square aria-hidden="true" />
+          Dibujar rectángulo
+        </Button>
+        <Button variant="outline" size="sm" aria-pressed={dibujando === "polygon"} onClick={() => dibujar("polygon")}>
+          <Pentagon aria-hidden="true" />
+          Dibujar polígono
+        </Button>
+        {area && (
+          <Button variant="ghost" size="sm" onClick={() => cambiar({ area: null, dibujando: null })}>
+            <Trash2 aria-hidden="true" />
+            Borrar área
+          </Button>
+        )}
+      </div>
+      {dibujando && (
+        <p className="text-xs text-tinta-suave">
+          {dibujando === "rectangle"
+            ? "Hacé clic en dos esquinas opuestas del mapa."
+            : "Hacé clic en cada vértice y doble clic en el último para cerrar."}
+        </p>
+      )}
+      <form onSubmit={usarPunto} className="flex flex-col gap-2" noValidate>
+        <p className="text-sm text-tinta-suave">O escribí un punto y un radio:</p>
+        <div className="grid grid-cols-2 gap-2">
+          <Campo label="Latitud">
+            {(id) => (
+              <input id={id} className={control} inputMode="decimal" placeholder="-42,90" value={lat} onChange={(e) => setLat(e.target.value)} />
+            )}
+          </Campo>
+          <Campo label="Longitud">
+            {(id) => (
+              <input id={id} className={control} inputMode="decimal" placeholder="-71,30" value={lon} onChange={(e) => setLon(e.target.value)} />
+            )}
+          </Campo>
+        </div>
+        <Campo label="Radio">
+          {(id) => (
+            <select id={id} className={control} value={radio} onChange={(e) => setRadio(e.target.value)}>
+              <option value="10">10 km</option>
+              <option value="25">25 km</option>
+              <option value="50">50 km</option>
+              <option value="100">100 km</option>
+            </select>
+          )}
+        </Campo>
+        {error && (
+          <p role="alert" className="text-sm text-peligro">
+            {error}
+          </p>
+        )}
+        <Button type="submit" variant="outline" size="sm" className="self-start">
+          Usar este punto
+        </Button>
+      </form>
+    </section>
+  );
+}
+
+function Fechas({ error }: { error: string | null }) {
+  const { desde, hasta, hoy, cambiar } = useConsulta();
+  return (
+    <section aria-labelledby="titulo-fechas" className="flex flex-col gap-3">
+      <h2 id="titulo-fechas" className="text-lg font-semibold">
+        Período
+      </h2>
+      <div className="grid grid-cols-2 gap-2">
+        <Campo label="Desde">
+          {(id) => (
+            <input id={id} type="date" className={control} min={INICIO_DATOS} max={hoy} value={desde} onChange={(e) => cambiar({ desde: e.target.value })} />
+          )}
+        </Campo>
+        <Campo label="Hasta">
+          {(id) => (
+            <input id={id} type="date" className={control} min={INICIO_DATOS} max={hoy} value={hasta} onChange={(e) => cambiar({ hasta: e.target.value })} />
+          )}
+        </Campo>
+      </div>
+      {error && (
+        <p role="alert" className="text-sm text-peligro">
+          {error}
+        </p>
+      )}
+    </section>
+  );
+}
+
+function Filtros() {
+  const { fuente, confianzaMin, frpMin, momento, cambiar } = useConsulta();
+  return (
+    <section aria-labelledby="titulo-filtros" className="flex flex-col gap-3">
+      <h2 id="titulo-filtros" className="text-lg font-semibold">
+        Filtros
+      </h2>
+      <div className="grid grid-cols-2 gap-2">
+        <Campo label="Serie">
+          {(id) => (
+            <select id={id} className={control} value={fuente} onChange={(e) => cambiar({ fuente: e.target.value as Fuente })}>
+              <option value="harmonized">Armonizada</option>
+              <option value="modis">MODIS</option>
+              <option value="viirs">VIIRS</option>
+            </select>
+          )}
+        </Campo>
+        <Campo label="Confianza mínima">
+          {(id) => (
+            <select id={id} className={control} value={confianzaMin} onChange={(e) => cambiar({ confianzaMin: e.target.value as Confianza })}>
+              <option value="low">Baja</option>
+              <option value="nominal">Nominal</option>
+              <option value="high">Alta</option>
+            </select>
+          )}
+        </Campo>
+        <Campo label="Potencia mínima (MW)">
+          {(id) => (
+            <input
+              id={id}
+              type="number"
+              min={0}
+              step={1}
+              className={control}
+              value={frpMin}
+              onChange={(e) => cambiar({ frpMin: Math.max(0, Number(e.target.value) || 0) })}
+            />
+          )}
+        </Campo>
+        <Campo label="Momento del día">
+          {(id) => (
+            <select id={id} className={control} value={momento} onChange={(e) => cambiar({ momento: e.target.value as Momento })}>
+              <option value="todos">Día y noche</option>
+              <option value="D">Día</option>
+              <option value="N">Noche</option>
+            </select>
+          )}
+        </Campo>
+      </div>
+    </section>
+  );
+}
+
+function Resultado({ focos, cargando, fallo, hayArea }: { focos: number | null; cargando: boolean; fallo: boolean; hayArea: boolean }) {
+  let texto = "Elegí un área para ver sus focos.";
+  if (hayArea && cargando) texto = "Buscando focos…";
+  else if (fallo) texto = "Los focos no están disponibles ahora. Probá de nuevo en un rato.";
+  else if (focos !== null) texto = focos === 1 ? "1 foco en el área y el período." : `${focos} focos en el área y el período.`;
+  return (
+    <p role="status" className="rounded-control bg-superficie-2 p-2 text-sm">
+      {texto}
+    </p>
+  );
+}
+
+export function PanelConsulta() {
+  const { focos, errorFechas, consulta, hayArea } = useFocos();
+  return (
+    <div className="flex flex-col gap-5">
+      <Area />
+      <Fechas error={errorFechas} />
+      <Filtros />
+      <Resultado
+        focos={focos?.features.length ?? null}
+        cargando={consulta.isFetching}
+        fallo={consulta.isError}
+        hayArea={hayArea && !errorFechas}
+      />
+    </div>
+  );
+}

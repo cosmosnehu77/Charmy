@@ -3,12 +3,12 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { act, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import App from "@/App";
-import { armarGrilla, type CeldaCalendario } from "@/calendario/calendario";
+import { armarGrilla, type CeldaCalendario } from "@/calendario/grilla";
 import { useApp } from "@/estado/app";
 import { estadoInicialConsulta, useConsulta } from "@/estado/consulta";
 import { atributosFoco } from "@/experto/atributos";
-import { calendarioCsv, calendarioSvg } from "@/experto/descargas";
-import { filtrarPorMes, mesesDelPeriodo } from "@/experto/reproduccion";
+import { calendarioCsv, calendarioSvg } from "@/experto/archivos";
+import { filtrarPorMes, mesesDelPeriodo } from "@/experto/meses";
 
 vi.mock("@/mapa/Mapa", () => ({ default: () => <div data-testid="mapa" /> }));
 

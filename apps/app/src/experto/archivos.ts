@@ -8,7 +8,7 @@ import {
   MESES,
   type RespuestaCalendario,
   type Vista,
-} from "@/calendario/calendario";
+} from "@/calendario/grilla";
 
 export function calendarioCsv(cal: RespuestaCalendario): string {
   const filas = cal.cells.map((c) =>

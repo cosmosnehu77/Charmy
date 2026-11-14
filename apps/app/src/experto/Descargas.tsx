@@ -1,10 +1,10 @@
 import { Download } from "lucide-react";
-import { armarGrilla, type RespuestaCalendario, type Vista } from "@/calendario/calendario";
+import { armarGrilla, type RespuestaCalendario, type Vista } from "@/calendario/grilla";
 import { Button } from "@/components/ui/button";
 import { bboxDeArea, rutaFocos } from "@/consulta/consulta";
 import { useConsulta } from "@/estado/consulta";
 import { urlApi } from "@/lib/api";
-import { calendarioCsv, calendarioSvg, descargarArchivo } from "./descargas";
+import { calendarioCsv, calendarioSvg, descargarArchivo } from "./archivos";
 
 /** Descargas extra del modo experto (RF-EXP-02). */
 export function Descargas({

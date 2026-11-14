@@ -1,9 +1,9 @@
 import { Pause, Play } from "lucide-react";
 import { useEffect, useState } from "react";
-import { MESES_LARGOS } from "@/calendario/calendario";
+import { MESES_LARGOS } from "@/calendario/grilla";
 import { Button } from "@/components/ui/button";
 import { useConsulta } from "@/estado/consulta";
-import { mesesDelPeriodo } from "./reproduccion";
+import { mesesDelPeriodo } from "./meses";
 
 const PASO_MS = 1500;
 

@@ -51,3 +51,8 @@ def test_escribe_particionado_y_no_pisa(tmp_path):
     assert leido.height == df.height
     with pytest.raises(FileExistsError):
         escribir(df, tmp_path / "focos")
+
+
+def test_orden_estable():
+    rutas = list(FIX.glob("*.csv"))
+    assert cargar(rutas).equals(cargar(list(reversed(rutas))))

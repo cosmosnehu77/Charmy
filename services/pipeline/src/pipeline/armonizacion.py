@@ -13,11 +13,13 @@ Uso: uv run --package pipeline python -m pipeline.armonizacion --focos data/foco
 
 import argparse
 import json
+import shutil
 import sys
 from pathlib import Path
 
 import polars as pl
 
+from pipeline.esquema import ESQUEMAS
 from pipeline.regiones import region_de_celdas
 
 GRUPOS = {"Terra": "modis", "Aqua": "modis", "N": "snpp", "N20": "noaa20", "N21": "noaa21"}
@@ -37,8 +39,13 @@ def filtrar(focos: pl.DataFrame) -> pl.DataFrame:
     )
 
 
-def dias_celda_mensuales(focos: pl.DataFrame, celda_region: pl.DataFrame) -> pl.DataFrame:
-    """D-02: cada (celda, día UTC) cuenta una vez por grupo de sensor. Meses sin fuego quedan en 0."""
+def dias_celda_mensuales(
+    focos: pl.DataFrame, celda_region: pl.DataFrame, regiones: list[str] | None = None
+) -> pl.DataFrame:
+    """D-02: cada (celda, día UTC) cuenta una vez por grupo de sensor. Meses sin fuego quedan en 0.
+
+    `regiones` suma con ceros las que no tuvieron ningún foco.
+    """
     dias = (
         focos.select(
             grupo=pl.col("satellite").replace_strict(GRUPOS),
@@ -56,7 +63,12 @@ def dias_celda_mensuales(focos: pl.DataFrame, celda_region: pl.DataFrame) -> pl.
     grilla = (
         rangos.select("grupo", mes=pl.date_ranges("desde", "hasta", "1mo"))
         .explode("mes")
-        .join(celda_region.select("region").unique(), how="cross")
+        .join(
+            pl.DataFrame(
+                {"region": regiones or celda_region["region"].unique()}, schema={"region": pl.String}
+            ),
+            how="cross",
+        )
     )
     return (
         grilla.join(conteo, on=["region", "grupo", "mes"], how="left")
@@ -83,9 +95,10 @@ def _ols(pares: pl.DataFrame, claves: list[str]) -> pl.DataFrame:
     b = pl.cov(lx, ly) / lx.var()
     resid = (ly - ly.mean()) - b * (lx - lx.mean())
     datos = pares.filter((pl.col("x") > 0) & (pl.col("y") > 0)).with_columns(_todo=pl.lit(1))
-    return datos.group_by(claves or ["_todo"]).agg(
+    coef = datos.group_by(claves or ["_todo"]).agg(
         n=pl.len(), b=b, a=ly.mean() - b * lx.mean(), sigma=((resid**2).sum() / (pl.len() - 2)).sqrt()
     )
+    return coef.filter(pl.col("b").is_finite())  # sin variación en x no hay recta
 
 
 def calibrar(m: pl.DataFrame, desde: str, hacia: str, min_puntos: int = MIN_PUNTOS) -> pl.DataFrame:
@@ -200,6 +213,25 @@ def serie(m: pl.DataFrame) -> pl.DataFrame:
     )
 
 
+def calendario(serie: pl.DataFrame) -> pl.DataFrame:
+    """RF-CAL-02: serie armonizada, mediana del mes en los años anteriores al último, anomalía y percentil.
+
+    El año en curso se compara con su historia sin entrar en ella. El percentil es entre todos los años.
+    """
+    h = serie.filter(pl.col("source") == "harmonized").drop("source")
+    if h.is_empty():
+        return pl.DataFrame(schema=ESQUEMAS["calendario"])
+    grupo = ["region", "month"]
+    historia = h.filter(pl.col("year") < h["year"].max()).group_by(grupo).agg(median=pl.col("value").median())
+    rango = (pl.col("value").rank("average").over(grupo) - 0.5) / pl.len().over(grupo) * 100
+    return (
+        h.join(historia, on=grupo, how="left")
+        .with_columns(anomaly=pl.col("value") - pl.col("median"), percentile=rango.round(1))
+        .select({k: pl.col(k).cast(v) for k, v in ESQUEMAS["calendario"].items()}.values())
+        .sort("region", "year", "month")
+    )
+
+
 def main(argv: list[str] | None = None) -> int:
     p = argparse.ArgumentParser(description="Armonización v1: focos -> serie y métricas")
     p.add_argument("--focos", type=Path, required=True, help="Carpeta de focos de pipeline.firms")
@@ -208,11 +240,15 @@ def main(argv: list[str] | None = None) -> int:
     args = p.parse_args(argv)
     focos = filtrar(pl.read_parquet(args.focos, hive_partitioning=True))
     regiones = json.loads(args.regiones.read_text())
-    m = dias_celda_mensuales(focos, region_de_celdas(focos["cell_id"], regiones))
+    codigos = [f["properties"]["region"] for f in regiones["features"]]
+    m = dias_celda_mensuales(focos, region_de_celdas(focos["cell_id"], regiones), codigos)
     args.out.mkdir(parents=True, exist_ok=True)
-    serie(m).write_parquet(args.out / "serie.parquet")
+    s = serie(m)
+    s.write_parquet(args.out / "serie.parquet")
+    calendario(s).write_parquet(args.out / "calendario.parquet")
     metricas(m).write_parquet(args.out / "metricas.parquet")
-    print(f"serie y metricas en {args.out}")
+    shutil.copyfile(args.regiones, args.out / "regiones.geojson")
+    print(f"serie, calendario, metricas y regiones en {args.out}: listo para publicar (infra/README.md)")
     return 0
 
 

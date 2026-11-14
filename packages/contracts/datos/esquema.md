@@ -10,7 +10,7 @@ Los nombres de campo siguen al OpenAPI (`docs/repo-inicial/openapi.yaml`), así 
 | `focos` | **estable** | F1-B1, `services/pipeline` (`pipeline.firms`) |
 | `regiones` | **estable** | F2-B1, `pipeline.regiones` |
 | `serie` | **estable** | F2-B1, `pipeline.armonizacion` (en `data/muestras`, todavía provisoria) |
-| `calendario` | borrador | F2-B2 |
+| `calendario` | **estable** | F2-B2, `pipeline.armonizacion` (en `data/muestras`, todavía provisorio) |
 | `metricas` | **estable** | F2-B1, `pipeline.armonizacion` (en `data/muestras`, todavía provisoria) |
 
 ## Grilla
@@ -78,14 +78,15 @@ fuego valen 0.
 | `origin` | string | `modis_convertido` (hasta 2011), `viirs_medido` (mientras hay S-NPP), `viirs_convertido` (NOAA-20 llevado a S-NPP, después de S-NPP) o `modis_medido` (solo en `source = modis`) |
 | `provisional` | bool | `true` si el valor es de ejemplo y no un resultado. La app lo tiene que mostrar como tal |
 
-## `calendario` (borrador, F2-B2)
+## `calendario`
 
 Lo de `serie` más la comparación con la historia (RF-CAL-02). Coincide con `Calendar.cells` del OpenAPI.
 
 | Columna | Tipo | Descripción |
 |---|---|---|
 | `region`, `year`, `month`, `value`, `lower`, `upper`, `origin`, `provisional` | | Como en `serie`, solo `source = harmonized` |
-| `median` | float64 | Mediana histórica del mismo mes |
+| `median` | float64 | Mediana del mismo mes en los años anteriores al último de la serie. El año en curso se compara con su historia sin entrar en ella. Nula si no hay historia |
+| `anomaly` | float64 | `value − median` |
 | `percentile` | float64 | Posición del valor en la historia de ese mes, 0–100 |
 
 ## `metricas`
@@ -126,3 +127,8 @@ Las genera `uv run --package pipeline python -m pipeline.muestras <csv>... --out
   "focos": [{ "lat": -52.52, "lon": -70.24, "hora_utc": "04:04", "frp": 1.37, "confidence": "nominal" }]
 }
 ```
+
+## Publicación
+
+`pipeline.armonizacion` deja en `--out` lo que se publica: `serie.parquet`, `calendario.parquet`,
+`metricas.parquet` y `regiones.geojson`. Se suben con `publicar` (`infra/README.md`) como `datos-AAAA-MM-DD`.

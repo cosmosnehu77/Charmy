@@ -17,6 +17,7 @@ from pathlib import Path
 
 import polars as pl
 
+from pipeline.armonizacion import calendario
 from pipeline.firms import cargar
 
 # Sur de Argentina y Chile: oeste, sur, este, norte. Con el borde este en -62 no entra ningún otro país.
@@ -106,18 +107,6 @@ def serie_provisoria() -> pl.DataFrame:
         .with_columns(pl.col("year").cast(pl.Int16), pl.col("month").cast(pl.Int8), provisional=pl.lit(True))
         .sort("region", "source", "year", "month")
     )
-
-
-def calendario(serie: pl.DataFrame) -> pl.DataFrame:
-    """Serie armonizada más la mediana histórica del mes y el percentil del valor en esa historia."""
-    h = serie.filter(pl.col("source") == "harmonized").drop("source")
-    grupo = ["region", "month"]
-    return h.with_columns(
-        median=pl.col("value").median().over(grupo),
-        percentile=((pl.col("value").rank("average").over(grupo) - 0.5) / pl.len().over(grupo) * 100).round(
-            1
-        ),
-    ).sort("region", "year", "month")
 
 
 def metricas_provisorias() -> pl.DataFrame:

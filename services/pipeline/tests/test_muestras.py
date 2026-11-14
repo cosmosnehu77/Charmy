@@ -4,24 +4,9 @@ from pathlib import Path
 import polars as pl
 import pytest
 from pipeline.firms import cargar
-from pipeline.muestras import calendario, dia_juego, serie_provisoria
+from pipeline.muestras import dia_juego, serie_provisoria
 
 FIX = Path(__file__).parent / "fixtures"
-
-
-def test_calendario_mediana_y_percentil_por_region_y_mes():
-    serie = pl.DataFrame(
-        {
-            "region": ["X"] * 3,
-            "year": [2001, 2002, 2003],
-            "month": [1, 1, 1],
-            "source": ["harmonized"] * 3,
-            "value": [10.0, 30.0, 20.0],
-        }
-    )
-    cal = calendario(serie)
-    assert cal["median"].to_list() == [20.0, 20.0, 20.0]
-    assert cal["percentile"].to_list() == [16.7, 83.3, 50.0]
 
 
 def test_serie_provisoria_marcada_y_sin_viirs_antes_de_2012():

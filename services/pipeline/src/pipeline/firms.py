@@ -116,7 +116,7 @@ def cargar(rutas: list[Path]) -> pl.DataFrame:
     return (
         df.sort("product", descending=True)  # "sp" antes que "nrt"
         .unique(["satellite", "acq_datetime", "latitude", "longitude"], keep="first")
-        .sort("acq_datetime", "satellite")
+        .sort("acq_datetime", "satellite", "latitude", "longitude")  # la clave única: orden estable
         .select(COLUMNAS)
     )
 

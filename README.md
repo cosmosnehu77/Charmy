@@ -65,7 +65,8 @@ cp .env.example .env
 pnpm dev --filter @charmy/app
 ```
 
-Sin `VITE_API_URL`, la app usa las muestras de `data/muestras/`. Para usar el mock del contrato:
+En desarrollo la app usa el mock del contrato (`apps/app/.env.development`); levantalo con el comando de abajo.
+Para usar la API local o la de producción, poné `VITE_API_URL` (con `/api/v1`) en `apps/app/.env.development.local`.
 
 ```bash
 pnpm --filter @charmy/contracts-api mock

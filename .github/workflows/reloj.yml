@@ -1,0 +1,48 @@
+# Reloj de las tareas programadas (D-33). El cron de GitHub nunca disparó en este repo (cero corridas "schedule"
+# en worker-vivo.yml y avisos.yml), pero workflow_dispatch sí anda. Este flujo corre casi 6 horas: dispara avisos.yml
+# cada 5 minutos y worker-vivo.yml cada 15, y antes del tope de 6 horas se vuelve a lanzar a sí mismo.
+# Sin secretos nuevos: GITHUB_TOKEN puede disparar workflow_dispatch. Gratis en un repo público.
+# Para pararlo: cancelar la corrida en curso en la pestaña Actions (no se relanza si la cancelan).
+name: Reloj
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths: [.github/workflows/reloj.yml]
+  # Por si el cron de GitHub empieza a andar: relanza el reloj si se cortó.
+  schedule:
+    - cron: "41 */3 * * *"
+
+permissions:
+  actions: write
+  contents: read
+
+# Un solo reloj a la vez: uno corriendo y, como mucho, uno esperando.
+concurrency:
+  group: reloj
+  cancel-in-progress: false
+
+jobs:
+  tic:
+    runs-on: ubuntu-latest
+    timeout-minutes: 355
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+    steps:
+      - name: Disparar avisos cada 5 minutos y el worker cada 15
+        run: |
+          fin=$(( $(date +%s) + 340 * 60 ))
+          vuelta=0
+          while [ "$(date +%s)" -lt "$fin" ]; do
+            gh workflow run avisos.yml --ref main || echo "::warning::no se pudo disparar avisos.yml"
+            if [ $(( vuelta % 3 )) -eq 0 ]; then
+              gh workflow run worker-vivo.yml --ref main || echo "::warning::no se pudo disparar worker-vivo.yml"
+            fi
+            vuelta=$(( vuelta + 1 ))
+            sleep 300
+          done
+      - name: Relanzar el reloj
+        if: success()
+        run: gh workflow run reloj.yml --ref main

@@ -40,7 +40,15 @@ Los **focos en vivo** salen solo de NOAA-20 y NOAA-21. Disponibilidad verificada
 - **API de área** (worker y pipeline):
   `https://firms.modaps.eosdis.nasa.gov/api/area/csv/<MAP_KEY>/<FUENTE>/<oeste,sur,este,norte>/<días 1-5>[/<AAAA-MM-DD>]`.
   Límite: **5.000 transacciones cada 10 minutos** por clave. Solo el worker consulta lo vivo, cada 30 minutos (D-13).
-- **Archivo histórico**: se pide en el sitio de FIRMS (Download), llega por correo como CSV. No se guarda en el repo.
+  - La fecha es el **primer** día: `.../5/2010-08-01` trae del 1 al 5 de agosto.
+  - Sirve también los productos SP: el histórico completo se puede bajar por acá, de a 5 días.
+  - **Un pedido de un área grande cuenta como varias transacciones.** Con todo Argentina y Chile, 6 pedidos en
+    paralelo agotaron el cupo en minutos (respuesta HTTP 400 `Exceeding allowed transaction limit`) y la clave quedó
+    bloqueada unos 10 minutos para todo el equipo, worker incluido. Para descargas masivas: uno o dos pedidos a la
+    vez, con pausa, y esperar 10 minutos si aparece ese mensaje.
+  - Mandá un `User-Agent` propio (por ejemplo `charmy-pipeline/0.1`): algunos pedidos sin él devuelven 403.
+- **Archivo histórico**: se pide en el sitio de FIRMS (Download) y llega por correo como CSV; también se puede bajar
+  por la API de área (arriba). Nunca se guarda en el repo: va a `data/firms/`, que está ignorada.
 - **CSV públicos de 24 h y 7 días**, sin clave, por continente:
   `https://firms.modaps.eosdis.nasa.gov/data/active_fire/<noaa-20-viirs-c2|noaa-21-viirs-c2|modis-c6.1>/csv/<J1_VIIRS_C2|J2_VIIRS_C2|MODIS_C6_1>_South_America_<24h|7d>.csv`.
   Sirven para muestras y pruebas.
@@ -56,8 +64,8 @@ Los **focos en vivo** salen solo de NOAA-20 y NOAA-21. Disponibilidad verificada
 | `type` | 0 vegetación, 1 volcán, 2 fuente fija en tierra, 3 en mar. **Solo en SP** | igual |
 | `version` | `6.1NRT` en NRT; sin `NRT` en SP | `2.0NRT` en NRT |
 
-Códigos NRT confirmados con los CSV de 7 días el 14/11/2026: `N20`, `N21`, `T`, `A`. Los del archivo SP de
-NOAA-20/21 se confirman con la descarga de F0-B1.
+Códigos confirmados el 14/11/2026: NRT `N20`, `N21`, `T`, `A` (CSV de 7 días); SP de MODIS `Terra`, `Aqua`, con
+`type` en todas las filas. Los del SP de S-NPP, NOAA-20 y NOAA-21 se confirman con la descarga de F0-B1.
 
 ### Cargarlos
 
@@ -104,7 +112,10 @@ Datos abiertos de NASA, sin restricción de uso. Se cita la fuente en la app, la
 - Entrada OAuth `client_credentials`: el token se pide a
   `https://identity.dataspace.copernicus.eu/auth/realms/CDSE/protocol/openid-connect/token` con `CDSE_CLIENT_ID` y
   `CDSE_CLIENT_SECRET`. Las APIs están en `https://sh.dataspace.copernicus.eu`: **Catalog** para buscar la escena
-  reciente más despejada y **Process** para generar la imagen. Las rutas exactas se confirman al crear el cliente.
+  reciente más despejada y **Process** para generar la imagen. Probadas el 14/11/2026:
+  `POST /api/v1/catalog/1.0.0/search` (colección `sentinel-2-l2a`) y `POST /api/v1/process`. El token dura 30 min.
+- **Sentinel-2 admite como máximo 1.500 m por píxel**: un área grande con pocos píxeles devuelve 400. Pedí un área
+  chica alrededor del foco o más píxeles. Una imagen de 16×16 de un área de ~2 km gastó 0,01 unidades de proceso.
 - Cuenta gratuita: 10.000 unidades de proceso y 50.000 pedidos por mes, 300 por minuto. Cada imagen generada se
   guarda en caché para no gastar cuota dos veces.
 - Dos estilos: color real y falso color (resalta lo quemado). Sirve para inspección visual, no como veredicto (D-19).

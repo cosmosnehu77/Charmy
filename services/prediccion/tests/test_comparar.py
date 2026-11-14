@@ -1,0 +1,106 @@
+"""Pruebas mínimas de F3-E3 (#170). Datos sintéticos y un modelo falso: sin bajar pesos ni llamar a la red."""
+
+import math
+import random
+from datetime import date
+
+import numpy as np
+import polars as pl
+from pipeline.esquema import ESQUEMAS
+from pipeline.prediccion import filas, particion
+from prediccion.comparar import MODELO, comparar, leer_entrenamiento
+
+
+def mensual(tendencia: float, celdas: int = 12, semilla: int = 5) -> pl.DataFrame:
+    """Días con fuego por celda y mes, 2012-01 a 2025-12: estación más una tendencia por año."""
+    rnd = random.Random(semilla)
+    meses = pl.date_range(date(2012, 1, 1), date(2025, 12, 1), "1mo", eager=True).to_list()
+    datos = []
+    for c in range(celdas):
+        nivel = rnd.uniform(2, 6)
+        for m in meses:
+            estacion = 1 + 0.8 * math.cos(2 * math.pi * (m.month - 9) / 12)
+            valor = nivel * estacion + tendencia * (m.year - 2012) + rnd.uniform(-0.3, 0.3)
+            datos.append((f"-4{c // 10}.{c % 10}_-70.0", m, max(0.0, round(valor, 1))))
+    return pl.DataFrame(
+        datos, schema={"cell_id": pl.String, "mes": pl.Date, "dias": pl.Float64}, orient="row"
+    )
+
+
+class Persistencia:
+    """Modelo falso con la interfaz de TimesFM: repite el último valor. Guarda lo que recibió."""
+
+    def __init__(self, escala: float = 0.2):
+        self.escala = escala
+        self.contextos: list[np.ndarray] = []
+
+    def forecast(self, horizon: int, inputs: list[np.ndarray]):
+        self.contextos.extend(inputs)
+        ultimo = np.array([x[-1] for x in inputs], dtype=float)[:, None].repeat(horizon, axis=1)
+        q = np.stack([ultimo * (1 + self.escala * (k - 5) / 5) for k in range(10)], axis=2)
+        return ultimo, q
+
+
+class Estacional:
+    """Modelo falso que repite el valor de hace 12 meses más la tendencia: le gana a la climatología."""
+
+    def __init__(self, tendencia: float):
+        self.tendencia = tendencia
+
+    def forecast(self, horizon: int, inputs: list[np.ndarray]):
+        punto = np.array([[x[-12 + h - 1] + self.tendencia for h in range(1, horizon + 1)] for x in inputs])
+        q = np.stack([punto * (0.8 + 0.04 * k) for k in range(10)], axis=2)
+        return punto, q
+
+
+def test_no_publica_si_no_supera_a_la_climatologia():
+    # Sin tendencia, repetir el último mes es peor que la climatología en una serie estacional.
+    r = comparar(mensual(0.0), Persistencia(), mejora_vigente={1: 0.0, 2: 0.0, 3: 0.0})
+    assert all(v <= 0.02 for v in r.mejora.values())
+    assert r.prediccion.is_empty()
+
+
+def test_no_reemplaza_a_lightgbm_si_no_lo_supera():
+    m = mensual(1.0)
+    r = comparar(m, Estacional(1.0), mejora_vigente={1: 0.99, 2: 0.99, 3: 0.99})
+    assert any(v > 0.02 for v in r.mejora.values())  # sí le gana a la climatología...
+    assert r.prediccion.is_empty()  # ...pero no a LightGBM: queda LightGBM
+
+
+def test_publica_los_horizontes_que_superan_a_climatologia_y_lightgbm():
+    m = mensual(1.0)
+    r = comparar(m, Estacional(1.0), mejora_vigente={1: 0.0, 2: 0.99, 3: 0.0})
+    assert set(r.prediccion["horizon"].to_list()) == {1, 3}
+    assert dict(r.prediccion.schema) == ESQUEMAS["prediccion"]
+    assert (r.prediccion["model"] == MODELO).all()
+    # Incertidumbre ordenada: p10 <= esperado <= p90 (RF-PRE-02).
+    assert (r.prediccion["p10"] <= r.prediccion["expected_fire_days"]).all()
+    assert (r.prediccion["expected_fire_days"] <= r.prediccion["p90"]).all()
+    # Se emite desde el último mes conocido.
+    assert set(r.prediccion["month"].to_list()) == {"2026-01", "2026-03"}
+
+
+def test_validacion_temporal_sin_fuga_y_con_los_mismos_anios_que_lightgbm():
+    m = mensual(0.5, celdas=3)
+    modelo = Persistencia()
+    r = comparar(m, modelo, mejora_vigente={1: 0.0, 2: 0.0, 3: 0.0})
+    # Mismas emisiones de prueba que la partición de pipeline.prediccion (LightGBM).
+    _, prueba = particion(filas(m))
+    assert r.emisiones == sorted(set(prueba["emision"].to_list()))
+    # Cada contexto termina en su mes de emisión: nunca ve el mes que predice.
+    porcelda = len(r.emisiones)
+    for i, emision in enumerate(r.emisiones):
+        meses_hasta = m.filter(pl.col("mes") <= emision)["mes"].n_unique()
+        assert len(modelo.contextos[i * 3]) == meses_hasta
+    assert len(modelo.contextos) >= porcelda * 3
+
+
+def test_lee_la_tabla_de_entrenamiento_publicada(tmp_path):
+    ruta = tmp_path / "entrenamiento.parquet"
+    pl.DataFrame(
+        {"cell_id": ["-41.9_-71.5"] * 2, "month": ["2012-02", "2012-03"], "fire_days": [3, 0]},
+        schema={"cell_id": pl.String, "month": pl.String, "fire_days": pl.Int16},
+    ).write_parquet(ruta)
+    m = leer_entrenamiento(ruta)
+    assert m.schema == {"cell_id": pl.String, "mes": pl.Date, "dias": pl.Float64}
+    assert m["mes"].to_list() == [date(2012, 2, 1), date(2012, 3, 1)]

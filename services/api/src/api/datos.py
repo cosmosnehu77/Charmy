@@ -41,8 +41,11 @@ def version() -> str:
     return _leer_manifiesto(url)[0] if url else "muestras"
 
 
-def archivos(tabla: str) -> list[str]:
-    """Rutas o URLs de los Parquet de una tabla del esquema (`focos`, `calendario`, ...)."""
+def archivos(tabla: str, opcional: bool = False) -> list[str]:
+    """Rutas o URLs de los Parquet de una tabla del esquema (`focos`, `calendario`, ...).
+
+    Con `opcional`, una tabla que no se publicó devuelve una lista vacía en vez de 503.
+    """
     url = os.environ.get("DATA_MANIFEST_URL", "").strip()
     if url:
         encontrados = [
@@ -55,7 +58,7 @@ def archivos(tabla: str) -> list[str]:
         unico = carpeta / f"{tabla}.parquet"
         partes = sorted(map(str, carpeta.glob(f"{tabla}/**/*.parquet")))
         encontrados = [str(unico)] if unico.exists() else partes
-    if not encontrados:
+    if not encontrados and not opcional:
         raise DatosNoDisponibles(f"No hay archivos de la tabla {tabla}")
     return encontrados
 

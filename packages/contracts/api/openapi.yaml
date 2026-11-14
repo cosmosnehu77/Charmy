@@ -25,6 +25,7 @@ info:
     | `demasiados_reportes` | 429 | Más de 5 reportes en 10 minutos desde la misma conexión |
     | `datos_no_disponibles` | 503 | No se pueden leer los datos o la base no responde |
     | `fuente_no_disponible` | 503 | Meteomatics o Copernicus no responden y no hay copia (`/weather`, `/imagery`) |
+    | `sin_prediccion` | 404 | `/forecast`: ese plazo no superó a la climatología o no hay predicción publicada |
     | `sin_imagen` | 404 | No hay una imagen lo bastante despejada en los últimos 30 días (`/imagery/latest`) |
 servers:
   - url: http://localhost:8000/api/v1
@@ -169,10 +170,14 @@ paths:
       operationId: getForecast
       tags: [historico]
       summary: Actividad esperada para los próximos meses (solo si el modelo supera la climatología)
+      description: |
+        Celdas de 0,1° que tocan el `bbox`, para el mes que está a `months` meses del último mes con datos. Solo se
+        publican los plazos que superan a la climatología (D-10, RF-PRE-02); para los demás, 404 `sin_prediccion`.
       parameters:
         - $ref: '#/components/parameters/bbox'
         - name: months
           in: query
+          description: Meses desde el último mes con datos
           schema: { type: integer, minimum: 1, maximum: 3, default: 1 }
       responses:
         '200':
@@ -204,6 +209,14 @@ paths:
                     skill_vs_climatology: 0.12
                     cells:
                       - { cell_id: '-42.9_-71.3', month: '2026-12', expected_fire_days: 2.4, p10: 0.5, p90: 5.1 }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '404':
+          description: No hay predicción para ese plazo (el modelo no supera a la climatología o no se publicó)
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+              example: { code: sin_prediccion, message: 'Para ese plazo el modelo no supera a lo habitual, así que no mostramos predicción.' }
+        '503': { $ref: '#/components/responses/DatosNoDisponibles' }
   /live:
     get:
       operationId: listLive

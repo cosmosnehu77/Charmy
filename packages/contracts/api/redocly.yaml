@@ -1,0 +1,9 @@
+# Reglas del lint del contrato. `recommended` también valida los ejemplos contra sus esquemas.
+extends:
+  - recommended
+rules:
+  # La API es pública y sin cuentas (D-14): solo las rutas de entidades declaran `security`.
+  security-defined: off
+  # Los servidores son locales a propósito: la API local y el mock de Prism.
+  no-server-example.com: off
+  info-license: off

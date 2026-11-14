@@ -18,10 +18,14 @@ import { Charmy } from "@charmy/charmy";
 Sin React (Astro estático, HTML, el juego):
 
 ```ts
-import { charmySvg } from "@charmy/charmy/core";
+import { charmyHtml, charmySvg } from "@charmy/charmy/core";
+import "@charmy/charmy/charmy.css"; // animaciones y globo (o insertar CHARMY_CSS en un <style>)
 
-const svg = charmySvg({ mood: "festeja", outfit: "bombero", size: 120 }); // texto SVG listo para insertar
+const html = charmyHtml({ mood: "saluda", size: 120, say: "¡Hola!" }); // dibujo y globo
+const svg = charmySvg({ mood: "festeja", outfit: "bombero", size: 120 }); // solo el dibujo
 ```
+
+En React no hace falta importar el CSS: el componente lo inserta una sola vez (React 19).
 
 En el `package.json` del consumidor: `"@charmy/charmy": "workspace:*"`.
 
@@ -36,6 +40,8 @@ En el `package.json` del consumidor: `"@charmy/charmy": "workspace:*"`.
 | `label` | texto | estado y vestuario | Texto alternativo. |
 | `decorative` | booleano | `false` | Oculta el dibujo a lectores de pantalla cuando el texto de al lado ya lo dice. |
 | `variant` | `completo`, `cabeza` | según `size` | Fuerza el recorte. |
+| `animate` | booleano | `true` | `false` deja a Charmy quieto (listas, avatares). |
+| `sayPosition` | `derecha`, `arriba` | `derecha` | Dónde va el globo de `say`. |
 | `className`, `style` | — | — | Solo en React, sobre el contenedor. |
 
 Un valor inválido vuelve al de por defecto: la página nunca se rompe por Charmy.
@@ -61,11 +67,21 @@ Un valor inválido vuelve al de por defecto: la página nunca se rompe por Charm
 
 Tamaños: ayudas y alertas, 96 px o más; avatar y listas, 48 a 64 px; menos de 40 px, solo la cabeza.
 
-## Para animar (fase 2)
+## Animaciones
 
-Cada capa del SVG tiene `data-capa="<nombre>"` y la llama de la cola tiene `data-parte="llama-cola"`. El `<svg>`
-lleva `class="charmy"`, `data-mood` y `data-outfit`, así que las animaciones se escriben en CSS sin tocar el dibujo.
-`CAPAS_DE(mood, outfit)` devuelve las capas prendidas.
+Son solo CSS (`src/estilos.ts`), sin JavaScript por cuadro. Se apagan solas con `prefers-reduced-motion`.
+
+| Estado | Qué se mueve |
+|---|---|
+| todos | La llama de la cola titila. |
+| `saluda` | El brazo saluda desde el hombro y laten las líneas de movimiento. |
+| `explica` | Señala con el brazo, mueve la boca y los puntos del globo se encienden en orden. |
+| `alerta` | Se encienden las puntas de las orejas y rebota el signo de exclamación. Sin parpadeos rápidos. |
+
+Los demás estados (`idle`, `festeja`, `pensando`) se animan en F3-E2. Para sumar una animación: cada capa tiene
+`data-capa="<nombre>"` y las partes móviles `data-parte` (`llama-cola`, `orejas-llama`, `exclamacion`); el `<svg>`
+lleva `class="charmy"`, `data-mood` y `data-outfit`. Una capa animada nunca tiene `transform` propio en su `<g>`:
+el CSS lo pisaría (hay una prueba que lo controla). `CAPAS_DE(mood, outfit)` devuelve las capas prendidas.
 
 ## Comandos
 

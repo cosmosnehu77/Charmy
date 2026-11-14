@@ -1,0 +1,803 @@
+openapi: 3.1.0
+info:
+  title: Charmy API
+  version: 0.1.0
+  description: |
+    Contrato en borrador para el MVP de Space Apps 2026. Destino: packages/contracts/openapi.yaml.
+    Los datos históricos salen de Parquet precalculado; los datos en vivo, del worker (VIIRS NOAA-20/21 NRT).
+
+    Este archivo es la fuente de verdad: la API lo implementa y el mock (Prism) responde con sus ejemplos.
+    Todos los ejemplos son **muestras provisorias**: valores inventados con la forma real, nunca resultados.
+servers:
+  - url: http://localhost:8000/api/v1
+    description: API local (services/api)
+  - url: http://localhost:4010
+    description: Mock local de Prism (pnpm --filter @charmy/contracts-api mock)
+tags:
+  - name: historico
+    description: Serie armonizada precalculada (Parquet)
+  - name: vivo
+    description: Focos recientes y contexto del lugar
+  - name: alertas
+    description: Reportes ciudadanos y avisos a entidades
+  - name: meta
+    description: Estado del servicio y métricas
+paths:
+  /hotspots:
+    get:
+      operationId: listHotspots
+      tags: [historico]
+      summary: Focos dentro de un área y un rango de fechas
+      parameters:
+        - $ref: '#/components/parameters/bbox'
+        - $ref: '#/components/parameters/from'
+        - $ref: '#/components/parameters/to'
+        - name: source
+          in: query
+          schema: { type: string, enum: [harmonized, modis, viirs], default: harmonized }
+        - name: min_confidence
+          in: query
+          schema: { type: string, enum: [low, nominal, high], default: nominal }
+        - name: format
+          in: query
+          description: csv devuelve text/csv con los atributos crudos de FIRMS
+          schema: { type: string, enum: [geojson, csv], default: geojson }
+      responses:
+        '200':
+          description: Focos
+          content:
+            application/geo+json:
+              schema: { $ref: '#/components/schemas/HotspotCollection' }
+              examples:
+                muestra:
+                  summary: Muestra provisoria (valores inventados)
+                  value:
+                    type: FeatureCollection
+                    features:
+                      - type: Feature
+                        id: muestra-h-0001
+                        geometry: { type: Point, coordinates: [-71.312, -42.905] }
+                        properties:
+                          acq_datetime: '2025-01-18T18:24:00Z'
+                          satellite: N20
+                          instrument: VIIRS
+                          confidence: nominal
+                          frp: 12.4
+                          daynight: D
+                          fixed_source: false
+                      - type: Feature
+                        id: muestra-h-0002
+                        geometry: { type: Point, coordinates: [-71.298, -42.911] }
+                        properties:
+                          acq_datetime: '2025-01-18T14:50:00Z'
+                          satellite: Aqua
+                          instrument: MODIS
+                          confidence: high
+                          frp: 38.9
+                          daynight: D
+                          fixed_source: false
+            text/csv:
+              schema: { type: string }
+              examples:
+                muestra:
+                  summary: Muestra provisoria (valores inventados)
+                  value: |
+                    latitude,longitude,acq_date,acq_time,satellite,instrument,confidence,frp,daynight
+                    -42.905,-71.312,2025-01-18,1824,N20,VIIRS,n,12.4,D
+        '400': { $ref: '#/components/responses/BadRequest' }
+  /calendar:
+    post:
+      operationId: getCalendar
+      tags: [historico]
+      summary: Calendario de actividad de quema armonizado para un polígono
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [area]
+              properties:
+                area: { $ref: '#/components/schemas/GeoJSONPolygon' }
+                from_year: { type: integer, default: 2001 }
+                to_year: { type: integer }
+                resolution: { type: string, enum: [month, day_of_year], default: month }
+            examples:
+              muestra:
+                summary: Área de ejemplo en la Comarca Andina
+                value:
+                  area:
+                    type: Polygon
+                    coordinates: [[[-71.6, -42.2], [-71.0, -42.2], [-71.0, -42.8], [-71.6, -42.8], [-71.6, -42.2]]]
+                  from_year: 2001
+                  to_year: 2025
+                  resolution: month
+      responses:
+        '200':
+          description: Matriz de calendario con anomalías
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Calendar' }
+              examples:
+                muestra:
+                  summary: Muestra provisoria (valores inventados)
+                  value:
+                    unit: dias_celda_con_fuego_equivalente_viirs
+                    baseline: mediana 2001-2025 por mes
+                    cells:
+                      - { year: 2005, month: 1, value: 3.1, lower: 2.2, upper: 4.3, median: 4.0, percentile: 38, origin: modis_convertido }
+                      - { year: 2015, month: 1, value: 14.6, lower: 11.9, upper: 17.8, median: 4.0, percentile: 96, origin: modis_convertido }
+                      - { year: 2025, month: 1, value: 22.0, median: 4.0, percentile: 99, origin: viirs_medido }
+        '400': { $ref: '#/components/responses/BadRequest' }
+  /forecast:
+    get:
+      operationId: getForecast
+      tags: [historico]
+      summary: Actividad esperada para los próximos meses (solo si el modelo supera la climatología)
+      parameters:
+        - $ref: '#/components/parameters/bbox'
+        - name: months
+          in: query
+          schema: { type: integer, minimum: 1, maximum: 3, default: 1 }
+      responses:
+        '200':
+          description: Pronóstico por celda
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [model, skill_vs_climatology, cells]
+                properties:
+                  model: { type: string, example: lightgbm-v1 }
+                  skill_vs_climatology: { type: number, description: Mejora relativa de MAE en el test temporal }
+                  cells:
+                    type: array
+                    items:
+                      type: object
+                      required: [cell_id, month, expected_fire_days, p10, p90]
+                      properties:
+                        cell_id: { type: string }
+                        month: { type: string, example: '2026-12' }
+                        expected_fire_days: { type: number }
+                        p10: { type: number }
+                        p90: { type: number }
+              examples:
+                muestra:
+                  summary: Muestra provisoria (valores inventados)
+                  value:
+                    model: muestra
+                    skill_vs_climatology: 0.12
+                    cells:
+                      - { cell_id: '-71.3_-42.9', month: '2026-12', expected_fire_days: 2.4, p10: 0.5, p90: 5.1 }
+  /live:
+    get:
+      operationId: listLive
+      tags: [vivo]
+      summary: Focos de las últimas horas con estado de verificación
+      parameters:
+        - $ref: '#/components/parameters/bbox'
+        - name: hours
+          in: query
+          schema: { type: integer, minimum: 1, maximum: 120, default: 48 }
+      responses:
+        '200':
+          description: Focos en vivo
+          content:
+            application/geo+json:
+              schema: { $ref: '#/components/schemas/HotspotCollection' }
+              examples:
+                muestra:
+                  summary: Muestra provisoria (valores inventados)
+                  value:
+                    type: FeatureCollection
+                    features:
+                      - type: Feature
+                        id: muestra-v-0001
+                        geometry: { type: Point, coordinates: [-67.512, -45.861] }
+                        properties:
+                          acq_datetime: '2026-11-14T05:12:00Z'
+                          satellite: N21
+                          instrument: VIIRS
+                          confidence: nominal
+                          frp: 9.8
+                          daynight: N
+                          fixed_source: true
+                          verdict: fuente_fija
+                      - type: Feature
+                        id: muestra-v-0002
+                        geometry: { type: Point, coordinates: [-71.287, -42.118] }
+                        properties:
+                          acq_datetime: '2026-11-14T04:40:00Z'
+                          satellite: N20
+                          instrument: VIIRS
+                          confidence: high
+                          frp: 27.3
+                          daynight: N
+                          fixed_source: false
+                          verdict: probable
+  /live/{hotspot_id}/evidence:
+    get:
+      operationId: getEvidence
+      tags: [vivo]
+      summary: Señales y evidencia usadas para el veredicto
+      parameters:
+        - name: hotspot_id
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: Evidencia
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Verification' }
+              examples:
+                muestra:
+                  summary: Muestra provisoria (valores inventados)
+                  value:
+                    verdict: probable
+                    score: 0.64
+                    signals: { satellite: 0.8, fixed_source: 0.0, news: 0.5, reports: 0.0 }
+                    evidence:
+                      - kind: satelite
+                        title: Dos pasadas de VIIRS con el foco en la misma celda
+                        label: apoya
+                      - kind: noticia
+                        title: Titular de ejemplo sobre un incendio en la zona
+                        url: https://example.org/noticia-de-ejemplo
+                        label: apoya
+        '404': { $ref: '#/components/responses/NotFound' }
+  /weather:
+    get:
+      operationId: getWeather
+      tags: [vivo]
+      summary: Tiempo actual, pronóstico e índice de riesgo de incendio en un punto
+      description: |
+        Lo implementa el módulo services/contexto (carril B) con datos de Meteomatics, con caché.
+        Lo consumen la app y el servicio de avisos.
+      parameters:
+        - name: lat
+          in: query
+          required: true
+          schema: { type: number, minimum: -90, maximum: 90 }
+        - name: lon
+          in: query
+          required: true
+          schema: { type: number, minimum: -180, maximum: 180 }
+        - name: hours
+          in: query
+          description: Horas de pronóstico
+          schema: { type: integer, minimum: 0, maximum: 48, default: 12 }
+      responses:
+        '200':
+          description: Tiempo en el punto
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [source, fetched_at, now, forecast]
+                properties:
+                  source: { type: string, example: Meteomatics }
+                  fetched_at: { type: string, format: date-time }
+                  now: { $ref: '#/components/schemas/WeatherPoint' }
+                  forecast:
+                    type: array
+                    items: { $ref: '#/components/schemas/WeatherPoint' }
+              examples:
+                muestra:
+                  summary: Muestra provisoria (valores inventados)
+                  value:
+                    source: Meteomatics
+                    fetched_at: '2026-11-14T12:00:00Z'
+                    now:
+                      time: '2026-11-14T12:00:00Z'
+                      wind_speed_ms: 8.2
+                      wind_dir_deg: 270
+                      temperature_c: 24.5
+                      relative_humidity_pct: 22
+                      fire_risk_index: 3
+                      fire_risk_label: alto
+                    forecast:
+                      - time: '2026-11-14T13:00:00Z'
+                        wind_speed_ms: 9.0
+                        wind_dir_deg: 265
+                        temperature_c: 25.1
+                        relative_humidity_pct: 20
+                        fire_risk_index: 3
+                        fire_risk_label: alto
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '503':
+          description: La fuente de datos del tiempo no responde. El resto de la app sigue funcionando.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+  /imagery/latest:
+    get:
+      operationId: getLatestImagery
+      tags: [vivo]
+      summary: Imagen satelital óptica más reciente y despejada alrededor de un punto
+      description: |
+        Lo implementa el módulo services/contexto (carril B) con Sentinel-2 L2A de Copernicus Data Space,
+        usando las APIs Catalog y Process de Sentinel Hub desde el servidor. Las imágenes se guardan en caché.
+        Sirve para inspección visual; no cambia el veredicto de un foco.
+      parameters:
+        - name: lat
+          in: query
+          required: true
+          schema: { type: number, minimum: -90, maximum: 90 }
+        - name: lon
+          in: query
+          required: true
+          schema: { type: number, minimum: -180, maximum: 180 }
+        - name: radius_km
+          in: query
+          schema: { type: number, minimum: 1, maximum: 25, default: 5 }
+        - name: style
+          in: query
+          description: color_real muestra lo que vería el ojo; falso_color resalta superficie quemada y fuego activo
+          schema: { type: string, enum: [color_real, falso_color], default: color_real }
+        - name: before
+          in: query
+          description: Buscar la imagen más reciente anterior a esta fecha. Por defecto, hoy.
+          schema: { type: string, format: date }
+        - name: max_cloud_pct
+          in: query
+          schema: { type: integer, minimum: 0, maximum: 100, default: 30 }
+      responses:
+        '200':
+          description: Datos de la imagen y dónde pedirla
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ImageryResult' }
+              examples:
+                muestra:
+                  summary: Muestra provisoria (valores inventados)
+                  value:
+                    image_id: muestra-img-0001
+                    image_url: /api/v1/imagery/muestra-img-0001.png
+                    bbox: [-71.35, -42.15, -71.22, -42.08]
+                    acquired_at: '2026-11-10T14:22:00Z'
+                    cloud_cover_pct: 4.1
+                    style: color_real
+                    source: Copernicus Sentinel-2 L2A
+                    attribution: Contiene datos modificados de Copernicus Sentinel 2026
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '404':
+          description: No hay una imagen lo bastante despejada en los últimos 30 días para ese lugar.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+        '503':
+          description: La fuente de imágenes no responde o se agotó la cuota. El resto de la app sigue funcionando.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+  /imagery/{image_id}.png:
+    get:
+      operationId: getImageryPng
+      tags: [vivo]
+      summary: La imagen ya generada, servida desde la caché
+      parameters:
+        - name: image_id
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: Imagen
+          content:
+            image/png:
+              schema: { type: string, format: binary }
+        '404': { $ref: '#/components/responses/NotFound' }
+  /reports:
+    get:
+      operationId: listReports
+      tags: [alertas]
+      summary: Reportes ciudadanos recientes dentro de un área
+      description: Lo consulta el servicio de avisos para notificar a las entidades de cada zona.
+      parameters:
+        - $ref: '#/components/parameters/bbox'
+        - name: since
+          in: query
+          description: Solo reportes creados después de este momento
+          schema: { type: string, format: date-time }
+      responses:
+        '200':
+          description: Reportes
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  required: [id, lat, lon, status, created_at]
+                  properties:
+                    id: { type: string }
+                    lat: { type: number }
+                    lon: { type: number }
+                    description: { type: string }
+                    photo_url: { type: string, format: uri }
+                    status: { type: string, enum: [sin_verificar, visto, en_camino, controlado, falso] }
+                    created_at: { type: string, format: date-time }
+              examples:
+                muestra:
+                  summary: Muestra provisoria (valores inventados)
+                  value:
+                    - id: muestra-r-0001
+                      lat: -42.12
+                      lon: -71.29
+                      description: Columna de humo detrás del cerro
+                      status: sin_verificar
+                      created_at: '2026-11-14T10:05:00Z'
+        '400': { $ref: '#/components/responses/BadRequest' }
+    post:
+      operationId: createReport
+      tags: [alertas]
+      summary: Reporte ciudadano anónimo
+      description: Sin cuenta. Requiere token de captcha; límite de frecuencia por IP. No guarda datos personales.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [lat, lon, captcha_token]
+              properties:
+                lat: { type: number, minimum: -90, maximum: 90 }
+                lon: { type: number, minimum: -180, maximum: 180 }
+                description: { type: string, maxLength: 500 }
+                photo_url: { type: string, format: uri }
+                captcha_token: { type: string }
+            examples:
+              muestra:
+                summary: Reporte de ejemplo
+                value: { lat: -42.12, lon: -71.29, description: Columna de humo detrás del cerro, captcha_token: token-de-prueba }
+      responses:
+        '201':
+          description: Reporte creado como "sin verificar"
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [id, status]
+                properties:
+                  id: { type: string }
+                  status: { type: string, enum: [sin_verificar] }
+              examples:
+                muestra:
+                  summary: Muestra provisoria
+                  value: { id: muestra-r-0002, status: sin_verificar }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '429': { description: Demasiados reportes desde esta conexión. Probá de nuevo en unos minutos. }
+  /entities/me/alerts:
+    get:
+      operationId: listEntityAlerts
+      tags: [alertas]
+      summary: Bandeja de la entidad (focos y reportes dentro de sus zonas)
+      security: [{ bearer: [] }]
+      responses:
+        '200':
+          description: Alertas
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/Alert' }
+              examples:
+                muestra:
+                  summary: Muestra provisoria (valores inventados)
+                  value:
+                    - id: muestra-a-0001
+                      zone_id: zona-demo
+                      kind: foco_satelital
+                      hotspot_id: muestra-v-0002
+                      status: nueva
+                      created_at: '2026-11-14T04:45:00Z'
+        '401': { $ref: '#/components/responses/Unauthorized' }
+  /alerts/{alert_id}:
+    patch:
+      operationId: updateAlert
+      tags: [alertas]
+      summary: La entidad actualiza el estado de una alerta (alimenta la verificación)
+      security: [{ bearer: [] }]
+      parameters:
+        - name: alert_id
+          in: path
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [status]
+              properties:
+                status: { type: string, enum: [visto, en_camino, controlado, falso] }
+                note: { type: string, maxLength: 500 }
+            examples:
+              muestra:
+                summary: Cambio de estado de ejemplo
+                value: { status: en_camino, note: Sale una dotación }
+      responses:
+        '200':
+          description: Alerta actualizada
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Alert' }
+              examples:
+                muestra:
+                  summary: Muestra provisoria (valores inventados)
+                  value:
+                    id: muestra-a-0001
+                    zone_id: zona-demo
+                    kind: foco_satelital
+                    hotspot_id: muestra-v-0002
+                    status: en_camino
+                    created_at: '2026-11-14T04:45:00Z'
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
+  /cap/{zone_id}.xml:
+    get:
+      operationId: getCapFeed
+      tags: [alertas]
+      summary: Feed CAP 1.2 de una zona
+      parameters:
+        - name: zone_id
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: Alertas en formato OASIS CAP 1.2
+          content:
+            application/cap+xml:
+              schema: { type: string }
+              examples:
+                muestra:
+                  summary: Muestra provisoria (alerta inventada)
+                  value: |
+                    <?xml version="1.0" encoding="UTF-8"?>
+                    <alert xmlns="urn:oasis:names:tc:emergency:cap:1.2">
+                      <identifier>muestra-a-0001</identifier>
+                      <sender>charmy</sender>
+                      <sent>2026-11-14T04:45:00-00:00</sent>
+                      <status>Exercise</status>
+                      <msgType>Alert</msgType>
+                      <scope>Public</scope>
+                    </alert>
+        '404': { $ref: '#/components/responses/NotFound' }
+  /harmonization/metrics:
+    get:
+      operationId: getHarmonizationMetrics
+      tags: [meta]
+      summary: Métricas de validación de la armonización por región
+      responses:
+        '200':
+          description: Métricas
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [method, overlap, regions]
+                properties:
+                  method: { type: string, example: 'log-linear por región y mes, validación dejando un año afuera' }
+                  overlap: { type: string, example: '2012-01/2026-11' }
+                  regions:
+                    type: array
+                    items:
+                      type: object
+                      required: [region, r2, bias, mae, n_months]
+                      properties:
+                        region: { type: string }
+                        r2: { type: number }
+                        bias: { type: number }
+                        mae: { type: number }
+                        n_months: { type: integer }
+              examples:
+                muestra:
+                  summary: Muestra provisoria (valores inventados, no son métricas reales)
+                  value:
+                    method: log-linear por región y mes, validación dejando un año afuera
+                    overlap: '2012-01/2026-11'
+                    regions:
+                      - { region: patagonia-andina, r2: 0.0, bias: 0.0, mae: 0.0, n_months: 0 }
+  /health:
+    get:
+      operationId: getHealth
+      tags: [meta]
+      summary: Estado del servicio y antigüedad de los datos
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [status]
+                properties:
+                  status: { type: string, example: ok }
+                  last_nrt_fetch: { type: string, format: date-time }
+                  data_version: { type: string }
+              examples:
+                muestra:
+                  summary: Muestra provisoria
+                  value: { status: ok, data_version: muestra }
+components:
+  securitySchemes:
+    bearer:
+      type: http
+      scheme: bearer
+      description: JWT de Supabase Auth (enlace mágico, solo entidades invitadas)
+  parameters:
+    bbox:
+      name: bbox
+      in: query
+      required: true
+      description: oeste,sur,este,norte en grados decimales (mismo orden que FIRMS)
+      schema: { type: string, example: '-72,-46.5,-65,-42' }
+    from:
+      name: from
+      in: query
+      schema: { type: string, format: date }
+    to:
+      name: to
+      in: query
+      schema: { type: string, format: date }
+  responses:
+    BadRequest:
+      description: Parámetros inválidos
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+          example: { code: bbox_invalido, message: 'El área debe tener el formato oeste,sur,este,norte.' }
+    Unauthorized:
+      description: Falta iniciar sesión como entidad
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+          example: { code: sin_sesion, message: Iniciá sesión como entidad para ver esta bandeja. }
+    NotFound:
+      description: No existe
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+          example: { code: no_existe, message: No encontramos lo que buscás. }
+  schemas:
+    Error:
+      type: object
+      required: [code, message]
+      properties:
+        code: { type: string, example: bbox_invalido }
+        message: { type: string, example: 'El área debe tener el formato oeste,sur,este,norte.' }
+    GeoJSONPolygon:
+      type: object
+      required: [type, coordinates]
+      properties:
+        type: { type: string, enum: [Polygon] }
+        coordinates:
+          type: array
+          items:
+            type: array
+            items:
+              type: array
+              items: { type: number }
+              minItems: 2
+              maxItems: 2
+    HotspotCollection:
+      type: object
+      required: [type, features]
+      properties:
+        type: { type: string, enum: [FeatureCollection] }
+        features:
+          type: array
+          items: { $ref: '#/components/schemas/Hotspot' }
+    Hotspot:
+      type: object
+      required: [type, id, geometry, properties]
+      properties:
+        type: { type: string, enum: [Feature] }
+        id: { type: string }
+        geometry:
+          type: object
+          required: [type, coordinates]
+          properties:
+            type: { type: string, enum: [Point] }
+            coordinates: { type: array, items: { type: number }, minItems: 2, maxItems: 2 }
+        properties:
+          type: object
+          required: [acq_datetime, satellite, instrument, confidence, frp, daynight]
+          properties:
+            acq_datetime: { type: string, format: date-time }
+            satellite: { type: string, enum: [Terra, Aqua, N, N20, N21] }
+            instrument: { type: string, enum: [MODIS, VIIRS] }
+            confidence: { type: string, enum: [low, nominal, high] }
+            frp: { type: number, description: Potencia radiativa del fuego (MW) }
+            daynight: { type: string, enum: [D, N] }
+            fixed_source: { type: boolean }
+            verdict:
+              type: string
+              enum: [confirmado, probable, sin_confirmar, fuente_fija]
+    Calendar:
+      type: object
+      required: [unit, baseline, cells]
+      properties:
+        unit: { type: string, example: dias_celda_con_fuego_equivalente_viirs }
+        baseline: { type: string, example: mediana 2001-2025 por mes }
+        cells:
+          type: array
+          items:
+            type: object
+            required: [year, month, value, median, percentile, origin]
+            properties:
+              year: { type: integer }
+              month: { type: integer, minimum: 1, maximum: 12 }
+              value: { type: number }
+              lower: { type: number }
+              upper: { type: number }
+              median: { type: number }
+              percentile: { type: number, minimum: 0, maximum: 100 }
+              origin: { type: string, enum: [modis_convertido, viirs_medido] }
+    WeatherPoint:
+      type: object
+      required: [time, wind_speed_ms, wind_dir_deg, temperature_c, relative_humidity_pct]
+      properties:
+        time: { type: string, format: date-time }
+        wind_speed_ms: { type: number }
+        wind_dir_deg: { type: number, description: 'Dirección desde la que sopla el viento, en grados' }
+        temperature_c: { type: number }
+        relative_humidity_pct: { type: number }
+        fire_risk_index: { type: number, description: Índice de riesgo de incendio de la fuente }
+        fire_risk_label: { type: string, enum: [bajo, moderado, alto, muy_alto, extremo] }
+    ImageryResult:
+      type: object
+      required: [image_id, image_url, bbox, acquired_at, cloud_cover_pct, style, source, attribution]
+      properties:
+        image_id: { type: string }
+        image_url: { type: string, description: 'Ruta de la imagen en esta API, lista para usar como capa del mapa' }
+        bbox:
+          type: array
+          description: oeste, sur, este, norte de la imagen, para ubicarla sobre el mapa
+          items: { type: number }
+          minItems: 4
+          maxItems: 4
+        acquired_at: { type: string, format: date-time }
+        cloud_cover_pct: { type: number }
+        style: { type: string, enum: [color_real, falso_color] }
+        source: { type: string, example: Copernicus Sentinel-2 L2A }
+        attribution: { type: string, example: Contiene datos modificados de Copernicus Sentinel 2026 }
+    Verification:
+      type: object
+      required: [verdict, score, signals, evidence]
+      properties:
+        verdict: { type: string, enum: [confirmado, probable, sin_confirmar, fuente_fija] }
+        score: { type: number, minimum: 0, maximum: 1 }
+        signals:
+          type: object
+          required: [satellite, fixed_source, news, reports]
+          properties:
+            satellite: { type: number }
+            fixed_source: { type: number }
+            news: { type: number }
+            reports: { type: number }
+        evidence:
+          type: array
+          items:
+            type: object
+            required: [kind, title, label]
+            properties:
+              kind: { type: string, enum: [noticia, reporte, entidad, satelite] }
+              title: { type: string }
+              url: { type: string, format: uri }
+              label: { type: string, enum: [apoya, contradice, sin_informacion] }
+    Alert:
+      type: object
+      required: [id, zone_id, kind, status, created_at]
+      properties:
+        id: { type: string }
+        zone_id: { type: string }
+        kind: { type: string, enum: [foco_satelital, reporte_ciudadano] }
+        hotspot_id: { type: string }
+        report_id: { type: string }
+        status: { type: string, enum: [nueva, visto, en_camino, controlado, falso] }
+        created_at: { type: string, format: date-time }

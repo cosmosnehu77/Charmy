@@ -2,6 +2,7 @@
 
 import csv
 import io
+import re
 from datetime import date, timedelta
 from typing import Annotated, Literal
 
@@ -15,6 +16,9 @@ router = APIRouter()
 
 NIVELES = ["low", "nominal", "high"]
 TOPE = 20_000
+SATELITES = {"modis": {"Terra", "Aqua"}, "viirs": {"N", "N20", "N21"}}
+# focos/<satélite>-<año>.parquet (esquema.md); en el release la carpeta se aplana con `--`.
+ARCHIVO_FOCOS = re.compile(r"([A-Za-z0-9]+)-(\d{4})\.parquet$")
 ENCABEZADO_CSV = [
     "latitude",
     "longitude",
@@ -79,17 +83,42 @@ def listar(
         ORDER BY acq_datetime, satellite, latitude, longitude
     """
     con = conexion()
-    parametros = [archivos("focos"), *parametros]
+    rutas = podar(archivos("focos"), desde, hasta, source)
+    if not rutas:
+        filas_vacias: list[tuple] = []
+        if format == "csv":
+            return _csv(filas_vacias)
+        return JSONResponse(_geojson(filas_vacias), media_type="application/geo+json")
+    parametros = [rutas, *parametros]
 
     if format == "csv":
         return _csv(con.execute(consulta, parametros).fetchall())
-    # El mapa recibe como máximo TOPE focos; la descarga en CSV trae todos.
-    filas = con.execute(consulta + " LIMIT ?", [*parametros, TOPE + 1]).fetchall()
-    respuesta = _geojson(filas[:TOPE])
-    if len(filas) > TOPE:
-        total = con.execute(f"SELECT count(*) {origen}", parametros).fetchone()[0]
+    # El mapa recibe como máximo TOPE focos; la descarga en CSV trae todos. El total sale de la misma lectura.
+    con_total = consulta.replace(" AS acq_datetime,", " AS acq_datetime, count(*) OVER () AS total,", 1)
+    filas = con.execute(con_total + " LIMIT ?", [*parametros, TOPE]).fetchall()
+    total = filas[0][3] if filas else 0
+    respuesta = _geojson([fila[:3] + fila[4:] for fila in filas])
+    if total > TOPE:
         respuesta |= {"truncated": True, "total": total}
     return JSONResponse(respuesta, media_type="application/geo+json")
+
+
+def podar(rutas: list[str], desde: date | None, hasta: date | None, source: str) -> list[str]:
+    """Solo los archivos de los años y satélites pedidos: leerlos todos por HTTPS tarda minutos.
+
+    Un archivo sin satélite y año en el nombre (las muestras) se lee siempre.
+    """
+    elegidos = []
+    for ruta in rutas:
+        partes = ARCHIVO_FOCOS.search(ruta.rsplit("/", 1)[-1].rsplit("--", 1)[-1])
+        if partes:
+            satelite, anio = partes[1], int(partes[2])
+            if desde and anio < desde.year or hasta and anio > hasta.year:
+                continue
+            if source in SATELITES and satelite not in SATELITES[source]:
+                continue
+        elegidos.append(ruta)
+    return elegidos
 
 
 def _geojson(filas: list[tuple]) -> dict:

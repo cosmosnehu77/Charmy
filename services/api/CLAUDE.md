@@ -9,6 +9,7 @@ API REST de Charmy. Dueño: `@BrunoAguinaga0` (carril C). Implementa `packages/c
 uv run --package api uvicorn api.main:app --reload --port 8000   # levantar en local
 uv run ruff check services/api && uv run ruff format services/api # lint y formato
 docker compose --profile api up                                   # API y base en contenedores
+uv run pytest services/api                                        # pruebas
 ```
 
 Docs interactivas en `http://localhost:8000/api/v1/docs`.
@@ -31,4 +32,6 @@ Docs interactivas en `http://localhost:8000/api/v1/docs`.
 - `GET /reports`, `POST /alerts` y `PATCH /alerts/{id}` piden `CHARMY_SERVICE_TOKEN` (Bearer); `POST /reports`
   es público. Los reportes no guardan IP ni datos personales (RNF-05). Las tablas llevan RLS activado.
 - `services/contexto` (carril B) se monta como router; no se edita desde este carril.
-- La imagen se construye con contexto `services/api` (como en `docker-compose.yml`).
+- La imagen se construye desde la **raíz del repo** con `-f services/api/Dockerfile`, porque monta
+  `services/contexto`. Lo que entra está en `services/api/Dockerfile.dockerignore`.
+- Pruebas: `uv run pytest services/api` desde la raíz (usan `data/muestras/`, sin red ni base).

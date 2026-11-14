@@ -260,6 +260,7 @@ name = "api"
 version = "0.1.0"
 source = { editable = "services/api" }
 dependencies = [
+    { name = "contexto" },
     { name = "duckdb" },
     { name = "fastapi" },
     { name = "httpx" },
@@ -270,6 +271,7 @@ dependencies = [
 
 [package.metadata]
 requires-dist = [
+    { name = "contexto", editable = "services/contexto" },
     { name = "duckdb", specifier = ">=2.0.0" },
     { name = "fastapi", specifier = ">=0.162.7" },
     { name = "httpx", specifier = ">=0.28.1" },

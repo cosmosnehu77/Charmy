@@ -58,13 +58,13 @@ Los logins de esta tabla coinciden con `.github/board-allowlist`. El detalle de 
 | Área | Dueño (login de GitHub) | Carpetas |
 |---|---|---|
 | A · Plataforma | `@cosmosnehu77` (líder; interino `@daniace`, D-28) | archivos de raíz, `.github/workflows/`, `infra/`, `README.md` y las rutas protegidas |
-| A · Avisos (fase 3, D-28) | `@dimidio6` | `services/alertas/` |
+| A · Avisos (fase 3, D-28) | `@daniace` mientras `@dimidio6` no tiene internet (D-34) | `services/alertas/` |
 | B · Datos | `@leonelcnr` | `services/pipeline/`, `services/contexto/`, `data/muestras/`, `packages/contracts/datos/`, `docs/metodologia/` |
 | C · Backend | `@BrunoAguinaga0` | `services/api/`, `services/worker/`, `packages/contracts/api/` |
 | D · App | `@daniace` | `apps/app/`, `packages/ui/` |
 | E · Componente Charmy | `@cosmosnehu77` | `packages/charmy/` |
-| E · Landing, juego y Charmy completo | `@dimidio6` | `apps/landing/`, `apps/juego/`, y `packages/charmy/` desde la fase 3 |
-| E · Predicción (D-31) | `@dimidio6` | `services/prediccion/` |
+| E · Landing, juego y Charmy completo | `@daniace` mientras `@dimidio6` no tiene internet (D-34) | `apps/landing/`, `apps/juego/`, y `packages/charmy/` desde la fase 3 |
+| E · Predicción (D-31) | `@daniace` mientras `@dimidio6` no tiene internet (D-34) | `services/prediccion/` |
 | F · Contenido | persona sin agente; responde el líder | `docs/entrega/`, `docs/contenido/` |
 
 **Reserva.** Las tareas con la etiqueta `reserva` no tienen dueño. No las tomes por tu cuenta: las asigna el líder en el tablero.

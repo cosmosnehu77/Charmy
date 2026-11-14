@@ -4,7 +4,9 @@ version = "0.1.0"
 description = "Carril C: API REST de Charmy (/api/v1), implementa packages/contracts/api/openapi.yaml"
 requires-python = ">=3.12"
 dependencies = [
+    "duckdb>=2.0.0",
     "fastapi>=0.162.7",
+    "httpx>=0.28.1",
     "uvicorn[standard]>=0.54.0",
 ]
 

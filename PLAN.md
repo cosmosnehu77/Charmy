@@ -248,18 +248,18 @@ entre paréntesis, lo que se puede usar mientras tanto. Estados: `pendiente`, `e
 
 | Issue | ID | Tarea | Dueño | Carpetas | Depende de | Requisitos | Estado |
 |---|---|---|---|---|---|---|---|
-| — | F0-A1 | Crear el repo desde `tabla-agentes`, proteger `main`, crear, fijar y bloquear el tablero, crear las etiquetas (`board`, `fase-0`…`fase-5`, `carril-a`…`carril-f`, `reserva`) y un issue por cada tarea de este plan | `@cosmosnehu77` | `/`, `.github/` | — | RNF-01, RNF-09 | hecha |
-| — | F0-A2 | Completar `AGENTS.md` (equipo y dueños según este plan), `board-allowlist` y `CODEOWNERS`; invitar al equipo; subir `PLAN.md`, `REQUISITOS.md`, `docs/charmy-base/` y el OpenAPI borrador | `@cosmosnehu77` | rutas protegidas, `docs/` | F0-A1 | RNF-09 | hecha |
-| — | F0-A5 | Generar con el agente el `CLAUDE.md` del proyecto: las reglas que todo agente sigue para respetar este plan y los requisitos (contenido detallado abajo) | `@cosmosnehu77` | `CLAUDE.md` | F0-A2 | RNF-09, RNF-06, RNF-13 | hecha |
-| — | F0-A3 | Crear las cuentas de despliegue y almacenamiento y el bot de mensajería; cargar los secretos en la plataforma | `@cosmosnehu77` | fuera del repo | — | RNF-06, RNF-10 | pendiente |
-| — | F0-B1 | Clave de FIRMS (**hecho:** obtenida y probada el 14/11) y descarga del archivo histórico de Argentina y Chile: MODIS C6.1 y VIIRS de S-NPP, NOAA-20 y NOAA-21. La descarga se encola y llega por correo | `@leonelcnr` | fuera del repo | — | RF-ARM-01 | en curso |
-| — | F0-B2 | Cuenta de Meteomatics (**hecho:** activa y probada el 14/11, vence el 22/11) y cuenta de Copernicus Data Space con su cliente OAuth para las APIs (el secreto se muestra una sola vez: guardarlo en el momento) | `@leonelcnr` | fuera del repo | — | RF-CTX-01, RF-CTX-03, RNF-13 | en curso |
-| — | F0-C1 | Crear la clave del modelo de lenguaje, la base de datos y el host de la API | `@BrunoAguinaga0` | fuera del repo | — | RNF-10 | pendiente |
-| — | F0-D1 | Probar que el mapa base y el relieve cargan sin clave; anotar en su issue qué se conserva del prototipo anterior | `@daniace` | — | — | RF-MAP-06 | pendiente |
-| — | F0-E1 | Revisar `docs/charmy-base/` y anotar en su issue qué capas y animaciones faltan para el componente | `@cosmosnehu77` | — | F0-A2 | RF-CHA-01 | pendiente |
-| — | F0-F1 | Confirmar las reglas del evento (código y arte previos, formato e idioma de la entrega, hora de cierre) y escribir el guion v0 de la demo | carril F | `docs/entrega/` | — | RNF-11 | pendiente |
-| — | F0-X1 | **Cada persona activa:** aceptar la invitación al repo, `gh auth login`, clonar, `tools/board check` y revisar los issues de **su carril**; si algo está mal repartido, avisar en el tablero | todos | — | F0-A2, F0-A5 | RNF-09 | pendiente |
-| — | F0-A4 | Completar la columna "Issue" de este plan (**hecho** al crear los issues) y abrir la fase 1 en el tablero | `@cosmosnehu77` | `PLAN.md` | F0-X1 | RNF-09 | en curso |
+| #2 | F0-A1 | Crear el repo desde `tabla-agentes`, proteger `main`, crear, fijar y bloquear el tablero, crear las etiquetas (`board`, `fase-0`…`fase-5`, `carril-a`…`carril-f`, `reserva`) y un issue por cada tarea de este plan | `@cosmosnehu77` | `/`, `.github/` | — | RNF-01, RNF-09 | hecha |
+| #3 | F0-A2 | Completar `AGENTS.md` (equipo y dueños según este plan), `board-allowlist` y `CODEOWNERS`; invitar al equipo; subir `PLAN.md`, `REQUISITOS.md`, `docs/charmy-base/` y el OpenAPI borrador | `@cosmosnehu77` | rutas protegidas, `docs/` | F0-A1 | RNF-09 | hecha |
+| #4 | F0-A5 | Generar con el agente el `CLAUDE.md` del proyecto: las reglas que todo agente sigue para respetar este plan y los requisitos (contenido detallado abajo) | `@cosmosnehu77` | `CLAUDE.md` | F0-A2 | RNF-09, RNF-06, RNF-13 | hecha |
+| #5 | F0-A3 | Crear las cuentas de despliegue y almacenamiento y el bot de mensajería; cargar los secretos en la plataforma | `@cosmosnehu77` | fuera del repo | — | RNF-06, RNF-10 | pendiente |
+| #6 | F0-B1 | Clave de FIRMS (**hecho:** obtenida y probada el 14/11) y descarga del archivo histórico de Argentina y Chile: MODIS C6.1 y VIIRS de S-NPP, NOAA-20 y NOAA-21. La descarga se encola y llega por correo | `@leonelcnr` | fuera del repo | — | RF-ARM-01 | en curso |
+| #7 | F0-B2 | Cuenta de Meteomatics (**hecho:** activa y probada el 14/11, vence el 22/11) y cuenta de Copernicus Data Space con su cliente OAuth para las APIs (el secreto se muestra una sola vez: guardarlo en el momento) | `@leonelcnr` | fuera del repo | — | RF-CTX-01, RF-CTX-03, RNF-13 | en curso |
+| #8 | F0-C1 | Crear la clave del modelo de lenguaje, la base de datos y el host de la API | `@BrunoAguinaga0` | fuera del repo | — | RNF-10 | pendiente |
+| #9 | F0-D1 | Probar que el mapa base y el relieve cargan sin clave; anotar en su issue qué se conserva del prototipo anterior | `@daniace` | — | — | RF-MAP-06 | pendiente |
+| #10 | F0-E1 | Revisar `docs/charmy-base/` y anotar en su issue qué capas y animaciones faltan para el componente | `@cosmosnehu77` | — | F0-A2 | RF-CHA-01 | pendiente |
+| #11 | F0-F1 | Confirmar las reglas del evento (código y arte previos, formato e idioma de la entrega, hora de cierre) y escribir el guion v0 de la demo | carril F | `docs/entrega/` | — | RNF-11 | pendiente |
+| #12 | F0-X1 | **Cada persona activa:** aceptar la invitación al repo, `gh auth login`, clonar, `tools/board check` y revisar los issues de **su carril**; si algo está mal repartido, avisar en el tablero | todos | — | F0-A2, F0-A5 | RNF-09 | pendiente |
+| #13 | F0-A4 | Completar la columna "Issue" de este plan (**hecho** al crear los issues) y abrir la fase 1 en el tablero | `@cosmosnehu77` | `PLAN.md` | F0-X1 | RNF-09 | en curso |
 
 **Issues.** El agente del líder creó un issue por tarea el 14/11: el título empieza con el ID, lleva las etiquetas
 `fase-N` y `carril-x` y tiene asignado a su dueño. Las tareas del carril F y las de la reserva no tienen persona
@@ -298,21 +298,21 @@ protección alcanza solo al `CLAUDE.md` de la raíz.
 
 | Issue | ID | Tarea | Dueño | Carpetas | Depende de | Requisitos | Estado |
 |---|---|---|---|---|---|---|---|
-| — | F1-A1 | Raíz del monorepo: workspaces de pnpm y uv, Turborepo, `.env.example`, `docker-compose.yml` base; completar en `CLAUDE.md` los comandos del monorepo | `@cosmosnehu77` | archivos de raíz | — | RNF-01, RNF-08 | pendiente |
-| — | F1-A2 | CI por carpeta y despliegue automático de landing, app, juego y API | `@cosmosnehu77` | `.github/workflows/`, `infra/` | F1-A1 | RNF-01 | pendiente |
-| — | F1-B1 | Carga de FIRMS a Parquet y esquema de datos | `@leonelcnr` | `services/pipeline/`, `packages/contracts/datos/` | — | RF-ARM-01 | pendiente |
-| — | F1-B2 | Muestras chicas con el esquema final: focos, serie, calendario, métricas y un día real para el juego. Los valores provisorios van marcados | `@leonelcnr` | `data/muestras/` | — | RNF-09 | pendiente |
-| — | F1-B3 | Skill `firms-data`: FIRMS, Meteomatics y Copernicus, con las condiciones de uso de cada fuente | `@leonelcnr` | `.claude/skills/firms-data/` | — | RNF-09, RNF-13 | pendiente |
-| — | F1-C1 | OpenAPI v0 acordado, mock y colección publicados | `@BrunoAguinaga0` | `packages/contracts/api/` | — | RNF-09 | pendiente |
-| — | F1-C2 | Esqueleto de la API con `/health`, en contenedor | `@BrunoAguinaga0` | `services/api/` | — | RNF-08 | pendiente |
-| — | F1-C3 | Skill `contratos` | `@BrunoAguinaga0` | `.claude/skills/contratos/` | F1-C1 | RNF-09 | pendiente |
-| — | F1-D1 | Esqueleto de la app y tokens de diseño tomados de la base de Charmy | `@daniace` | `apps/app/`, `packages/ui/` | — | RNF-12 | pendiente |
-| — | F1-D2 | Mapa base con los perfiles 2D y 3D | `@daniace` | `apps/app/` | F1-D1 | RF-MAP-06 | pendiente |
-| — | F1-E1 | Componente Charmy con su API final a partir de `docs/charmy-base/`, todavía sin animar | `@cosmosnehu77` | `packages/charmy/` | — | RF-CHA-01 | pendiente |
-| — | F1-E2 | Esqueleto de la landing | `@BrunoAguinaga0` | `apps/landing/` | — (importa a Charmy cuando F1-E1 está en `main`) | RF-CHA-04 | pendiente |
-| — | F1-E3 | Skill `charmy` | `@cosmosnehu77` | `.claude/skills/charmy/` | F1-E1 | RNF-09 | pendiente |
-| — | F1-E4 | Esqueleto del juego | reserva | `apps/juego/` | — (importa a Charmy cuando F1-E1 está en `main`) | RF-CHA-04 | pendiente |
-| — | F1-F1 | Guion de la demo de 3 minutos y textos de la landing | carril F | `docs/entrega/`, `docs/contenido/` | — | RF-LAN-01 | pendiente |
+| #14 | F1-A1 | Raíz del monorepo: workspaces de pnpm y uv, Turborepo, `.env.example`, `docker-compose.yml` base; completar en `CLAUDE.md` los comandos del monorepo | `@cosmosnehu77` | archivos de raíz | — | RNF-01, RNF-08 | pendiente |
+| #15 | F1-A2 | CI por carpeta y despliegue automático de landing, app, juego y API | `@cosmosnehu77` | `.github/workflows/`, `infra/` | F1-A1 | RNF-01 | pendiente |
+| #16 | F1-B1 | Carga de FIRMS a Parquet y esquema de datos | `@leonelcnr` | `services/pipeline/`, `packages/contracts/datos/` | — | RF-ARM-01 | pendiente |
+| #17 | F1-B2 | Muestras chicas con el esquema final: focos, serie, calendario, métricas y un día real para el juego. Los valores provisorios van marcados | `@leonelcnr` | `data/muestras/` | — | RNF-09 | pendiente |
+| #18 | F1-B3 | Skill `firms-data`: FIRMS, Meteomatics y Copernicus, con las condiciones de uso de cada fuente | `@leonelcnr` | `.claude/skills/firms-data/` | — | RNF-09, RNF-13 | pendiente |
+| #19 | F1-C1 | OpenAPI v0 acordado, mock y colección publicados | `@BrunoAguinaga0` | `packages/contracts/api/` | — | RNF-09 | pendiente |
+| #20 | F1-C2 | Esqueleto de la API con `/health`, en contenedor | `@BrunoAguinaga0` | `services/api/` | — | RNF-08 | pendiente |
+| #21 | F1-C3 | Skill `contratos` | `@BrunoAguinaga0` | `.claude/skills/contratos/` | F1-C1 | RNF-09 | pendiente |
+| #22 | F1-D1 | Esqueleto de la app y tokens de diseño tomados de la base de Charmy | `@daniace` | `apps/app/`, `packages/ui/` | — | RNF-12 | pendiente |
+| #23 | F1-D2 | Mapa base con los perfiles 2D y 3D | `@daniace` | `apps/app/` | F1-D1 | RF-MAP-06 | pendiente |
+| #24 | F1-E1 | Componente Charmy con su API final a partir de `docs/charmy-base/`, todavía sin animar | `@cosmosnehu77` | `packages/charmy/` | — | RF-CHA-01 | pendiente |
+| #25 | F1-E2 | Esqueleto de la landing | `@BrunoAguinaga0` | `apps/landing/` | — (importa a Charmy cuando F1-E1 está en `main`) | RF-CHA-04 | pendiente |
+| #26 | F1-E3 | Skill `charmy` | `@cosmosnehu77` | `.claude/skills/charmy/` | F1-E1 | RNF-09 | pendiente |
+| #27 | F1-E4 | Esqueleto del juego | reserva | `apps/juego/` | — (importa a Charmy cuando F1-E1 está en `main`) | RF-CHA-04 | pendiente |
+| #28 | F1-F1 | Guion de la demo de 3 minutos y textos de la landing | carril F | `docs/entrega/`, `docs/contenido/` | — | RF-LAN-01 | pendiente |
 
 **Independencia en esta fase.** Nadie espera a F1-A1: los workspaces usan globs, así que cada persona crea su carpeta y
 el monorepo la toma sola. Ninguna tarea espera a otra persona: la landing arranca sin Charmy y lo importa cuando F1-E1 entra en `main`.
@@ -324,17 +324,17 @@ el monorepo la toma sola. Ninguna tarea espera a otra persona: la landing arranc
 
 | Issue | ID | Tarea | Dueño | Carpetas | Depende de | Requisitos | Estado |
 |---|---|---|---|---|---|---|---|
-| — | F2-A1 | Almacenamiento público de los datos estáticos y script de publicación | `@cosmosnehu77` | `infra/` | F1-A2 | RNF-02 | pendiente |
-| — | F2-A2 | Prueba de humo del flujo completo en producción, corrida en CI con la colección, y README base | `@cosmosnehu77` | `.github/workflows/`, `README.md` | F1-C1 | RNF-02, RNF-01 | pendiente |
-| — | F2-B1 | Armonización v1: filtros, días-celda, calibración en cadena y validación dejando un año afuera | `@leonelcnr` | `services/pipeline/` | F1-B1 | RF-ARM-01, RF-ARM-02, RF-ARM-03 | pendiente |
-| — | F2-B2 | Agregados de calendario, anomalías y métricas de validación; publicación de los Parquet | `@leonelcnr` | `services/pipeline/` | F2-B1, F2-A1 | RF-CAL-01, RF-CAL-02, RF-CAL-03, RF-ARM-04 | pendiente |
-| — | F2-C1 | `/hotspots` con filtros y salida en CSV | `@BrunoAguinaga0` | `services/api/` | F1-C2 (usa F1-B2) | RF-MAP-05, RF-EXP-01 | pendiente |
-| — | F2-C2 | `/calendar` y `/harmonization/metrics` | `@BrunoAguinaga0` | `services/api/` | F1-C2 (usa F1-B2; datos reales con F2-B2) | RF-CAL-01, RF-CAL-02, RF-ARM-04 | pendiente |
-| — | F2-D1 | Selección de área (dibujo y latitud/longitud), fechas y filtros sobre el mapa | `@daniace` | `apps/app/` | F1-D2 (usa el mock de F1-C1) | RF-MAP-01, RF-MAP-02, RF-MAP-04, RF-MAP-05 | pendiente |
-| — | F2-D2 | Calendario año × mes con anomalía y rampas accesibles; descarga del CSV | `@daniace` | `apps/app/` | F2-D1 | RF-CAL-01, RF-CAL-02, RF-CAL-03, RF-CAL-05, RF-EXP-01 | pendiente |
-| — | F2-E1 | Charmy: tres estados animados (saluda, explica, alerta), globo de diálogo y movimiento reducido | `@cosmosnehu77` | `packages/charmy/` | F1-E1 | RF-CHA-02, RF-CHA-06 | pendiente |
-| — | F2-E2 | Landing completa: portada con Charmy, problema, funcionalidades, equipo, créditos y accesos | `@BrunoAguinaga0` | `apps/landing/` | F1-E2 (textos de F1-F1) | RF-LAN-01, RF-LAN-02, RF-LAN-03, RF-LAN-04 | pendiente |
-| — | F2-F1 | Frases de Charmy para la app y retoques del arte | carril F | `docs/contenido/`, `docs/charmy-base/` | — | RF-CHA-07 | pendiente |
+| #29 | F2-A1 | Almacenamiento público de los datos estáticos y script de publicación | `@cosmosnehu77` | `infra/` | F1-A2 | RNF-02 | pendiente |
+| #30 | F2-A2 | Prueba de humo del flujo completo en producción, corrida en CI con la colección, y README base | `@cosmosnehu77` | `.github/workflows/`, `README.md` | F1-C1 | RNF-02, RNF-01 | pendiente |
+| #31 | F2-B1 | Armonización v1: filtros, días-celda, calibración en cadena y validación dejando un año afuera | `@leonelcnr` | `services/pipeline/` | F1-B1 | RF-ARM-01, RF-ARM-02, RF-ARM-03 | pendiente |
+| #32 | F2-B2 | Agregados de calendario, anomalías y métricas de validación; publicación de los Parquet | `@leonelcnr` | `services/pipeline/` | F2-B1, F2-A1 | RF-CAL-01, RF-CAL-02, RF-CAL-03, RF-ARM-04 | pendiente |
+| #33 | F2-C1 | `/hotspots` con filtros y salida en CSV | `@BrunoAguinaga0` | `services/api/` | F1-C2 (usa F1-B2) | RF-MAP-05, RF-EXP-01 | pendiente |
+| #34 | F2-C2 | `/calendar` y `/harmonization/metrics` | `@BrunoAguinaga0` | `services/api/` | F1-C2 (usa F1-B2; datos reales con F2-B2) | RF-CAL-01, RF-CAL-02, RF-ARM-04 | pendiente |
+| #35 | F2-D1 | Selección de área (dibujo y latitud/longitud), fechas y filtros sobre el mapa | `@daniace` | `apps/app/` | F1-D2 (usa el mock de F1-C1) | RF-MAP-01, RF-MAP-02, RF-MAP-04, RF-MAP-05 | pendiente |
+| #36 | F2-D2 | Calendario año × mes con anomalía y rampas accesibles; descarga del CSV | `@daniace` | `apps/app/` | F2-D1 | RF-CAL-01, RF-CAL-02, RF-CAL-03, RF-CAL-05, RF-EXP-01 | pendiente |
+| #37 | F2-E1 | Charmy: tres estados animados (saluda, explica, alerta), globo de diálogo y movimiento reducido | `@cosmosnehu77` | `packages/charmy/` | F1-E1 | RF-CHA-02, RF-CHA-06 | pendiente |
+| #38 | F2-E2 | Landing completa: portada con Charmy, problema, funcionalidades, equipo, créditos y accesos | `@BrunoAguinaga0` | `apps/landing/` | F1-E2 (textos de F1-F1) | RF-LAN-01, RF-LAN-02, RF-LAN-03, RF-LAN-04 | pendiente |
+| #39 | F2-F1 | Frases de Charmy para la app y retoques del arte | carril F | `docs/contenido/`, `docs/charmy-base/` | — | RF-CHA-07 | pendiente |
 
 **Comunicación entre carriles.** B → C: cuando F2-B2 publica, avisa en el tablero la ruta de los datos; C cambia una
 variable. C → D: cuando un endpoint cumple el contrato, C lo anuncia y D cambia la URL del mock por la real.
@@ -347,22 +347,22 @@ A recorre el flujo en producción y publica lo que esté roto.
 
 | Issue | ID | Tarea | Dueño | Carpetas | Depende de | Requisitos | Estado |
 |---|---|---|---|---|---|---|---|
-| — | F3-A1 | Servicio de avisos: bot con una zona de demostración, mensaje por foco o reporte nuevo con el viento en el lugar, botones de estado y aviso de emergencias | `@cosmosnehu77` | `services/alertas/` | F1-C1 (usa el mock; datos reales con F3-C1, F3-C2 y F3-B3) | RF-ALE-02, RF-ALE-03, RF-ALE-06, RF-CTX-02 | pendiente |
-| — | F3-A2 | Feed CAP 1.2 por zona | `@cosmosnehu77` | `services/alertas/` | F3-A1 | RF-ALE-04 | pendiente |
-| — | F3-B1 | Máscara de fuentes fijas publicada como dato | `@leonelcnr` | `services/pipeline/` | F2-B1 | RF-ARM-05 | pendiente |
-| — | F3-B3 | Tiempo en el foco: paquete con `/weather` sobre Meteomatics, con caché por celda y media hora (el límite es de 1.000 pedidos por día) y respuesta clara si la fuente no responde | `@leonelcnr` | `services/contexto/` | F1-C1, F0-B2 | RF-CTX-01, RNF-14 | pendiente |
-| — | F3-B4 | Imagen satelital del foco: `/imagery` sobre las APIs de Copernicus, con búsqueda de la escena reciente más despejada, estilos de color real y falso color, caché de imágenes y respuesta clara si no hay imagen o se agota la cuota | `@leonelcnr` | `services/contexto/` | F3-B3, F0-B2 | RF-CTX-03, RNF-14 | pendiente |
-| — | F3-B2 | Predicción a 1–3 meses con compuerta contra la climatología | `@leonelcnr` | `services/pipeline/` | F2-B2 | RF-PRE-01, RF-PRE-02 | pendiente |
-| — | F3-C1 | Worker de focos recientes con caché y `/live` | `@BrunoAguinaga0` | `services/worker/`, `services/api/` | F2-C1 | RF-VIV-01 | pendiente |
-| — | F3-C2 | Reportes ciudadanos y estado de avisos: `POST` y `GET /reports`, `PATCH /alerts/{id}` | `@BrunoAguinaga0` | `services/api/` | F2-C1 | RF-ALE-01, RF-ALE-03, RNF-05 | pendiente |
-| — | F3-C3 | Verificación: señales, noticias, etiquetado con el modelo de lenguaje y `/live/{id}/evidence` | `@BrunoAguinaga0` | `services/worker/` | F3-C1 (fuentes fijas con F3-B1) | RF-VIV-02, RF-VIV-03, RF-VIV-04 | pendiente |
-| — | F3-D1 | Modo novato: recorrido de Charmy, lenguaje simple, conclusión por área, búsqueda por localidad | `@daniace` | `apps/app/` | F2-D2, F2-E1 | RF-MOD-01, RF-MOD-03, RF-CHA-05, RF-MAP-03 | pendiente |
-| — | F3-D2 | Modo experto: selector de serie, panel de validación, atributos originales, descargas extra, reproducción temporal | `@daniace` | `apps/app/` | F2-D2 | RF-MOD-02, RF-ARM-04, RF-EXP-02, RF-MAP-07 | pendiente |
-| — | F3-D3 | Capa de focos recientes con veredicto y evidencia; formulario de reporte | `@daniace` | `apps/app/` | F2-D1 (usa el mock; datos reales con F3-C1 a C3) | RF-VIV-01, RF-VIV-02, RF-ALE-01, RF-ALE-06 | pendiente |
-| — | F3-D4 | Panel de contexto del foco: viento, riesgo de incendio e imagen satelital reciente como capa del mapa, con su fecha, nubosidad y atribución | `@daniace` | `apps/app/` | F2-D1 (usa el mock; datos reales con F3-B3 y F3-B4) | RF-CTX-01, RF-CTX-03, RNF-14 | pendiente |
-| — | F3-E1 | Charmy Kids: un nivel jugable con focos de un día real, puntaje, combo y cierre educativo | reserva | `apps/juego/` | F1-E4 (usa F1-B2) | RF-KID-01, RF-KID-02, RF-KID-03 | pendiente |
-| — | F3-E2 | Charmy completo: los seis estados y los cinco vestuarios | reserva | `packages/charmy/` | F2-E1 | RF-CHA-02, RF-CHA-03 | pendiente |
-| — | F3-F1 | Grabar la demo y armar las slides | carril F | `docs/entrega/` | — | RNF-07 | pendiente |
+| #40 | F3-A1 | Servicio de avisos: bot con una zona de demostración, mensaje por foco o reporte nuevo con el viento en el lugar, botones de estado y aviso de emergencias | `@cosmosnehu77` | `services/alertas/` | F1-C1 (usa el mock; datos reales con F3-C1, F3-C2 y F3-B3) | RF-ALE-02, RF-ALE-03, RF-ALE-06, RF-CTX-02 | pendiente |
+| #41 | F3-A2 | Feed CAP 1.2 por zona | `@cosmosnehu77` | `services/alertas/` | F3-A1 | RF-ALE-04 | pendiente |
+| #42 | F3-B1 | Máscara de fuentes fijas publicada como dato | `@leonelcnr` | `services/pipeline/` | F2-B1 | RF-ARM-05 | pendiente |
+| #43 | F3-B3 | Tiempo en el foco: paquete con `/weather` sobre Meteomatics, con caché por celda y media hora (el límite es de 1.000 pedidos por día) y respuesta clara si la fuente no responde | `@leonelcnr` | `services/contexto/` | F1-C1, F0-B2 | RF-CTX-01, RNF-14 | pendiente |
+| #44 | F3-B4 | Imagen satelital del foco: `/imagery` sobre las APIs de Copernicus, con búsqueda de la escena reciente más despejada, estilos de color real y falso color, caché de imágenes y respuesta clara si no hay imagen o se agota la cuota | `@leonelcnr` | `services/contexto/` | F3-B3, F0-B2 | RF-CTX-03, RNF-14 | pendiente |
+| #45 | F3-B2 | Predicción a 1–3 meses con compuerta contra la climatología | `@leonelcnr` | `services/pipeline/` | F2-B2 | RF-PRE-01, RF-PRE-02 | pendiente |
+| #46 | F3-C1 | Worker de focos recientes con caché y `/live` | `@BrunoAguinaga0` | `services/worker/`, `services/api/` | F2-C1 | RF-VIV-01 | pendiente |
+| #47 | F3-C2 | Reportes ciudadanos y estado de avisos: `POST` y `GET /reports`, `PATCH /alerts/{id}` | `@BrunoAguinaga0` | `services/api/` | F2-C1 | RF-ALE-01, RF-ALE-03, RNF-05 | pendiente |
+| #48 | F3-C3 | Verificación: señales, noticias, etiquetado con el modelo de lenguaje y `/live/{id}/evidence` | `@BrunoAguinaga0` | `services/worker/` | F3-C1 (fuentes fijas con F3-B1) | RF-VIV-02, RF-VIV-03, RF-VIV-04 | pendiente |
+| #49 | F3-D1 | Modo novato: recorrido de Charmy, lenguaje simple, conclusión por área, búsqueda por localidad | `@daniace` | `apps/app/` | F2-D2, F2-E1 | RF-MOD-01, RF-MOD-03, RF-CHA-05, RF-MAP-03 | pendiente |
+| #50 | F3-D2 | Modo experto: selector de serie, panel de validación, atributos originales, descargas extra, reproducción temporal | `@daniace` | `apps/app/` | F2-D2 | RF-MOD-02, RF-ARM-04, RF-EXP-02, RF-MAP-07 | pendiente |
+| #51 | F3-D3 | Capa de focos recientes con veredicto y evidencia; formulario de reporte | `@daniace` | `apps/app/` | F2-D1 (usa el mock; datos reales con F3-C1 a C3) | RF-VIV-01, RF-VIV-02, RF-ALE-01, RF-ALE-06 | pendiente |
+| #52 | F3-D4 | Panel de contexto del foco: viento, riesgo de incendio e imagen satelital reciente como capa del mapa, con su fecha, nubosidad y atribución | `@daniace` | `apps/app/` | F2-D1 (usa el mock; datos reales con F3-B3 y F3-B4) | RF-CTX-01, RF-CTX-03, RNF-14 | pendiente |
+| #53 | F3-E1 | Charmy Kids: un nivel jugable con focos de un día real, puntaje, combo y cierre educativo | reserva | `apps/juego/` | F1-E4 (usa F1-B2) | RF-KID-01, RF-KID-02, RF-KID-03 | pendiente |
+| #54 | F3-E2 | Charmy completo: los seis estados y los cinco vestuarios | reserva | `packages/charmy/` | F2-E1 | RF-CHA-02, RF-CHA-03 | pendiente |
+| #55 | F3-F1 | Grabar la demo y armar las slides | carril F | `docs/entrega/` | — | RNF-07 | pendiente |
 
 **Comunicación entre carriles.** El servicio de avisos (A) no comparte base ni código con la API (C): consulta `/live` y
 `/reports` y devuelve el estado con `PATCH /alerts/{id}`. La app (D) y los avisos (A) se construyen contra el mock y se
@@ -382,14 +382,14 @@ Si falta tiempo en el carril B, el orden es: fuentes fijas, tiempo, imagen y, po
 
 | Issue | ID | Tarea | Dueño | Carpetas | Depende de | Requisitos | Estado |
 |---|---|---|---|---|---|---|---|
-| — | F4-A1 | README final, declaración de uso de IA y revisión de secretos (el repo es público desde el primer commit) | `@cosmosnehu77` | `README.md`, raíz | fase 3 | RNF-01, RNF-06, RNF-07 | pendiente |
-| — | F4-B1 | Documento del método: armonización, validación, supuestos y fuentes, con el contraste manual de las cifras contra estadísticas públicas externas | `@leonelcnr` | `docs/metodologia/` | fase 3 | RNF-07, RF-ARM-04, RF-CTX-06, RNF-13 | pendiente |
-| — | F4-C1 | Datos cacheados para la demo, servicios despiertos y errores claros | `@BrunoAguinaga0` | `services/api/`, `services/worker/` | fase 3 | RNF-02 | pendiente |
-| — | F4-D1 | Pulido de la app: accesibilidad, ancho de teléfono y textos | `@daniace` | `apps/app/` | fase 3 | RNF-03, RNF-04 | pendiente |
-| — | F4-E1 | Pulido de la landing; enlaces entre las tres piezas | `@BrunoAguinaga0` | `apps/landing/` | fase 3 | RF-LAN-04, RNF-12 | pendiente |
-| — | F4-E2 | Pulido del juego | reserva | `apps/juego/` | F3-E1 | RNF-12 | pendiente |
-| — | F4-F1 | Video o slides finales | carril F | `docs/entrega/` | F3-F1 | RNF-07, RNF-11 | pendiente |
-| — | F4-X1 | Envío en la plataforma de Space Apps | carril F y `@cosmosnehu77` | — | F4-A1, F4-F1 | RNF-01 | pendiente |
+| #56 | F4-A1 | README final, declaración de uso de IA y revisión de secretos (el repo es público desde el primer commit) | `@cosmosnehu77` | `README.md`, raíz | fase 3 | RNF-01, RNF-06, RNF-07 | pendiente |
+| #57 | F4-B1 | Documento del método: armonización, validación, supuestos y fuentes, con el contraste manual de las cifras contra estadísticas públicas externas | `@leonelcnr` | `docs/metodologia/` | fase 3 | RNF-07, RF-ARM-04, RF-CTX-06, RNF-13 | pendiente |
+| #58 | F4-C1 | Datos cacheados para la demo, servicios despiertos y errores claros | `@BrunoAguinaga0` | `services/api/`, `services/worker/` | fase 3 | RNF-02 | pendiente |
+| #59 | F4-D1 | Pulido de la app: accesibilidad, ancho de teléfono y textos | `@daniace` | `apps/app/` | fase 3 | RNF-03, RNF-04 | pendiente |
+| #60 | F4-E1 | Pulido de la landing; enlaces entre las tres piezas | `@BrunoAguinaga0` | `apps/landing/` | fase 3 | RF-LAN-04, RNF-12 | pendiente |
+| #61 | F4-E2 | Pulido del juego | reserva | `apps/juego/` | F3-E1 | RNF-12 | pendiente |
+| #62 | F4-F1 | Video o slides finales | carril F | `docs/entrega/` | F3-F1 | RNF-07, RNF-11 | pendiente |
+| #63 | F4-X1 | Envío en la plataforma de Space Apps | carril F y `@cosmosnehu77` | — | F4-A1, F4-F1 | RNF-01 | pendiente |
 
 ### Fase 5 — Opción Azure (opcional, después del MVP)
 
@@ -429,15 +429,15 @@ demo), el worker pasa a ser una tarea programada administrada y todo queda en un
 
 | Issue | ID | Tarea | Dueño | Carpetas | Depende de | Requisitos | Estado |
 |---|---|---|---|---|---|---|---|
-| — | F5-A1 | Activar los créditos; crear el grupo de recursos en la región más cercana, la alerta de presupuesto, la identidad federada para GitHub Actions, la cuenta de almacenamiento y el entorno de Container Apps | `@cosmosnehu77` | `infra/azure/` | fase 4 | RNF-10, RNF-06 | pendiente |
-| — | F5-B1 | Publicar los Parquet en Blob Storage con lectura pública, CORS y caché; comprobar los pedidos por rango | `@leonelcnr` | `services/pipeline/` | F5-A1 | RNF-02 | pendiente |
-| — | F5-A2 | Crear las tres Static Web Apps y sus flujos de despliegue, que compilan en CI y suben la carpeta construida | `@cosmosnehu77` | `.github/workflows/`, `infra/azure/` | F5-A1 | RNF-01 | pendiente |
-| — | F5-D1 | Configuración de la app para Static Web Apps (ruta de respaldo y cabeceras) y prueba en la dirección nueva | `@daniace` | `apps/app/` | F5-A2 | RNF-03 | pendiente |
-| — | F5-E1 | Configuración de la landing para Static Web Apps y prueba en la dirección nueva | `@BrunoAguinaga0` | `apps/landing/` | F5-A2 | RNF-12 | pendiente |
-| — | F5-E2 | Configuración del juego para Static Web Apps y prueba en la dirección nueva | reserva | `apps/juego/` | F5-A2 | RNF-12 | pendiente |
-| — | F5-C1 | API en Container Apps con una réplica mínima, worker como tarea programada, secretos y CORS para los orígenes nuevos | `@BrunoAguinaga0` | `services/api/`, `services/worker/` | F5-A1, F5-B1 | RNF-02 | pendiente |
-| — | F5-A3 | Avisos en Container Apps | `@cosmosnehu77` | `services/alertas/` | F5-C1 | RF-ALE-02 | pendiente |
-| — | F5-A4 | Prueba de humo completa contra Azure, cambio de DNS o de variables, y actualización de la tabla de referencia y de D-21 | `@cosmosnehu77` | `.github/workflows/`, `PLAN.md` | F5-B1, F5-D1, F5-E1, F5-C1 | RNF-02 | pendiente |
+| #64 | F5-A1 | Activar los créditos; crear el grupo de recursos en la región más cercana, la alerta de presupuesto, la identidad federada para GitHub Actions, la cuenta de almacenamiento y el entorno de Container Apps | `@cosmosnehu77` | `infra/azure/` | fase 4 | RNF-10, RNF-06 | pendiente |
+| #65 | F5-B1 | Publicar los Parquet en Blob Storage con lectura pública, CORS y caché; comprobar los pedidos por rango | `@leonelcnr` | `services/pipeline/` | F5-A1 | RNF-02 | pendiente |
+| #66 | F5-A2 | Crear las tres Static Web Apps y sus flujos de despliegue, que compilan en CI y suben la carpeta construida | `@cosmosnehu77` | `.github/workflows/`, `infra/azure/` | F5-A1 | RNF-01 | pendiente |
+| #67 | F5-D1 | Configuración de la app para Static Web Apps (ruta de respaldo y cabeceras) y prueba en la dirección nueva | `@daniace` | `apps/app/` | F5-A2 | RNF-03 | pendiente |
+| #68 | F5-E1 | Configuración de la landing para Static Web Apps y prueba en la dirección nueva | `@BrunoAguinaga0` | `apps/landing/` | F5-A2 | RNF-12 | pendiente |
+| #69 | F5-E2 | Configuración del juego para Static Web Apps y prueba en la dirección nueva | reserva | `apps/juego/` | F5-A2 | RNF-12 | pendiente |
+| #70 | F5-C1 | API en Container Apps con una réplica mínima, worker como tarea programada, secretos y CORS para los orígenes nuevos | `@BrunoAguinaga0` | `services/api/`, `services/worker/` | F5-A1, F5-B1 | RNF-02 | pendiente |
+| #71 | F5-A3 | Avisos en Container Apps | `@cosmosnehu77` | `services/alertas/` | F5-C1 | RF-ALE-02 | pendiente |
+| #72 | F5-A4 | Prueba de humo completa contra Azure, cambio de DNS o de variables, y actualización de la tabla de referencia y de D-21 | `@cosmosnehu77` | `.github/workflows/`, `PLAN.md` | F5-B1, F5-D1, F5-E1, F5-C1 | RNF-02 | pendiente |
 
 **Comunicación entre carriles.** F5-A1 publica en el tablero los nombres de los recursos y las variables. Después,
 B, D, E y C trabajan en paralelo, cada uno en su carpeta. Solo F5-A4 cambia a dónde apunta el público.

@@ -62,5 +62,5 @@ Tamaños: ayudas y alertas, 96 px o más; avatar y listas, 48 a 64 px; por debaj
 
 ## Si hace falta algo que el componente no tiene
 
-No se resuelve en tu carpeta. Se pide en el tablero mencionando al dueño de `packages/charmy` (`@cosmosnehu77`).
+No se resuelve en tu carpeta. Se pide en el tablero mencionando al dueño de `packages/charmy` (`@dimidio6` desde la fase 3).
 Un estado o vestuario nuevo es un cambio de contrato: se agrega primero en `docs/charmy-base/` y después en el componente.

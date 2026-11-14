@@ -10,7 +10,7 @@
 
 **Fase activa:** 3
 **Líder:** `@cosmosnehu77`. Hasta que vuelva (probablemente en la fase 4), **líder interino `@daniace`** (D-28).
-**Versión:** 2.0.1 · **Última actualización:** 14 de noviembre de 2026
+**Versión:** 2.0.2 · **Última actualización:** 14 de noviembre de 2026
 
 ## Objetivo del proyecto
 
@@ -206,6 +206,7 @@ si nada: avisen en el tablero y propongan el PR que actualiza este documento.
 | D-26 | **Respaldo de Meteomatics.** Todo lo que se lee de Meteomatics se guarda también como copia de respaldo. Si la API falla, agota su cupo o la cuenta vence (22/11/2026), `/weather` responde con esa copia, con su fecha y marcada como copia; solo si no hay copia para el lugar la parte se muestra como no disponible (RNF-14). La copia queda del lado del servidor y no se publica en el repo ni en los releases públicos, salvo que las condiciones de Meteomatics lo permitan. | La cuenta del evento vence una semana después de la entrega y tiene 1.000 pedidos por día: la demo y lo que siga no pueden depender de que responda en vivo. | RF-CTX-01, RNF-13, RNF-14 |
 | D-27 | **Cloudflare Pages al carril E.** La cuenta, los proyectos y el primer deploy web de landing, app y juego pasan del líder a `@dimidio6` (F2-E3, sale de F0-A3). Los secretos los carga el líder, porque solo el dueño del repo puede, con los valores que recibe por un canal privado. | Las tres piezas que se publican en Pages son del carril E o las consume; el líder queda con el host de la API y el bot. | RNF-01, RNF-06 |
 | D-28 | **Líder interino.** `@cosmosnehu77` se queda sin uso de tokens y vuelve probablemente en la fase 4. `@daniace` es líder interino con todos los poderes del líder (fases, rutas protegidas como dueño de código, reasignaciones y decisiones). F3-A1 y F3-A2 y la carpeta `services/alertas/` pasan a `@dimidio6`, que tenía la menor carga de la fase 3; el bot de Telegram (parte de F0-A3) va con F3-A1. Lo que solo puede hacer el dueño del repo (secretos de Actions, permisos) espera a `@cosmosnehu77`. | Que la implementación no se detenga y la carga quede pareja. | RNF-09 |
+| D-29 | **Las pruebas corren en cada commit y cada servicio tiene las suyas.** Un hook `pre-commit` versionado (`.githooks/`, se activa con `pnpm install`) corre las pruebas de los paquetes JS y de los servicios de Python que toca el commit, y rechaza un servicio sin pruebas. El CI falla si un servicio que cambió en el PR no tiene pruebas. Saltear el hook con `--no-verify` no está permitido. | `CI ok` corría `pytest` sobre todos los servicios juntos: `services/api` y `services/worker` cerraron tareas sin una sola prueba y el CI quedó en verde. | RNF-15 |
 
 ---
 
@@ -363,6 +364,7 @@ A recorre el flujo en producción y publica lo que esté roto.
 |---|---|---|---|---|---|---|---|
 | #40 | F3-A1 | Servicio de avisos: bot con una zona de demostración, mensaje por foco o reporte nuevo con el viento en el lugar, botones de estado y aviso de emergencias | `@dimidio6` (D-28) | `services/alertas/` | F1-C1 (usa el mock; datos reales con F3-C1, F3-C2 y F3-B3) | RF-ALE-02, RF-ALE-03, RF-ALE-06, RF-CTX-02 | pendiente |
 | #41 | F3-A2 | Feed CAP 1.2 por zona | `@dimidio6` (D-28) | `services/alertas/` | F3-A1 | RF-ALE-04 | pendiente |
+| — | F3-A3 | Pruebas obligatorias: hook `pre-commit` con las pruebas de lo que cambia y CI que exige pruebas en cada servicio que cambia (D-29) | `@daniace` (D-28) | `.githooks/`, `package.json`, `.github/workflows/ci.yml`, `docs/PRUEBAS.md` | — | RNF-15 | en curso |
 | #42 | F3-B1 | Máscara de fuentes fijas publicada como dato | `@leonelcnr` | `services/pipeline/` | F2-B1 | RF-ARM-05 | pendiente |
 | #43 | F3-B3 | Tiempo en el foco: paquete con `/weather` sobre Meteomatics, con caché por celda y media hora (el límite es de 1.000 pedidos por día), copia de respaldo de lo leído que se usa si la fuente falla o la cuenta vence (D-26) y respuesta clara si no hay copia | `@leonelcnr` | `services/contexto/` | F1-C1, F0-B2 | RF-CTX-01, RNF-14 | pendiente |
 | #44 | F3-B4 | Imagen satelital del foco: `/imagery` sobre las APIs de Copernicus, con búsqueda de la escena reciente más despejada, estilos de color real y falso color, caché de imágenes y respuesta clara si no hay imagen o se agota la cuota | `@leonelcnr` | `services/contexto/` | F3-B3, F0-B2 | RF-CTX-03, RNF-14 | pendiente |
@@ -574,6 +576,7 @@ La fase 5 no cubre requisitos nuevos: refuerza RNF-02 y RNF-10 sobre lo ya entre
 | 2026-11-14 | Versión 1.9. Respaldo de lo leído de Meteomatics para cuando la API falle o la cuenta venza (D-26, cambia F3-B3). Cloudflare Pages pasa a `@dimidio6` en la tarea nueva F2-E3 (D-27). | 3, 5 | `@cosmosnehu77` |
 | 2026-11-14 | Versión 2.0. Se cierra la fase 2 y se abre la 3. `@daniace` queda como líder interino hasta que vuelva `@cosmosnehu77` (D-28); F3-A1 y F3-A2 pasan a `@dimidio6`. | encabezado, equipo, 3, 5, 10 | `@cosmosnehu77` |
 | 2026-11-14 | Versión 2.0.1. Las tablas de carriles y de componentes reflejan D-28: `services/alertas/` y el servicio de avisos pasan a `@dimidio6`; la de componentes también le da `packages/charmy/` desde la fase 3. | equipo, 1.3 | `@daniace` |
+| 2026-11-14 | Versión 2.0.2. Pruebas en cada commit y por servicio (D-29, tarea F3-A3). | 3, 5 | `@daniace` |
 
 ## 10. Registro de cierres
 

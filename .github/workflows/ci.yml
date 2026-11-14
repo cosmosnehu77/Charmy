@@ -68,6 +68,22 @@ jobs:
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - name: Cada servicio que cambió tiene pruebas (RNF-15, D-29)
+        # pytest corre todos los servicios juntos y le alcanza con que uno tenga pruebas: esto lo pide por servicio.
+        env:
+          DESDE: ${{ needs.cambios.outputs.desde }}
+        run: |
+          falta=0
+          for dir in $(git diff --name-only "$DESDE"...HEAD | grep -oE '^(services/[^/]+|infra/(humo|publicar))/' | sort -u); do
+            [ -f "$dir/pyproject.toml" ] || continue
+            if ! git ls-files "$dir" | grep -qE '(^|/)test_[^/]*\.py$'; then
+              echo "::error::$dir no tiene pruebas (test_*.py). Toda funcionalidad se entrega con pruebas (RNF-15)."
+              falta=1
+            fi
+          done
+          exit $falta
       # setup-uv no publica la etiqueta de versión mayor (v10): se fija la versión exacta.
       - uses: astral-sh/setup-uv@v10.3.3
         with:

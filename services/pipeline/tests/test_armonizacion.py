@@ -11,6 +11,7 @@ from pipeline.armonizacion import (
     convertir,
     dias_celda_mensuales,
     filtrar,
+    meses_completos,
     metricas,
     serie,
     validar,
@@ -54,6 +55,13 @@ CELDA_REGION = pl.DataFrame({"cell_id": ["-45.4_-71.3", "-45.5_-71.3"], "region"
 def test_filtro_descarta_type_distinto_de_cero():
     df = filtrar(focos(foco(tipo=0), foco(tipo=2), foco(tipo=None)))
     assert df["type"].to_list() == [0, None]  # NRT no trae type: se conserva
+
+
+def test_filtro_descarta_focos_en_celdas_de_fuentes_fijas():
+    # RF-ARM-05: en una celda de la máscara (fundición, antorcha) no se cuenta nada, traiga type o no (NRT).
+    f = focos(foco(tipo=None, cell="-22.4_-68.9"), foco(tipo=None), foco(tipo=0, cell="-22.4_-68.9"))
+    df = filtrar(f, fijas=["-22.4_-68.9"])
+    assert df.select("type", "cell_id").rows() == [(None, "-45.4_-71.3")]
 
 
 def test_filtro_descarta_modis_con_confianza_menor_a_30():
@@ -145,6 +153,26 @@ def test_serie_sin_saltos_en_los_empalmes():
     assert origen[(2012, 1)] == "viirs_medido"
     assert origen[(2026, 8)] == "viirs_convertido"
     assert not s["provisional"].any()
+
+
+def test_mes_con_dias_sin_datos_del_sensor_no_es_completo():
+    # NOAA-20 tiene todos los días de enero; S-NPP solo dos (p. ej., dejó de publicar o entró en modo seguro).
+    f = focos(*[foco(dia=d) for d in range(1, 32)], foco("N", dia=1), foco("N", dia=2))
+    completos = meses_completos(f)
+    assert completos.select("grupo", "year", "month").rows() == [("noaa20", 2020, 1)]
+
+
+def test_hueco_de_snpp_se_llena_con_noaa20_y_antes_de_noaa20_con_modis():
+    sin = ((pl.col("grupo") == "snpp") & pl.col("year").is_in([2015, 2022]) & (pl.col("month") == 7)).not_()
+    m = sintetico().filter(sin)
+    s = serie(m).filter(pl.col("source") == "harmonized")
+    origen = dict(zip(zip(s["year"], s["month"], strict=False), s["origin"], strict=False))
+    assert origen[(2022, 7)] == "viirs_convertido"
+    assert origen[(2015, 7)] == "modis_convertido"
+    assert origen[(2022, 6)] == "viirs_medido"
+    # Un valor por región y mes: el hueco no queda vacío ni duplicado.
+    assert s.group_by("region", "year", "month").len()["len"].max() == 1
+    assert s.filter((pl.col("year") == 2022) & (pl.col("month") == 7)).height == 2
 
 
 def test_convertidos_tienen_incertidumbre_y_medidos_no():

@@ -70,20 +70,22 @@ def test_parquet_publicados_cumplen_el_esquema(tmp_path):
             for sat, desde in (("Aqua", 2010), ("N", 2012), ("N20", 2014)):
                 if anio < desde:
                     continue
-                for dia in range(
-                    1, 2 + (anio + mes) % 3
-                ):  # de 1 a 3 días con fuego, para que la recta tenga pendiente
+                # De 1 a 3 días con fuego en la región, para que la recta tenga pendiente, y una celda
+                # de fondo con focos todos los días: así el mes cuenta como completo para el sensor.
+                region = [(d, -45.35, -71.25, "-45.4_-71.3") for d in range(1, 2 + (anio + mes) % 3)]
+                fondo = [(d, -30.05, -60.05, "-30.1_-60.1") for d in range(1, 32)]
+                for dia, lat, lon, celda in region + fondo:
                     filas.append(
                         {
-                            "latitude": -45.35,
-                            "longitude": -71.25,
+                            "latitude": lat,
+                            "longitude": lon,
                             "acq_datetime": datetime(anio, mes, dia, tzinfo=UTC),
                             "satellite": sat,
                             "instrument": "MODIS" if sat == "Aqua" else "VIIRS",
                             "confidence": "high",
                             "confidence_pct": 90 if sat == "Aqua" else None,
                             "type": 0,
-                            "cell_id": "-45.4_-71.3",
+                            "cell_id": celda,
                             "year": anio,
                         }
                     )

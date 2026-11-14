@@ -1,9 +1,10 @@
 """Armonización v1 (F2-B1): filtros D-04, días-celda D-02 y calibración en cadena D-03.
 
 Unidad: días-celda con fuego por región y mes, en "equivalente VIIRS S-NPP".
-- Hasta 2011: MODIS convertido a S-NPP.
-- Mientras hay S-NPP: S-NPP medido.
-- Después: NOAA-20 convertido a S-NPP.
+- Cada mes sale del mejor sensor que lo cubrió entero: S-NPP medido; si no, NOAA-20 convertido a S-NPP; si no,
+  MODIS convertido. Así quedan MODIS hasta 2011, S-NPP mientras publicó y NOAA-20 en sus huecos y después.
+- Un mes en que un sensor tuvo días sin ningún foco en toda la zona no cuenta para ese sensor: en la zona hay
+  focos todos los días, así que es un corte del satélite o un mes a medias (el último de S-NPP o el actual).
 Calibración log-lineal ln(y) = a + b·ln(x) por región y mes del año, con respaldo en la región entera y
 luego en todo el conjunto cuando faltan puntos. Se valida dejando un año afuera.
 
@@ -20,19 +21,26 @@ from pathlib import Path
 import polars as pl
 
 from pipeline.esquema import ESQUEMAS
+from pipeline.fuentes_fijas import mascara
 from pipeline.regiones import region_de_celdas
 
 GRUPOS = {"Terra": "modis", "Aqua": "modis", "N": "snpp", "N20": "noaa20", "N21": "noaa21"}
 MIN_PUNTOS = 5  # meses con fuego en ambos sensores para ajustar un nivel
 Z90 = 1.645  # intervalo del 90 % en escala logarítmica
 CLAVE = ["region", "year", "month"]
+MIN_COBERTURA = 0.9  # fracción de días del mes con algún foco del sensor para que el mes cuente
 
 
-def filtrar(focos: pl.DataFrame) -> pl.DataFrame:
-    """D-04: vegetación (type 0; NRT no trae type y se conserva), MODIS ≥ 30, VIIRS nominal o alta."""
+def filtrar(focos: pl.DataFrame, fijas: list[str] | None = None) -> pl.DataFrame:
+    """D-04: vegetación (type 0; NRT no trae type y se conserva), MODIS ≥ 30, VIIRS nominal o alta.
+
+    RF-ARM-05: nada de lo que cae en una celda de fuentes fijas (`fijas`, la máscara de fuentes_fijas)
+    cuenta como quema, en SP y en NRT por igual.
+    """
     modis = pl.col("instrument") == "MODIS"
     return focos.filter(
         (pl.col("type").is_null() | (pl.col("type") == 0))
+        & ~pl.col("cell_id").is_in(fijas or [])
         & pl.when(modis)
         .then(pl.col("confidence_pct") >= 30)
         .otherwise(pl.col("confidence").is_in(["nominal", "high"]))
@@ -83,6 +91,23 @@ def dias_celda_mensuales(
             value=pl.col("value").fill_null(0.0),
         )
         .sort("region", "grupo", "year", "month")
+    )
+
+
+def meses_completos(focos: pl.DataFrame) -> pl.DataFrame:
+    """Meses (grupo, year, month) en que el sensor tuvo focos en al menos MIN_COBERTURA de los días."""
+    return (
+        focos.lazy()
+        .select(grupo=pl.col("satellite").replace_strict(GRUPOS), dia=pl.col("acq_datetime").dt.date())
+        .unique()
+        .group_by("grupo", mes=pl.col("dia").dt.truncate("1mo"))
+        .agg(dias=pl.len())
+        .filter(pl.col("dias") >= MIN_COBERTURA * pl.col("mes").dt.month_end().dt.day())
+        .select(
+            "grupo", year=pl.col("mes").dt.year().cast(pl.Int16), month=pl.col("mes").dt.month().cast(pl.Int8)
+        )
+        .sort("grupo", "year", "month")
+        .collect()
     )
 
 
@@ -192,23 +217,22 @@ def metricas(m: pl.DataFrame) -> pl.DataFrame:
 
 def serie(m: pl.DataFrame) -> pl.DataFrame:
     """Tabla `serie` del contrato: armonizada y cada sensor por separado."""
-    mes = pl.col("year").cast(pl.Int32) * 12 + pl.col("month").cast(pl.Int32)
-    snpp = m.filter(pl.col("grupo") == "snpp")
-    if snpp.is_empty():
+    if m.filter(pl.col("grupo") == "snpp").is_empty():
         raise ValueError("Faltan datos de S-NPP: es la referencia de la calibración")
-    inicio, fin = snpp.select(mes.min()).item(), snpp.select(mes.max()).item()
 
     def crudo(grupo: str, source: str, origin: str) -> pl.DataFrame:
         d = m.filter(pl.col("grupo") == grupo).select(*CLAVE, "value")
         return d.with_columns(lower="value", upper="value", source=pl.lit(source), origin=pl.lit(origin))
 
-    medido = crudo("snpp", "harmonized", "viirs_medido")
-    antes = convertir(m.filter((pl.col("grupo") == "modis") & (mes < inicio)), calibrar(m, "modis", "snpp"))
-    partes = [antes.with_columns(source=pl.lit("harmonized"), origin=pl.lit("modis_convertido")), medido]
-    despues = m.filter((pl.col("grupo") == "noaa20") & (mes > fin))
-    if not despues.is_empty():
-        conv = convertir(despues, calibrar(m, "noaa20", "snpp"))
-        partes.append(conv.with_columns(source=pl.lit("harmonized"), origin=pl.lit("viirs_convertido")))
+    partes = [crudo("snpp", "harmonized", "viirs_medido")]
+    cubiertos = partes[0].select("year", "month").unique()
+    for grupo, origin in (("noaa20", "viirs_convertido"), ("modis", "modis_convertido")):
+        faltan = m.filter(pl.col("grupo") == grupo).join(cubiertos, on=["year", "month"], how="anti")
+        if faltan.is_empty():
+            continue
+        conv = convertir(faltan, calibrar(m, grupo, "snpp"))
+        partes.append(conv.with_columns(source=pl.lit("harmonized"), origin=pl.lit(origin)))
+        cubiertos = pl.concat([cubiertos, faltan.select("year", "month").unique()])
     partes += [crudo("modis", "modis", "modis_medido"), crudo("snpp", "viirs", "viirs_medido")]
     return (
         pl.concat([p.select(*CLAVE, "source", "value", "lower", "upper", "origin") for p in partes])
@@ -244,10 +268,12 @@ def main(argv: list[str] | None = None) -> int:
     args = p.parse_args(argv)
     # Solo las columnas que usa la armonización: con el histórico completo, leer todo no entra en memoria.
     columnas = ["satellite", "instrument", "confidence", "confidence_pct", "type", "cell_id", "acq_datetime"]
+    para_mascara = ["satellite", "latitude", "longitude", "cell_id", "type", "acq_datetime"]
+    fijas = mascara(pl.scan_parquet(args.focos / "*.parquet").select(para_mascara))["cell_id"].to_list()
     # D-02 cuenta (satélite, día, celda) una vez: deduplicar cada archivo antes de juntarlos baja la memoria.
     focos = pl.concat(
         [
-            filtrar(pl.scan_parquet(ruta).select(columnas))
+            filtrar(pl.scan_parquet(ruta).select(columnas), fijas)
             .select("satellite", "cell_id", acq_datetime=pl.col("acq_datetime").dt.truncate("1d"))
             .unique()
             .collect()
@@ -256,7 +282,9 @@ def main(argv: list[str] | None = None) -> int:
     )
     regiones = json.loads(args.regiones.read_text())
     codigos = [f["properties"]["region"] for f in regiones["features"]]
-    m = dias_celda_mensuales(focos, region_de_celdas(focos["cell_id"], regiones), codigos)
+    m = dias_celda_mensuales(focos, region_de_celdas(focos["cell_id"], regiones), codigos).join(
+        meses_completos(focos), on=["grupo", "year", "month"], how="semi"
+    )
     args.out.mkdir(parents=True, exist_ok=True)
     s = serie(m)
     s.write_parquet(args.out / "serie.parquet")

@@ -114,16 +114,16 @@ predicen sus meses. Coincide con `/harmonization/metrics`.
 ## `fuentes_fijas`
 
 Celdas con calor que no es quema: antorchas de gas, industria, volcanes (RF-ARM-05). Se publica como
-`fuentes_fijas.csv` para que el worker la lea sin DuckDB (F3-C3, señal "fuente fija" de D-09). Es una señal: no
-borra focos.
+`fuentes_fijas.csv` para que el worker la lea sin DuckDB (F3-C3, señal "fuente fija" de D-09). En `focos` y en el
+mapa se ven todos los focos; en la serie y el calendario no cuenta nada de lo que cae en estas celdas.
 
 | Columna | Tipo | Descripción |
 |---|---|---|
 | `cell_id` | string | Celda de 0,1° marcada, igual que en `focos` |
 
-Una celda entra si, con los focos VIIRS del histórico, algún punto de 0,01° (~1 km) tiene focos en al menos 30
-días, de 5 años y de 6 meses del año distintos, o si la mayoría de sus focos traen `type` 1, 2 o 3 de FIRMS. No
-dice qué tipo de fuente es: si hace falta, se suma una columna sin romper nada.
+Una celda entra si, con los focos VIIRS del histórico, algún punto de 0,01° (~1 km) tiene focos en al menos 6
+días por año, durante 5 años o más y en 10 meses del año distintos, o si la mayoría de sus focos traen `type` 1, 2
+o 3 de FIRMS. No dice qué tipo de fuente es: si hace falta, se suma una columna sin romper nada.
 
 ## Muestras (`data/muestras/`)
 

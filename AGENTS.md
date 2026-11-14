@@ -69,3 +69,14 @@ Los logins de esta tabla coinciden con `.github/board-allowlist`. El detalle de 
 **Reserva.** Las tareas con la etiqueta `reserva` no tienen dueño. No las tomes por tu cuenta: las asigna el líder en el tablero.
 
 `@dimidio6` está en el repo pero todavía no participa: no figura en la lista de permitidos, así que sus mensajes no llegan a los agentes. Cuando se sume, el líder lo agrega a esta tabla y a `.github/board-allowlist`.
+
+## 7. Relevo por límite de uso
+
+Cuando una persona llega a cerca del **90 % de su uso de tokens**, el trabajo no se para: otra persona lo sigue por un rato. El procedimiento está en la skill `relevo` (`/relevo` en Claude Code) y la parte mecánica la hace `tools/relevo`, sin gastar tokens.
+
+1. **Dejar.** El agente commitea lo suyo y corre `tools/relevo dejar "<qué falta, concreto>" [@login]`: pushea la rama, abre el PR en borrador, deja la nota de relevo en el issue (etiqueta `relevo`) y avisa en el tablero. Se hace **antes** de quedarse sin uso: al 100 % ya no hay agente para dejar la nota.
+2. **Quién toma.** Lo confirma el líder en el tablero (sección 2). Si el que se va es el líder, su propio mensaje asigna a quien nombra.
+3. **Tomar.** `tools/relevo tomar <issue>`. El traspaso es **temporal** y vale solo para las carpetas de esa tarea. No da poderes del líder: un PR que toca rutas protegidas espera su revisión. Commits chicos, `git push` seguido, sin force-push.
+4. **Volver.** El dueño corre `tools/relevo volver <issue>`; quien lo tenía pushea lo suyo y deja la rama. Si el dueño no volvió y la tarea está probada, quien la tomó puede terminarla y fusionarla, y lo avisa en el tablero.
+
+Sin agente, la persona puede correr `tools/relevo` a mano desde la terminal.

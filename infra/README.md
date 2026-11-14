@@ -5,8 +5,9 @@ Dueño: `@cosmosnehu77` (carril A). Qué se despliega y dónde está en `PLAN.md
 | Flujo | Cuándo corre | Qué hace |
 |---|---|---|
 | `ci.yml` | Todo PR y todo push a `main` | Detecta qué cambió. JavaScript: tipos, pruebas y compilación **solo** de los paquetes tocados y de los que dependen de ellos. Python: `ruff` y `pytest`. Si cambió el contrato de la API o la prueba de humo, la corre contra el mock. Termina con **`CI ok`**, el chequeo obligatorio para fusionar en `main`. |
+| `al-dia.yml` | `main` con cambios en `uv.lock` o `pnpm-lock.yaml`, o a mano | Pone al día los PR abiertos que chocan **solo** en lockfiles (con `tools/al-dia` de `main`), pushea y vuelve a correr su CI. En un conflicto real, comenta en el PR mencionando a quien lo abrió. |
 | `deploy-web.yml` | `main` con cambios en `apps/` o `packages/`, o a mano | Compila landing, app y juego y los publica en Cloudflare Pages (`charmy-landing`, `charmy-app`, `charmy-juego`). |
-| `deploy-api.yml` | `main` con cambios en `services/api/` o `services/contexto/`, o a mano | Avisa a la plataforma de la API con su "deploy hook" espera a que responda `/health` y corre la prueba de humo. |
+| `deploy-api.yml` | `main` con cambios en `services/api/` o `services/contexto/`, o a mano | Avisa a la plataforma de la API con su "deploy hook", espera a que responda `/health` y corre la prueba de humo. |
 
 Cada pieza que todavía no existe se salta sola, así que los flujos se pueden dejar activos desde el primer día.
 

@@ -1,0 +1,130 @@
+#!/usr/bin/env bash
+# Relevo: cuando una persona se queda sin uso de tokens (~90 %), deja su tarea lista para que otra la siga un rato.
+# Hace la parte mecánica sin gastar tokens del agente. Reglas: AGENTS.md §7 y PLAN.md D-24.
+#
+#   tools/relevo dejar "<qué falta, concreto>" [@login]   pushea la rama, abre el PR en borrador si no hay, deja la
+#                                                         nota de relevo en el issue y avisa en el tablero
+#   tools/relevo tomar <issue>                            baja la rama del issue, muestra la nota y avisa que la tomás
+#   tools/relevo volver <issue>                           el dueño retoma su tarea y avisa a quien la tenía
+#
+# Variables: RELEVO_LIDER (por defecto, el dueño de /AGENTS.md en .github/CODEOWNERS).
+set -euo pipefail
+
+die() { echo "relevo: $*" >&2; exit 1; }
+cd "$(git rev-parse --show-toplevel)"
+command -v gh > /dev/null || die "falta gh (https://cli.github.com)"
+
+yo="$(tools/board whoami)" || die "gh no tiene sesión: gh auth login"
+lider="${RELEVO_LIDER:-$(awk '$1=="/AGENTS.md"{sub("@","",$2); print $2; exit}' .github/CODEOWNERS 2> /dev/null)}"
+lider="${lider:-cosmosnehu77}"
+MARCA="<!-- relevo:nota -->"
+MARCA_TOMA="<!-- relevo:toma -->"
+
+limpio() {
+  git diff --quiet && git diff --cached --quiet && return 0
+  echo "relevo: hay cambios sin commit. Commiteá tus archivos (nada de git add -A) y volvé a correrlo:" >&2
+  git status --short >&2
+  exit 1
+}
+
+rama_de_issue() {   # la única rama remota que empieza con "<issue>-"
+  local ramas
+  git fetch -q --prune origin
+  ramas="$(git for-each-ref --format='%(refname:strip=3)' "refs/remotes/origin/$1-*")"
+  [ -n "$ramas" ] || die "no hay ninguna rama origin/$1-* (¿el dueño corrió tools/relevo dejar?)"
+  [ "$(printf '%s\n' "$ramas" | wc -l)" -eq 1 ] || die "hay más de una rama para #$1: $(echo $ramas)"
+  printf '%s\n' "$ramas"
+}
+
+ultima_nota() {   # autor y cuerpo del último comentario del issue que lleva la marca $2
+  gh issue view "$1" --json comments \
+    -q "[.comments[] | select(.body | contains(\"$2\"))] | last | select(. != null) | .author.login + \"\n\" + .body"
+}
+
+dejar() {
+  local falta="${1:-}" quien="${2:-}" rama issue pr titulo nota destino
+  [ -n "$falta" ] || die 'falta decir qué queda por hacer: tools/relevo dejar "<qué falta>" [@login]'
+  rama="$(git rev-parse --abbrev-ref HEAD)"
+  [[ "$rama" =~ ^([0-9]+)- ]] || die "la rama '$rama' no es <issue>-<slug>; el relevo es de una tarea con issue"
+  issue="${BASH_REMATCH[1]}"
+  limpio
+  git push -q -u origin HEAD   # nunca --force
+
+  pr="$(gh pr list --head "$rama" --state open --json url -q '.[0].url')"
+  if [ -z "$pr" ]; then
+    titulo="$(gh issue view "$issue" --json title -q .title)"
+    pr="$(gh pr create --draft --base main --head "$rama" --title "$titulo" \
+      --body "Closes #$issue
+
+En relevo: el estado y lo que falta están en la nota de relevo de #$issue.")"
+  fi
+
+  nota="$MARCA
+## Relevo: @$yo deja esta tarea
+
+**Rama:** \`$rama\` · **PR:** $pr · **Último commit:** \`$(git log -1 --format='%h %s')\` · $(date -u '+%Y-%m-%d %H:%M') UTC
+
+### Qué falta
+$falta
+
+### Commits que todavía no están en main
+\`\`\`
+$(git log --oneline origin/main..HEAD | head -20)
+\`\`\`
+
+### Archivos tocados
+\`\`\`
+$(git diff --stat origin/main...HEAD | tail -25)
+\`\`\`
+
+### Para seguir
+\`tools/relevo tomar $issue\`, leer las \"Pruebas mínimas\" de este issue y seguir por \"Qué falta\". Solo las carpetas de esta tarea, sin force-push. Cuando @$yo vuelva, corre \`tools/relevo volver $issue\` y se le devuelve."
+  gh issue comment "$issue" --body "$nota" > /dev/null
+  gh issue edit "$issue" --add-label relevo > /dev/null 2>&1 || echo "relevo: no se pudo poner la etiqueta 'relevo' (seguimos)" >&2
+
+  quien="${quien#@}"
+  if [ "$yo" = "$lider" ]; then
+    destino="${quien:+Lo toma @$quien (lo asigna el líder).}"
+    destino="${destino:-@todos: ¿quién lo toma? Respondan acá y lo confirmo.}"
+  else
+    destino="${quien:+Propongo a @$quien. }@$lider confirmá quién lo toma."
+  fi
+  tools/board post "[Relevo de @$yo] RELEVO #$issue: me quedo sin uso por un rato. Rama $rama, PR $pr. Falta: ${falta%.}. $destino Nota completa en #$issue."
+  echo "relevo: listo. Nota en #$issue, PR $pr."
+}
+
+tomar() {
+  local issue="${1:-}" rama
+  [[ "$issue" =~ ^[0-9]+$ ]] || die "uso: tools/relevo tomar <número de issue>"
+  limpio
+  rama="$(rama_de_issue "$issue")"
+  git switch -q "$rama" 2> /dev/null || git switch -q -c "$rama" --track "origin/$rama"
+  git pull -q --ff-only || die "tu copia de $rama no avanza sola; revisá con git status"
+  ultima_nota "$issue" "$MARCA" | tail -n +2 || true
+  gh issue comment "$issue" --body "$MARCA_TOMA
+@$yo toma el relevo de esta tarea en \`$rama\`." > /dev/null
+  tools/board post "[Relevo de @$yo] tomo el relevo de #$issue (rama $rama). Cuando el dueño vuelva, pusheo y le devuelvo la rama."
+  echo "relevo: estás en $rama. Seguí por \"Qué falta\" de la nota de arriba."
+}
+
+volver() {
+  local issue="${1:-}" rama quien
+  [[ "$issue" =~ ^[0-9]+$ ]] || die "uso: tools/relevo volver <número de issue>"
+  limpio
+  quien="$(ultima_nota "$issue" "$MARCA_TOMA" | head -1)"
+  rama="$(rama_de_issue "$issue")"
+  git switch -q "$rama" 2> /dev/null || git switch -q -c "$rama" --track "origin/$rama"
+  git pull -q --ff-only || die "tu copia de $rama no avanza sola; revisá con git status"
+  gh issue edit "$issue" --remove-label relevo > /dev/null 2>&1 || true
+  gh issue comment "$issue" --body "<!-- relevo:fin -->
+@$yo retoma esta tarea." > /dev/null
+  tools/board post "[Relevo de @$yo] retomo #$issue.${quien:+ @$quien gracias: pusheá lo que tengas en $rama y dejá de tocarla.}"
+  echo "relevo: retomaste #$issue en $rama. Si quien la tenía pushea después, hacé git pull."
+}
+
+case "${1:-}" in
+  dejar) shift; dejar "$@" ;;
+  tomar) shift; tomar "$@" ;;
+  volver) shift; volver "$@" ;;
+  *) sed -n '2,10p' "$0" | sed 's/^# \{0,1\}//'; exit 2 ;;
+esac

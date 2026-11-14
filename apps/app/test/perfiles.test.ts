@@ -1,5 +1,5 @@
 import type { StyleSpecification } from "maplibre-gl";
-import { perfiles, transformarEstilo, URL_TERRARIUM } from "@/mapa/perfiles";
+import { esFallaDelEstilo, perfiles, transformarEstilo, URL_TERRARIUM } from "@/mapa/perfiles";
 
 const base: StyleSpecification = {
   version: 8,
@@ -35,5 +35,17 @@ describe("perfiles del mapa (RF-MAP-06)", () => {
 
   it("los dos perfiles usan estilos sin clave", () => {
     for (const p of Object.values(perfiles)) expect(p.estilo).not.toMatch(/key=|token=/i);
+  });
+});
+
+describe("esFallaDelEstilo: solo avisa si no carga el estilo base", () => {
+  const url = perfiles["3d"].estilo;
+  it("un error de la URL del estilo es falla", () => {
+    expect(esFallaDelEstilo({ url, status: 503 }, url)).toBe(true);
+  });
+  it("un error de una tesela, una fuente o sin URL no lo es", () => {
+    expect(esFallaDelEstilo({ url: "https://tiles.openfreemap.org/planet/1/2/3.pbf", status: 404 }, url)).toBe(false);
+    expect(esFallaDelEstilo(new Error("otra cosa"), url)).toBe(false);
+    expect(esFallaDelEstilo(undefined, url)).toBe(false);
   });
 });

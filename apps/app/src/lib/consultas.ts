@@ -8,11 +8,11 @@ export function useEstadoApi(): EstadoApi {
   const salud = useQuery({
     queryKey: ["health"],
     queryFn: ({ signal }) => pedir<Salud>("/health", { signal }),
-    enabled: urlApi !== "",
+    enabled: urlApi() !== "",
     retry: 1,
     refetchInterval: 5 * 60_000,
   });
-  if (!urlApi) return "sin-configurar";
+  if (!urlApi()) return "sin-configurar";
   if (salud.isPending) return "conectando";
   return salud.isSuccess && salud.data.status === "ok" ? "conectada" : "no-disponible";
 }

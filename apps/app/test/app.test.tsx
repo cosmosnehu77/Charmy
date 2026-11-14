@@ -23,7 +23,7 @@ describe("esqueleto de la app", () => {
     montar();
     expect(screen.getByRole("heading", { name: "Charmy" })).toBeInTheDocument();
     expect(screen.getByText(/no reemplaza a los servicios de emergencia/)).toBeInTheDocument();
-    expect(screen.getByRole("status")).toHaveTextContent("Datos de muestra");
+    expect(screen.getByText("Sin servidor configurado")).toBeInTheDocument();
   });
 
   it("cambia de modo y de vista del mapa", async () => {

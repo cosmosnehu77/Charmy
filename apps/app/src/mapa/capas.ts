@@ -1,0 +1,54 @@
+/**
+ * Capas propias del mapa: el área elegida y los focos. Se agregan en cada `style.load`,
+ * así sobreviven al cambio entre 2D y 3D.
+ */
+import { interfaz, rampaConteo } from "@charmy/ui";
+import type { ExpressionSpecification, Map as MapaMapLibre } from "maplibre-gl";
+import type { ColeccionFocos, Poligono } from "@/consulta/consulta";
+
+/** Cortes de potencia radiativa (MW) para el color de los focos, con la rampa YlOrRd de 7 clases. */
+export const CORTES_FRP = [5, 10, 20, 50, 100, 300] as const;
+
+const colorPorFrp: ExpressionSpecification = [
+  "step",
+  ["get", "frp"],
+  rampaConteo[0],
+  ...CORTES_FRP.flatMap((corte, i) => [corte, rampaConteo[i + 1] as string]),
+] as ExpressionSpecification;
+
+const vacio = { type: "FeatureCollection" as const, features: [] };
+
+export function datosArea(area: Poligono | null) {
+  return area ? { type: "Feature" as const, geometry: area, properties: {} } : vacio;
+}
+
+export function agregarCapas(m: MapaMapLibre, area: Poligono | null, focos: ColeccionFocos | null) {
+  if (m.getSource("area")) return;
+  m.addSource("area", { type: "geojson", data: datosArea(area) });
+  m.addSource("focos", { type: "geojson", data: focos ?? vacio });
+  m.addLayer({
+    id: "area-relleno",
+    type: "fill",
+    source: "area",
+    paint: { "fill-color": interfaz.acento, "fill-opacity": 0.08 },
+  });
+  m.addLayer({
+    id: "area-borde",
+    type: "line",
+    source: "area",
+    paint: { "line-color": interfaz.acento, "line-width": 2, "line-dasharray": [2, 1] },
+  });
+  m.addLayer({
+    id: "focos",
+    type: "circle",
+    source: "focos",
+    paint: {
+      "circle-color": colorPorFrp,
+      // El tamaño también crece con la potencia: el color no va solo (RNF-04).
+      "circle-radius": ["interpolate", ["linear"], ["get", "frp"], 0, 3, 50, 6, 300, 10],
+      "circle-stroke-color": interfaz.tinta,
+      "circle-stroke-width": 0.75,
+      "circle-opacity": 0.9,
+    },
+  });
+}

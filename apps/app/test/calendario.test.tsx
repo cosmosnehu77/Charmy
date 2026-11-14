@@ -14,11 +14,13 @@ vi.mock("@/mapa/Mapa", () => ({ default: () => <div data-testid="mapa" /> }));
 // Muestra provisoria con la forma del contrato (valores inventados).
 const calendario = {
   unit: "dias_celda_con_fuego_equivalente_viirs",
-  baseline: "mediana 2001-2025 por mes",
+  baseline: "mediana del mismo mes en los años anteriores al último",
+  region: "AR-U",
+  provisional: true,
   cells: [
-    { year: 2025, month: 1, value: 22.0, median: 4.0, percentile: 99, origin: "viirs_medido" },
-    { year: 2025, month: 2, value: 0, median: 3.0, percentile: 20, origin: "viirs_medido" },
-    { year: 2026, month: 1, value: 3.1, median: 4.0, percentile: 38, origin: "viirs_medido" },
+    { year: 2025, month: 1, value: 22.0, median: 4.0, anomaly: 18.0, percentile: 99, origin: "viirs_medido" },
+    { year: 2025, month: 2, value: 0, median: 3.0, anomaly: -3.0, percentile: 20, origin: "viirs_medido" },
+    { year: 2026, month: 1, value: 3.1, median: 4.0, anomaly: -0.9, percentile: 38, origin: "viirs_medido" },
   ],
 };
 const focos = { type: "FeatureCollection", features: [] };
@@ -165,7 +167,7 @@ describe("calendario (F2-D2)", () => {
 
 describe("describirCelda: origen de cada valor", () => {
   const celda = (origin: string) =>
-    ({ year: 2020, month: 3, value: 1, median: 1, percentile: 50, origin }) as unknown as CeldaCalendario;
+    ({ year: 2020, month: 3, value: 1, median: 1, anomaly: 0, percentile: 50, origin }) as unknown as CeldaCalendario;
   it.each([
     ["modis_convertido", "MODIS convertido"],
     ["viirs_medido", "VIIRS medido"],
@@ -183,7 +185,15 @@ describe("calendario sin celdas o con área inválida", () => {
   it("si no hay celdas muestra el motivo que manda la API, sin grilla", async () => {
     fetchSimulado.mockImplementation(async (url) =>
       String(url).includes("/calendar")
-        ? new Response(JSON.stringify({ unit: "x", baseline: "El área está fuera de la cobertura del MVP (Argentina y Chile).", cells: [] }))
+        ? new Response(
+            JSON.stringify({
+              unit: "x",
+              baseline: "mediana del mismo mes en los años anteriores al último",
+              provisional: false,
+              message: "El área está fuera de la cobertura del MVP (Argentina y Chile).",
+              cells: [],
+            }),
+          )
         : new Response(JSON.stringify(focos)),
     );
     montar(<Calendario />);
@@ -200,5 +210,34 @@ describe("calendario sin celdas o con área inválida", () => {
     montar(<Calendario />);
     expect(await screen.findByText(/El polígono se cruza consigo mismo\./)).toBeInTheDocument();
     expect(screen.queryByText(/no está disponible/)).not.toBeInTheDocument();
+  });
+});
+
+describe("contrato de /calendar v0.2 (#118)", () => {
+  it("con provisional muestra «Dato de ejemplo»", async () => {
+    montar(<Calendario />);
+    expect(await screen.findByText("Dato de ejemplo")).toBeInTheDocument();
+  });
+
+  it("sin provisional no muestra la etiqueta", async () => {
+    fetchSimulado.mockImplementation(async (url) =>
+      String(url).includes("/calendar")
+        ? new Response(JSON.stringify({ ...calendario, provisional: false }))
+        : new Response(JSON.stringify(focos)),
+    );
+    montar(<Calendario />);
+    await screen.findByRole("table");
+    expect(screen.queryByText("Dato de ejemplo")).not.toBeInTheDocument();
+  });
+
+  it("nombra la región de calibración", async () => {
+    montar(<Calendario />);
+    expect(await screen.findByText(/región AR-U/)).toBeInTheDocument();
+  });
+
+  it("la descripción de la celda incluye la anomalía con su signo", () => {
+    const [enero, febrero] = calendario.cells as CeldaCalendario[];
+    expect(describirCelda(enero ?? null, 2025, 0)).toMatch(/anomalía \+18/);
+    expect(describirCelda(febrero ?? null, 2025, 1)).toMatch(/anomalía −3/);
   });
 });

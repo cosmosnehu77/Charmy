@@ -15,3 +15,8 @@ pnpm check --filter @charmy/app    # tipos, pruebas y compilación (también com
 - Si una fuente falla, esa parte se muestra como no disponible y el resto sigue (ver `EstadoApi`).
 - Componentes de shadcn en `src/components/ui/`; estado global en `src/estado/`; acceso a la API en `src/lib/`.
 - Textos en español, en segunda persona. El aviso de emergencias (`AvisoEmergencias`) queda siempre visible.
+- Mapa (`src/mapa/`): MapLibre v6, un solo motor con dos perfiles en `perfiles.ts` (2D positron sin relieve; 3D
+  liberty con relieve Terrarium). Todo sin clave. Se cambia de perfil con `setStyle` + `transformStyle`: las capas
+  propias (focos, área) se agregan ahí para que sobrevivan al cambio. El worker se registra con `setWorkerUrl`
+  (Vite); sin eso el mapa queda en blanco. `Mapa.tsx` se carga con `lazy` para no frenar el primer dibujo.
+- jsdom no tiene WebGL: en las pruebas `Mapa` se reemplaza con `vi.mock`; lo visual se revisa en el navegador.

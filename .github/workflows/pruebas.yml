@@ -1,0 +1,62 @@
+# Pruebas unitarias de TODO el monorepo en cada PR a main. Su chequeo final, "Pruebas", es el que pide el ruleset
+# "Proteger Rama - Pruebas" junto con "CI ok". ci.yml corre solo lo que cambió (rápido); este corre todas las
+# pruebas, así un cambio no rompe algo que el filtro de ci.yml dejó afuera. Reglas de pruebas: docs/PRUEBAS.md.
+name: Pruebas
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  workflow_dispatch:   # lo usa al-dia.yml después de pushear a la rama de un PR
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pruebas-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  js:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Pruebas unitarias de JavaScript
+        run: pnpm turbo run test
+
+  python:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+      - uses: astral-sh/setup-uv@v10.3.3
+        with:
+          enable-cache: true
+      - run: uv sync --all-packages --frozen
+      - name: Pruebas unitarias de Python
+        # pytest sale con 5 si no encuentra pruebas: eso cuenta como falla (RNF-15).
+        run: uv run pytest services infra
+
+  ok:
+    name: Pruebas
+    if: always()
+    needs: [js, python]
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - name: Todas las pruebas pasaron
+        env:
+          RESULTADOS: ${{ join(needs.*.result, ' ') }}
+        run: |
+          echo "Resultados: $RESULTADOS"
+          for r in $RESULTADOS; do
+            [ "$r" = success ] || { echo "::error::Alguna prueba falló o se canceló"; exit 1; }
+          done

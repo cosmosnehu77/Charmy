@@ -4,8 +4,7 @@ Dueño: `@cosmosnehu77` (carril A). Qué se despliega y dónde está en `PLAN.md
 
 | Flujo | Cuándo corre | Qué hace |
 |---|---|---|
-| `ci-js.yml` | PR o `main` que toquen `apps/` o `packages/` | Lint, tipos, pruebas y compilación **solo** de los paquetes tocados y de los que dependen de ellos. |
-| `ci-python.yml` | PR o `main` que toquen `services/` | `ruff` y `pytest` del workspace de uv. |
+| `ci.yml` | Todo PR y todo push a `main` | Detecta qué cambió. JavaScript: tipos, pruebas y compilación **solo** de los paquetes tocados y de los que dependen de ellos. Python: `ruff` y `pytest`. Termina con **`CI ok`**, el chequeo obligatorio para fusionar en `main`. |
 | `deploy-web.yml` | `main` con cambios en `apps/` o `packages/`, o a mano | Compila landing, app y juego y los publica en Cloudflare Pages (`charmy-landing`, `charmy-app`, `charmy-juego`). |
 | `deploy-api.yml` | `main` con cambios en `services/api/` o `services/contexto/`, o a mano | Avisa a la plataforma de la API con su "deploy hook" y espera a que responda `/health`. |
 

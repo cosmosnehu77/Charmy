@@ -5,14 +5,13 @@ Los guarda services/worker en Postgres (`focos_vivo` y `estado_vivo`), con una c
 La API nunca llama a FIRMS. Si la última consulta falló, sirve la anterior con su fecha y lo dice.
 """
 
-import os
 from datetime import UTC, datetime, timedelta
 from typing import Annotated
 
-import psycopg
 from fastapi import APIRouter, Query
 from fastapi.responses import JSONResponse
 
+from api.base import conectar
 from api.datos import DatosNoDisponibles
 from api.hotspots import leer_bbox
 
@@ -28,25 +27,19 @@ def listar(
     hours: Annotated[int, Query(ge=1, le=120)] = 48,
 ) -> JSONResponse:
     oeste, sur, este, norte = leer_bbox(bbox)
-    url = os.environ.get("DATABASE_URL", "").strip()
-    if not url:
-        raise DatosNoDisponibles("Falta DATABASE_URL")
     ahora = datetime.now(UTC)
-    try:
-        with psycopg.connect(url, connect_timeout=10) as con:
-            estado = con.execute("SELECT fetched_at, error FROM estado_vivo WHERE id = 1").fetchone()
-            filas = con.execute(
-                """
-                SELECT id, latitude, longitude, acq_datetime, satellite, instrument, confidence, frp,
-                       daynight, cell_id
-                FROM focos_vivo
-                WHERE longitude BETWEEN %s AND %s AND latitude BETWEEN %s AND %s AND acq_datetime >= %s
-                ORDER BY acq_datetime, satellite, latitude, longitude
-                """,
-                [oeste, este, sur, norte, ahora - timedelta(hours=hours)],
-            ).fetchall()
-    except psycopg.Error as error:
-        raise DatosNoDisponibles(f"La base no responde: {type(error).__name__}") from None
+    with conectar() as con:
+        estado = con.execute("SELECT fetched_at, error FROM estado_vivo WHERE id = 1").fetchone()
+        filas = con.execute(
+            """
+            SELECT id, latitude, longitude, acq_datetime, satellite, instrument, confidence, frp,
+                   daynight, cell_id
+            FROM focos_vivo
+            WHERE longitude BETWEEN %s AND %s AND latitude BETWEEN %s AND %s AND acq_datetime >= %s
+            ORDER BY acq_datetime, satellite, latitude, longitude
+            """,
+            [oeste, este, sur, norte, ahora - timedelta(hours=hours)],
+        ).fetchall()
     if estado is None or estado[0] is None:
         raise DatosNoDisponibles("Todavía no hay una consulta exitosa a FIRMS")
 

@@ -14,6 +14,7 @@ import httpx
 import psycopg
 
 from worker.firms import FUENTES, FirmsNoDisponible, normalizar, pedir
+from worker.verificacion import verificar
 
 INTERVALO = timedelta(minutes=30)
 VENTANA = timedelta(hours=120)
@@ -85,11 +86,13 @@ def actualizar(con: psycopg.Connection, ahora: datetime, cliente: httpx.Client) 
     except FirmsNoDisponible as error:
         con.execute("UPDATE estado_vivo SET error = %s WHERE id = 1", [str(error)])
         con.commit()
-        return f"FIRMS no disponible, /live sigue con la consulta anterior: {error}"
+        # Los reportes y los estados de los avisos cambian aunque FIRMS no responda: se verifica igual.
+        verificados = verificar(con, ahora, cliente)
+        return f"FIRMS no disponible, /live sigue con la consulta anterior: {error}; {verificados}"
 
     with con.cursor() as cursor:
         cursor.executemany(GUARDAR, focos)
     con.execute("DELETE FROM focos_vivo WHERE acq_datetime < %s", [ahora - VENTANA])
     con.execute("UPDATE estado_vivo SET fetched_at = %s, error = NULL WHERE id = 1", [ahora])
     con.commit()
-    return f"{len(focos)} focos de los últimos {dias} días guardados"
+    return f"{len(focos)} focos de los últimos {dias} días guardados; {verificar(con, ahora, cliente)}"

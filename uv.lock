@@ -1084,10 +1084,12 @@ source = { editable = "services/worker" }
 dependencies = [
     { name = "httpx" },
     { name = "psycopg", extra = ["binary"] },
+    { name = "shapely" },
 ]
 
 [package.metadata]
 requires-dist = [
     { name = "httpx", specifier = ">=0.28.1" },
     { name = "psycopg", extras = ["binary"], specifier = ">=3.3.9" },
+    { name = "shapely", specifier = ">=2.2.0" },
 ]

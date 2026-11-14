@@ -8,10 +8,14 @@ import { useConsulta } from "@/estado/consulta";
 import { pedir, urlApi } from "@/lib/api";
 import { useFocosVivo } from "@/vivo/consultas";
 import { useVivo } from "@/vivo/estado";
-import { direccionViento, urlImagen } from "./contexto";
+import { direccionViento, textoRiesgo, urlImagen } from "./contexto";
 import { type EstiloImagen, useContexto } from "./estado";
 
-type Tiempo = paths["/weather"]["get"]["responses"]["200"]["content"]["application/json"];
+/** `stale` y `message` (copia de respaldo, D-26) vienen de services/contexto (#141) y entran al contrato. */
+type Tiempo = paths["/weather"]["get"]["responses"]["200"]["content"]["application/json"] & {
+  stale?: boolean;
+  message?: string;
+};
 type PuntoTiempo = components["schemas"]["WeatherPoint"];
 type Imagen = components["schemas"]["ImageryResult"];
 
@@ -49,16 +53,22 @@ function Tiempo({ lat, lon }: { lat: number; lon: number }) {
   if (consulta.isPending) return <p className="text-sm text-tinta-suave">Buscando el tiempo…</p>;
   if (consulta.isError)
     return <p className="rounded-control bg-superficie-2 p-2 text-sm">El tiempo no está disponible ahora.</p>;
-  const { now, forecast, source, fetched_at } = consulta.data;
+  const { now, forecast, source, fetched_at, stale, message } = consulta.data;
+  const riesgo = textoRiesgo(now.fire_risk_index, now.fire_risk_label);
   return (
     <div className="flex flex-col gap-1 text-sm">
+      {stale && (
+        <p className="rounded-control border border-aviso-borde p-2 text-aviso-texto">
+          Copia guardada: {message ?? "la fuente no responde y mostramos los últimos datos que tenemos."}
+        </p>
+      )}
       <p>
         Viento: <strong>{viento(now)}</strong>. Temperatura: {decimal.format(now.temperature_c)} °C. Humedad:{" "}
         {entero.format(now.relative_humidity_pct)} %.
       </p>
-      {now.fire_risk_label && (
+      {riesgo && (
         <p>
-          Riesgo de incendio: <strong>{now.fire_risk_label.replace("_", " ")}</strong>
+          Riesgo de incendio: <strong>{riesgo}</strong>
         </p>
       )}
       {forecast.length > 0 && (

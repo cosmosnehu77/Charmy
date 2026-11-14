@@ -1,10 +1,10 @@
 # Rutas protegidas: se ejecutan o se leen automáticamente en la máquina de todo el equipo.
-# Un PR que las toque necesita la revisión del líder (protección de rama de `main`).
+# Un PR que las toque necesita la revisión del líder o del líder interino (protección de rama de `main`).
 
-/.claude/        @cosmosnehu77
-/tools/          @cosmosnehu77
-/.github/        @cosmosnehu77
-/AGENTS.md       @cosmosnehu77
-/CLAUDE.md       @cosmosnehu77
-/PLAN.md         @cosmosnehu77
-/REQUISITOS.md   @cosmosnehu77
+/.claude/        @daniace @cosmosnehu77
+/tools/          @daniace @cosmosnehu77
+/.github/        @daniace @cosmosnehu77
+/AGENTS.md       @daniace @cosmosnehu77
+/CLAUDE.md       @daniace @cosmosnehu77
+/PLAN.md         @daniace @cosmosnehu77
+/REQUISITOS.md   @daniace @cosmosnehu77

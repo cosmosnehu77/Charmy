@@ -8,9 +8,9 @@
 > Si alguien cambia una tecnología, una skill o un componente, se actualiza la tabla y las tareas afectadas
 > en el mismo PR (ver [Cómo mantener este plan](#2-cómo-mantener-este-plan)).
 
-**Fase activa:** 2
-**Líder:** `@cosmosnehu77`
-**Versión:** 1.9 · **Última actualización:** 14 de noviembre de 2026
+**Fase activa:** 3
+**Líder:** `@cosmosnehu77`. Hasta que vuelva (probablemente en la fase 4), **líder interino `@daniace`** (D-28).
+**Versión:** 2.0 · **Última actualización:** 14 de noviembre de 2026
 
 ## Objetivo del proyecto
 
@@ -26,6 +26,11 @@ Space Apps antes del cierre del domingo 15 de noviembre de 2026.
 Cada persona tiene un **carril**: un conjunto de carpetas que solo ella y su agente tocan.
 Trabajan **cinco personas con agente**. `@dimidio6` se sumó en la fase 2 y tomó el carril E salvo el componente Charmy
 (decisión D-25).
+
+**Líder interino (D-28).** `@cosmosnehu77` se queda sin uso y vuelve probablemente en la fase 4. Mientras
+tanto `@daniace` hace todo lo que este plan y `AGENTS.md` le dan al líder: abre y cierra fases, revisa y fusiona los PR
+de rutas protegidas, reasigna trabajo y toma las decisiones pendientes. Las tareas de la fase 3 del carril A (servicio
+de avisos) pasan a `@dimidio6` con la carpeta `services/alertas/`.
 
 | Carril | Persona | Qué hace | Carpetas propias |
 |---|---|---|---|
@@ -200,6 +205,7 @@ si nada: avisen en el tablero y propongan el PR que actualiza este documento.
 | D-25 | `@dimidio6` se suma con agente y toma el carril E salvo el componente Charmy: el juego y el Charmy completo, que estaban en reserva, y la landing desde F2-E2. `@BrunoAguinaga0` queda solo con el backend. | Reparte la carga (6–7 tareas abiertas por persona en las fases 1 a 4) y libera al backend, que es camino crítico en las fases 2 y 3. Reemplaza el reparto de D-22. | RNF-09, RF-KID, RF-CHA, RF-LAN |
 | D-26 | **Respaldo de Meteomatics.** Todo lo que se lee de Meteomatics se guarda también como copia de respaldo. Si la API falla, agota su cupo o la cuenta vence (22/11/2026), `/weather` responde con esa copia, con su fecha y marcada como copia; solo si no hay copia para el lugar la parte se muestra como no disponible (RNF-14). La copia queda del lado del servidor y no se publica en el repo ni en los releases públicos, salvo que las condiciones de Meteomatics lo permitan. | La cuenta del evento vence una semana después de la entrega y tiene 1.000 pedidos por día: la demo y lo que siga no pueden depender de que responda en vivo. | RF-CTX-01, RNF-13, RNF-14 |
 | D-27 | **Cloudflare Pages al carril E.** La cuenta, los proyectos y el primer deploy web de landing, app y juego pasan del líder a `@dimidio6` (F2-E3, sale de F0-A3). Los secretos los carga el líder, porque solo el dueño del repo puede, con los valores que recibe por un canal privado. | Las tres piezas que se publican en Pages son del carril E o las consume; el líder queda con el host de la API y el bot. | RNF-01, RNF-06 |
+| D-28 | **Líder interino.** `@cosmosnehu77` se queda sin uso de tokens y vuelve probablemente en la fase 4. `@daniace` es líder interino con todos los poderes del líder (fases, rutas protegidas como dueño de código, reasignaciones y decisiones). F3-A1 y F3-A2 y la carpeta `services/alertas/` pasan a `@dimidio6`, que tenía la menor carga de la fase 3; el bot de Telegram (parte de F0-A3) va con F3-A1. Lo que solo puede hacer el dueño del repo (secretos de Actions, permisos) espera a `@cosmosnehu77`. | Que la implementación no se detenga y la carga quede pareja. | RNF-09 |
 
 ---
 
@@ -355,8 +361,8 @@ A recorre el flujo en producción y publica lo que esté roto.
 
 | Issue | ID | Tarea | Dueño | Carpetas | Depende de | Requisitos | Estado |
 |---|---|---|---|---|---|---|---|
-| #40 | F3-A1 | Servicio de avisos: bot con una zona de demostración, mensaje por foco o reporte nuevo con el viento en el lugar, botones de estado y aviso de emergencias | `@cosmosnehu77` | `services/alertas/` | F1-C1 (usa el mock; datos reales con F3-C1, F3-C2 y F3-B3) | RF-ALE-02, RF-ALE-03, RF-ALE-06, RF-CTX-02 | pendiente |
-| #41 | F3-A2 | Feed CAP 1.2 por zona | `@cosmosnehu77` | `services/alertas/` | F3-A1 | RF-ALE-04 | pendiente |
+| #40 | F3-A1 | Servicio de avisos: bot con una zona de demostración, mensaje por foco o reporte nuevo con el viento en el lugar, botones de estado y aviso de emergencias | `@dimidio6` (D-28) | `services/alertas/` | F1-C1 (usa el mock; datos reales con F3-C1, F3-C2 y F3-B3) | RF-ALE-02, RF-ALE-03, RF-ALE-06, RF-CTX-02 | pendiente |
+| #41 | F3-A2 | Feed CAP 1.2 por zona | `@dimidio6` (D-28) | `services/alertas/` | F3-A1 | RF-ALE-04 | pendiente |
 | #42 | F3-B1 | Máscara de fuentes fijas publicada como dato | `@leonelcnr` | `services/pipeline/` | F2-B1 | RF-ARM-05 | pendiente |
 | #43 | F3-B3 | Tiempo en el foco: paquete con `/weather` sobre Meteomatics, con caché por celda y media hora (el límite es de 1.000 pedidos por día), copia de respaldo de lo leído que se usa si la fuente falla o la cuenta vence (D-26) y respuesta clara si no hay copia | `@leonelcnr` | `services/contexto/` | F1-C1, F0-B2 | RF-CTX-01, RNF-14 | pendiente |
 | #44 | F3-B4 | Imagen satelital del foco: `/imagery` sobre las APIs de Copernicus, con búsqueda de la escena reciente más despejada, estilos de color real y falso color, caché de imágenes y respuesta clara si no hay imagen o se agota la cuota | `@leonelcnr` | `services/contexto/` | F3-B3, F0-B2 | RF-CTX-03, RNF-14 | pendiente |
@@ -566,14 +572,15 @@ La fase 5 no cubre requisitos nuevos: refuerza RNF-02 y RNF-10 sobre lo ya entre
 | 2026-11-14 | Versión 1.7. Se abre la fase 2. Las tareas de la fase 1 que siguen abiertas (#21, #25, #27, #28) continúan en paralelo: ninguna comparte carpeta con una tarea de otro dueño de la fase 2. | encabezado | `@cosmosnehu77` |
 | 2026-11-14 | Versión 1.8. Se suma `@dimidio6` (D-25): carril E salvo el componente Charmy. Recibe la reserva (F1-E4, F3-E1, F3-E2, F4-E2, F5-E2) y la landing de `@BrunoAguinaga0` (F2-E2, F4-E1, F5-E1). Ya no hay tareas en reserva. Tarea F2-A4. | equipo, 1.3, 3, 5 | `@cosmosnehu77` |
 | 2026-11-14 | Versión 1.9. Respaldo de lo leído de Meteomatics para cuando la API falle o la cuenta venza (D-26, cambia F3-B3). Cloudflare Pages pasa a `@dimidio6` en la tarea nueva F2-E3 (D-27). | 3, 5 | `@cosmosnehu77` |
+| 2026-11-14 | Versión 2.0. Se cierra la fase 2 y se abre la 3. `@daniace` queda como líder interino hasta que vuelva `@cosmosnehu77` (D-28); F3-A1 y F3-A2 pasan a `@dimidio6`. | encabezado, equipo, 3, 5, 10 | `@cosmosnehu77` |
 
 ## 10. Registro de cierres
 
 | Fase | Cerrada el | Notas |
 |---|---|---|
 | 0 | 2026-11-14 | Abierta la fase 1 por decisión del líder. Siguen abiertas, sin bloquear a nadie: F0-A3 (#5), F0-B1 (#6), F0-B2 (#7), F0-C1 (#8), F0-D1 (#9), F0-F1 (#11) y F0-X1 (#12). F0-E1 (#10) se cierra junto con F1-E1. |
-| 1 | | |
-| 2 | | |
+| 1 | 2026-11-14 | Se abrió la fase 2 con F1 en paralelo (v1.7). |
+| 2 | 2026-11-14 | Humo 3 de 3 contra producción y las tres piezas en Cloudflare Pages; flujo área → focos → calendario → CSV verificado por `@dimidio6` (#112). Los datos todavía son las muestras (`datos-muestras-2`): los reales llegan con el histórico de FIRMS (#6). Cierra `@cosmosnehu77` antes de pasar el mando (D-28). |
 | 3 | | |
 | 4 | | |
 | 5 (opcional) | | |

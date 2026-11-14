@@ -70,8 +70,12 @@ def _tablas(con: psycopg.Connection) -> None:
 
 def _exigir_token(authorization: str | None) -> None:
     esperado = os.environ.get("CHARMY_SERVICE_TOKEN", "").strip()
-    recibido = (authorization or "").removeprefix("Bearer ").strip()
-    if not esperado or not hmac.compare_digest(recibido.encode(), esperado.encode()):
+    esquema, _, recibido = (authorization or "").partition(" ")
+    if (
+        esquema != "Bearer"
+        or not esperado
+        or not hmac.compare_digest(recibido.strip().encode(), esperado.encode())
+    ):
         raise ErrorDeContrato(401, "sin_sesion", "Falta el token de servicio o no es válido.")
 
 

@@ -5,6 +5,7 @@ Ninguna clave se lee al importar: la API arranca sin .env.
 
 import os
 
+from contexto import imagen, tiempo
 from fastapi import APIRouter, FastAPI, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
@@ -71,4 +72,7 @@ v1.include_router(hotspots.router)
 v1.include_router(calendario.router)
 v1.include_router(vivo.router)
 v1.include_router(avisos.router)
+# Contexto del foco (carril B, services/contexto): tiempo con Meteomatics e imagen de Copernicus.
+v1.include_router(tiempo.router)
+v1.include_router(imagen.router)
 app.include_router(v1)

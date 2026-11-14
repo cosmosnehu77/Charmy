@@ -1,0 +1,7 @@
+# Contexto de la imagen de la API: la raíz del repo. Solo entra lo que la API necesita.
+*
+!services/api/pyproject.toml
+!services/api/src/**
+!services/contexto/pyproject.toml
+!services/contexto/src/**
+**/__pycache__

@@ -9,7 +9,11 @@ import { bboxDeArea, type Poligono } from "@/consulta/consulta";
 import { useFocos } from "@/consulta/useFocos";
 import { useApp } from "@/estado/app";
 import { useConsulta } from "@/estado/consulta";
-import { agregarCapas, datosArea } from "./capas";
+import { atributosFoco } from "@/experto/atributos";
+import { useFocosVivo } from "@/vivo/consultas";
+import { useVivo } from "@/vivo/estado";
+import { useContexto } from "@/contexto/estado";
+import { agregarCapas, datosArea, ponerImagen } from "./capas";
 import { esFallaDelEstilo, LIMITES_MVP, perfiles, transformarEstilo } from "./perfiles";
 
 maplibregl.setWorkerUrl(urlWorker);
@@ -52,11 +56,15 @@ export default function Mapa() {
   const area = useConsulta((s) => s.area);
   const dibujando = useConsulta((s) => s.dibujando);
   const { focos } = useFocos();
+  const vivoVisible = useVivo((s) => s.visible);
+  const { data: vivoDatos } = useFocosVivo();
+  const vivo = vivoVisible ? (vivoDatos ?? null) : null;
+  const capaImagen = useContexto((s) => s.capa);
   const [falla, setFalla] = useState(false);
 
   // Lo último que hay que dibujar, para volver a agregarlo después de un cambio de estilo.
-  const datos = useRef({ area, focos });
-  datos.current = { area, focos };
+  const datos = useRef({ area, focos, vivo, capaImagen });
+  datos.current = { area, focos, vivo, capaImagen };
 
   // Crear el mapa una sola vez.
   useEffect(() => {
@@ -79,11 +87,45 @@ export default function Mapa() {
     });
     m.on("style.load", () => {
       setFalla(false);
-      agregarCapas(m, datos.current.area, datos.current.focos);
+      agregarCapas(m, datos.current.area, datos.current.focos, datos.current.vivo);
+      ponerImagen(m, datos.current.capaImagen);
       // Terra Draw ya se detuvo antes de setStyle (ver el efecto del perfil): acá se crea uno nuevo.
       dibujo.current = crearDibujo(m);
       const modo = useConsulta.getState().dibujando;
       if (modo) dibujo.current.setMode(modo);
+    });
+    // Modo experto: tocar un foco muestra sus atributos originales (RF-MOD-02).
+    m.on("click", "focos", (e) => {
+      const foco = e.features?.[0];
+      if (!foco || useApp.getState().modo !== "experto") return;
+      const lista = document.createElement("dl");
+      lista.className = "grid grid-cols-[auto_1fr] gap-x-3 gap-y-0.5 font-mono text-xs";
+      for (const [nombre, valor] of atributosFoco(foco.properties as Parameters<typeof atributosFoco>[0])) {
+        const dt = document.createElement("dt");
+        dt.className = "text-tinta-suave";
+        dt.textContent = nombre;
+        const dd = document.createElement("dd");
+        dd.textContent = valor;
+        lista.append(dt, dd);
+      }
+      new maplibregl.Popup({ maxWidth: "320px" }).setLngLat(e.lngLat).setDOMContent(lista).addTo(m);
+    });
+    // Tocar un foco reciente lo elige en el panel «En vivo» para ver su evidencia.
+    m.on("click", "vivo", (e) => {
+      const id = e.features?.[0]?.properties?.id ?? e.features?.[0]?.id;
+      if (id !== undefined) useVivo.getState().cambiar({ seleccionado: String(id) });
+    });
+    m.on("mouseenter", "vivo", () => {
+      m.getCanvas().style.cursor = "pointer";
+    });
+    m.on("mouseleave", "vivo", () => {
+      m.getCanvas().style.cursor = "";
+    });
+    m.on("mouseenter", "focos", () => {
+      if (useApp.getState().modo === "experto") m.getCanvas().style.cursor = "pointer";
+    });
+    m.on("mouseleave", "focos", () => {
+      m.getCanvas().style.cursor = "";
     });
     mapa.current = m;
     return () => {
@@ -132,6 +174,24 @@ export default function Mapa() {
       ?.getSource<maplibregl.GeoJSONSource>("focos")
       ?.setData(focos ?? { type: "FeatureCollection", features: [] });
   }, [focos]);
+
+  // Focos en vivo.
+  useEffect(() => {
+    mapa.current
+      ?.getSource<maplibregl.GeoJSONSource>("vivo")
+      ?.setData(vivo ?? { type: "FeatureCollection", features: [] });
+  }, [vivo]);
+
+  // Imagen satelital como capa.
+  useEffect(() => {
+    const m = mapa.current;
+    if (!m?.getSource("area")) return; // si el estilo está cargando, la pone el style.load
+    ponerImagen(m, capaImagen);
+    if (capaImagen) {
+      const [o, s, e, n] = capaImagen.bbox;
+      m.fitBounds([o, s, e, n], { padding: 48, duration: 800 });
+    }
+  }, [capaImagen]);
 
   // Herramienta de dibujo.
   useEffect(() => {

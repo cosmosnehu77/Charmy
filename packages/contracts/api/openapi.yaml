@@ -19,9 +19,10 @@ info:
     | `anios_invalidos` | 400 | `from_year` es posterior a `to_year` |
     | `poligono_invalido` | 400 | El polígono de `/calendar` se cruza consigo mismo |
     | `resolucion_no_disponible` | 400 | `/calendar` con `resolution: day_of_year` (por ahora solo `month`) |
-    | `sin_sesion` | 401 | Falta iniciar sesión como entidad |
+    | `sin_sesion` | 401 | Falta el token de servicio o no es válido |
     | `no_existe` | 404 | La ruta o el recurso no existen |
     | `metodo_no_permitido` | 405 | La ruta no acepta ese método |
+    | `demasiados_reportes` | 429 | Más de 5 reportes en 10 minutos desde la misma conexión |
     | `datos_no_disponibles` | 503 | No se pueden leer los datos o la fuente externa no responde |
 servers:
   - url: http://localhost:8000/api/v1
@@ -209,6 +210,9 @@ paths:
       description: |
         Solo NOAA-20 (`N20`) y NOAA-21 (`N21`): S-NPP (`N`) no publica datos nuevos desde el 2/11/2026.
         El `id` de cada foco sirve para pedir `/live/{hotspot_id}/evidence` mientras el foco esté en `/live`.
+        El worker consulta FIRMS cada 30 minutos. Si la última consulta falló, la respuesta trae los focos de la
+        anterior con `stale: true`, su fecha en `fetched_at` y un `message`. Sin ninguna consulta exitosa, 503.
+        `verdict` y `fixed_source` los calcula la verificación del worker (D-09); faltan en un foco recién llegado.
       parameters:
         - $ref: '#/components/parameters/bbox'
         - name: hours
@@ -219,12 +223,24 @@ paths:
           description: Focos en vivo
           content:
             application/geo+json:
-              schema: { $ref: '#/components/schemas/HotspotCollection' }
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/HotspotCollection'
+                  - type: object
+                    required: [fetched_at, stale]
+                    properties:
+                      fetched_at: { type: string, format: date-time, description: Última consulta exitosa a FIRMS }
+                      stale:
+                        type: boolean
+                        description: true si la última consulta a FIRMS falló o pasó más de una hora sin una exitosa
+                      message: { type: string, description: 'Solo con `stale: true`: de cuándo son los focos' }
               examples:
                 muestra:
                   summary: Muestra provisoria (valores inventados)
                   value:
                     type: FeatureCollection
+                    fetched_at: '2026-11-14T05:30:00Z'
+                    stale: false
                     features:
                       - type: Feature
                         id: N21-2026-11-14T05:12:00Z--45.86100--67.51200
@@ -257,6 +273,11 @@ paths:
       operationId: getEvidence
       tags: [vivo]
       summary: Señales y evidencia usadas para el veredicto
+      description: |
+        El veredicto sale de reglas sobre cuatro señales (satélite, fuente fija, noticias y reportes con el estado
+        que marcó la entidad), no del modelo de lenguaje, que solo etiqueta titulares (D-09, RF-VIV-04). Sin
+        noticias, la señal de noticias vale 0 y nunca vuelve falso un foco. 404 si el foco ya no está en `/live`
+        o todavía no se verificó.
       parameters:
         - name: hotspot_id
           in: path
@@ -284,6 +305,7 @@ paths:
                         url: https://example.org/noticia-de-ejemplo
                         label: apoya
         '404': { $ref: '#/components/responses/NotFound' }
+        '503': { $ref: '#/components/responses/DatosNoDisponibles' }
   /weather:
     get:
       operationId: getWeather
@@ -431,7 +453,8 @@ paths:
       operationId: listReports
       tags: [alertas]
       summary: Reportes ciudadanos recientes dentro de un área
-      description: Lo consulta el servicio de avisos para notificar a las entidades de cada zona.
+      description: Lo consulta el servicio de avisos para notificar a las entidades de cada zona. Pide el token de servicio.
+      security: [{ servicio: [] }]
       parameters:
         - $ref: '#/components/parameters/bbox'
         - name: since
@@ -440,7 +463,7 @@ paths:
           schema: { type: string, format: date-time }
       responses:
         '200':
-          description: Reportes
+          description: Reportes, del más viejo al más nuevo
           content:
             application/json:
               schema:
@@ -467,28 +490,33 @@ paths:
                       status: sin_verificar
                       created_at: '2026-11-14T10:05:00Z'
         '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '503': { $ref: '#/components/responses/DatosNoDisponibles' }
     post:
       operationId: createReport
       tags: [alertas]
       summary: Reporte ciudadano anónimo
-      description: Sin cuenta. Requiere token de captcha; límite de frecuencia por IP. No guarda datos personales.
+      description: |
+        Sin cuenta. No guarda IP ni datos personales (RNF-05): solo lo que viene en el cuerpo. Un campo que no está
+        en el contrato se rechaza con 400. Límite: 5 reportes cada 10 minutos por conexión, contados solo en memoria.
       requestBody:
         required: true
         content:
           application/json:
             schema:
               type: object
-              required: [lat, lon, captcha_token]
+              additionalProperties: false
+              required: [lat, lon]
               properties:
                 lat: { type: number, minimum: -90, maximum: 90 }
                 lon: { type: number, minimum: -180, maximum: 180 }
                 description: { type: string, maxLength: 500 }
                 photo_url: { type: string, format: uri }
-                captcha_token: { type: string }
+                captcha_token: { type: string, description: 'Reservado para un captcha: el MVP no lo verifica' }
             examples:
               muestra:
                 summary: Reporte de ejemplo
-                value: { lat: -42.12, lon: -71.29, description: Columna de humo detrás del cerro, captcha_token: token-de-prueba }
+                value: { lat: -42.12, lon: -71.29, description: Columna de humo detrás del cerro }
       responses:
         '201':
           description: Reporte creado como "sin verificar"
@@ -505,38 +533,83 @@ paths:
                   summary: Muestra provisoria
                   value: { id: muestra-r-0002, status: sin_verificar }
         '400': { $ref: '#/components/responses/BadRequest' }
-        '429': { description: Demasiados reportes desde esta conexión. Probá de nuevo en unos minutos. }
-  /entities/me/alerts:
-    get:
-      operationId: listEntityAlerts
-      tags: [alertas]
-      summary: Bandeja de la entidad (focos y reportes dentro de sus zonas)
-      security: [{ bearer: [] }]
-      responses:
-        '200':
-          description: Alertas
+        '429':
+          description: Demasiados reportes desde esta conexión
           content:
             application/json:
-              schema:
-                type: array
-                items: { $ref: '#/components/schemas/Alert' }
+              schema: { $ref: '#/components/schemas/Error' }
+              example: { code: demasiados_reportes, message: Mandaste varios reportes seguidos. Probá de nuevo en unos minutos. }
+        '503': { $ref: '#/components/responses/DatosNoDisponibles' }
+  /alerts:
+    post:
+      operationId: createAlert
+      tags: [alertas]
+      summary: El servicio de avisos registra un aviso antes de mandarlo
+      description: |
+        Pide el token de servicio. Si ya existe un aviso para esa zona y ese foco o reporte, devuelve el mismo
+        (200) en vez de crear otro: así no se duplica. El `id` va en los botones del mensaje a la entidad.
+      security: [{ servicio: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required: [zone_id, kind]
+              description: '`hotspot_id` con `kind: foco_satelital`; `report_id` con `kind: reporte_ciudadano`'
+              properties:
+                zone_id: { type: string }
+                kind: { type: string, enum: [foco_satelital, reporte_ciudadano] }
+                hotspot_id: { type: string }
+                report_id: { type: string }
+            examples:
+              muestra:
+                summary: Aviso de ejemplo
+                value: { zone_id: zona-demo, kind: foco_satelital, hotspot_id: N20-2026-11-14T04:40:00Z--42.11800--71.28700 }
+      responses:
+        '201':
+          description: Aviso nuevo
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Alert' }
               examples:
                 muestra:
                   summary: Muestra provisoria (valores inventados)
                   value:
-                    - id: muestra-a-0001
-                      zone_id: zona-demo
-                      kind: foco_satelital
-                      hotspot_id: N20-2026-11-14T04:40:00Z--42.11800--71.28700
-                      status: nueva
-                      created_at: '2026-11-14T04:45:00Z'
+                    id: muestra-a-0001
+                    zone_id: zona-demo
+                    kind: foco_satelital
+                    hotspot_id: N20-2026-11-14T04:40:00Z--42.11800--71.28700
+                    status: nueva
+                    created_at: '2026-11-14T04:45:00Z'
+        '200':
+          description: El aviso ya existía para esa zona y ese foco o reporte
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Alert' }
+              examples:
+                muestra:
+                  summary: Muestra provisoria (valores inventados)
+                  value:
+                    id: muestra-a-0001
+                    zone_id: zona-demo
+                    kind: foco_satelital
+                    hotspot_id: N20-2026-11-14T04:40:00Z--42.11800--71.28700
+                    status: visto
+                    created_at: '2026-11-14T04:45:00Z'
+        '400': { $ref: '#/components/responses/BadRequest' }
         '401': { $ref: '#/components/responses/Unauthorized' }
+        '503': { $ref: '#/components/responses/DatosNoDisponibles' }
   /alerts/{alert_id}:
     patch:
       operationId: updateAlert
       tags: [alertas]
       summary: La entidad actualiza el estado de una alerta (alimenta la verificación)
-      security: [{ bearer: [] }]
+      description: |
+        Lo llama el servicio de avisos cuando la entidad toca un botón. Pide el token de servicio. Si el aviso es
+        de un reporte ciudadano, el reporte toma el mismo estado.
+      security: [{ servicio: [] }]
       parameters:
         - name: alert_id
           in: path
@@ -548,6 +621,7 @@ paths:
           application/json:
             schema:
               type: object
+              additionalProperties: false
               required: [status]
               properties:
                 status: { type: string, enum: [visto, en_camino, controlado, falso] }
@@ -571,9 +645,12 @@ paths:
                     kind: foco_satelital
                     hotspot_id: N20-2026-11-14T04:40:00Z--42.11800--71.28700
                     status: en_camino
+                    note: Sale una dotación
                     created_at: '2026-11-14T04:45:00Z'
+        '400': { $ref: '#/components/responses/BadRequest' }
         '401': { $ref: '#/components/responses/Unauthorized' }
         '404': { $ref: '#/components/responses/NotFound' }
+        '503': { $ref: '#/components/responses/DatosNoDisponibles' }
   /cap/{zone_id}.xml:
     get:
       operationId: getCapFeed
@@ -674,10 +751,12 @@ paths:
                   value: { status: ok, data_version: datos-muestras-2 }
 components:
   securitySchemes:
-    bearer:
+    servicio:
       type: http
       scheme: bearer
-      description: JWT de Supabase Auth (enlace mágico, solo entidades invitadas)
+      description: |
+        Token de servicio compartido entre la API y el servicio de avisos (`CHARMY_SERVICE_TOKEN`). No es para el
+        navegador. La bandeja web de entidades con cuenta queda para después del MVP (D-08).
   parameters:
     bbox:
       name: bbox
@@ -701,11 +780,11 @@ components:
           schema: { $ref: '#/components/schemas/Error' }
           example: { code: bbox_invalido, message: 'El área debe tener el formato oeste,sur,este,norte.' }
     Unauthorized:
-      description: Falta iniciar sesión como entidad
+      description: Falta el token de servicio o no es válido
       content:
         application/json:
           schema: { $ref: '#/components/schemas/Error' }
-          example: { code: sin_sesion, message: Iniciá sesión como entidad para ver esta bandeja. }
+          example: { code: sin_sesion, message: Falta el token de servicio o no es válido. }
     DatosNoDisponibles:
       description: No se pueden leer los datos ahora. El resto de la app sigue funcionando.
       content:
@@ -886,4 +965,5 @@ components:
         hotspot_id: { type: string }
         report_id: { type: string }
         status: { type: string, enum: [nueva, visto, en_camino, controlado, falso] }
+        note: { type: string, description: Nota de la entidad en el último cambio de estado }
         created_at: { type: string, format: date-time }

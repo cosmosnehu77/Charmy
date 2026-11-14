@@ -2,14 +2,22 @@ import { lazy, Suspense } from "react";
 import { Calendario } from "@/calendario/Calendario";
 import { AvisoEmergencias } from "@/components/AvisoEmergencias";
 import { Encabezado } from "@/components/Encabezado";
+import { Seguro } from "@/components/Seguro";
 import { PanelConsulta } from "@/consulta/PanelConsulta";
 import { useApp } from "@/estado/app";
+import { PanelValidacion } from "@/experto/PanelValidacion";
+import { PanelContexto } from "@/contexto/PanelContexto";
+import { Recorrido } from "@/novato/Recorrido";
+import { FormReporte } from "@/vivo/FormReporte";
+import { PanelVivo } from "@/vivo/PanelVivo";
 
 // MapLibre pesa: se carga aparte para que el resto de la app aparezca enseguida (RNF-03).
 const Mapa = lazy(() => import("@/mapa/Mapa"));
 
 export default function App() {
   const perfilMapa = useApp((s) => s.perfilMapa);
+  const modo = useApp((s) => s.modo);
+  const mostrarRecorrido = useApp((s) => s.modo === "novato" && !s.recorridoVisto);
   return (
     <div className="flex h-full flex-col">
       <a
@@ -25,6 +33,13 @@ export default function App() {
           className="order-2 flex flex-col gap-4 border-t bg-card p-4 md:order-1 md:w-80 md:overflow-y-auto md:border-t-0 md:border-r"
         >
           <PanelConsulta />
+          <Seguro nombre="La sección «En vivo»">
+            <PanelVivo />
+          </Seguro>
+          <Seguro nombre="El contexto del lugar">
+            <PanelContexto />
+          </Seguro>
+          <FormReporte />
           <div className="mt-auto">
             <AvisoEmergencias />
           </div>
@@ -42,9 +57,17 @@ export default function App() {
           >
             <Mapa />
           </Suspense>
+          {mostrarRecorrido && <Recorrido />}
         </main>
         <div className="border-t bg-card md:max-h-[45%] md:overflow-y-auto">
-          <Calendario />
+          <Seguro nombre="El calendario">
+            <Calendario />
+          </Seguro>
+          {modo === "experto" && (
+            <Seguro nombre="El panel de validación">
+              <PanelValidacion />
+            </Seguro>
+          )}
         </div>
         </div>
       </div>

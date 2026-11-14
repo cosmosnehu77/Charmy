@@ -50,6 +50,7 @@ jobs:
             if "$RUNNER_TEMP/al-dia" > salida.txt 2>&1 && git push -q origin "HEAD:$rama"; then
               echo "#$n: lockfiles resueltos"
               gh workflow run ci.yml --ref "$rama" || echo "::warning::#$n: no se pudo volver a correr el CI"
+              gh workflow run pruebas.yml --ref "$rama" || echo "::warning::#$n: no se pudieron volver a correr las pruebas"
               gh pr comment "$n" --body "Traje \`main\` a esta rama y regeneré los lockfiles con \`tools/al-dia\`: el conflicto era solo de \`pnpm-lock.yaml\` o \`uv.lock\`. Antes de seguir: \`git pull\`." || true
             else
               echo "#$n: conflicto real"; cat salida.txt

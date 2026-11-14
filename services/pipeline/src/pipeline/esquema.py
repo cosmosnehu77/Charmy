@@ -25,4 +25,5 @@ ESQUEMAS = {
         "n_months": pl.Int32,
         "provisional": pl.Boolean,
     },
+    "fuentes_fijas": {"cell_id": pl.String},
 }

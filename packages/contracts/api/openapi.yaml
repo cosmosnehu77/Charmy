@@ -3,11 +3,26 @@ info:
   title: Charmy API
   version: 0.1.0
   description: |
-    Contrato en borrador para el MVP de Space Apps 2026. Destino: packages/contracts/openapi.yaml.
+    Contrato para el MVP de Space Apps 2026 (packages/contracts/api/openapi.yaml).
     Los datos históricos salen de Parquet precalculado; los datos en vivo, del worker (VIIRS NOAA-20/21 NRT).
 
     Este archivo es la fuente de verdad: la API lo implementa y el mock (Prism) responde con sus ejemplos.
     Todos los ejemplos son **muestras provisorias**: valores inventados con la forma real, nunca resultados.
+
+    Códigos de error (`Error.code`), para decidir por código y no por texto:
+
+    | Código | Estado | Cuándo |
+    |---|---|---|
+    | `parametros_invalidos` | 400 | Falta un parámetro o tiene un tipo o valor fuera del contrato |
+    | `bbox_invalido` | 400 | `bbox` no es oeste,sur,este,norte o está fuera de rango |
+    | `fechas_invalidas` | 400 | `from` es posterior a `to` |
+    | `anios_invalidos` | 400 | `from_year` es posterior a `to_year` |
+    | `poligono_invalido` | 400 | El polígono de `/calendar` se cruza consigo mismo |
+    | `resolucion_no_disponible` | 400 | `/calendar` con `resolution: day_of_year` (por ahora solo `month`) |
+    | `sin_sesion` | 401 | Falta iniciar sesión como entidad |
+    | `no_existe` | 404 | La ruta o el recurso no existen |
+    | `metodo_no_permitido` | 405 | La ruta no acepta ese método |
+    | `datos_no_disponibles` | 503 | No se pueden leer los datos o la fuente externa no responde |
 servers:
   - url: http://localhost:8000/api/v1
     description: API local (services/api)
@@ -55,7 +70,7 @@ paths:
                     type: FeatureCollection
                     features:
                       - type: Feature
-                        id: muestra-h-0001
+                        id: N20-2025-01-18T18:24:00Z--42.90500--71.31200
                         geometry: { type: Point, coordinates: [-71.312, -42.905] }
                         properties:
                           acq_datetime: '2025-01-18T18:24:00Z'
@@ -64,9 +79,9 @@ paths:
                           confidence: nominal
                           frp: 12.4
                           daynight: D
-                          fixed_source: false
+                          cell_id: '-43.0_-71.4'
                       - type: Feature
-                        id: muestra-h-0002
+                        id: Aqua-2025-01-18T14:50:00Z--42.91100--71.29800
                         geometry: { type: Point, coordinates: [-71.298, -42.911] }
                         properties:
                           acq_datetime: '2025-01-18T14:50:00Z'
@@ -75,7 +90,7 @@ paths:
                           confidence: high
                           frp: 38.9
                           daynight: D
-                          fixed_source: false
+                          cell_id: '-43.0_-71.3'
             text/csv:
               schema: { type: string }
               examples:
@@ -85,6 +100,7 @@ paths:
                     latitude,longitude,acq_date,acq_time,satellite,instrument,confidence,frp,daynight
                     -42.905,-71.312,2025-01-18,1824,N20,VIIRS,n,12.4,D
         '400': { $ref: '#/components/responses/BadRequest' }
+        '503': { $ref: '#/components/responses/DatosNoDisponibles' }
   /calendar:
     post:
       operationId: getCalendar
@@ -114,7 +130,10 @@ paths:
                   resolution: month
       responses:
         '200':
-          description: Matriz de calendario con anomalías
+          description: |
+            Matriz de calendario con anomalías para la región de calibración que comparte más superficie con el
+            área. Si el área está fuera de la cobertura o la región no tiene datos en esos años, `cells` viene
+            vacío y `message` dice por qué.
           content:
             application/json:
               schema: { $ref: '#/components/schemas/Calendar' }
@@ -123,12 +142,23 @@ paths:
                   summary: Muestra provisoria (valores inventados)
                   value:
                     unit: dias_celda_con_fuego_equivalente_viirs
-                    baseline: mediana 2001-2025 por mes
+                    baseline: mediana del mismo mes en los años anteriores al último
+                    region: AR-U
+                    provisional: true
                     cells:
-                      - { year: 2005, month: 1, value: 3.1, lower: 2.2, upper: 4.3, median: 4.0, percentile: 38, origin: modis_convertido }
-                      - { year: 2015, month: 1, value: 14.6, lower: 11.9, upper: 17.8, median: 4.0, percentile: 96, origin: modis_convertido }
-                      - { year: 2025, month: 1, value: 22.0, median: 4.0, percentile: 99, origin: viirs_medido }
+                      - { year: 2005, month: 1, value: 3.1, lower: 2.2, upper: 4.3, median: 4.0, anomaly: -0.9, percentile: 38, origin: modis_convertido }
+                      - { year: 2015, month: 1, value: 14.6, median: 4.0, anomaly: 10.6, percentile: 96, origin: viirs_medido }
+                      - { year: 2025, month: 1, value: 22.0, lower: 19.1, upper: 25.3, median: 4.0, anomaly: 18.0, percentile: 99, origin: viirs_convertido }
+                fuera_de_cobertura:
+                  summary: Área fuera de la cobertura
+                  value:
+                    unit: dias_celda_con_fuego_equivalente_viirs
+                    baseline: mediana del mismo mes en los años anteriores al último
+                    provisional: false
+                    message: 'Sin datos para esta área: está fuera de la cobertura.'
+                    cells: []
         '400': { $ref: '#/components/responses/BadRequest' }
+        '503': { $ref: '#/components/responses/DatosNoDisponibles' }
   /forecast:
     get:
       operationId: getForecast
@@ -168,12 +198,15 @@ paths:
                     model: muestra
                     skill_vs_climatology: 0.12
                     cells:
-                      - { cell_id: '-71.3_-42.9', month: '2026-12', expected_fire_days: 2.4, p10: 0.5, p90: 5.1 }
+                      - { cell_id: '-42.9_-71.3', month: '2026-12', expected_fire_days: 2.4, p10: 0.5, p90: 5.1 }
   /live:
     get:
       operationId: listLive
       tags: [vivo]
       summary: Focos de las últimas horas con estado de verificación
+      description: |
+        Solo NOAA-20 (`N20`) y NOAA-21 (`N21`): S-NPP (`N`) no publica datos nuevos desde el 2/11/2026.
+        El `id` de cada foco sirve para pedir `/live/{hotspot_id}/evidence` mientras el foco esté en `/live`.
       parameters:
         - $ref: '#/components/parameters/bbox'
         - name: hours
@@ -192,7 +225,7 @@ paths:
                     type: FeatureCollection
                     features:
                       - type: Feature
-                        id: muestra-v-0001
+                        id: N21-2026-11-14T05:12:00Z--45.86100--67.51200
                         geometry: { type: Point, coordinates: [-67.512, -45.861] }
                         properties:
                           acq_datetime: '2026-11-14T05:12:00Z'
@@ -204,7 +237,7 @@ paths:
                           fixed_source: true
                           verdict: fuente_fija
                       - type: Feature
-                        id: muestra-v-0002
+                        id: N20-2026-11-14T04:40:00Z--42.11800--71.28700
                         geometry: { type: Point, coordinates: [-71.287, -42.118] }
                         properties:
                           acq_datetime: '2026-11-14T04:40:00Z'
@@ -215,6 +248,8 @@ paths:
                           daynight: N
                           fixed_source: false
                           verdict: probable
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '503': { $ref: '#/components/responses/DatosNoDisponibles' }
   /live/{hotspot_id}/evidence:
     get:
       operationId: getEvidence
@@ -490,7 +525,7 @@ paths:
                     - id: muestra-a-0001
                       zone_id: zona-demo
                       kind: foco_satelital
-                      hotspot_id: muestra-v-0002
+                      hotspot_id: N20-2026-11-14T04:40:00Z--42.11800--71.28700
                       status: nueva
                       created_at: '2026-11-14T04:45:00Z'
         '401': { $ref: '#/components/responses/Unauthorized' }
@@ -532,7 +567,7 @@ paths:
                     id: muestra-a-0001
                     zone_id: zona-demo
                     kind: foco_satelital
-                    hotspot_id: muestra-v-0002
+                    hotspot_id: N20-2026-11-14T04:40:00Z--42.11800--71.28700
                     status: en_camino
                     created_at: '2026-11-14T04:45:00Z'
         '401': { $ref: '#/components/responses/Unauthorized' }
@@ -582,14 +617,22 @@ paths:
                 required: [method, overlap, regions]
                 properties:
                   method: { type: string, example: 'log-linear por región y mes, validación dejando un año afuera' }
-                  overlap: { type: string, example: '2012-01/2026-11' }
+                  overlap:
+                    type: string
+                    description: Período de solapamiento de cada tramo de la cadena de calibración
+                    example: 'modis_snpp 2012-01/2026-07; noaa20_snpp 2018-04/2026-07'
                   regions:
                     type: array
                     items:
                       type: object
-                      required: [region, r2, bias, mae, n_months]
+                      required: [region, pair, r2, bias, mae, n_months, provisional]
                       properties:
-                        region: { type: string }
+                        region: { type: string, description: Código ISO 3166-2 de la región de calibración, example: AR-U }
+                        pair:
+                          type: string
+                          description: Tramo de la cadena de calibración
+                          enum: [modis_snpp, noaa20_snpp]
+                        provisional: { type: boolean, description: true si el valor es de ejemplo y no un resultado }
                         r2: { type: number }
                         bias: { type: number }
                         mae: { type: number }
@@ -599,9 +642,11 @@ paths:
                   summary: Muestra provisoria (valores inventados, no son métricas reales)
                   value:
                     method: log-linear por región y mes, validación dejando un año afuera
-                    overlap: '2012-01/2026-11'
+                    overlap: 'modis_snpp 2012-01/2026-07; noaa20_snpp 2018-04/2026-07'
                     regions:
-                      - { region: patagonia-andina, r2: 0.0, bias: 0.0, mae: 0.0, n_months: 0 }
+                      - { region: AR-U, pair: modis_snpp, r2: 0.0, bias: 0.0, mae: 0.0, n_months: 0, provisional: true }
+                      - { region: AR-U, pair: noaa20_snpp, r2: 0.0, bias: 0.0, mae: 0.0, n_months: 0, provisional: true }
+        '503': { $ref: '#/components/responses/DatosNoDisponibles' }
   /health:
     get:
       operationId: getHealth
@@ -618,11 +663,13 @@ paths:
                 properties:
                   status: { type: string, example: ok }
                   last_nrt_fetch: { type: string, format: date-time }
-                  data_version: { type: string }
+                  data_version:
+                    type: string
+                    description: Versión de los datos publicados que sirve la API (`muestras` si usa las locales)
               examples:
                 muestra:
                   summary: Muestra provisoria
-                  value: { status: ok, data_version: muestra }
+                  value: { status: ok, data_version: datos-muestras-2 }
 components:
   securitySchemes:
     bearer:
@@ -657,6 +704,12 @@ components:
         application/json:
           schema: { $ref: '#/components/schemas/Error' }
           example: { code: sin_sesion, message: Iniciá sesión como entidad para ver esta bandeja. }
+    DatosNoDisponibles:
+      description: No se pueden leer los datos ahora. El resto de la app sigue funcionando.
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+          example: { code: datos_no_disponibles, message: Los datos no están disponibles ahora. Probá más tarde. }
     NotFound:
       description: No existe
       content:
@@ -668,7 +721,7 @@ components:
       type: object
       required: [code, message]
       properties:
-        code: { type: string, example: bbox_invalido }
+        code: { type: string, description: Ver el catálogo de códigos en la descripción del contrato, example: bbox_invalido }
         message: { type: string, example: 'El área debe tener el formato oeste,sur,este,norte.' }
     GeoJSONPolygon:
       type: object
@@ -697,7 +750,13 @@ components:
       required: [type, id, geometry, properties]
       properties:
         type: { type: string, enum: [Feature] }
-        id: { type: string }
+        id:
+          type: string
+          description: |
+            `<satellite>-<acq_datetime ISO UTC>-<latitude .5f>-<longitude .5f>`, de la clave única del foco
+            (packages/contracts/datos/esquema.md). Estable mientras el foco exista; no une un foco NRT con su
+            versión histórica.
+          example: N20-2026-11-12T04:04:00Z--52.52398--70.23965
         geometry:
           type: object
           required: [type, coordinates]
@@ -709,26 +768,41 @@ components:
           required: [acq_datetime, satellite, instrument, confidence, frp, daynight]
           properties:
             acq_datetime: { type: string, format: date-time }
-            satellite: { type: string, enum: [Terra, Aqua, N, N20, N21] }
+            satellite:
+              type: string
+              description: '`N` (S-NPP) solo en el histórico: `/live` nunca lo devuelve'
+              enum: [Terra, Aqua, N, N20, N21]
             instrument: { type: string, enum: [MODIS, VIIRS] }
             confidence: { type: string, enum: [low, nominal, high] }
             frp: { type: number, description: Potencia radiativa del fuego (MW) }
             daynight: { type: string, enum: [D, N] }
+            cell_id:
+              type: string
+              description: Celda de 0,1° de la grilla (D-02), esquina suroeste "<lat>_<lon>"
+              example: '-45.4_-71.3'
             fixed_source: { type: boolean }
             verdict:
               type: string
               enum: [confirmado, probable, sin_confirmar, fuente_fija]
     Calendar:
       type: object
-      required: [unit, baseline, cells]
+      required: [unit, baseline, provisional, cells]
       properties:
         unit: { type: string, example: dias_celda_con_fuego_equivalente_viirs }
-        baseline: { type: string, example: mediana 2001-2025 por mes }
+        baseline: { type: string, example: mediana del mismo mes en los años anteriores al último }
+        region:
+          type: string
+          description: Región de calibración usada (ISO 3166-2). Falta si el área está fuera de la cobertura
+          example: AR-U
+        provisional:
+          type: boolean
+          description: true si algún valor es de ejemplo y no un resultado; la app lo muestra como "dato de ejemplo"
+        message: { type: string, description: 'Por qué `cells` viene vacío (fuera de la cobertura, región sin datos)' }
         cells:
           type: array
           items:
             type: object
-            required: [year, month, value, median, percentile, origin]
+            required: [year, month, value, median, anomaly, percentile, origin]
             properties:
               year: { type: integer }
               month: { type: integer, minimum: 1, maximum: 12 }
@@ -736,8 +810,14 @@ components:
               lower: { type: number }
               upper: { type: number }
               median: { type: number }
+              anomaly: { type: number, description: value − median }
               percentile: { type: number, minimum: 0, maximum: 100 }
-              origin: { type: string, enum: [modis_convertido, viirs_medido] }
+              origin:
+                type: string
+                description: |
+                  modis_convertido (hasta 2011), viirs_medido (mientras hay S-NPP), viirs_convertido (NOAA-20
+                  llevado a S-NPP, después de S-NPP), modis_medido (solo con source = modis)
+                enum: [modis_convertido, viirs_medido, viirs_convertido, modis_medido]
     WeatherPoint:
       type: object
       required: [time, wind_speed_ms, wind_dir_deg, temperature_c, relative_humidity_pct]

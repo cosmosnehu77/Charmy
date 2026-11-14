@@ -72,7 +72,7 @@ def listar(
 
     consulta = f"""
         SELECT latitude, longitude, strftime(acq_datetime, '%Y-%m-%dT%H:%M:%SZ') AS acq_datetime,
-               satellite, instrument, confidence, confidence_pct, frp, daynight
+               satellite, instrument, confidence, confidence_pct, frp, daynight, cell_id
         FROM read_parquet(?, union_by_name = true)
         WHERE {" AND ".join(condiciones)}
         ORDER BY acq_datetime, satellite, latitude, longitude
@@ -87,7 +87,7 @@ def listar(
 
 def _geojson(filas: list[tuple]) -> dict:
     features = []
-    for lat, lon, cuando, satelite, instrumento, confianza, _, frp, diaonoche in filas:
+    for lat, lon, cuando, satelite, instrumento, confianza, _, frp, diaonoche, celda in filas:
         features.append(
             {
                 "type": "Feature",
@@ -100,6 +100,7 @@ def _geojson(filas: list[tuple]) -> dict:
                     "confidence": confianza,
                     "frp": frp,
                     "daynight": diaonoche,
+                    "cell_id": celda,
                 },
             }
         )
@@ -110,7 +111,7 @@ def _csv(filas: list[tuple]) -> Response:
     salida = io.StringIO()
     escritor = csv.writer(salida, lineterminator="\n")
     escritor.writerow(ENCABEZADO_CSV)
-    for lat, lon, cuando, satelite, instrumento, confianza, confianza_pct, frp, diaonoche in filas:
+    for lat, lon, cuando, satelite, instrumento, confianza, confianza_pct, frp, diaonoche, _ in filas:
         # Atributos crudos de FIRMS: MODIS da la confianza en 0-100 y VIIRS en l, n o h.
         crudo = confianza_pct if instrumento == "MODIS" and confianza_pct is not None else confianza[0]
         hora = cuando[11:13] + cuando[14:16]

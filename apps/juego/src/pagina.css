@@ -1,0 +1,41 @@
+/* La página alrededor del lienzo: tokens de @charmy/ui, sin valores sueltos. */
+@import "@charmy/ui/tokens.css";
+@import "@charmy/ui/fonts.css";
+
+html,
+body {
+  height: 100%;
+  margin: 0;
+}
+body {
+  display: flex;
+  flex-direction: column;
+  background: var(--charmy-cielo);
+  color: var(--color-tinta);
+  font-family: var(--fuente-texto);
+}
+#juego {
+  flex: 1;
+  min-height: 0;
+}
+.pie {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 8px 16px 12px;
+  font-size: 13px;
+  text-align: center;
+  color: var(--color-tinta-suave);
+}
+.pie nav {
+  display: flex;
+  justify-content: center;
+  gap: 16px;
+}
+.pie a {
+  color: var(--color-acento);
+  font-weight: 600;
+}
+.pie p {
+  margin: 0;
+}

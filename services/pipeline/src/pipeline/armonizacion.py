@@ -182,6 +182,7 @@ def metricas(m: pl.DataFrame) -> pl.DataFrame:
     return (
         pl.concat(partes)
         .select("region", "pair", "r2", "bias", "mae", "n_months", provisional=pl.lit(False))
+        .with_columns(pl.col("r2", "bias", "mae").fill_nan(None))  # 0/0 sin fuego: null, JSON no tiene NaN
         .sort("region", "pair")
     )
 
@@ -238,7 +239,9 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--regiones", type=Path, required=True)
     p.add_argument("--out", type=Path, required=True)
     args = p.parse_args(argv)
-    focos = filtrar(pl.read_parquet(args.focos / "*.parquet"))
+    # Solo las columnas que usa la armonización: con el histórico completo, leer todo no entra en memoria.
+    columnas = ["satellite", "instrument", "confidence", "confidence_pct", "type", "cell_id", "acq_datetime"]
+    focos = filtrar(pl.scan_parquet(args.focos / "*.parquet").select(columnas)).collect()
     regiones = json.loads(args.regiones.read_text())
     codigos = [f["properties"]["region"] for f in regiones["features"]]
     m = dias_celda_mensuales(focos, region_de_celdas(focos["cell_id"], regiones), codigos)

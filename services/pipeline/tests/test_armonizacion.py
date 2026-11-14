@@ -180,3 +180,13 @@ def test_determinismo():
     m = sintetico()
     assert serie(m).equals(serie(m))
     assert metricas(m).equals(metricas(m))
+
+
+def test_region_sin_fuego_da_metricas_nulas_y_no_nan():
+    """0/0 en una región sin fuego daría NaN, que no existe en JSON: va null."""
+    m = sintetico()
+    sin_fuego = m.filter(pl.col("region") == "AR-U").with_columns(region=pl.lit("AR-V"), value=pl.lit(0.0))
+    met = metricas(pl.concat([m, sin_fuego])).filter(pl.col("region") == "AR-V")
+    assert met.height == 2
+    assert met["r2"].null_count() == 2 and met["bias"].null_count() == 2
+    assert met["mae"].to_list() == [0.0, 0.0]

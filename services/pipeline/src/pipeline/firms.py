@@ -5,6 +5,7 @@ Uso: uv run --package pipeline python -m pipeline.firms <csv>... --out data/foco
 """
 
 import argparse
+import shutil
 import sys
 from pathlib import Path
 
@@ -112,11 +113,15 @@ def leer_csv(ruta: Path) -> pl.DataFrame:
 
 def cargar(rutas: list[Path]) -> pl.DataFrame:
     """Une varios CSV y quita duplicados; si un foco está en SP y en NRT, queda el de SP."""
-    df = pl.concat([leer_csv(r) for r in rutas])
+    return cargar_partes(pl.concat([leer_csv(r) for r in rutas]))
+
+
+def cargar_partes(df: pl.DataFrame) -> pl.DataFrame:
+    """Quita duplicados (gana SP sobre NRT) y deja el orden estable de la clave única."""
     return (
         df.sort("product", descending=True)  # "sp" antes que "nrt"
         .unique(["satellite", "acq_datetime", "latitude", "longitude"], keep="first")
-        .sort("acq_datetime", "satellite", "latitude", "longitude")  # la clave única: orden estable
+        .sort("acq_datetime", "satellite", "latitude", "longitude")
         .select(COLUMNAS)
     )
 
@@ -131,16 +136,43 @@ def escribir(df: pl.DataFrame, salida: Path) -> None:
         parte.write_parquet(salida / f"{satelite}-{anio}.parquet")
 
 
+def convertir(entradas: list[Path], salida: Path) -> int:
+    """Como escribir(cargar(...)) sin tener todo en memoria: el histórico completo no entra en una PC común.
+
+    Reparte cada CSV en partes por satélite y año; después une cada satélite-año, quita duplicados y escribe.
+    Las carpetas de `entradas` se recorren enteras. Devuelve la cantidad de focos escritos.
+    """
+    if salida.exists() and any(salida.iterdir()):
+        raise FileExistsError(f"{salida} ya tiene datos: bórrala o elige otra carpeta")
+    rutas = sorted(r for e in entradas for r in (e.rglob("*.csv") if e.is_dir() else [e]))
+    partes = salida / ".partes"
+    for i, ruta in enumerate(rutas):
+        df = leer_csv(ruta).with_columns(year=pl.col("acq_datetime").dt.year())
+        for (satelite, anio), parte in df.partition_by("satellite", "year", as_dict=True).items():
+            carpeta = partes / f"{satelite}-{anio}"
+            carpeta.mkdir(parents=True, exist_ok=True)
+            parte.drop("year").write_parquet(carpeta / f"{i:06d}.parquet")
+    total = 0
+    for carpeta in sorted(partes.iterdir()):
+        df = cargar_partes(pl.read_parquet(carpeta / "*.parquet"))
+        df.with_columns(year=pl.col("acq_datetime").dt.year()).write_parquet(
+            salida / f"{carpeta.name}.parquet"
+        )
+        total += df.height
+    shutil.rmtree(partes)
+    return total
+
+
 def main(argv: list[str] | None = None) -> int:
     p = argparse.ArgumentParser(description="CSV de FIRMS a Parquet (tabla focos)")
-    p.add_argument("csv", nargs="+", type=Path)
+    p.add_argument("csv", nargs="+", type=Path, help="CSV o carpetas con CSV")
     p.add_argument("--out", type=Path, required=True)
     args = p.parse_args(argv)
-    df = cargar(args.csv)
-    escribir(df, args.out)
-    print(f"{df.height} focos escritos en {args.out}")
+    total = convertir(args.csv, args.out)
+    print(f"{total} focos escritos en {args.out}")
+    resumen = pl.scan_parquet(args.out / "*.parquet").group_by("satellite")
     fechas = pl.col("acq_datetime")
-    print(df.group_by("satellite").agg(pl.len(), fechas.min().alias("desde"), fechas.max().alias("hasta")))
+    print(resumen.agg(pl.len(), fechas.min().alias("desde"), fechas.max().alias("hasta")).collect())
     return 0
 
 

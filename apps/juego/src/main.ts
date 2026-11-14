@@ -5,14 +5,20 @@ import dia from "../../../data/muestras/dia-juego.json";
 import { CONSEJOS, cierreDePartida, fechaLarga } from "./cierre";
 import { cargarDia, type DiaJuego } from "./datos";
 import { apagar, dejarEscapar, marcadorInicial, planDeNivel, type Marcador } from "./partida";
+import { dimensiones } from "./pantalla";
+import "./pagina.css";
 
-const ANCHO = 800;
-const ALTO = 600;
+const { ancho: ANCHO, alto: ALTO } = dimensiones(window.innerWidth, window.innerHeight);
+/** Las posiciones verticales se pensaron para 600 de alto: se escalan al alto real del lienzo. */
+const Y = (y: number) => Math.round((y / 600) * ALTO);
+/** Ancho de los textos largos, para que se corten en líneas dentro del lienzo. */
+const LINEAS = { wordWrap: { width: ANCHO - 80 }, align: "center" } as const;
 const DURACION_MS = 60_000;
 /** Cuánto tarda un foco sin apagar en escaparse. */
 const VIDA_FOCO_MS = 4_000;
 const MARGEN = 20;
-const ARRIBA = 50;
+/** Lugar para el marcador, que ocupa dos líneas. */
+const ARRIBA = 60;
 const CLAVE_RECORD = "charmy-kids-record";
 
 const DIA = dia as DiaJuego;
@@ -53,22 +59,22 @@ class Inicio extends Phaser.Scene {
   }
 
   create() {
-    this.add.image(ANCHO / 2, 210, "charmy");
+    this.add.image(ANCHO / 2, Y(210), "charmy");
     this.add
-      .text(ANCHO / 2, 320, "Charmy Kids", { ...TEXTO, fontSize: "40px", color: paleta.acento })
+      .text(ANCHO / 2, Y(320), "Charmy Kids", { ...TEXTO, fontSize: "40px", color: paleta.acento })
       .setOrigin(0.5);
     this.add
-      .text(ANCHO / 2, 380, `Estos son los focos de calor que vieron los satélites el ${fechaLarga(DIA.fecha)}.\nTocalos para apagarlos. Si apagás seguido, sumás combo.`, {
+      .text(ANCHO / 2, Y(395), `Estos son los focos de calor que vieron los satélites el ${fechaLarga(DIA.fecha)}.\nTocalos para apagarlos. Si apagás seguido, sumás combo.`, {
         ...TEXTO,
-        fontSize: "16px",
-        align: "center",
+        ...LINEAS,
+        fontSize: "18px",
       })
       .setOrigin(0.5);
     const record = leerRecord();
     if (record > 0) {
-      this.add.text(ANCHO / 2, 430, `Tu récord: ${record}`, { ...TEXTO, fontSize: "16px" }).setOrigin(0.5);
+      this.add.text(ANCHO / 2, Y(455), `Tu récord: ${record}`, { ...TEXTO, fontSize: "18px" }).setOrigin(0.5);
     }
-    boton(this, ANCHO / 2, 490, "Jugar", () => this.scene.start("nivel"));
+    boton(this, ANCHO / 2, Y(510), "Jugar", () => this.scene.start("nivel"));
   }
 }
 
@@ -84,7 +90,7 @@ class Nivel extends Phaser.Scene {
 
   create() {
     this.marcador = marcadorInicial();
-    this.hud = this.add.text(12, 12, "", { ...TEXTO, fontSize: "16px" }).setDepth(10);
+    this.hud = this.add.text(12, 8, "", { ...TEXTO, fontSize: "18px" }).setDepth(10);
     this.add.image(ANCHO - 64, ALTO - 64, "charmy").setScale(0.75).setDepth(10);
 
     // Margen arriba para el marcador y a los costados para que ningún foco quede cortado.
@@ -129,7 +135,7 @@ class Nivel extends Phaser.Scene {
   update() {
     const restante = Math.ceil(this.reloj.getRemaining() / 1000);
     const m = this.marcador;
-    this.hud.setText(`Puntos ${m.puntos}   Combo x${m.combo}   Apagados ${m.apagados}   Tiempo ${restante}s`);
+    this.hud.setText(`Puntos ${m.puntos}   Combo x${m.combo}\nApagados ${m.apagados}   Tiempo ${restante}s`);
   }
 }
 
@@ -144,26 +150,26 @@ class Fin extends Phaser.Scene {
     if (esRecord) guardarRecord(m.puntos);
     const { dato, consejo } = cierreDePartida(DIA, Math.floor(Math.random() * CONSEJOS.length));
 
-    this.add.image(ANCHO / 2, 120, "charmy-festeja");
+    this.add.image(ANCHO / 2, Y(120), "charmy-festeja");
     this.add
-      .text(ANCHO / 2, 210, esRecord ? `¡Nuevo récord: ${m.puntos} puntos!` : `Hiciste ${m.puntos} puntos`, {
+      .text(ANCHO / 2, Y(210), esRecord ? `¡Nuevo récord: ${m.puntos} puntos!` : `Hiciste ${m.puntos} puntos`, {
         ...TEXTO,
         fontSize: "28px",
         color: paleta.acento,
       })
       .setOrigin(0.5);
     this.add
-      .text(ANCHO / 2, 250, `Apagaste ${m.apagados} focos. Tu mejor combo fue x${m.mejorCombo}.`, {
+      .text(ANCHO / 2, Y(255), `Apagaste ${m.apagados} focos. Tu mejor combo fue x${m.mejorCombo}.`, {
         ...TEXTO,
-        fontSize: "16px",
+        ...LINEAS,
+        fontSize: "18px",
       })
       .setOrigin(0.5);
-    const ancho = { wordWrap: { width: ANCHO - 120 }, align: "center" } as const;
-    this.add.text(ANCHO / 2, 320, dato, { ...TEXTO, ...ancho, fontSize: "16px" }).setOrigin(0.5);
+    this.add.text(ANCHO / 2, Y(325), dato, { ...TEXTO, ...LINEAS, fontSize: "18px" }).setOrigin(0.5);
     this.add
-      .text(ANCHO / 2, 410, consejo, { ...TEXTO, ...ancho, fontSize: "18px", color: interfaz.exito })
+      .text(ANCHO / 2, Y(420), consejo, { ...TEXTO, ...LINEAS, fontSize: "20px", color: interfaz.exito })
       .setOrigin(0.5);
-    boton(this, ANCHO / 2, 500, "Jugar otra vez", () => this.scene.start("nivel"));
+    boton(this, ANCHO / 2, Y(520), "Jugar otra vez", () => this.scene.start("nivel"));
   }
 }
 
@@ -179,6 +185,9 @@ function boton(escena: Phaser.Scene, x: number, y: number, texto: string, alToca
     .setOrigin(0.5)
     .setInteractive({ useHandCursor: true });
   etiqueta.on("pointerdown", alTocar);
+  // También con el teclado: Enter o Espacio (RNF-04). Un solo botón por escena.
+  escena.input.keyboard?.once("keydown-ENTER", alTocar);
+  escena.input.keyboard?.once("keydown-SPACE", alTocar);
 }
 
 new Phaser.Game({

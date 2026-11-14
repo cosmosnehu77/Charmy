@@ -1,0 +1,28 @@
+import { readFileSync } from "node:fs";
+import { fileURLToPath } from "node:url";
+import { describe, expect, it } from "vitest";
+import { dimensiones } from "../src/pantalla";
+
+describe("dimensiones del lienzo", () => {
+  it("en una pantalla vertical (teléfono) usa un lienzo vertical", () => {
+    expect(dimensiones(375, 700)).toEqual({ ancho: 480, alto: 720 });
+  });
+  it("en una pantalla apaisada o casi cuadrada usa el lienzo de 800 × 600", () => {
+    expect(dimensiones(1400, 900)).toEqual({ ancho: 800, alto: 600 });
+    expect(dimensiones(800, 820)).toEqual({ ancho: 800, alto: 600 });
+  });
+});
+
+describe("página del juego", () => {
+  const html = readFileSync(fileURLToPath(new URL("../index.html", import.meta.url)), "utf8");
+  it("enlaza a la landing y a la app en producción", () => {
+    expect(html).toContain('href="https://charmy-landing.pages.dev"');
+    expect(html).toContain('href="https://charmy-app.pages.dev"');
+  });
+  it("tiene descripción y el aviso de emergencias", () => {
+    expect(html).toMatch(/<meta name="description" content="[^"]+"/);
+    expect(html).toMatch(/no reemplaza a los servicios de emergencia/);
+    expect(html).toMatch(/100/);
+    expect(html).toMatch(/132/);
+  });
+});

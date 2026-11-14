@@ -10,7 +10,7 @@
 
 **Fase activa:** 2
 **Líder:** `@cosmosnehu77`
-**Versión:** 1.8 · **Última actualización:** 14 de noviembre de 2026
+**Versión:** 1.9 · **Última actualización:** 14 de noviembre de 2026
 
 ## Objetivo del proyecto
 
@@ -198,6 +198,8 @@ si nada: avisen en el tablero y propongan el PR que actualiza este documento.
 | D-23 | **Pruebas antes que "terminado" y YAGNI.** Cada issue lleva sus "Pruebas mínimas"; la lógica se escribe con la prueba primero; las fuentes externas se prueban con respuestas grabadas, también cuando fallan; `CI ok` es obligatorio para fusionar. No se construye nada que el issue no pida. | Con cuatro agentes en paralelo, lo que no está probado se rompe en la integración, justo antes de la demo. Y en 48 horas, todo lo que sobra le quita tiempo a lo que se evalúa. | RNF-15, RNF-14, RNF-09 |
 | D-24 | **Relevo y lockfiles sin bloqueo.** Al ~90 % de uso de tokens, el agente deja la tarea con `tools/relevo dejar` y otra persona la sigue por un rato, solo en las carpetas de esa tarea, hasta que el dueño vuelve (`AGENTS.md` §7). Los PR abiertos que chocan solo en `uv.lock` o `pnpm-lock.yaml` los pone al día el flujo `al-dia.yml`. | Con un límite de uso por persona y cuatro personas en paralelo, una tarea parada frena a quien depende de ella. Y cada PR que suma un paquete choca en el lockfile con los demás: es mecánico, no tiene por qué esperar a nadie. | RNF-09, RNF-15 |
 | D-25 | `@dimidio6` se suma con agente y toma el carril E salvo el componente Charmy: el juego y el Charmy completo, que estaban en reserva, y la landing desde F2-E2. `@BrunoAguinaga0` queda solo con el backend. | Reparte la carga (6–7 tareas abiertas por persona en las fases 1 a 4) y libera al backend, que es camino crítico en las fases 2 y 3. Reemplaza el reparto de D-22. | RNF-09, RF-KID, RF-CHA, RF-LAN |
+| D-26 | **Respaldo de Meteomatics.** Todo lo que se lee de Meteomatics se guarda también como copia de respaldo. Si la API falla, agota su cupo o la cuenta vence (22/11/2026), `/weather` responde con esa copia, con su fecha y marcada como copia; solo si no hay copia para el lugar la parte se muestra como no disponible (RNF-14). La copia queda del lado del servidor y no se publica en el repo ni en los releases públicos, salvo que las condiciones de Meteomatics lo permitan. | La cuenta del evento vence una semana después de la entrega y tiene 1.000 pedidos por día: la demo y lo que siga no pueden depender de que responda en vivo. | RF-CTX-01, RNF-13, RNF-14 |
+| D-27 | **Cloudflare Pages al carril E.** La cuenta, los proyectos y el primer deploy web de landing, app y juego pasan del líder a `@dimidio6` (F2-E3, sale de F0-A3). Los secretos los carga el líder, porque solo el dueño del repo puede, con los valores que recibe por un canal privado. | Las tres piezas que se publican en Pages son del carril E o las consume; el líder queda con el host de la API y el bot. | RNF-01, RNF-06 |
 
 ---
 
@@ -340,6 +342,7 @@ el monorepo la toma sola. Ninguna tarea espera a otra persona: la landing arranc
 | #37 | F2-E1 | Charmy: tres estados animados (saluda, explica, alerta), globo de diálogo y movimiento reducido | `@cosmosnehu77` | `packages/charmy/` | F1-E1 | RF-CHA-02, RF-CHA-06 | pendiente |
 | #38 | F2-E2 | Landing completa: portada con Charmy, problema, funcionalidades, equipo, créditos y accesos | `@dimidio6` | `apps/landing/` | F1-E2 (textos de F1-F1) | RF-LAN-01, RF-LAN-02, RF-LAN-03, RF-LAN-04 | pendiente |
 | #39 | F2-F1 | Frases de Charmy para la app y retoques del arte | carril F | `docs/contenido/`, `docs/charmy-base/` | — | RF-CHA-07 | pendiente |
+| #112 | F2-E3 | Cloudflare Pages: cuenta, proyectos `charmy-app`, `charmy-landing` y `charmy-juego` y primer deploy web (D-27) | `@dimidio6` | fuera del repo | F1-A2 | RNF-01 | pendiente |
 
 **Comunicación entre carriles.** B → C: cuando F2-B2 publica, avisa en el tablero la ruta de los datos; C cambia una
 variable. C → D: cuando un endpoint cumple el contrato, C lo anuncia y D cambia la URL del mock por la real.
@@ -355,7 +358,7 @@ A recorre el flujo en producción y publica lo que esté roto.
 | #40 | F3-A1 | Servicio de avisos: bot con una zona de demostración, mensaje por foco o reporte nuevo con el viento en el lugar, botones de estado y aviso de emergencias | `@cosmosnehu77` | `services/alertas/` | F1-C1 (usa el mock; datos reales con F3-C1, F3-C2 y F3-B3) | RF-ALE-02, RF-ALE-03, RF-ALE-06, RF-CTX-02 | pendiente |
 | #41 | F3-A2 | Feed CAP 1.2 por zona | `@cosmosnehu77` | `services/alertas/` | F3-A1 | RF-ALE-04 | pendiente |
 | #42 | F3-B1 | Máscara de fuentes fijas publicada como dato | `@leonelcnr` | `services/pipeline/` | F2-B1 | RF-ARM-05 | pendiente |
-| #43 | F3-B3 | Tiempo en el foco: paquete con `/weather` sobre Meteomatics, con caché por celda y media hora (el límite es de 1.000 pedidos por día) y respuesta clara si la fuente no responde | `@leonelcnr` | `services/contexto/` | F1-C1, F0-B2 | RF-CTX-01, RNF-14 | pendiente |
+| #43 | F3-B3 | Tiempo en el foco: paquete con `/weather` sobre Meteomatics, con caché por celda y media hora (el límite es de 1.000 pedidos por día), copia de respaldo de lo leído que se usa si la fuente falla o la cuenta vence (D-26) y respuesta clara si no hay copia | `@leonelcnr` | `services/contexto/` | F1-C1, F0-B2 | RF-CTX-01, RNF-14 | pendiente |
 | #44 | F3-B4 | Imagen satelital del foco: `/imagery` sobre las APIs de Copernicus, con búsqueda de la escena reciente más despejada, estilos de color real y falso color, caché de imágenes y respuesta clara si no hay imagen o se agota la cuota | `@leonelcnr` | `services/contexto/` | F3-B3, F0-B2 | RF-CTX-03, RNF-14 | pendiente |
 | #45 | F3-B2 | Predicción a 1–3 meses con compuerta contra la climatología | `@leonelcnr` | `services/pipeline/` | F2-B2 | RF-PRE-01, RF-PRE-02 | pendiente |
 | #46 | F3-C1 | Worker de focos recientes con caché y `/live` | `@BrunoAguinaga0` | `services/worker/`, `services/api/` | F2-C1 | RF-VIV-01 | pendiente |
@@ -562,6 +565,7 @@ La fase 5 no cubre requisitos nuevos: refuerza RNF-02 y RNF-10 sobre lo ya entre
 | 2026-11-14 | Versión 1.6. Relevo por límite de uso y lockfiles al día solos (D-24, F1-A3): `tools/relevo`, skill `relevo`, `AGENTS.md` §7 y flujo `al-dia.yml`. `tools/al-dia` ya no corre scripts de instalación. | 1.2, 3, 5, 7 | `@cosmosnehu77` |
 | 2026-11-14 | Versión 1.7. Se abre la fase 2. Las tareas de la fase 1 que siguen abiertas (#21, #25, #27, #28) continúan en paralelo: ninguna comparte carpeta con una tarea de otro dueño de la fase 2. | encabezado | `@cosmosnehu77` |
 | 2026-11-14 | Versión 1.8. Se suma `@dimidio6` (D-25): carril E salvo el componente Charmy. Recibe la reserva (F1-E4, F3-E1, F3-E2, F4-E2, F5-E2) y la landing de `@BrunoAguinaga0` (F2-E2, F4-E1, F5-E1). Ya no hay tareas en reserva. Tarea F2-A4. | equipo, 1.3, 3, 5 | `@cosmosnehu77` |
+| 2026-11-14 | Versión 1.9. Respaldo de lo leído de Meteomatics para cuando la API falle o la cuenta venza (D-26, cambia F3-B3). Cloudflare Pages pasa a `@dimidio6` en la tarea nueva F2-E3 (D-27). | 3, 5 | `@cosmosnehu77` |
 
 ## 10. Registro de cierres
 

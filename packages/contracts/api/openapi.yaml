@@ -878,7 +878,10 @@ components:
               enum: [Terra, Aqua, N, N20, N21]
             instrument: { type: string, enum: [MODIS, VIIRS] }
             confidence: { type: string, enum: [low, nominal, high] }
-            frp: { type: number, description: Potencia radiativa del fuego (MW) }
+            frp:
+              type: [number, 'null']
+              description: Potencia radiativa del fuego (MW). `null` si FIRMS no la informa
+              examples: [12.4]
             daynight: { type: string, enum: [D, N] }
             cell_id:
               type: string

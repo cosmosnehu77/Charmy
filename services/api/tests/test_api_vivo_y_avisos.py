@@ -123,3 +123,14 @@ def test_cambio_a_un_estado_fuera_del_contrato_da_400(cliente, estado):
         "/api/v1/alerts/a-1", json={"status": estado}, headers={"Authorization": f"Bearer {TOKEN}"}
     )
     assert r.status_code == 400
+
+
+def test_foco_en_vivo_sin_frp_sale_con_frp_null():
+    from datetime import UTC, datetime
+
+    from api.vivo import _feature
+
+    cuando = datetime(2026, 11, 14, 4, 40, tzinfo=UTC)
+    foco = _feature("N20-x", -42.1, -71.3, cuando, "N20", "VIIRS", "nominal", None, "N", "-42.2_-71.3", None, None)
+    assert foco["properties"]["frp"] is None
+    assert "verdict" not in foco["properties"]

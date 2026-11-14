@@ -633,8 +633,8 @@ paths:
                           description: Tramo de la cadena de calibración
                           enum: [modis_snpp, noaa20_snpp]
                         provisional: { type: boolean, description: true si el valor es de ejemplo y no un resultado }
-                        r2: { type: number }
-                        bias: { type: number }
+                        r2: { type: [number, "null"], description: Nulo si no hubo fuego en el solape }
+                        bias: { type: [number, "null"], description: Nulo si no hubo fuego en el solape }
                         mae: { type: number }
                         n_months: { type: integer }
               examples:

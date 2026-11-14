@@ -1,10 +1,10 @@
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
-import { Charmy, CAPAS_DE, MOODS, OUTFITS, capasVisibles, charmySvg } from "../src/index.js";
+import { CAPAS_DE, CHARMY_CSS, Charmy, MOODS, OUTFITS, capasVisibles, charmyHtml, charmySvg } from "../src/index.js";
 import { CAPAS } from "../src/dibujo.js";
 
 const visibles = (svg: string) =>
-  [...new Set([...svg.matchAll(/data-capa="(\w+)" opacity="1"/g)].map((m) => m[1]))].sort();
+  [...new Set([...svg.matchAll(/data-capa="(\w+)"[^>]*opacity="1"/g)].map((m) => m[1]))].sort();
 
 describe("capas", () => {
   it("todas las capas del dibujo tienen regla", () => {
@@ -69,7 +69,7 @@ describe("charmySvg", () => {
 describe("<Charmy />", () => {
   it("sin texto no dibuja globo", () => {
     const html = renderToStaticMarkup(<Charmy mood="saluda" />);
-    expect(html).not.toContain("charmy-globo");
+    expect(html).not.toContain(`class="charmy-globo"`);
   });
 
   it("con texto muestra el globo y lo anuncia", () => {
@@ -81,5 +81,46 @@ describe("<Charmy />", () => {
   it("el texto del globo se escapa", () => {
     const html = renderToStaticMarkup(<Charmy say="<b>hola</b>" />);
     expect(html).not.toContain("<b>hola</b>");
+  });
+});
+
+describe("animación", () => {
+  it("animate={false} deja a Charmy quieto", () => {
+    expect(charmySvg({ animate: false })).toContain('data-animado="no"');
+    expect(charmySvg({})).not.toContain("data-animado");
+  });
+
+  it("las partes que anima el CSS existen en el dibujo", () => {
+    const svg = charmySvg({ mood: "alerta" });
+    for (const parte of ["llama-cola", "orejas-llama", "exclamacion"]) expect(svg).toContain(`data-parte="${parte}"`);
+    for (const sel of CHARMY_CSS.matchAll(/data-(?:parte|capa)="(\w[\w-]*)"/g)) {
+      expect(svg).toMatch(new RegExp(`data-(parte|capa)="${sel[1]}"`));
+    }
+  });
+
+  it("ninguna capa animada tiene transform propio (el CSS lo pisaría)", () => {
+    const svg = charmySvg({});
+    for (const m of svg.matchAll(/<g data-(?:capa|parte)="[^"]*"[^>]*>/g)) expect(m[0]).not.toContain("transform=");
+  });
+
+  it("respeta el movimiento reducido", () => {
+    expect(CHARMY_CSS).toContain("prefers-reduced-motion: reduce");
+  });
+});
+
+describe("charmyHtml", () => {
+  it("arma el globo sin React y escapa el texto", () => {
+    const html = charmyHtml({ mood: "explica", say: "<b>hola</b>", sayPosition: "arriba" });
+    expect(html).toContain('data-globo="arriba"');
+    expect(html).toContain("&#60;b&#62;hola");
+    expect(html).not.toContain("<b>");
+  });
+});
+
+describe("<Charmy /> con estilos", () => {
+  it("incluye la hoja de animaciones y la posición del globo", () => {
+    const html = renderToStaticMarkup(<Charmy mood="saluda" say="Hola" sayPosition="arriba" />);
+    expect(html).toContain("charmy-saludo");
+    expect(html).toContain('data-globo="arriba"');
   });
 });

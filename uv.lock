@@ -5,6 +5,7 @@ requires-python = ">=3.12"
 [manifest]
 members = [
     "api",
+    "humo",
     "pipeline",
     "publicar",
 ]
@@ -191,6 +192,11 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/54/4d/f2d88782251467325a62ec4ad704249bb1b09c21aacb997181a9f4421f30/httptools-0.9.0-cp315-cp315t-win_amd64.whl", hash = "sha256:bca180cbe84e4fba7807eb408a8655295f697928512324517e30a091ede522a8", size = 100837, upload-time = "2026-10-09T19:56:38.831Z" },
     { url = "https://files.pythonhosted.org/packages/00/4b/5e96c4e0d171f959a0064971c3fced9cea5a19e5fab7a8e7d57aceb80506/httptools-0.9.0-cp315-cp315t-win_arm64.whl", hash = "sha256:4a4d8c2c7e73ba5967be74d7c3a5ff81fde815ee1b48d9c5c0f14de8463a847b", size = 95947, upload-time = "2026-10-09T19:56:40.562Z" },
 ]
+
+[[package]]
+name = "humo"
+version = "0.1.0"
+source = { editable = "infra/humo" }
 
 [[package]]
 name = "idna"

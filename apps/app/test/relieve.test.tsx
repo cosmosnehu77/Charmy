@@ -198,7 +198,7 @@ describe("vista Relieve (F4-R1)", () => {
     montar();
     expect(screen.getByRole("link", { name: "Charmy: ir a la página de inicio" })).toHaveAttribute(
       "href",
-      "https://charmy-landing.pages.dev",
+      "https://charmy.earth",
     );
   });
 

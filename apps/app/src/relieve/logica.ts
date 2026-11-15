@@ -366,6 +366,22 @@ export function nombreMes(mes: number): string {
   return (enIngles() ? MESES_EN : MESES_ES)[mes - 1] ?? "";
 }
 
+/** Primer año de la serie armonizada (MODIS desde 11/2000; ver `docs/metodologia/`). */
+const PRIMER_ANIO = 2001;
+
+/**
+ * Qué es «lo normal» en la ficha (#381): el valor del mes contra la mediana de ese mes en los años anteriores, la
+ * misma que usa el pipeline para el percentil.
+ */
+export function textoLoNormal(u: { year: number; month: number; value: number; median: number | null }): string | null {
+  if (u.median === null) return null;
+  const mes = nombreMes(u.month);
+  return t(
+    `En ${mes} de ${u.year} hubo ${decimal(u.value)} días-celda con fuego. Lo normal acá en ${mes} es ${decimal(u.median)}: la mediana de los ${mes}s de ${PRIMER_ANIO} a ${u.year - 1}.`,
+    `In ${mes} ${u.year} there were ${decimal(u.value)} fire cell-days. Normal here in ${mes} is ${decimal(u.median)}: the median of every ${mes} from ${PRIMER_ANIO} to ${u.year - 1}.`,
+  );
+}
+
 /** "13/11" a partir de "2026-11-13". */
 export function diaCorto(iso: string): string {
   return `${iso.slice(8, 10)}/${iso.slice(5, 7)}`;

@@ -20,6 +20,7 @@ info:
     | `poligono_invalido` | 400 | El polígono de `/calendar` se cruza consigo mismo |
     | `resolucion_no_disponible` | 400 | `/calendar` con `resolution: day_of_year` (por ahora solo `month`) |
     | `sin_sesion` | 401 | Falta el token de servicio o no es válido |
+    | `sin_permiso` | 403 | `/telegram/webhook` sin la cabecera secreta de Telegram o con una que no coincide |
     | `no_existe` | 404 | La ruta o el recurso no existen |
     | `metodo_no_permitido` | 405 | La ruta no acepta ese método |
     | `demasiados_reportes` | 429 | Más de 5 reportes en 10 minutos desde la misma conexión |
@@ -897,6 +898,57 @@ paths:
                     </alert>
         '404': { $ref: '#/components/responses/NotFound' }
         '503': { $ref: '#/components/responses/DatosNoDisponibles' }
+  /telegram/webhook:
+    post:
+      operationId: telegramWebhook
+      tags: [alertas]
+      summary: Telegram avisa que la entidad tocó un botón de un aviso (D-41)
+      description: |
+        Solo para Telegram: la llama cuando alguien toca Visto, En camino, Controlado o Falso en un aviso. Pide la
+        cabecera `X-Telegram-Bot-Api-Secret-Token` con el secreto que se dio al registrar el webhook
+        (`TELEGRAM_WEBHOOK_SECRET`). Guarda el estado como `PATCH /alerts/{alert_id}`, edita el mensaje con el estado
+        y contesta el toque. Responde 200 a todo update válido, también a los que no son un toque de aviso, para que
+        Telegram no lo reintente. Si la base no responde, contesta el toque pidiendo probar de nuevo.
+      parameters:
+        - name: X-Telegram-Bot-Api-Secret-Token
+          in: header
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              description: Un Update de la Bot API de Telegram; solo se lee `callback_query`.
+              additionalProperties: true
+            examples:
+              muestra:
+                summary: Toque de ejemplo (valores inventados)
+                value:
+                  update_id: 5
+                  callback_query:
+                    id: q-9
+                    data: 'e:muestra-a-0001:en_camino'
+                    message: { message_id: 101, chat: { id: -1000000000001, type: supergroup }, text: Foco de calor satelital en tu zona }
+      responses:
+        '200':
+          description: Update recibido
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [ok]
+                properties:
+                  ok: { type: boolean, const: true }
+              examples:
+                muestra: { value: { ok: true } }
+        '403':
+          description: Falta la cabecera secreta o no coincide
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+              example: { code: sin_permiso, message: Esta ruta es solo para Telegram. }
   /harmonization/metrics:
     get:
       operationId: getHarmonizationMetrics

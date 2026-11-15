@@ -147,9 +147,11 @@ describe("vista Relieve (F4-R1)", () => {
       "Anomalía",
       "Riesgo",
       "Predicción",
-      "En vivo",
       "Experto",
+      "En vivo",
     ]);
+    // Experto va sin ícono (F4-D8).
+    expect(within(pestanas).getByRole("tab", { name: "Experto" }).querySelector("svg")).toBeNull();
     const ranking = await screen.findByRole("region", { name: "Ranking" });
     expect(await within(ranking).findByText("Neuquén")).toBeInTheDocument();
     expect(screen.getByText(/no reemplaza a los servicios de emergencia/)).toBeInTheDocument();
@@ -567,8 +569,9 @@ describe("tu zona en Relieve (#262)", () => {
     expect(rectangulo).toHaveAttribute("aria-pressed", "false");
     expect(screen.queryByText("Dibujando en el mapa")).not.toBeInTheDocument();
     expect(within(panel).getByLabelText("Desde")).toHaveValue("2022-01-01");
-    // Ya no hay modo novato: los filtros técnicos se ven siempre.
+    // Ya no hay modo novato: los filtros técnicos están siempre, plegados con un resumen de lo elegido (F4-D8).
     expect(within(panel).getByLabelText("Serie")).toBeInTheDocument();
+    expect(within(panel).getByText("3 · Filtros").closest("summary")).toHaveTextContent("Armonizada · confianza nominal o más");
     expect(within(panel).queryByRole("radio", { name: "Novato" })).not.toBeInTheDocument();
     expect(screen.getByText(/no reemplaza a los servicios de emergencia/)).toBeInTheDocument();
   });
@@ -578,6 +581,7 @@ describe("tu zona en Relieve (#262)", () => {
     const u = userEvent.setup();
     await u.click(screen.getByRole("tab", { name: "Experto" }));
     const panel = screen.getByRole("complementary", { name: "Experto" });
+    await u.click(within(panel).getByRole("button", { name: "Punto" }));
     await u.type(within(panel).getByLabelText("Latitud"), "-42,9");
     await u.type(within(panel).getByLabelText("Longitud"), "-71,3");
     await u.click(within(panel).getByRole("button", { name: "Usar este punto" }));
@@ -587,10 +591,12 @@ describe("tu zona en Relieve (#262)", () => {
     expect(within(resumen).getByText("Día con más focos").nextSibling).toHaveTextContent(/^\d{1,2} [a-z]{3} \d{4}$/);
     expect(resumen).toHaveTextContent(/potencia/i);
     const calendario = await screen.findByRole("region", { name: "Calendario de quema" });
-    expect(within(calendario).getByRole("link", { name: /Descargar CSV/ })).toHaveAttribute(
+    await u.click(within(calendario).getByText("Descargas"));
+    expect(within(calendario).getByRole("link", { name: "Focos (CSV)" })).toHaveAttribute(
       "href",
       expect.stringContaining("http://api.prueba/api/v1/"),
     );
+    await u.click(within(panel).getByRole("tab", { name: "Lugar" }));
     expect(within(panel).getByRole("region", { name: "Contexto del lugar" })).toBeInTheDocument();
     expect(within(panel).getByRole("button", { name: "Reportar un foco" })).toBeInTheDocument();
     await u.click(within(panel).getByRole("button", { name: "Borrar área" }));
@@ -621,9 +627,60 @@ describe("tu zona en Relieve (#262)", () => {
     const panel = screen.getByRole("complementary", { name: "Experto" });
     expect(within(panel).getByLabelText("Serie")).toBeInTheDocument();
     expect(await within(panel).findByRole("group", { name: "Reproducir por mes" })).toBeInTheDocument();
+    await userEvent.setup().click(within(panel).getByRole("tab", { name: "Validación" }));
     expect(within(panel).getByRole("region", { name: "Validación de la armonización" })).toBeInTheDocument();
     const ficha = screen.getByRole("region", { name: "Atributos del foco" });
     expect(within(ficha).getByText("NOAA-20 (VIIRS)")).toBeInTheDocument();
     expect(within(ficha).getByText("12 MW")).toBeInTheDocument();
+  });
+});
+
+describe("organización de Experto (F4-D8)", () => {
+  it("el panel va por pasos: Dónde, Cuándo y Filtros, y el área se marca con un solo selector", async () => {
+    montar();
+    const u = userEvent.setup();
+    await u.click(screen.getByRole("tab", { name: "Experto" }));
+    const panel = screen.getByRole("complementary", { name: "Experto" });
+    expect(within(panel).getByRole("heading", { name: "1 · Dónde" })).toBeInTheDocument();
+    expect(within(panel).getByRole("heading", { name: "2 · Cuándo" })).toBeInTheDocument();
+    const formas = within(panel).getByRole("group", { name: "Cómo marcar el área" });
+    expect(within(formas).getAllByRole("button").map((b) => b.textContent)).toEqual(["Rectángulo", "Polígono", "Localidad", "Punto"]);
+    // Localidad y Punto muestran su formulario; elegir uno apaga el dibujo.
+    expect(within(panel).queryByLabelText("Latitud")).not.toBeInTheDocument();
+    await u.click(within(formas).getByRole("button", { name: "Dibujar polígono" }));
+    await u.click(within(formas).getByRole("button", { name: "Localidad" }));
+    expect(useConsulta.getState().dibujando).toBeNull();
+    expect(within(formas).getByRole("button", { name: "Localidad" })).toHaveAttribute("aria-pressed", "true");
+    expect(within(panel).getByLabelText("Buscar una localidad")).toBeInTheDocument();
+    await u.click(within(formas).getByRole("button", { name: "Punto" }));
+    expect(within(panel).queryByLabelText("Buscar una localidad")).not.toBeInTheDocument();
+    expect(within(panel).getByLabelText("Latitud")).toBeInTheDocument();
+  });
+
+  it("Resumen, Lugar y Validación son pestañas del panel; las flechas pasan de una a otra", async () => {
+    useConsulta.setState({ area: { type: "Polygon", coordinates: [[[-72, -43], [-71, -43], [-71, -42], [-72, -42], [-72, -43]]] } });
+    useRelieve.setState({ pestana: "zona" });
+    montar();
+    const u = userEvent.setup();
+    const panel = screen.getByRole("complementary", { name: "Experto" });
+    const pestanas = within(panel).getByRole("tablist", { name: "Qué ver del área" });
+    expect(within(pestanas).getAllByRole("tab").map((t) => t.textContent)).toEqual(["Resumen", "Lugar", "Validación"]);
+    expect(within(pestanas).getByRole("tab", { name: "Resumen" })).toHaveAttribute("aria-selected", "true");
+    expect(within(panel).queryByRole("region", { name: "Contexto del lugar" })).not.toBeInTheDocument();
+    within(pestanas).getByRole("tab", { name: "Resumen" }).focus();
+    await u.keyboard("{ArrowRight}");
+    expect(within(pestanas).getByRole("tab", { name: "Lugar" })).toHaveAttribute("aria-selected", "true");
+    expect(within(panel).getByRole("tabpanel", { name: "Lugar" })).toContainElement(
+      within(panel).getByRole("region", { name: "Contexto del lugar" }),
+    );
+  });
+
+  it("Reportar un foco va en el encabezado y abre el formulario en el panel", async () => {
+    useRelieve.setState({ pestana: "zona" });
+    montar();
+    const u = userEvent.setup();
+    const panel = screen.getByRole("complementary", { name: "Experto" });
+    await u.click(within(within(panel).getByRole("banner")).getByRole("button", { name: "Reportar un foco" }));
+    expect(within(panel).getByRole("form", { name: "Reportar un foco" })).toBeInTheDocument();
   });
 });

@@ -36,39 +36,32 @@ export function Reproduccion() {
 
   if (meses.length < 2) return null;
 
+  // Compacto, en la franja del resultado (F4-D8): el botón redondo y, si hay un mes elegido, el mes y la vuelta al período.
+  const boton = "grid size-[34px] shrink-0 place-items-center rounded-full bg-charmy-llama text-tinta hover:brightness-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring";
   return (
-    <div role="group" aria-label="Reproducir por mes" className="flex flex-col gap-2">
-      <h3 className="text-sm font-medium">Reproducir por mes</h3>
-      <div className="flex flex-wrap items-center gap-2">
-        {reproduciendo ? (
-          <Button variant="outline" size="sm" onClick={() => setReproduciendo(false)}>
-            <Pause aria-hidden="true" />
-            Pausar
-          </Button>
-        ) : (
-          <Button variant="outline" size="sm" onClick={reproducir}>
-            <Play aria-hidden="true" />
-            Reproducir
-          </Button>
-        )}
-        {mesReproduccion && (
-          <>
-            <span className="font-mono text-xs" aria-live="polite">
-              {nombreMes(mesReproduccion)}
-            </span>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => {
-                setReproduciendo(false);
-                cambiar({ mesReproduccion: null });
-              }}
-            >
-              Ver todo el período
-            </Button>
-          </>
-        )}
-      </div>
+    <div role="group" aria-label="Reproducir por mes" className="flex flex-col items-end gap-1">
+      {reproduciendo ? (
+        <button type="button" aria-label="Pausar" title="Pausar" className={boton} onClick={() => setReproduciendo(false)}>
+          <Pause aria-hidden="true" className="size-4" />
+        </button>
+      ) : (
+        <button type="button" aria-label="Reproducir" title="Reproducir por mes" className={boton} onClick={reproducir}>
+          <Play aria-hidden="true" className="size-4" />
+        </button>
+      )}
+      {mesReproduccion && (
+        <Button
+          variant="ghost"
+          size="sm"
+          className="h-auto px-1 py-0 text-xs"
+          onClick={() => {
+            setReproduciendo(false);
+            cambiar({ mesReproduccion: null });
+          }}
+        >
+          Ver todo el período
+        </Button>
+      )}
     </div>
   );
 }

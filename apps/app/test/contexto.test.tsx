@@ -45,13 +45,16 @@ const area = {
 const fetchSimulado = vi.fn<typeof fetch>();
 let falla: "tiempo" | "imagen" | null = null;
 
+/** Monta la app y abre la pestaña Lugar del panel de Experto, donde va el contexto (F4-D8). */
 function montar() {
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
-  return render(
+  const vista = render(
     <QueryClientProvider client={qc}>
       <App />
     </QueryClientProvider>,
   );
+  fireEvent.click(screen.getByRole("tab", { name: "Lugar" }));
+  return vista;
 }
 
 beforeEach(() => {
@@ -155,7 +158,7 @@ describe("una parte complementaria que falla no rompe la app (RNF-14)", () => {
     montar();
     expect(await screen.findByText(/el tiempo no está disponible/i)).toBeInTheDocument();
     expect(await screen.findByTestId("mapa")).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: "Área" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "1 · Dónde" })).toBeInTheDocument();
   });
 });
 

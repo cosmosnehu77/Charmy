@@ -84,6 +84,7 @@ afterEach(() => {
 describe("panel de validación (RF-ARM-04)", () => {
   it("muestra las métricas del mock por región y tramo", async () => {
     montar();
+    await userEvent.setup().click(screen.getByRole("tab", { name: "Validación" }));
     const panel = await screen.findByRole("region", { name: "Validación de la armonización" });
     const tabla = await within(panel).findByRole("table");
     const filas = within(tabla).getAllByRole("row");
@@ -138,14 +139,14 @@ describe("reproducción temporal (RF-MAP-07)", () => {
     const u = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
     const control = await screen.findByRole("group", { name: "Reproducir por mes" });
     await u.click(within(control).getByRole("button", { name: "Reproducir" }));
-    expect(within(control).getByText("enero de 2025")).toBeInTheDocument();
+    // El mes lo dice la franja del resultado, junto al botón (F4-D8).
     expect(useConsulta.getState().mesReproduccion).toBe("2025-01");
     expect(await screen.findByText(/1 foco en el área en enero de 2025/)).toBeInTheDocument();
     await act(async () => vi.advanceTimersByTime(1600));
-    expect(within(control).getByText("febrero de 2025")).toBeInTheDocument();
+    expect(await screen.findByText(/en el área en febrero de 2025/)).toBeInTheDocument();
     await u.click(within(control).getByRole("button", { name: "Pausar" }));
     await act(async () => vi.advanceTimersByTime(5000));
-    expect(within(control).getByText("febrero de 2025")).toBeInTheDocument();
+    expect(screen.getByText(/en el área en febrero de 2025/)).toBeInTheDocument();
     await u.click(within(control).getByRole("button", { name: "Ver todo el período" }));
     expect(useConsulta.getState().mesReproduccion).toBeNull();
   });

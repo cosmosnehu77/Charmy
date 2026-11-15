@@ -146,7 +146,7 @@ describe("calendario (F2-D2)", () => {
   it("el botón de CSV arma la URL con los mismos filtros", async () => {
     useConsulta.setState({ fuente: "viirs", confianzaMin: "high" });
     montar(<Calendario />);
-    const enlace = await screen.findByRole("link", { name: /descargar csv/i });
+    const enlace = await screen.findByRole("link", { name: "Focos (CSV)" });
     const url = new URL(enlace.getAttribute("href") ?? "");
     expect(url.pathname).toBe("/api/v1/hotspots");
     expect(url.searchParams.get("format")).toBe("csv");

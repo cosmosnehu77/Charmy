@@ -1,7 +1,6 @@
 import { colorSinDato, rampaAnomalia, rampaConteo } from "@charmy/ui";
 import { Download } from "lucide-react";
 import { useState } from "react";
-import { Button } from "@/components/ui/button";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { bboxDeArea, rutaCsv } from "@/consulta/consulta";
 import { useConsulta } from "@/estado/consulta";
@@ -69,13 +68,16 @@ export function Calendario() {
           <ToggleGroupItem value="anomalia">Anomalía</ToggleGroupItem>
           <ToggleGroupItem value="cantidad">Cantidad</ToggleGroupItem>
         </ToggleGroup>
-        {csv && (
-          <Button asChild variant="outline" size="sm" className="ml-auto">
-            <a href={csv} download>
-              <Download aria-hidden="true" />
-              Descargar CSV
+        {consulta.isSuccess && consulta.data.cells.length > 0 ? (
+          <Descargas calendario={consulta.data} desdeAnio={desdeAnio} hastaAnio={hastaAnio} vista={vista} csv={csv} />
+        ) : (
+          // Sin calendario igual se pueden bajar los focos (el mapa y la descarga siguen funcionando).
+          csv && (
+            <a href={csv} download className="ml-auto inline-flex min-h-8 items-center gap-1.5 rounded-full border border-borde px-3 text-sm hover:bg-white/10">
+              <Download aria-hidden="true" className="size-4" />
+              Focos (CSV)
             </a>
-          </Button>
+          )
         )}
       </div>
 
@@ -100,10 +102,12 @@ export function Calendario() {
             {consulta.data.baseline}
             {consulta.data.region ? `, región ${consulta.data.region}` : ""}.
           </p>
-          <ResumenCalendario celdas={consulta.data.cells} />
+          {/* En la hoja ancha de escritorio, la grilla a la izquierda y las estadísticas al costado (F4-D8). */}
+          <div className="flex flex-col gap-3 xl:grid xl:grid-cols-[minmax(0,1fr)_260px] xl:items-start xl:gap-4">
+          <div className="flex min-w-0 flex-col gap-3 xl:order-1">
           <Leyenda vista={vista} />
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[34rem] table-fixed border-separate border-spacing-0.5 text-center font-mono text-[11px]">
+            <table className="w-full min-w-[28rem] table-fixed border-separate border-spacing-0.5 text-center font-mono text-[11px]">
               <caption className="sr-only">
                 Calendario de quema por año y mes,{" "}
                 {vista === "cantidad" ? "cantidad" : "anomalía"}
@@ -146,7 +150,11 @@ export function Calendario() {
               </tbody>
             </table>
           </div>
-          <Descargas calendario={consulta.data} desdeAnio={desdeAnio} hastaAnio={hastaAnio} vista={vista} />
+          </div>
+          <div className="xl:order-2">
+            <ResumenCalendario celdas={consulta.data.cells} />
+          </div>
+          </div>
         </>
       )}
     </section>

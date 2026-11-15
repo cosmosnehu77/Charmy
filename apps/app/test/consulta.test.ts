@@ -1,5 +1,6 @@
 import type { components } from "@charmy/contracts-api";
 import {
+  resumenFiltros,
   areaDesdePunto,
   bboxDeArea,
   filtrarFocos,
@@ -149,5 +150,19 @@ describe("focos sin FRP (frp null, decisión del 14/11)", () => {
   });
   it("con potencia mínima, el foco sin FRP no pasa el filtro", () => {
     expect(filtrarFocos(sinFrp, { frpMin: 5, momento: "todos" }).features).toHaveLength(0);
+  });
+});
+
+describe("resumenFiltros: lo que dice el paso Filtros plegado (F4-D8)", () => {
+  it("nombra la serie y la confianza, y suma potencia y momento solo si filtran", () => {
+    expect(resumenFiltros({ fuente: "harmonized", confianzaMin: "nominal", frpMin: 0, momento: "todos" })).toBe(
+      "Armonizada · confianza nominal o más",
+    );
+    expect(resumenFiltros({ fuente: "viirs", confianzaMin: "high", frpMin: 10, momento: "N" })).toBe(
+      "VIIRS · confianza alta · 10 MW o más · de noche",
+    );
+    expect(resumenFiltros({ fuente: "modis", confianzaMin: "low", frpMin: 0, momento: "D" })).toBe(
+      "MODIS · cualquier confianza · de día",
+    );
   });
 });

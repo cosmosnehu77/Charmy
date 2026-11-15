@@ -1,5 +1,5 @@
 import { Charmy } from "@charmy/charmy";
-import { Search, SquareDashed } from "lucide-react";
+import { Search } from "lucide-react";
 import { useId, useRef, useState } from "react";
 import { URL_LANDING } from "@/lib/enlaces";
 import { useRelieve } from "./estado";
@@ -7,13 +7,13 @@ import { INDICADORES, type RegionResumen } from "./logica";
 
 const sinTildes = (s: string) => s.normalize("NFD").replace(/\p{Diacritic}/gu, "").toLowerCase();
 
-/** Píldora central: Charmy, los indicadores, En vivo, Experto (ex Tu zona, #262) y la lupa (F4-R1). */
+/** Píldora central: Charmy, los indicadores, Experto (ex Tu zona, #262), En vivo y la lupa (F4-R1). */
 export function Pildora({ regiones }: { regiones: RegionResumen[] }) {
   const { pestana, elegirPestana } = useRelieve();
   const pestanas = [
     ...INDICADORES.map((i) => ({ id: i.id, nombre: i.nombre })),
-    { id: "vivo" as const, nombre: "En vivo" },
     { id: "zona" as const, nombre: "Experto" },
+    { id: "vivo" as const, nombre: "En vivo" },
   ];
   const lista = useRef<HTMLDivElement>(null);
 
@@ -62,7 +62,6 @@ export function Pildora({ regiones }: { regiones: RegionResumen[] }) {
               }`}
             >
               {p.id === "vivo" && <i aria-hidden="true" className="punto-vivo" />}
-              {p.id === "zona" && <SquareDashed aria-hidden="true" className="size-4" />}
               {p.nombre}
             </button>
           );

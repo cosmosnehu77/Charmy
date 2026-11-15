@@ -48,6 +48,29 @@
   --color-oscuro-tinta-suave: #b8c3ce;
   --color-oscuro-acento: #ff7a3d;
 
+  /* ---- Mapa de la landing ("sala de mapas"): negro cálido, musgo y ámbar; de día, papel cálido ---- */
+  --mapa-noche-fondo: #0b0d0a;
+  --mapa-noche-panel: #131611;
+  --mapa-noche-elevado: #1a1e17;
+  --mapa-noche-linea: #283023;
+  --mapa-noche-linea-suave: #1d221a;
+  --mapa-noche-musgo: #2a3916;
+  --mapa-noche-texto: #a9b0a1;
+  --mapa-noche-tenue: #868d80;
+  --mapa-noche-tinta: #f2f0e8;
+  --mapa-noche-acento: #dc8c46;
+  --mapa-noche-acento-texto: #dc8c46;
+  --mapa-dia-fondo: #ecebe4;
+  --mapa-dia-panel: #f8f7f2;
+  --mapa-dia-elevado: #e3e2da;
+  --mapa-dia-linea: #cfcec4;
+  --mapa-dia-linea-suave: #dddcd3;
+  --mapa-dia-texto: #3b4036;
+  --mapa-dia-tenue: #5a5f53; /* el #62675b del artefacto no llega a 4,5:1 sobre el panel elevado */
+  --mapa-dia-tinta: #12140f;
+  --mapa-dia-acento: #dc8c46;
+  --mapa-dia-acento-texto: #9c4f14;
+
   /* ---- Tipografías ---- */
   --fuente-titulos: "Bricolage Grotesque Variable", "Bricolage Grotesque", system-ui, sans-serif;
   --fuente-texto: "IBM Plex Sans", system-ui, sans-serif;

@@ -14,7 +14,9 @@ import { atributosFoco } from "@/experto/atributos";
 import { urlGoogleMaps, urlGoogleMapsEmbed } from "@/lib/enlaces";
 import { useVivo } from "@/vivo/estado";
 import { FormReporte } from "@/vivo/FormReporte";
+import { CharmyGuia } from "./CharmyGuia";
 import { useRelieve } from "./estado";
+import { PASOS_EXPERTO } from "./guiaExperto";
 
 const ANCHO = "(min-width: 768px)";
 
@@ -41,7 +43,8 @@ type Seccion = (typeof SECCIONES)[number]["id"];
 /**
  * Experto (ex Tu zona, #262): la consulta por área y fechas dentro de Relieve, con los colores de vidrio oscuro de
  * `.tema-relieve`. Va por pasos (dónde, cuándo y filtros plegados), una franja con el resultado y la reproducción, y
- * pestañas para el resumen, el lugar y la validación (F4-D8). Reportar un foco va en el encabezado.
+ * pestañas para el resumen, el lugar y la validación (F4-D8). Reportar un foco va en el encabezado, junto a la Guía de
+ * Charmy, que recorre cada parte (F4-D9): por eso cada una lleva su `data-guia`.
  */
 export function Zona() {
   const { focos, errorFechas, consulta, hayArea } = useFocos();
@@ -64,9 +67,17 @@ export function Zona() {
       >
         <header className="flex items-center justify-between gap-2 border-b border-white/10 px-4 pb-3 pt-4">
           <h2 className="font-titulos text-xl font-bold">Experto</h2>
+          <div className="flex items-center gap-1.5">
+          <CharmyGuia
+            pasos={PASOS_EXPERTO}
+            outfit="cientifica"
+            boton="cabeza"
+            etiqueta="Guía: Charmy te explica cómo se usa Experto"
+          />
           {!reportando && (
             <button
               type="button"
+              data-guia="zona-reportar"
               onClick={() => cambiarVivo({ reportando: true })}
               className="inline-flex min-h-8 items-center gap-1.5 rounded-full border border-white/20 px-3 text-[12.5px] hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >
@@ -74,14 +85,21 @@ export function Zona() {
               Reportar un foco
             </button>
           )}
+          </div>
         </header>
         {/* El desplazamiento va adentro: así la barra no rompe el redondeo del panel (#236). */}
         <div className="scroll-relieve flex flex-col gap-4 overflow-y-auto px-4 pb-20 pt-3.5 md:pb-5">
           <FormReporte />
-          <Area />
-          <Fechas error={errorFechas} />
-          <Filtros />
-          <div className="flex items-center gap-2 rounded-control bg-charmy-llama/10 px-3 py-2 shadow-[inset_0_0_0_1px_color-mix(in_srgb,var(--charmy-llama)_35%,transparent)]">
+          <div data-guia="zona-donde">
+            <Area />
+          </div>
+          <div data-guia="zona-cuando">
+            <Fechas error={errorFechas} />
+          </div>
+          <div data-guia="zona-filtros">
+            <Filtros />
+          </div>
+          <div data-guia="zona-resultado" className="flex items-center gap-2 rounded-control bg-charmy-llama/10 px-3 py-2 shadow-[inset_0_0_0_1px_color-mix(in_srgb,var(--charmy-llama)_35%,transparent)]">
             <Resultado
               focos={focos?.features.length ?? null}
               cargando={consulta.isFetching}
@@ -160,7 +178,7 @@ function Secciones(contenido: Record<Seccion, React.ReactNode>) {
   };
 
   return (
-    <div className="flex flex-col gap-3">
+    <div data-guia="zona-secciones" className="flex flex-col gap-3">
       <div ref={lista} role="tablist" aria-label="Qué ver del área" onKeyDown={moverConFlechas} className="flex gap-0.5 border-b border-white/10">
         {SECCIONES.map((s) => {
           const activa = s.id === actual;

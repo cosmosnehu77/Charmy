@@ -120,7 +120,7 @@ beforeEach(() => {
   });
   vi.stubGlobal("fetch", fetchSimulado);
   useConsulta.setState(estadoInicialConsulta("2026-11-14"));
-  useVivo.setState({ satelites: ["N20", "N21"] });
+  useVivo.setState({ satelites: ["N20", "N21"], reportando: false });
   useRelieve.setState({
     pestana: "focos",
     seleccion: null,
@@ -682,5 +682,83 @@ describe("organización de Experto (F4-D8)", () => {
     const panel = screen.getByRole("complementary", { name: "Experto" });
     await u.click(within(within(panel).getByRole("banner")).getByRole("button", { name: "Reportar un foco" }));
     expect(within(panel).getByRole("form", { name: "Reportar un foco" })).toBeInTheDocument();
+  });
+});
+
+describe("Charmy guía Experto (F4-D9)", () => {
+  const AREA = { type: "Polygon" as const, coordinates: [[[-72, -43], [-71, -43], [-71, -42], [-72, -42], [-72, -43]]] };
+
+  /** Avanza con Siguiente y devuelve los títulos de los pasos por los que pasó, hasta el último. */
+  async function recorrer(u: ReturnType<typeof userEvent.setup>) {
+    const titulos: string[] = [];
+    for (let i = 0; i < 20; i++) {
+      const dialogo = await screen.findByRole("dialog");
+      titulos.push(dialogo.getAttribute("aria-labelledby") ? within(dialogo).getByRole("heading").textContent ?? "" : "");
+      const boton = within(dialogo).getByRole("button", { name: /Siguiente|Terminar/ });
+      if (boton.textContent === "Terminar") break;
+      await u.click(boton);
+    }
+    return titulos;
+  }
+
+  it("el botón del encabezado abre el recorrido de Experto, que señala cada parte del panel", async () => {
+    // jsdom no mide: con un tamaño falso ningún paso se saltea por no estar en pantalla.
+    vi.spyOn(Element.prototype, "getBoundingClientRect").mockReturnValue(new DOMRect(0, 0, 120, 40));
+    useConsulta.setState({ area: AREA });
+    useRelieve.setState({ pestana: "zona" });
+    montar();
+    const u = userEvent.setup();
+    const panel = screen.getByRole("complementary", { name: "Experto" });
+    await screen.findByRole("region", { name: "Calendario de quema" });
+    // Cada parte que explica lleva su marca.
+    for (const marca of ["zona-donde", "zona-cuando", "zona-filtros", "zona-resultado", "zona-secciones", "zona-reportar"]) {
+      expect(panel.querySelector(`[data-guia="${marca}"]`)).not.toBeNull();
+    }
+    expect(document.querySelector('[data-guia="calendario"]')).not.toBeNull();
+    await u.click(within(within(panel).getByRole("banner")).getByRole("button", { name: /Guía: Charmy te explica cómo se usa Experto/ }));
+    expect(await recorrer(u)).toEqual([
+      "Experto, paso a paso",
+      "1 · Dónde",
+      "2 · Cuándo",
+      "Serie y confianza",
+      "Potencia y momento",
+      "Cuántos focos",
+      "Resumen, Lugar y Validación",
+      "Calendario de quema",
+      "Tocá un foco",
+      "¿Ves fuego?",
+      "¡Listo!",
+    ]);
+    // El último paso recuerda los números de emergencia; Escape cierra el recorrido.
+    expect(screen.getByRole("dialog")).toHaveTextContent(/llamá al 100 en Argentina o al 132 en Chile/);
+    await u.keyboard("{Escape}");
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    vi.restoreAllMocks();
+  });
+
+  it("explica los parámetros: las cuatro formas del área y los filtros", async () => {
+    vi.spyOn(Element.prototype, "getBoundingClientRect").mockReturnValue(new DOMRect(0, 0, 120, 40));
+    useRelieve.setState({ pestana: "zona" });
+    montar();
+    const u = userEvent.setup();
+    await u.click(screen.getByRole("button", { name: /Guía: Charmy te explica cómo se usa Experto/ }));
+    await u.click(await screen.findByRole("button", { name: "Siguiente" }));
+    expect(await screen.findByRole("dialog", { name: "1 · Dónde" })).toHaveTextContent(/Rectángulo.*Polígono.*Localidad.*Punto/);
+    await u.click(screen.getByRole("button", { name: "Siguiente" }));
+    await u.click(await screen.findByRole("button", { name: "Siguiente" }));
+    expect(await screen.findByRole("dialog", { name: "Serie y confianza" })).toHaveTextContent(/MODIS y VIIRS/);
+    vi.restoreAllMocks();
+  });
+
+  it("sin área no hay calendario: ese paso se saltea", async () => {
+    vi.spyOn(Element.prototype, "getBoundingClientRect").mockReturnValue(new DOMRect(0, 0, 120, 40));
+    useRelieve.setState({ pestana: "zona" });
+    montar();
+    const u = userEvent.setup();
+    await u.click(screen.getByRole("button", { name: /Guía: Charmy te explica cómo se usa Experto/ }));
+    const titulos = await recorrer(u);
+    expect(titulos).not.toContain("Calendario de quema");
+    expect(titulos.at(-1)).toBe("¡Listo!");
+    vi.restoreAllMocks();
   });
 });

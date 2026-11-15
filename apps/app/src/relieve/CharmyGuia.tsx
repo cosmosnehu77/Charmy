@@ -1,14 +1,15 @@
-import { Charmy, type Mood } from "@charmy/charmy";
+import { Charmy, type Mood, type Outfit } from "@charmy/charmy";
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useRelieve } from "./estado";
 import { ubicarGlobo } from "./logica";
 
 /**
- * Charmy guía (RF-CHA-05): espera abajo a la izquierda; al tocarlo recorre la pantalla con un foco que va de un
- * elemento a otro (marcados con `data-guia`). Si un elemento no está en pantalla, ese paso se saltea.
+ * Charmy guía (RF-CHA-05): al tocarlo recorre la pantalla con un foco que va de un elemento a otro (marcados con
+ * `data-guia`). Si un elemento no está en pantalla, ese paso se saltea. En la vista común espera abajo a la izquierda;
+ * en Experto va en el encabezado del panel con sus propios pasos (F4-D9).
  */
-interface Paso {
+export interface Paso {
   guia?: string;
   mood: Mood;
   titulo: string;
@@ -19,7 +20,7 @@ interface Paso {
   emergencia?: boolean;
 }
 
-const PASOS: Paso[] = [
+const PASOS_MAPA: Paso[] = [
   {
     mood: "saluda",
     titulo: "¡Hola! Soy Charmy",
@@ -81,7 +82,20 @@ const PASOS: Paso[] = [
 
 const reducido = () => globalThis.matchMedia?.("(prefers-reduced-motion: reduce)").matches ?? false;
 
-export function CharmyGuia({ regionMasFuego }: { regionMasFuego: string | null }) {
+export function CharmyGuia({
+  regionMasFuego = null,
+  pasos: PASOS = PASOS_MAPA,
+  outfit = "guia",
+  boton = "figura",
+  etiqueta = "Charmy: ¿necesitás ayuda? Tocá para ver cómo se usa el mapa",
+}: {
+  regionMasFuego?: string | null;
+  pasos?: Paso[];
+  outfit?: Outfit;
+  /** «figura»: Charmy entero con la pregunta (vista común); «cabeza»: un botón chico para un encabezado. */
+  boton?: "figura" | "cabeza";
+  etiqueta?: string;
+}) {
   const [abierto, setAbierto] = useState(false);
   const [paso, setPaso] = useState(0);
   const [rect, setRect] = useState<DOMRect | null>(null);
@@ -133,7 +147,7 @@ export function CharmyGuia({ regionMasFuego }: { regionMasFuego: string | null }
         }
       }, p.abrirRegion || p.cerrarRegion || direccion < 0 ? 280 : 0);
     },
-    [cerrarRegionDeGuia, regionMasFuego, terminar],
+    [PASOS, cerrarRegionDeGuia, regionMasFuego, terminar],
   );
 
   const abrir = () => {
@@ -162,21 +176,35 @@ export function CharmyGuia({ regionMasFuego }: { regionMasFuego: string | null }
     };
     window.addEventListener("resize", medir);
     return () => window.removeEventListener("resize", medir);
-  }, [abierto, paso]);
+  }, [PASOS, abierto, paso]);
 
   const actual = PASOS[paso] ?? PASOS[0];
   const pad = 10;
 
   return (
     <>
-      <button ref={botonRef} type="button" className="guia-boton" hidden={abierto} onClick={abrir} aria-label="Charmy: ¿necesitás ayuda? Tocá para ver cómo se usa el mapa">
-        <span className="guia-figura">
-          <Charmy size={84} mood="saluda" outfit="guia" decorative />
-        </span>
-        <span className="guia-pregunta" aria-hidden="true">
-          <b>¿Necesitás ayuda?</b>Tocame y te muestro cómo usar el mapa.
-        </span>
-      </button>
+      {boton === "figura" ? (
+        <button ref={botonRef} type="button" className="guia-boton" hidden={abierto} onClick={abrir} aria-label={etiqueta}>
+          <span className="guia-figura">
+            <Charmy size={84} mood="saluda" outfit={outfit} decorative />
+          </span>
+          <span className="guia-pregunta" aria-hidden="true">
+            <b>¿Necesitás ayuda?</b>Tocame y te muestro cómo usar el mapa.
+          </span>
+        </button>
+      ) : (
+        <button
+          ref={botonRef}
+          type="button"
+          onClick={abrir}
+          aria-label={etiqueta}
+          title={etiqueta}
+          className="inline-flex min-h-8 items-center gap-1 rounded-full border border-white/20 py-0.5 pl-0.5 pr-2.5 text-[12.5px] hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        >
+          <Charmy size={28} variant="cabeza" outfit={outfit} animate={false} decorative />
+          Guía
+        </button>
+      )}
       {/* En `body`: dentro de la vista quedaba atrapado en la capa del bloque de abajo, debajo de la píldora y la ficha (#226). */}
       {abierto && actual && createPortal(
         <div
@@ -205,7 +233,7 @@ export function CharmyGuia({ regionMasFuego }: { regionMasFuego: string | null }
             style={{ left: posicion.x, top: posicion.y }}
           >
             <span className="guia-figura-grande">
-              <Charmy size={96} mood={actual.mood} outfit="guia" decorative />
+              <Charmy size={96} mood={actual.mood} outfit={outfit} decorative />
             </span>
             <div className="guia-globo" aria-live="polite" key={paso}>
               <h3 id="guia-titulo">{actual.titulo}</h3>

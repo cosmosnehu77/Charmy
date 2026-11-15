@@ -1,76 +1,41 @@
-import { readFileSync } from "node:fs";
-import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
-import dia from "../../../data/muestras/dia-juego.json";
-import contorno from "../src/fondo.json";
-import { contornoDelDia, encuadre, proyectar, regionEn, simplificar, type Anillo, type Contorno, type GeoJson } from "../src/contorno";
+import { adentro, contornoDe, encuadre, proyectar, regionEn, type Paises, type Recuadro } from "../src/contorno";
+import geo from "../src/sudamerica.json";
 
-const ruta = (r: string) => fileURLToPath(new URL(r, import.meta.url));
-const regiones = JSON.parse(readFileSync(ruta("../../../data/muestras/regiones.geojson"), "utf8")) as GeoJson;
-const bbox = dia.bbox as [number, number, number, number];
+const bbox: Recuadro = [-76, -56, -62, -35];
+const mapa = contornoDe(geo as Paises);
 
-function extension(anillos: Anillo[]): [number, number, number, number] {
-  const lons = anillos.flat().map((p) => p[0]);
-  const lats = anillos.flat().map((p) => p[1]);
-  return [Math.min(...lons), Math.min(...lats), Math.max(...lons), Math.max(...lats)];
-}
+describe("mapa de Sudamérica", () => {
+  it("cada anillo trae el nombre de su país", () => {
+    expect(mapa.nombres).toHaveLength(mapa.anillos.length);
+    expect(mapa.nombres).toEqual(expect.arrayContaining(["Argentina", "Chile", "Brasil", "Islas Malvinas"]));
+  });
 
-describe("simplificar", () => {
-  it("saca los puntos casi alineados y conserva el anillo cerrado", () => {
-    const anillo: Anillo = [
-      [0, 0],
-      [1, 0.001],
-      [2, 0],
-      [2, 2],
-      [0, 2],
-      [0, 0],
-    ];
-    expect(simplificar(anillo, 0.01)).toEqual([
-      [0, 0],
-      [2, 0],
-      [2, 2],
-      [0, 2],
-      [0, 0],
-    ]);
+  it("los nombres están en español", () => {
+    expect(mapa.nombres).not.toContain("Falkland Islands");
+    expect(mapa.nombres).not.toContain("Brazil");
+  });
+
+  it("encuentra el país de un punto, o null en el mar", () => {
+    expect(regionEn(mapa, [-58.38, -34.6])).toBe("Argentina"); // Buenos Aires
+    expect(regionEn(mapa, [-70.65, -33.45])).toBe("Chile"); // Santiago
+    expect(regionEn(mapa, [-59.0, -51.7])).toBe("Islas Malvinas");
+    expect(regionEn(mapa, [-40, -45])).toBeNull(); // el Atlántico
+  });
+
+  it("un punto adentro de un cuadrado está adentro; afuera, no", () => {
+    const cuadrado: [number, number][] = [[0, 0], [10, 0], [10, 10], [0, 10], [0, 0]];
+    expect(adentro([5, 5], cuadrado)).toBe(true);
+    expect(adentro([15, 5], cuadrado)).toBe(false);
   });
 });
 
-describe("contorno de la región de fondo", () => {
-  it("fondo.json está al día con regiones.geojson (se regenera con pnpm contorno)", () => {
-    expect(contornoDelDia(regiones, bbox)).toEqual(contorno);
-  });
-
-  it("conserva el recuadro del día: solo regiones que lo tocan y la misma extensión", () => {
-    expect(contorno.bbox).toEqual(dia.bbox);
-    const [oeste, sur, este, norte] = bbox;
-    for (const anillo of contorno.anillos as Anillo[]) {
-      const [o, s, e, n] = extension([anillo]);
-      expect(e >= oeste && o <= este && n >= sur && s <= norte).toBe(true);
-    }
-    const original = regiones.features
-      .flatMap((f) => (f.geometry.type === "Polygon" ? [f.geometry.coordinates] : f.geometry.coordinates))
-      .map((poligono) => poligono[0]!)
-      .filter((a) => {
-        const [o, s, e, n] = extension([a]);
-        return e >= oeste && o <= este && n >= sur && s <= norte;
-      });
-    const antes = extension(original);
-    const despues = extension(contorno.anillos as Anillo[]);
-    for (let i = 0; i < 4; i++) expect(Math.abs(despues[i]! - antes[i]!)).toBeLessThan(0.1);
-  });
-
-  it("pesa menos que el original", () => {
-    const original = readFileSync(ruta("../../../data/muestras/regiones.geojson")).length;
-    expect(JSON.stringify(contorno).length).toBeLessThan(original / 4);
-  });
-
-  it("proyecta con el norte arriba y el oeste a la izquierda, como los focos", () => {
+describe("proyección y encuadre", () => {
+  it("proyecta con el norte arriba y el oeste a la izquierda", () => {
     expect(proyectar([-76, -35], bbox, { ancho: 800, alto: 600 })).toEqual({ x: 0, y: 0 });
     expect(proyectar([-62, -56], bbox, { ancho: 800, alto: 600 })).toEqual({ x: 800, y: 600 });
   });
-});
 
-describe("encuadre del mapa", () => {
   it("conserva la proporción real del recuadro y lo centra a lo ancho en un área apaisada", () => {
     const area = { ancho: 760, alto: 520 };
     const e = encuadre(bbox, area);
@@ -86,18 +51,5 @@ describe("encuadre del mapa", () => {
     expect(e.ancho).toBe(200);
     expect(e.dx).toBe(0);
     expect(e.dy).toBeCloseTo((1000 - e.alto) / 2, 5);
-  });
-});
-
-describe("región de un punto", () => {
-  it("cada anillo del contorno trae el nombre de su región y su país", () => {
-    expect(contorno.nombres).toHaveLength(contorno.anillos.length);
-    expect(contorno.nombres).toContain("Neuquén, Argentina");
-  });
-
-  it("encuentra la región aproximada de un punto, o null fuera del mapa", () => {
-    expect(regionEn(contorno as Contorno, [-68.06, -38.95])).toBe("Neuquén, Argentina"); // ciudad de Neuquén
-    expect(regionEn(contorno as Contorno, [-71.31, -41.13])).toBe("Río Negro, Argentina"); // Bariloche
-    expect(regionEn(contorno as Contorno, [-60, -45])).toBeNull(); // el mar
   });
 });

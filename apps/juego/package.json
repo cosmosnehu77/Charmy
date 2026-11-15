@@ -2,20 +2,19 @@
   "name": "@charmy/juego",
   "version": "0.1.0",
   "private": true,
-  "description": "Charmy Brigada: juego web en pixel art donde Charmy bombero apaga focos de un día real.",
+  "description": "Charmy Brigada: juego web sobre una maqueta 3D de Sudamérica donde Charmy bombero apaga focos simulados.",
   "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",
-    "test": "vitest run",
-    "contorno": "node scripts/contorno.ts"
+    "test": "vitest run"
   },
   "dependencies": {
     "@charmy/charmy": "workspace:*",
     "@charmy/ui": "workspace:*",
-    "phaser": "4.2.1"
+    "pixi.js": "8.22.0"
   },
   "devDependencies": {
     "@types/node": "^22.20.5",

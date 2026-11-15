@@ -15,7 +15,16 @@ import {
   verificarFoco,
   AGUA_SIN_VERIFICAR,
   MAX_CORTAFUEGOS,
+  COSTOS,
+  HERRAMIENTAS,
+  PREMIO_CORTAFUEGOS,
+  PREMIO_FALSA_ALARMA,
+  PROB_FALSA_ALARMA,
   RADIO_AVION,
+  buscar,
+  cobrar,
+  descartarFalsaAlarma,
+  premiarCortafuegos,
   RECARGA_AVION_MS,
   TANQUE,
   elegirHerramienta,
@@ -62,7 +71,6 @@ describe("puntaje y combo", () => {
 const dato = (extra: Partial<FocoEnPantalla> = {}): FocoEnPantalla => ({
   lat: -40,
   lon: -70,
-  hora_utc: "04:00",
   frp: 1,
   confidence: "nominal",
   x: 10,
@@ -175,6 +183,7 @@ describe("focos propagados", () => {
       y: 40,
       frp: 1,
       golpes: 1,
+      toques: 1,
       confianza: "nominal",
       verificado: false,
       fuenteFija: false,
@@ -267,5 +276,72 @@ describe("herramientas", () => {
   it("guía y piloto no golpean al tocar un foco: la escena usa el toque como un toque en el mapa", () => {
     const p = elegirHerramienta(conFocos({}), "guia");
     expect(tocarFoco(p, 1, 100)).toBe(p);
+  });
+});
+
+describe("un foco fuerte vale más", () => {
+  it("apagar suma los puntos base por los toques que costó, por el combo", () => {
+    expect(apagar(marcadorInicial(), 1000, 3).puntos).toBe(PUNTOS_BASE * 3);
+    const m = apagar(apagar(marcadorInicial(), 1000, 1), 1500, 2);
+    expect(m.puntos).toBe(PUNTOS_BASE * 1 + PUNTOS_BASE * 2 * 2);
+  });
+
+  it("el último toque a un foco de 2 toques paga doble", () => {
+    let p = encenderFoco(nuevaPartida(), focoActivo(1, dato({ frp: 5 })));
+    expect(buscar(p, 1)?.toques).toBe(2);
+    p = golpearFoco(golpearFoco(p, 1, 1000), 1, 1100);
+    expect(p.marcador.puntos).toBe(PUNTOS_BASE * 2);
+  });
+});
+
+describe("las unidades cuestan puntos", () => {
+  const conPuntos = (puntos: number): Partida => ({ ...nuevaPartida(), marcador: { ...marcadorInicial(), puntos } });
+
+  it("las seis herramientas tienen tecla, y el avión es la más cara", () => {
+    expect(HERRAMIENTAS).toEqual(["bombero", "piloto", "cientifica", "guia", "brigada", "aguatero"]);
+    const costos = Object.values(COSTOS);
+    expect(COSTOS.piloto).toBe(Math.max(...costos));
+    expect(COSTOS.bombero).toBeUndefined();
+  });
+
+  it("cobrar descuenta el costo si alcanzan los puntos", () => {
+    expect(cobrar(conPuntos(100), "piloto")?.marcador.puntos).toBe(100 - COSTOS.piloto!);
+    expect(cobrar(conPuntos(COSTOS.brigada!), "brigada")?.marcador.puntos).toBe(0);
+  });
+
+  it("si no alcanzan, no cobra nada", () => {
+    expect(cobrar(conPuntos(COSTOS.piloto! - 1), "piloto")).toBeNull();
+  });
+
+  it("el agua y la verificación no cuestan puntos", () => {
+    expect(cobrar(conPuntos(0), "bombero")?.marcador.puntos).toBe(0);
+    expect(cobrar(conPuntos(0), "cientifica")?.marcador.puntos).toBe(0);
+  });
+});
+
+describe("falsas alarmas y cortafuegos", () => {
+  it("una falsa alarma desaparece, no gasta agua y suma su premio", () => {
+    const p = encenderFoco(nuevaPartida(), focoActivo(4, dato({ confidence: "low" })));
+    const q = descartarFalsaAlarma(p, 4);
+    expect(q.activos).toEqual([]);
+    expect(q.agua).toBe(p.agua);
+    expect(q.marcador.puntos).toBe(PREMIO_FALSA_ALARMA);
+    expect(q.marcador.apagados).toBe(0);
+  });
+
+  it("descartar un foco que ya no está no cambia nada", () => {
+    const p = nuevaPartida();
+    expect(descartarFalsaAlarma(p, 9)).toBe(p);
+  });
+
+  it("la mayoría de los focos con \"?\" son falsa alarma", () => {
+    expect(PROB_FALSA_ALARMA).toBeGreaterThan(0.5);
+    expect(PROB_FALSA_ALARMA).toBeLessThan(1);
+  });
+
+  it("cada vez que un cortafuegos frena al fuego, suma su premio", () => {
+    expect(premiarCortafuegos(nuevaPartida(), 2).marcador.puntos).toBe(2 * PREMIO_CORTAFUEGOS);
+    const p = nuevaPartida();
+    expect(premiarCortafuegos(p, 0)).toBe(p);
   });
 });

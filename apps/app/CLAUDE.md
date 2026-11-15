@@ -10,7 +10,7 @@ pnpm check --filter @charmy/app    # tipos, pruebas y compilación (también com
 - `VITE_API_URL` es la URL base de la API con `/api/v1`. En `pnpm dev` apunta al mock (`.env.development`):
   levantarlo con `pnpm --filter @charmy/contracts-api mock`. Para la API local, `.env.development.local`.
   Pasar del mock a la API real es solo cambiar esa variable.
-- Una sola vista, Relieve (`src/relieve/`): indicadores por provincia, En vivo y Tu zona (#262, #276). Tu zona
+- Una sola vista, Relieve (`src/relieve/`): indicadores por provincia, En vivo y Experto (ex Tu zona, #262, #276, #314). Experto
   reúsa las piezas de la consulta, el calendario, el contexto y el reporte con los colores de `.tema-relieve`.
 - Consulta (`src/consulta/`): área, fechas y filtros. Lógica pura en `consulta.ts`; estado en `src/estado/consulta.ts`
   (con `hoy` inyectado). `/hotspots` se pide con `Accept: application/geo+json`. Serie y confianza van a la API;
@@ -23,5 +23,5 @@ pnpm check --filter @charmy/app    # tipos, pruebas y compilación (también com
 - Textos en español, en segunda persona. El aviso de emergencias (`AvisoEmergencias`) queda siempre visible.
 - Mapa: `src/relieve/MapaRelieve.tsx`, MapLibre v6 con el estilo oscuro de OpenFreeMap, sin clave, cargado con `lazy`.
   El worker se registra con `setWorkerUrl` (Vite); sin eso el mapa queda en blanco. Terra Draw (`src/mapa/dibujo.ts`)
-  dibuja el área de Tu zona. `src/mapa/` guarda solo lo compartido: límites, nombres en español, área e imagen.
+  dibuja el área de Experto. `src/mapa/` guarda solo lo compartido: límites, nombres en español, área e imagen.
 - jsdom no tiene WebGL: en las pruebas `MapaRelieve` se reemplaza con `vi.mock`; lo visual se revisa en el navegador.

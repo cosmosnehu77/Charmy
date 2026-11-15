@@ -10,7 +10,7 @@
 
 **Fase activa:** 4
 **Líder:** `@cosmosnehu77`. Hasta que vuelva (probablemente en la fase 4), **líder interino `@daniace`** (D-28).
-**Versión:** 2.3.4 · **Última actualización:** 15 de noviembre de 2026
+**Versión:** 2.3.5 · **Última actualización:** 15 de noviembre de 2026
 
 ## Objetivo del proyecto
 
@@ -421,6 +421,7 @@ Si falta tiempo en el carril B, el orden es: fuentes fijas, tiempo, imagen y, po
 | #306 | F4-D4 | Estadísticas en el panel En vivo: comparación con la ventana anterior, regiones con más focos y focos por veredicto, calculadas en el navegador con lo que ya trae `/live`, sin cambiar el contrato | `@daniace` | `apps/app/` | F4-D2 | RF-VIV-01, RF-VIV-02 | hecho |
 | #309 | F4-D5 | Estadísticas en la ficha de provincia: puesto en el ranking, el año contra los anteriores hasta el mismo mes y la temporada, con el calendario de la región que ya da la API, sin cambiar el contrato | `@daniace` | `apps/app/` | F4-D3 | RF-CAL-02, RF-CAL-03 | hecho |
 | #311 | F4-D6 | Tendencia de los últimos días en el ranking: minigráfica por día y flecha con texto (en alza, en baja, estable), sin contar hoy, con `by_day` y `frp_by_day` de `/regions/summary`, sin cambiar el contrato | `@daniace` | `apps/app/` | F4-R1 | RF-MAP-01, RNF-04 | hecho |
+| #314 | F4-D7 | Tu zona pasa a llamarse Experto y se retira el modo novato (queda solo lo experto); con la herramienta de dibujo encendida, el cursor del mapa es una cruz | `@daniace` | `apps/app/` | F4-D3 | RF-MOD-01, RF-MOD-02, RF-MOD-03 | en curso |
 | #60 | F4-E1 | Pulido de la landing; enlaces entre las tres piezas | `@daniace` (D-34) | `apps/landing/` | fase 3 | RF-LAN-04, RNF-12 | pendiente |
 | #61 | F4-E2 | Pulido del juego | `@daniace` (D-34) | `apps/juego/` | F3-E1 | RNF-12 | pendiente |
 | #183 | F4-E3 | El juego pasa a llamarse Charmy Brigada en todas las piezas; requisitos y tareas de D-35 | `@dimidio6` | `apps/juego/`, y el nombre en `apps/app/`, `apps/landing/`, `packages/charmy/`, `docs/` | — | RF-KID-01, RNF-12 | en revisión |
@@ -517,7 +518,7 @@ Qué tareas cubren cada requisito. Si un requisito de `REQUISITOS.md` no aparece
 | RF-MAP-08 | F0-B1 (cobertura); vista global sin tarea | 2 / hoja de ruta |
 | RF-EXP-01 | F2-C1, F2-D2 | 2 |
 | RF-EXP-02 | F3-D2 | 3 |
-| RF-MOD-01, 02, 03 | F3-D1, F3-D2 | 3 |
+| RF-MOD-01, 02, 03 | F3-D1, F3-D2; F4-D7 (retira el modo novato) | 3, 4 |
 | RF-CHA-01, 04 | F0-E1, F1-E1, F1-E2, F1-E4 | 1 |
 | RF-CHA-02, 03, 06 | F2-E1, F3-E2 | 2 (mínimo) / 3 |
 | RF-CHA-05 | F3-D1 | 3 |
@@ -627,6 +628,7 @@ La fase 5 no cubre requisitos nuevos: refuerza RNF-02 y RNF-10 sobre lo ya entre
 | 2026-11-15 | Versión 2.3.2. Tarea nueva F4-D2 (#260): filtro por satélite en los focos en vivo, ya fusionada en #261. | encabezado, 5, 6 | `@daniace` |
 | 2026-11-15 | Versión 2.3.3. TimesFM 3.0 pasa a ser el candidato de la predicción en lugar de la 2.5, autorizada por el líder porque Charmy es gratuito y sin fines de lucro (actualiza D-31, R-E2 #253). La compuerta D-10 no cambia. | 1.1, 3 | `@dimidio6` |
 | 2026-11-15 | Versión 2.3.4. Tareas nuevas F4-D3 (#297): toggle e indicador para dibujar el área en Tu zona y estadísticas del calendario y de los focos, ya fusionada en #298; y F4-A2 (#300): `.gitignore` de la raíz completo, ya fusionada en #301; y F4-D4 (#306): estadísticas en el panel En vivo, en #307; y F4-D5 (#309): estadísticas en la ficha de provincia, en #310; y F4-D6 (#311): tendencia en el ranking, en #315. | encabezado, 5, 6 | `@daniace` |
+| 2026-11-15 | Versión 2.3.5, con `REQUISITOS.md` 1.7. Tarea nueva F4-D7 (#314): Tu zona pasa a llamarse Experto, se retira el modo novato (RF-MOD-01 y RF-MOD-03 quedan fuera) y el cursor es una cruz al dibujar el área. | encabezado, 5, 6 | `@daniace` |
 
 ## 10. Registro de cierres
 

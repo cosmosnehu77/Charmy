@@ -391,5 +391,10 @@ export default function MapaRelieve({ regiones, dias, focos, onHover }: Props) {
     });
   }, [estado.seleccion, estado.plano, estado.pestana]);
 
-  return <div ref={contenedor} className="absolute inset-0" aria-hidden="true" />;
+  // MapLibre le pone `position: relative` a su contenedor: si fuera el mismo div absoluto, se queda sin alto.
+  return (
+    <div className="absolute inset-0" aria-hidden="true">
+      <div ref={contenedor} className="h-full w-full" />
+    </div>
+  );
 }

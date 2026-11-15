@@ -1,5 +1,5 @@
 import { rampaAnomalia, rampaConteo } from "@charmy/ui";
-import { ChevronRight, Compass, Minus, Plus, RotateCw } from "lucide-react";
+import { ChevronRight, Compass, Minus, Plus, RotateCw, Satellite } from "lucide-react";
 import { lazy, Suspense, useEffect, useMemo, useState } from "react";
 import { useConsulta } from "@/estado/consulta";
 import { useVivo } from "@/vivo/estado";
@@ -337,6 +337,13 @@ export function Relieve() {
             onClick={() => estado.cambiar({ plano: !estado.plano })}
           >
             <span className="text-[10px] font-bold">{estado.plano ? "3D" : "2D"}</span>
+          </BotonRedondo>
+          <BotonRedondo
+            etiqueta={estado.satelital ? t("Volver al modelo", "Back to the model") : t("Ver imagen satelital", "View satellite imagery")}
+            activo={estado.satelital}
+            onClick={() => estado.cambiar({ satelital: !estado.satelital })}
+          >
+            <Satellite aria-hidden="true" className="size-4" />
           </BotonRedondo>
           {/* El giro queda para los indicadores: en En vivo y Experto los grupos de focos se rearman al mover el mapa. */}
           {!enVivo && !zona && (

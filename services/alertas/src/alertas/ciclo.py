@@ -23,6 +23,7 @@ class Api(Protocol):
     async def reportes(self, zona: Zona) -> list[Foco]: ...
     async def viento(self, lat: float, lon: float) -> Viento | None: ...
     async def crear_alerta(self, zone_id: str, kind: Tipo, ref_id: str) -> tuple[str, bool]: ...
+    async def marcar_enviada(self, alert_id: str) -> bool: ...
 
 
 @dataclass(frozen=True)
@@ -43,19 +44,20 @@ async def avisar(api: Api, enviar: Enviar, zona: Zona, chat_id: int, avisados: s
     mandados = fallidos = 0
     for foco in nuevos:
         try:
-            alert_id, es_nueva = await api.crear_alerta(zona.id, foco.tipo, foco.id)
+            alert_id, pendiente = await api.crear_alerta(zona.id, foco.tipo, foco.id)
         except httpx.HTTPError as e:
             log.warning("no se pudo crear la alerta de %s: %s", foco.id, e)
             continue  # se reintenta en el ciclo siguiente
         avisados.add(foco.id)
-        if not es_nueva:
-            continue  # ya se avisó antes de reiniciar el servicio
+        if not pendiente:
+            continue  # ya se mandó en una corrida anterior
         texto = armar_mensaje(foco, zona, await api.viento(foco.lat, foco.lon))
         try:
             await enviar(chat_id, texto, botones(alert_id))
-        except Exception as e:  # uno que falla no frena a los demás; queda registrado en la API (#263)
+        except Exception as e:  # uno que falla no frena a los demás (#263); queda sin marcar y se reintenta
             log.warning("no se pudo mandar el aviso %s (foco %s): %s", alert_id, foco.id, e)
             fallidos += 1
             continue
+        await api.marcar_enviada(alert_id)  # #280: sin marca, la corrida siguiente lo reintenta
         mandados += 1
     return Resumen(len(focos), len(reportes), len(nuevos), mandados, fallidos)

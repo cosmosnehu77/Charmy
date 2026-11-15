@@ -81,12 +81,25 @@ class ClienteCharmy:
             return []
 
     async def crear_alerta(self, zone_id: str, kind: Tipo, ref_id: str) -> tuple[str, bool]:
-        """POST /alerts. Devuelve el id y si es nueva (201) o ya existía para ese foco o reporte (200)."""
+        """POST /alerts. Devuelve el id y si falta mandarlo: es nuevo (201), o ya existía pero `sent_at` es
+        null porque no salió (#280). Una API sin `sent_at` (anterior a #280) solo manda los nuevos."""
         campo = "hotspot_id" if kind == "foco_satelital" else "report_id"
         r = await self._http.post("/alerts", json={"zone_id": zone_id, "kind": kind, campo: ref_id},
                                   headers=self._auth)
         r.raise_for_status()
-        return r.json()["id"], r.status_code == 201
+        aviso = r.json()
+        pendiente = r.status_code == 201 or ("sent_at" in aviso and aviso["sent_at"] is None)
+        return aviso["id"], pendiente
+
+    async def marcar_enviada(self, alert_id: str) -> bool:
+        """POST /alerts/{id}/sent. Si falla, el aviso se reenvía en la corrida siguiente."""
+        try:
+            r = await self._http.post(f"/alerts/{alert_id}/sent", headers=self._auth)
+            r.raise_for_status()
+            return True
+        except httpx.HTTPError as e:
+            log.warning("no se pudo marcar enviado el aviso %s (se reenviará): %s", alert_id, e)
+            return False
 
     async def actualizar_alerta(self, alert_id: str, status: str) -> bool:
         try:

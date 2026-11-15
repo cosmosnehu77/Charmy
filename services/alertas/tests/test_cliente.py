@@ -5,6 +5,7 @@ import json
 from datetime import UTC, datetime
 
 import httpx
+import pytest
 from alertas.cliente import ClienteCharmy
 from alertas.modelos import Viento
 from alertas.zona import ZONA_DEMO
@@ -173,6 +174,35 @@ def test_crear_alerta_dice_si_es_nueva():
     assert asyncio.run(c.crear_alerta("zona-demo", "reporte_ciudadano", "r-1")) == ("muestra-a-0001", True)
     assert asyncio.run(c.crear_alerta("zona-demo", "reporte_ciudadano", "r-1")) == ("muestra-a-0001", False)
     assert pedidos[0] == {"zone_id": "zona-demo", "kind": "reporte_ciudadano", "report_id": "r-1"}
+
+
+@pytest.mark.parametrize(
+    "estado, sent_at, pendiente",
+    [
+        (201, None, True),  # nuevo
+        (200, None, True),  # ya existía pero no salió: se reintenta (#280)
+        (200, "2026-11-14T10:06:02Z", False),  # ya salió
+    ],
+)
+def test_crear_alerta_dice_si_falta_mandarlo(estado, sent_at, pendiente):
+    aviso = {"id": "a-1", "zone_id": "zona-demo", "kind": "foco_satelital", "status": "nueva",
+             "created_at": "2026-11-14T10:06:00Z", "sent_at": sent_at}
+    c = cliente(lambda req: httpx.Response(estado, json=aviso))
+    assert asyncio.run(c.crear_alerta("zona-demo", "foco_satelital", "h-1")) == ("a-1", pendiente)
+
+
+def test_marcar_enviada_hace_post_con_el_token():
+    def manejador(req):
+        assert req.method == "POST" and req.url.path == "/api/v1/alerts/a-1/sent"
+        assert req.headers["Authorization"] == f"Bearer {TOKEN}"
+        return httpx.Response(200, json={})
+
+    assert asyncio.run(cliente(manejador).marcar_enviada("a-1")) is True
+
+
+def test_marcar_enviada_que_falla_devuelve_false(caplog):
+    assert asyncio.run(cliente(lambda req: httpx.Response(503)).marcar_enviada("a-1")) is False
+    assert any("a-1" in m for m in caplog.messages)
 
 
 def test_actualizar_alerta_hace_patch_con_el_estado():

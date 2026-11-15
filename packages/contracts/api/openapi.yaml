@@ -614,6 +614,7 @@ paths:
       description: |
         Pide el token de servicio. Si ya existe un aviso para esa zona y ese foco o reporte, devuelve el mismo
         (200) en vez de crear otro: así no se duplica. El `id` va en los botones del mensaje a la entidad.
+        Si `sent_at` es `null`, el aviso todavía no salió y el servicio lo manda (o lo reintenta).
       security: [{ servicio: [] }]
       requestBody:
         required: true
@@ -649,6 +650,7 @@ paths:
                     hotspot_id: N20-2026-11-14T04:40:00Z--42.11800--71.28700
                     status: nueva
                     created_at: '2026-11-14T04:45:00Z'
+                    sent_at: null
         '200':
           description: El aviso ya existía para esa zona y ese foco o reporte
           content:
@@ -664,6 +666,7 @@ paths:
                     hotspot_id: N20-2026-11-14T04:40:00Z--42.11800--71.28700
                     status: visto
                     created_at: '2026-11-14T04:45:00Z'
+                    sent_at: '2026-11-14T04:45:02Z'
         '400': { $ref: '#/components/responses/BadRequest' }
         '401': { $ref: '#/components/responses/Unauthorized' }
         '503': { $ref: '#/components/responses/DatosNoDisponibles' }
@@ -714,6 +717,40 @@ paths:
                     note: Sale una dotación
                     created_at: '2026-11-14T04:45:00Z'
         '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '503': { $ref: '#/components/responses/DatosNoDisponibles' }
+  /alerts/{alert_id}/sent:
+    post:
+      operationId: markAlertSent
+      tags: [alertas]
+      summary: El servicio de avisos marca que el aviso llegó a la entidad
+      description: |
+        Lo llama el servicio de avisos después de mandar el mensaje. Pide el token de servicio. Pone `sent_at` la
+        primera vez; si ya estaba marcado, no lo cambia. Un aviso sin marcar se reintenta en la corrida siguiente.
+      security: [{ servicio: [] }]
+      parameters:
+        - name: alert_id
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: Aviso marcado como enviado
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Alert' }
+              examples:
+                muestra:
+                  summary: Muestra provisoria (valores inventados)
+                  value:
+                    id: muestra-a-0001
+                    zone_id: zona-demo
+                    kind: foco_satelital
+                    hotspot_id: N20-2026-11-14T04:40:00Z--42.11800--71.28700
+                    status: nueva
+                    created_at: '2026-11-14T04:45:00Z'
+                    sent_at: '2026-11-14T04:45:02Z'
         '401': { $ref: '#/components/responses/Unauthorized' }
         '404': { $ref: '#/components/responses/NotFound' }
         '503': { $ref: '#/components/responses/DatosNoDisponibles' }
@@ -1087,3 +1124,9 @@ components:
         status: { type: string, enum: [nueva, visto, en_camino, controlado, falso] }
         note: { type: string, description: Nota de la entidad en el último cambio de estado }
         created_at: { type: string, format: date-time }
+        sent_at:
+          type: [string, 'null']
+          format: date-time
+          description: |
+            Cuándo el servicio de avisos lo mandó a la entidad (`POST /alerts/{alert_id}/sent`). `null` si todavía no
+            salió: el servicio lo reintenta en la corrida siguiente. Los avisos anteriores a este campo se dan por enviados.

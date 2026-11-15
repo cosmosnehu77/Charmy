@@ -39,10 +39,13 @@ class ApiFalsa:
 
 
 class TelegramFalso:
-    def __init__(self):
+    def __init__(self, fallan=()):
         self.enviados = []
+        self.fallan = set(fallan)  # ids de focos cuyo aviso falla al enviarse
 
     async def __call__(self, chat_id, texto, teclado):
+        if any(f"a-{i}" in str(teclado) for i in self.fallan):
+            raise RuntimeError("Telegram no responde")
         self.enviados.append((chat_id, texto, teclado))
 
 
@@ -87,4 +90,15 @@ def test_avisar_devuelve_cuantos_reviso_y_cuantos_mando():
                    ya_existentes={"f2"})
     resumen = asyncio.run(avisar(api, TelegramFalso(), ZONA_DEMO, CHAT, set()))
 
-    assert (resumen.focos, resumen.reportes, resumen.nuevos, resumen.mandados) == (3, 1, 3, 2)
+    r = resumen
+    assert (r.focos, r.reportes, r.nuevos, r.mandados, r.fallidos) == (3, 1, 3, 2, 0)
+
+
+def test_un_envio_que_falla_no_frena_los_siguientes_y_queda_en_el_registro(caplog):
+    api = ApiFalsa([foco("f1", lat=-41.95), foco("f2", lat=-42.2)], [])
+    tg = TelegramFalso(fallan={"f1"})
+    resumen = asyncio.run(avisar(api, tg, ZONA_DEMO, CHAT, set()))
+
+    assert [e[2] for e in tg.enviados] == [botones("a-f2")]
+    assert (resumen.mandados, resumen.fallidos) == (1, 1)
+    assert any("a-f1" in m and "no se pudo mandar" in m for m in caplog.messages)

@@ -27,18 +27,20 @@ class Api(Protocol):
 
 @dataclass(frozen=True)
 class Resumen:
-    """Lo que hizo un ciclo, para el registro: focos y reportes leídos, nuevos en la zona, avisos mandados."""
+    """Lo que hizo un ciclo, para el registro: focos y reportes leídos, nuevos en la zona, avisos mandados
+    y envíos que fallaron."""
 
     focos: int
     reportes: int
     nuevos: int
     mandados: int
+    fallidos: int = 0
 
 
 async def avisar(api: Api, enviar: Enviar, zona: Zona, chat_id: int, avisados: set[str]) -> Resumen:
     focos, reportes = await api.focos_en_vivo(zona), await api.reportes(zona)
     nuevos = nuevos_para_avisar(zona, focos + reportes, avisados)
-    mandados = 0
+    mandados = fallidos = 0
     for foco in nuevos:
         try:
             alert_id, es_nueva = await api.crear_alerta(zona.id, foco.tipo, foco.id)
@@ -49,6 +51,11 @@ async def avisar(api: Api, enviar: Enviar, zona: Zona, chat_id: int, avisados: s
         if not es_nueva:
             continue  # ya se avisó antes de reiniciar el servicio
         texto = armar_mensaje(foco, zona, await api.viento(foco.lat, foco.lon))
-        await enviar(chat_id, texto, botones(alert_id))
+        try:
+            await enviar(chat_id, texto, botones(alert_id))
+        except Exception as e:  # uno que falla no frena a los demás; queda registrado en la API (#263)
+            log.warning("no se pudo mandar el aviso %s (foco %s): %s", alert_id, foco.id, e)
+            fallidos += 1
+            continue
         mandados += 1
-    return Resumen(len(focos), len(reportes), len(nuevos), mandados)
+    return Resumen(len(focos), len(reportes), len(nuevos), mandados, fallidos)

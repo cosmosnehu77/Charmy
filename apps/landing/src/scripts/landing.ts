@@ -1,6 +1,8 @@
 // Recorrido de la landing: mapa ilustrativo en un lienzo fijo, Charmy guía, tema e idioma.
 // Los colores salen de los tokens de @charmy/ui (se leen del CSS), nunca de valores sueltos.
 import regionesJson from "../data/regiones.json";
+import Lenis from "lenis";
+import "lenis/dist/lenis.css";
 import { EN } from "./en";
 import { ocultarBarra, progresoPaso, suave, tiempoLectura, tramo } from "./recorrido";
 
@@ -9,6 +11,8 @@ const REGIONES = regionesJson as Region[];
 const raiz = document.documentElement;
 const $ = <T extends HTMLElement = HTMLElement>(id: string) => document.getElementById(id) as T;
 const reducir = matchMedia("(prefers-reduced-motion: reduce)").matches;
+// Scroll suave: suaviza el scroll nativo (no mueve el contenido, así las tarjetas sticky siguen andando).
+if (!reducir) new Lenis({ autoRaf: true, anchors: true });
 const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
 const leerToken = (n: string) => getComputedStyle(raiz).getPropertyValue(n).trim();
 const RAMPA = [1, 2, 3, 4, 5, 6, 7].map((n) => leerToken(`--rampa-conteo-${n}`));

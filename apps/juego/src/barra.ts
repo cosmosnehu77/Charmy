@@ -1,45 +1,11 @@
-import { HERRAMIENTAS, type Herramienta } from "./partida";
+import { COSTOS, PREMIO_CORTAFUEGOS, type Herramienta } from "./partida";
 
-/** Qué hace cada herramienta, para el rótulo del nivel. Corto y con voseo. */
+/** Qué hace cada herramienta, para la ayuda de la barra. Corto y con voseo. */
 export const AYUDAS: Record<Herramienta, string> = {
-  bombero: "Agua: tocá un foco para apagarlo. Recargá en un lago.",
-  piloto: "Avión: tocá una zona y apaga todos los focos de ahí.",
-  cientifica: "Verificar: tocá un foco con \"?\" para ver si es real.",
-  guia: "Cortafuegos: tocá cerca del fuego para frenarlo.",
+  bombero: "Agua: tocá un foco para apagarlo. Recargá en un lago o una represa.",
+  piloto: `Avión (${COSTOS.piloto} puntos): tocá una zona y apaga todos los focos de ahí.`,
+  cientifica: "Verificar: tocá un foco con \"?\". La mayoría es falsa alarma y desaparece sin gastar agua.",
+  guia: `Cortafuegos (${COSTOS.guia} puntos): tocá cerca del fuego. Cada vez que lo frena, suma ${PREMIO_CORTAFUEGOS}.`,
+  brigada: `Brigada (${COSTOS.brigada} puntos): tocá el mapa y un camión va solo de foco en foco. Apaga hasta tres.`,
+  aguatero: `Aguatero (${COSTOS.aguatero} puntos): un Charmy bombero te trae 8 de agua en dos viajes y se va.`,
 };
-
-/** La barra de herramientas de la página (index.html): botones de HTML, para el dedo, el teclado y el lector. */
-export interface Barra {
-  mostrar(): void;
-  ocultar(): void;
-  marcar(h: Herramienta): void;
-  /** Segundos que faltan para el avión, o 0 si está listo. */
-  avion(segundos: number): void;
-}
-
-export function barra(alElegir: (h: Herramienta) => void): Barra {
-  const caja = document.querySelector<HTMLElement>("#herramientas");
-  const botones = new Map(
-    HERRAMIENTAS.map((h) => [h, caja?.querySelector<HTMLButtonElement>(`[data-herramienta="${h}"]`) ?? null]),
-  );
-  for (const [h, boton] of botones) {
-    boton?.addEventListener("click", () => alElegir(h));
-    // Enter o Espacio sobre un botón no deben llegar al juego.
-    boton?.addEventListener("keydown", (e) => e.stopPropagation());
-  }
-  const avion = botones.get("piloto");
-  const textoAvion = avion?.innerHTML ?? "";
-  let ultimo = -1;
-  return {
-    mostrar: () => caja?.removeAttribute("hidden"),
-    ocultar: () => caja?.setAttribute("hidden", ""),
-    marcar(elegida) {
-      for (const [h, boton] of botones) boton?.setAttribute("aria-pressed", String(h === elegida));
-    },
-    avion(segundos) {
-      if (!avion || segundos === ultimo) return;
-      ultimo = segundos;
-      avion.innerHTML = segundos > 0 ? `${textoAvion} (${segundos} s)` : textoAvion;
-    },
-  };
-}

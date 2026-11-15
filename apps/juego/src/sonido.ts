@@ -44,6 +44,8 @@ export const SONIDOS = {
   apagar: [nota("square", 660, 330, 0, 0.08, 0.08)],
   combo: [nota("square", 660, 660, 0, 0.06, 0.08), nota("square", 880, 880, 0.06, 0.08, 0.08)],
   escape: [nota("triangle", 300, 120, 0, 0.25)],
+  viento: [nota("sine", 180, 420, 0, 0.5, 0.05)],
+  victoria: [nota("triangle", 523, 523, 0, 0.1), nota("triangle", 659, 659, 0.1, 0.1), nota("triangle", 784, 784, 0.2, 0.1), nota("triangle", 1047, 1047, 0.3, 0.35)],
   recarga: [nota("sine", 300, 900, 0, 0.2)],
   fin: [nota("triangle", 523, 523, 0, 0.12), nota("triangle", 659, 659, 0.12, 0.12), nota("triangle", 784, 784, 0.24, 0.25)],
 } satisfies Record<string, Nota[]>;

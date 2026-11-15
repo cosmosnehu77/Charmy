@@ -21,3 +21,4 @@ pnpm --filter @charmy/landing preview # sirve dist/ como en producción
 - Página estática sin React. Si hace falta interacción, va con islas de Astro o con GSAP (tabla de PLAN.md).
 - Las pruebas renderizan la página con el Container API de Astro (`test/portada.test.ts`).
 - Toda animación de GSAP va dentro de `gsap.matchMedia()` con `(prefers-reduced-motion: no-preference)`.
+- El scroll suave es Lenis (`src/scripts/landing.ts`) y no arranca con movimiento reducido. Nada de ScrollSmoother: rompe las tarjetas sticky del recorrido.

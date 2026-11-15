@@ -5,7 +5,7 @@ import { potencia } from "./mecanica";
 /** Puntos por foco apagado con combo 1. Con combo N suma N veces esto. */
 export const PUNTOS_BASE = 10;
 /** Tiempo máximo entre dos focos apagados para que el combo siga. */
-export const VENTANA_COMBO_MS = 2000;
+export const VENTANA_COMBO_MS = 3200;
 /** Lo que se pierde por tocar una fuente fija. */
 export const PENALIDAD = 5;
 
@@ -25,14 +25,17 @@ export function marcadorInicial(): Marcador {
   return { puntos: 0, combo: 0, mejorCombo: 0, apagados: 0, escapados: 0, sinVerificar: 0, fijasTocadas: 0, ultimoApagadoMs: null };
 }
 
-/** Apagar un foco: si el anterior fue hace menos de la ventana, el combo crece; si no, vuelve a 1. */
-export function apagar(m: Marcador, ahoraMs: number): Marcador {
+/**
+ * Apagar un foco: si el anterior fue hace menos de la ventana, el combo crece; si no, vuelve a 1.
+ * `valor` es lo que costó apagarlo (sus toques): un foco fuerte vale más.
+ */
+export function apagar(m: Marcador, ahoraMs: number, valor = 1): Marcador {
   const enRacha =
     m.combo > 0 && m.ultimoApagadoMs !== null && ahoraMs - m.ultimoApagadoMs <= VENTANA_COMBO_MS;
   const combo = enRacha ? m.combo + 1 : 1;
   return {
     ...m,
-    puntos: m.puntos + PUNTOS_BASE * combo,
+    puntos: m.puntos + PUNTOS_BASE * valor * combo,
     combo,
     mejorCombo: Math.max(m.mejorCombo, combo),
     apagados: m.apagados + 1,
@@ -53,6 +56,8 @@ export interface FocoActivo {
   frp: number;
   /** Toques que faltan para apagarlo. */
   golpes: number;
+  /** Toques que hacían falta al encenderse: lo que vale al apagarlo. */
+  toques: number;
   confianza: string;
   verificado: boolean;
   fuenteFija: boolean;
@@ -65,6 +70,7 @@ export function focoActivo(id: number, f: FocoEnPantalla): FocoActivo {
     y: f.y,
     frp: f.frp,
     golpes: potencia(f.frp).toques,
+    toques: potencia(f.frp).toques,
     confianza: f.confidence,
     verificado: false,
     fuenteFija: f.fuente_fija === true,
@@ -73,7 +79,7 @@ export function focoActivo(id: number, f: FocoEnPantalla): FocoActivo {
 
 /** Un foco que nació de otro que se escapó: chico, de un toque. */
 export function focoPropagado(id: number, x: number, y: number): FocoActivo {
-  return { id, x, y, frp: 1, golpes: 1, confianza: "nominal", verificado: false, fuenteFija: false };
+  return { id, x, y, frp: 1, golpes: 1, toques: 1, confianza: "nominal", verificado: false, fuenteFija: false };
 }
 
 /** Cargas del tanque de agua de Charmy. Cada toque gasta una; un lago lo llena. */
@@ -81,13 +87,22 @@ export const TANQUE = 10;
 /** Lo que se gasta de más por apagar un foco de confianza baja sin verificarlo. */
 export const AGUA_SIN_VERIFICAR = 1;
 /** El avión hidrante apaga los focos a esta distancia (en píxeles del lienzo) de donde se lanza. */
-export const RADIO_AVION = 50;
-export const RECARGA_AVION_MS = 15_000;
-export const MAX_CORTAFUEGOS = 4;
+export const RADIO_AVION = 36;
+export const RECARGA_AVION_MS = 20_000;
+export const MAX_CORTAFUEGOS = 6;
 
-/** Una herramienta por vestuario de Charmy. */
-export const HERRAMIENTAS = ["bombero", "piloto", "cientifica", "guia"] as const;
+/** Una herramienta por vestuario de Charmy, más las unidades que se despliegan: brigada de camiones y Charmy aguatero. */
+export const HERRAMIENTAS = ["bombero", "piloto", "cientifica", "guia", "brigada", "aguatero"] as const;
 export type Herramienta = (typeof HERRAMIENTAS)[number];
+
+/** Lo que cuesta usar cada herramienta, en puntos: así se juega con reservas. El agua no cuesta puntos, gasta tanque. */
+export const COSTOS: Partial<Record<Herramienta, number>> = { piloto: 80, brigada: 50, guia: 10, aguatero: 30 };
+/** Lo que paga un cortafuegos cada vez que frena al fuego. */
+export const PREMIO_CORTAFUEGOS = 25;
+/** De los focos con "?", cuántos resultan falsa alarma al verificarlos. */
+export const PROB_FALSA_ALARMA = 0.6;
+/** Lo que suma descubrir una falsa alarma. */
+export const PREMIO_FALSA_ALARMA = 15;
 
 /** Estado de la partida: las escenas lo dibujan y lo cambian solo con estas funciones. */
 export interface Partida {
@@ -117,8 +132,9 @@ export function recargar(p: Partida): Partida {
   return { ...p, agua: TANQUE };
 }
 
-const buscar = (p: Partida, id: number) => p.activos.find((f) => f.id === id);
-const sin = (p: Partida, id: number) => p.activos.filter((f) => f.id !== id);
+export const buscar = (p: Partida, id: number) => p.activos.find((f) => f.id === id);
+/** Los focos activos menos uno. */
+export const sin = (p: Partida, id: number) => p.activos.filter((f) => f.id !== id);
 const restar = (puntos: number) => Math.max(0, puntos - PENALIDAD);
 
 /**
@@ -138,7 +154,7 @@ export function golpearFoco(p: Partida, id: number, ahoraMs: number): Partida {
     };
   }
   const golpes = foco.golpes - 1;
-  let marcador = golpes > 0 ? m : apagar(m, ahoraMs);
+  let marcador = golpes > 0 ? m : apagar(m, ahoraMs, foco.toques);
   let gasto = 1;
   if (foco.confianza === "low" && !foco.verificado) {
     marcador = { ...marcador, sinVerificar: marcador.sinVerificar + 1 };
@@ -176,7 +192,7 @@ export function lanzarAvion(p: Partida, x: number, y: number, ahoraMs: number): 
   const apagados = p.activos.filter(enZona);
   return {
     ...p,
-    marcador: apagados.reduce((m) => apagar(m, ahoraMs), p.marcador),
+    marcador: apagados.reduce((m, f) => apagar(m, ahoraMs, f.toques), p.marcador),
     activos: p.activos.filter((f) => !enZona(f)),
     avionListoMs: ahoraMs + RECARGA_AVION_MS,
   };
@@ -190,7 +206,7 @@ export function ponerCortafuegos(p: Partida, celda: Celda): Partida {
 
 /**
  * Tocar un foco con la herramienta elegida: el bombero lo golpea con agua, la científica lo verifica y el piloto
- * lanza el avión sobre él. La guía no actúa sobre el foco: la escena usa ese toque como un toque en el mapa.
+ * lanza el avión sobre él. Las demás no actúan sobre el foco: el juego usa ese toque como un toque en el mapa.
  */
 export function tocarFoco(p: Partida, id: number, ahoraMs: number): Partida {
   const foco = buscar(p, id);
@@ -202,7 +218,26 @@ export function tocarFoco(p: Partida, id: number, ahoraMs: number): Partida {
       return verificarFoco(p, id);
     case "piloto":
       return lanzarAvion(p, foco.x, foco.y, ahoraMs);
-    case "guia":
+    default:
       return p;
   }
+}
+
+/** Usar una herramienta que cuesta puntos: los descuenta, o devuelve null si no alcanzan. */
+export function cobrar(p: Partida, herramienta: Herramienta): Partida | null {
+  const costo = COSTOS[herramienta] ?? 0;
+  if (p.marcador.puntos < costo) return null;
+  return { ...p, marcador: { ...p.marcador, puntos: p.marcador.puntos - costo } };
+}
+
+/** Un foco con "?" que resultó falsa alarma: desaparece sin gastar agua y suma PREMIO_FALSA_ALARMA. */
+export function descartarFalsaAlarma(p: Partida, id: number): Partida {
+  if (!buscar(p, id)) return p;
+  return { ...p, activos: sin(p, id), marcador: { ...p.marcador, puntos: p.marcador.puntos + PREMIO_FALSA_ALARMA } };
+}
+
+/** Un cortafuegos frenó al fuego: suma PREMIO_CORTAFUEGOS por cada vez. */
+export function premiarCortafuegos(p: Partida, veces: number): Partida {
+  if (veces <= 0) return p;
+  return { ...p, marcador: { ...p.marcador, puntos: p.marcador.puntos + PREMIO_CORTAFUEGOS * veces } };
 }

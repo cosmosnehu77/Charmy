@@ -1,45 +1,40 @@
 # apps/juego: reglas para los agentes
 
-Charmy Brigada, juego web en Phaser 4 y pixel art 2D (D-11). Dueño: `@dimidio6` (carril E, D-25). Cloudflare Pages
-publica `apps/juego/dist` al entrar cambios en `main` (`deploy-web.yml`).
+Charmy Brigada, juego web sobre una maqueta 3D de Sudamérica en PixiJS 8 (D-36, reemplaza a D-11). Dueño:
+`@dimidio6` (carril E, D-25). Cloudflare Pages publica `apps/juego/dist` al entrar cambios en `main` (`deploy-web.yml`).
 
 ## Comandos
 
 ```bash
 pnpm dev --filter @charmy/juego       # http://localhost:5173
 pnpm check --filter @charmy/juego     # tipos, pruebas y compilación
-pnpm --filter @charmy/juego contorno  # regenera src/fondo.json desde data/muestras/regiones.geojson
 ```
 
 ## Reglas
 
-- Desafío del día (`src/desafio.ts`): `main.ts` pide los focos de ayer (hora de Argentina) a nuestra API,
-  `GET {VITE_API_URL}/game/day?date=` (F4-C2), con la forma de `data/muestras/dia-juego.json`. Sin API, si tarda más de
-  3 s, falla o trae menos de 20 focos, se juega la muestra y el inicio lo avisa. Nunca se llama a FIRMS ni a
-  Meteomatics, y las pruebas no tocan la red (respuestas grabadas). `src/datos.ts` pasa los focos a la pantalla.
-- Charmy se dibuja con `charmySvg()` de `@charmy/charmy/core` y se carga como textura. Nunca se copia su SVG.
-- Colores con `paleta`, `interfaz` y las rampas de `@charmy/ui`. Nada de valores sueltos.
-- La lógica (puntaje, combo, carga de datos) va en módulos puros con pruebas de Vitest; Phaser solo dibuja.
-- Una escena de Phaser por archivo en `src/escenas/` (`inicio`, `nivel`, `fin`); lo compartido (tamaño del lienzo,
-  textos, botón, fondo) en `src/comun.ts`. `src/main.ts` solo arma el juego.
-- Todo azar del juego sale de `crearAzar(semilla)` (`src/azar.ts`), con una fecha `AAAA-MM-DD` como semilla.
-- `src/grilla.ts` pasa del lienzo a celdas y de vuelta. `src/contorno.ts` simplifica las regiones y proyecta igual
-  que los focos; su resultado, `src/fondo.json`, es generado: no se edita a mano (una prueba lo compara).
-- `src/mecanica.ts` pasa el dato real a la mecánica: tabla de FRP a toques y tiempo de escape, y pasadas del
-  satélite por hora de detección (de noche la franja baja, de día sube).
-- `src/propagacion.ts`: un foco que se escapa enciende celdas vecinas de la grilla, con el azar de la partida y
-  sesgadas por el viento, hasta un tope. Hasta F4-C2 no hay viento (`VIENTO = null` en el nivel).
-- `src/partida.ts` (puntaje, combo, penalidades y el estado de la partida: focos activos, tanque de agua, herramienta
-  elegida, avión y cortafuegos), `src/ritmo.ts` (estado de Charmy y curva de dificultad) y `src/lagos.ts` (lagos
-  donde se recarga, con posición aproximada), `src/cierre.ts` (dato real y consejo) y `src/record.ts` (récord en
-  el navegador, que sigue leyendo la clave de cuando el juego se llamaba Charmy Kids) son puros y probados.
-- Las herramientas (una por vestuario de Charmy) se eligen en una barra de HTML (`#herramientas`, `src/barra.ts`),
-  para el dedo, el teclado (1 a 4) y el lector de pantalla. Charmy en el nivel lleva el vestuario de la herramienta.
-- Modo explorador (accesibilidad, `src/explorador.ts`): un botón de HTML en el pie arranca el nivel con
-  `{ modo: "explorador" }`. Sin reloj, sin escapes, sin gastar agua y sin récord. Flechas y Tab recorren los focos,
-  Enter o Espacio apagan, V verifica y Escape termina. Lo que dice el lector de pantalla va a `anunciar()` (la región
-  `aria-live` `#anuncio`). `src/fondo.json` guarda el nombre de cada región para decir dónde está el foco.
-- El sonido sale de `SONIDO` (`src/sonido.ts`, Web Audio, sin archivos). El silencio es un botón de HTML en el pie
-  y se recuerda en el navegador.
-- En las escenas, todo tiempo de juego sale del reloj de la escena (`this.time`, `TimerEvent`), nunca de `this.time.now`
-  ni de `Date.now()`: los temporizadores se frenan con la pestaña en segundo plano y el resto no.
+- Los focos son **simulados** (D-36): aparecen por barridas del satélite en zonas de Sudamérica donde el fuego es
+  habitual. El juego no llama a la API ni a FIRMS ni a Meteomatics. Lo dice la guía y lo repite el final con el 100 y
+  el 132 (`AVISO_SIMULADOS` en `src/cierre.ts`).
+- `src/juego.js` arma el mundo y la interfaz: maqueta en relieve (malla de Pixi con cámara en perspectiva hecha a mano),
+  fuego y partículas, barridas, viento, unidades, guía de Charmy, pausa, temas claro y oscuro, inicio y final. Solo
+  dibuja y conecta: las reglas van en módulos puros de TypeScript con pruebas de Vitest.
+- Módulos puros y probados: `partida.ts` (puntaje, combo, agua, herramientas, costos en puntos, falsas alarmas y
+  premio de los cortafuegos), `reloj.ts` (tiempo que sube al apagar y corre más rápido con más focos, victoria),
+  `mecanica.ts` (de FRP a toques y tiempo de escape), `propagacion.ts` (un foco que se escapa enciende vecinos, sesgado
+  por el viento), `ritmo.ts` (estado de Charmy), `lagos.ts` (fuentes de agua y ríos), `explorador.ts` (modo sin reloj
+  para lector de pantalla), `cierre.ts` (consejo y frase del final), `record.ts` (récord y mejores partidas en el
+  navegador, que sigue leyendo la clave de Charmy Kids), `sonido.ts` (Web Audio, sin archivos), `contorno.ts`,
+  `grilla.ts` y `azar.ts`.
+- Una regla nueva o un número que cambia el puntaje se escribe primero como prueba en `test/` y después en el módulo;
+  `juego.js` solo lo usa.
+- El mapa (`src/sudamerica.json`) sale de Natural Earth 1:50m (dominio público), simplificado. Los nombres van en
+  español y las Islas Malvinas se llaman así (una prueba lo comprueba).
+- Charmy se dibuja siempre con `charmySvg()` de `@charmy/charmy/core` (en el HTML y como textura de Pixi). Nunca se
+  copia su SVG.
+- Colores y tipografías de `@charmy/ui`: `tokens.css` y `fonts.css` en el CSS, `paleta` y `rampaConteo` en el código.
+  Los pocos tonos propios del juego (hover del ámbar, agua y avisos sobre el mapa oscuro) están definidos una sola vez
+  en el `:root` de `src/estilo.css`.
+- Todo azar de la partida sale de `crearAzar(semilla)` (`src/azar.ts`).
+- Accesibilidad: las herramientas y la cámara son botones de HTML; lo que dice el lector de pantalla va a `anunciar()`
+  (la región `aria-live` `#anuncio`); las animaciones respetan `prefers-reduced-motion`.
+- La tabla de puntajes compartida (F4-E10, RF-KID-04) queda para después.

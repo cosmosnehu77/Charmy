@@ -63,3 +63,16 @@ describe("reglas del modo explorador", () => {
     expect(REGLAS.normal).toEqual({ reloj: true, escapes: true, gastaAgua: true, sumaRecord: true });
   });
 });
+
+describe("texto del foco en inglés", () => {
+  it("dice lo mismo en inglés, con punto decimal", () => {
+    const t = textoDeFoco(foco(1, 0, 0, { frp: 4.77 }), 3, 142, "Neuquén, Argentina", "en");
+    expect(t).toBe("Fire 3 of 142, in Neuquén, Argentina (approximate). Power 4.8 megawatts: it takes 2 taps.");
+  });
+
+  it("avisa la falsa alarma, la verificación y las fuentes fijas", () => {
+    expect(textoDeFoco(foco(1, 0, 0, { confidence: "low" }), 1, 5, null, "en")).toMatch(/outside the map's regions.*1 tap\..*false alarm.*V key/);
+    expect(textoDeFoco({ ...foco(1, 0, 0, { confidence: "low" }), verificado: true }, 1, 5, null, "en")).toContain("Verified.");
+    expect(textoDeFoco(foco(1, 0, 0, { fuente_fija: true }), 1, 5, null, "en")).toMatch(/fixed source.*doesn't need putting out/);
+  });
+});

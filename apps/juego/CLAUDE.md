@@ -37,4 +37,8 @@ pnpm check --filter @charmy/juego     # tipos, pruebas y compilación
 - Todo azar de la partida sale de `crearAzar(semilla)` (`src/azar.ts`).
 - Accesibilidad: las herramientas y la cámara son botones de HTML; lo que dice el lector de pantalla va a `anunciar()`
   (la región `aria-live` `#anuncio`); las animaciones respetan `prefers-reduced-motion`.
+- Idioma: el juego habla español o inglés, el mismo que la landing. Llega en el enlace (`?idioma=en`) o de lo
+  guardado en `charmy-idioma` (`src/idioma.ts`). Todo texto nuevo va en los dos idiomas: los del HTML con `data-t`
+  (y `data-t-aria`, `data-t-title`) en `HTML` de `src/textos.ts`; los de `juego.js` en `TEXTOS`. Las pruebas comprueban
+  que no falte ninguna clave.
 - La tabla de puntajes compartida (F4-E10, RF-KID-04) queda para después.

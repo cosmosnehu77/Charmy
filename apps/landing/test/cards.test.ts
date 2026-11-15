@@ -42,7 +42,7 @@ describe("cards de la landing (F4-E1b, #286)", () => {
     expect(img?.getAttribute("alt")).toBeTruthy();
     expect(img?.getAttribute("src")).toBe("/juego/partida.jpg");
     expect(existsSync(fileURLToPath(new URL("../public/juego/partida.jpg", import.meta.url)))).toBe(true);
-    expect(doc.querySelector("#juego .captura")?.getAttribute("href")).toBe("https://charmy-juego.pages.dev");
+    expect(doc.querySelector("#juego .captura")?.getAttribute("href")).toBe("https://juego.charmy.earth");
     expect(texto("#juego")).not.toContain("día real");
   });
 

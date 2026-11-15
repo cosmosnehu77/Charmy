@@ -24,7 +24,7 @@ describe("esqueleto de la app", () => {
     expect(screen.getByText(/no reemplaza a los servicios de emergencia/)).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Charmy: ir a la página de inicio" })).toHaveAttribute(
       "href",
-      "https://charmy-landing.pages.dev",
+      "https://charmy.earth",
     );
   });
 

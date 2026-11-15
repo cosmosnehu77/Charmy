@@ -5,6 +5,7 @@ import App from "@/App";
 import { estadoInicialConsulta, useConsulta } from "@/estado/consulta";
 import { urlGoogleMaps, urlGoogleMapsEmbed } from "@/lib/enlaces";
 import { useRelieve } from "@/relieve/estado";
+import { reiniciarPreferencias } from "@/relieve/idioma";
 import { useVivo } from "@/vivo/estado";
 
 // jsdom no tiene WebGL: el mapa de Relieve se revisa en el navegador.
@@ -149,6 +150,7 @@ beforeEach(() => {
     return new Response(JSON.stringify({ status: "ok" }));
   });
   vi.stubGlobal("fetch", fetchSimulado);
+  reiniciarPreferencias();
   useConsulta.setState(estadoInicialConsulta("2026-11-14"));
   useVivo.setState({ satelites: ["N20", "N21"], reportando: false });
   useRelieve.setState({
@@ -198,7 +200,7 @@ describe("vista Relieve (F4-R1)", () => {
     montar();
     expect(screen.getByRole("link", { name: "Charmy: ir a la página de inicio" })).toHaveAttribute(
       "href",
-      "https://charmy-landing.pages.dev",
+      "https://charmy.earth",
     );
   });
 
@@ -841,5 +843,77 @@ describe("Charmy invita a la guía (F4-D10)", () => {
     } finally {
       vi.useRealTimers();
     }
+  });
+});
+
+describe("idioma EN/ES y tema claro/oscuro", () => {
+  it("el botón EN/ES arriba a la derecha traduce toda la interfaz al inglés y guarda la preferencia", async () => {
+    montar();
+    const u = userEvent.setup();
+    const btnIdioma = screen.getByRole("button", { name: "Switch to English" });
+    expect(document.documentElement.lang).toBe("es");
+
+    await u.click(btnIdioma);
+
+    expect(document.documentElement.lang).toBe("en");
+    expect(localStorage.getItem("charmy-idioma")).toBe("en");
+    expect(document.title).toContain("Fire in Argentina and the Southern Cone");
+    expect(screen.getByRole("button", { name: "Cambiar a español" })).toBeInTheDocument();
+
+    const pestanas = screen.getByRole("tablist", { name: "Indicator" });
+    expect(within(pestanas).getAllByRole("tab").map((t) => t.textContent)).toEqual([
+      "Hotspots",
+      "Intensity",
+      "Anomaly",
+      "Risk",
+      "Forecast",
+      "Expert",
+      "Live",
+    ]);
+    expect(screen.getByRole("combobox", { name: "Search your province or region" })).toBeInTheDocument();
+    expect(screen.getByText("How to read the map")).toBeInTheDocument();
+    expect(screen.getByText(/Charmy does not replace emergency services/)).toBeInTheDocument();
+
+    // Abrir la ficha de una provincia en inglés
+    await u.click(await screen.findByRole("button", { name: /Neuquén/ }));
+    const ficha = screen.getByRole("region", { name: "Card for Neuquén" });
+    expect(within(ficha).getByText("Total intensity")).toBeInTheDocument();
+    expect(within(ficha).getByText("Compared to normal")).toBeInTheDocument();
+    expect(within(ficha).getByText("In numbers")).toBeInTheDocument();
+    expect(within(ficha).getByText("View burn calendar")).toBeInTheDocument();
+
+    // Cambiar a Expert y Live en inglés
+    await u.click(screen.getByRole("tab", { name: "Expert" }));
+    expect(screen.getByRole("complementary", { name: "Expert" })).toHaveTextContent("1 · Where");
+    expect(screen.getByRole("complementary", { name: "Expert" })).toHaveTextContent("2 · When");
+    expect(screen.getByRole("complementary", { name: "Expert" })).toHaveTextContent("3 · Filters");
+
+    await u.click(screen.getByRole("tab", { name: "Live" }));
+    expect(screen.getByRole("complementary", { name: "Live summary" })).toHaveTextContent("Size = intensity");
+
+    // Volver a español
+    await u.click(screen.getByRole("button", { name: "Cambiar a español" }));
+    expect(document.documentElement.lang).toBe("es");
+    expect(localStorage.getItem("charmy-idioma")).toBe("es");
+    expect(screen.getByRole("complementary", { name: "Resumen en vivo" })).toBeInTheDocument();
+  });
+
+  it("el botón de tema con iconos sol/luna alterna entre oscuro y claro y guarda la preferencia", async () => {
+    montar();
+    const u = userEvent.setup();
+    const btnTema = screen.getByRole("button", { name: "Cambiar a tema claro" });
+    expect(document.documentElement.dataset.tema).toBe("oscuro");
+    expect(btnTema.querySelector(".i-sol")).toBeInTheDocument();
+    expect(btnTema.querySelector(".i-luna")).toBeInTheDocument();
+
+    await u.click(btnTema);
+
+    expect(document.documentElement.dataset.tema).toBe("claro");
+    expect(localStorage.getItem("charmy-tema")).toBe("claro");
+    expect(screen.getByRole("button", { name: "Cambiar a tema oscuro" })).toBeInTheDocument();
+
+    await u.click(screen.getByRole("button", { name: "Cambiar a tema oscuro" }));
+    expect(document.documentElement.dataset.tema).toBe("oscuro");
+    expect(localStorage.getItem("charmy-tema")).toBe("oscuro");
   });
 });

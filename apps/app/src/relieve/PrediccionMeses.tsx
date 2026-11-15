@@ -1,3 +1,4 @@
+import { t, useIdioma } from "./idioma";
 import { type MesPrediccion, nombreMes, plazoPrediccion } from "./logica";
 
 /**
@@ -5,6 +6,7 @@ import { type MesPrediccion, nombreMes, plazoPrediccion } from "./logica";
  * `texto` dice cada mes en celdas (una provincia) o en probabilidad (un área chica).
  */
 export function PrediccionMeses({ meses, texto }: { meses: MesPrediccion[]; texto: (m: MesPrediccion) => string }) {
+  useIdioma((s) => s.idioma);
   const fila = (m: MesPrediccion) => {
     const nombre = nombreMes(Number(m.month.slice(5, 7)));
     return (
@@ -23,16 +25,21 @@ export function PrediccionMeses({ meses, texto }: { meses: MesPrediccion[]; text
   const resto = meses.filter((m) => m.kind !== "forecast");
   return (
     <div>
-      <h3 className="mb-1 text-[11.5px] font-normal uppercase tracking-wider text-white/50">Los próximos meses</h3>
+      <h3 className="mb-1 text-[11.5px] font-normal uppercase tracking-wider text-white/50">
+        {t("Los próximos meses", "Upcoming months")}
+      </h3>
       <ul className="m-0 list-none p-0">{pronostico.map(fila)}</ul>
       {resto.length > 0 && (
         <details className="calendario-relieve">
-          <summary>Más adelante</summary>
+          <summary>{t("Más adelante", "Further ahead")}</summary>
           <ul className="m-0 list-none p-0">{resto.map(fila)}</ul>
         </details>
       )}
       <p className="mt-1 text-[11.5px] leading-snug text-white/45">
-        Es una estimación del modelo con los datos hasta el mes pasado: cuenta celdas de 0,1° (unos 11 km) con fuego.
+        {t(
+          "Es una estimación del modelo con los datos hasta el mes pasado: cuenta celdas de 0,1° (unos 11 km) con fuego.",
+          "Model estimate based on data through last month: counts 0.1° cells (~11 km) with fire.",
+        )}
       </p>
     </div>
   );

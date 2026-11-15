@@ -1,10 +1,12 @@
 import { Pause, Play } from "lucide-react";
 import { useEffect } from "react";
 import { useRelieve } from "./estado";
+import { t, useIdioma } from "./idioma";
 import { diaCorto, type RegionResumen } from "./logica";
 
 /** Línea de tiempo de la región elegida: una barra por día con sus focos; el play los recorre (F4-R1). */
 export function LineaTiempo({ region, dias }: { region: RegionResumen; dias: string[] }) {
+  useIdioma((s) => s.idioma);
   const { linea, usarLinea } = useRelieve();
   const porDia = region.properties.by_day;
 
@@ -35,23 +37,25 @@ export function LineaTiempo({ region, dias }: { region: RegionResumen; dias: str
   return (
     <div
       role="group"
-      aria-label={`Focos por día en ${region.properties.name}`}
+      aria-label={t(`Focos por día en ${region.properties.name}`, `Daily hotspots in ${region.properties.name}`)}
       data-guia="linea"
       className="linea-relieve vidrio-relieve pointer-events-auto absolute left-1/2 top-[76px] z-20 flex w-max max-w-[calc(100%-24px)] -translate-x-1/2 items-center gap-4 rounded-full py-[9px] pl-[9px] pr-[22px] md:bottom-[84px] md:top-auto"
     >
       <button
         type="button"
         onClick={reproducir}
-        aria-label={linea.play ? "Pausar" : "Reproducir los días"}
+        aria-label={linea.play ? t("Pausar", "Pause") : t("Reproducir los días", "Play days")}
         className="grid size-10 shrink-0 place-items-center rounded-full bg-charmy-llama text-tinta shadow-[0_0_18px_var(--charmy-llama)] hover:bg-relieve-brillo"
       >
         {linea.play ? <Pause aria-hidden="true" className="size-3.5 fill-current" /> : <Play aria-hidden="true" className="size-3.5 fill-current" />}
       </button>
       <div className="flex min-w-0 flex-col gap-1">
         <div className="flex items-baseline justify-between gap-4 whitespace-nowrap text-xs text-white/60">
-          <span>Focos en {region.properties.name}</span>
+          <span>{t(`Focos en ${region.properties.name}`, `Hotspots in ${region.properties.name}`)}</span>
           <b className="font-semibold text-white" aria-live="polite">
-            {linea.activa ? `${diaCorto(dia)} · ${focosDelDia} ${focosDelDia === 1 ? "foco" : "focos"}` : "Tocá play o un día"}
+            {linea.activa
+              ? `${diaCorto(dia)} · ${focosDelDia} ${focosDelDia === 1 ? t("foco", "hotspot") : t("focos", "hotspots")}`
+              : t("Tocá play o un día", "Tap play or a day")}
           </b>
         </div>
         <div className="flex items-end gap-2">
@@ -63,7 +67,7 @@ export function LineaTiempo({ region, dias }: { region: RegionResumen; dias: str
                 key={d}
                 type="button"
                 onClick={() => usarLinea({ activa: true, play: false, dia: i })}
-                aria-label={`${diaCorto(d)}: ${n} ${n === 1 ? "foco" : "focos"}`}
+                aria-label={`${diaCorto(d)}: ${n} ${n === 1 ? t("foco", "hotspot") : t("focos", "hotspots")}`}
                 aria-pressed={linea.activa && i === linea.dia}
                 className="group flex w-[34px] flex-col items-center gap-[3px]"
               >

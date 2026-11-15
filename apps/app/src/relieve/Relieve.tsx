@@ -9,6 +9,7 @@ import { useDatosRelieve } from "./datos";
 import { FichaFoco, PanelEnVivo } from "./EnVivo";
 import { indicadorDe, useRelieve } from "./estado";
 import { FichaRegion } from "./FichaRegion";
+import { localeActual, t, useIdioma } from "./idioma";
 import { LineaTiempo } from "./LineaTiempo";
 import { INDICADORES, rankingRegiones, serieDelIndicador, tendencia, valorIndicador } from "./logica";
 import { Pildora } from "./Pildora";
@@ -20,10 +21,11 @@ import "./estilos.css";
 const MapaRelieve = lazy(() => import("./MapaRelieve"));
 /** Segundos que el ranking queda abierto sin el cursor encima antes de esconderse (#251). */
 const RANKING_ABIERTO_MS = 6000;
-const num = (v: number, d = 0) => v.toLocaleString("es-AR", { minimumFractionDigits: d, maximumFractionDigits: d });
+const num = (v: number, d = 0) => v.toLocaleString(localeActual(), { minimumFractionDigits: d, maximumFractionDigits: d });
 
 /** Vista Relieve (F4-R1): el país en relieve por provincia, con paneles de vidrio flotando sobre el mapa. */
 export function Relieve() {
+  const { idioma, tema, alternarIdioma, alternarTema } = useIdioma();
   const { resumen, vivo, prediccion, regiones, focos } = useDatosRelieve();
   const estado = useRelieve();
   const [sobre, setSobre] = useState<{ id: string | null; foco: number | null; x: number; y: number }>({
@@ -66,14 +68,23 @@ export function Relieve() {
   // Se esconde solo, salvo con el cursor encima o durante el recorrido de Charmy.
   useEffect(() => {
     if (!rankingAbierto || sobreRanking || guia) return;
-    const t = setTimeout(() => cambiar({ ranking: false }), RANKING_ABIERTO_MS);
-    return () => clearTimeout(t);
+    const timer = setTimeout(() => cambiar({ ranking: false }), RANKING_ABIERTO_MS);
+    return () => clearTimeout(timer);
   }, [rankingAbierto, sobreRanking, guia, cambiar]);
+  useEffect(() => {
+    useIdioma.getState().sincronizarPreferencias();
+  }, []);
 
   return (
     <div className="relieve relative h-full min-h-[560px] overflow-hidden bg-relieve-fondo text-white">
       <div aria-hidden="true" className="relieve-brillo-fondo pointer-events-none absolute inset-0" />
-      <Suspense fallback={<p className="absolute inset-0 grid place-items-center text-sm text-white/60">Cargando el mapa…</p>}>
+      <Suspense
+        fallback={
+          <p className="absolute inset-0 grid place-items-center text-sm text-white/60">
+            {t("Cargando el mapa…", "Loading map…")}
+          </p>
+        }
+      >
         <MapaRelieve regiones={regiones} dias={dias} focos={enVivo ? focosVivo : focos} onHover={setSobre} />
       </Suspense>
 
@@ -85,7 +96,7 @@ export function Relieve() {
               <span>
                 {(() => {
                   const v = valorIndicador(regionSobre.properties, indicador);
-                  return v === null ? "sin dato" : `${num(v)} ${info?.unidad ?? ""}`;
+                  return v === null ? t("sin dato", "no data") : `${num(v)} ${info?.unidad ?? ""}`;
                 })()}
               </span>
             </>
@@ -97,9 +108,74 @@ export function Relieve() {
 
       <Pildora regiones={regiones} />
 
+      <div className="nav-acc pointer-events-auto absolute right-4 top-3 z-30">
+        <button
+          className="nav-btn"
+          id="btn-tema"
+          type="button"
+          aria-label={
+            tema === "oscuro"
+              ? t("Cambiar a tema claro", "Switch to light theme")
+              : t("Cambiar a tema oscuro", "Switch to dark theme")
+          }
+          title={
+            tema === "oscuro"
+              ? t("Cambiar a tema claro", "Switch to light theme")
+              : t("Cambiar a tema oscuro", "Switch to dark theme")
+          }
+          onClick={alternarTema}
+        >
+          <svg
+            aria-hidden="true"
+            className="i-sol"
+            viewBox="0 0 24 24"
+            width="18"
+            height="18"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.8"
+            strokeLinecap="round"
+          >
+            <circle cx="12" cy="12" r="4.5" />
+            <path d="M12 2.5v2.5M12 19v2.5M4.9 4.9l1.8 1.8M17.3 17.3l1.8 1.8M2.5 12H5M19 12h2.5M4.9 19.1l1.8-1.8M17.3 6.7l1.8-1.8" />
+          </svg>
+          <svg
+            aria-hidden="true"
+            className="i-luna"
+            viewBox="0 0 24 24"
+            width="18"
+            height="18"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.8"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <path d="M20.5 14.5A8.5 8.5 0 0 1 9.5 3.5a8.5 8.5 0 1 0 11 11Z" />
+          </svg>
+        </button>
+        <button
+          className="nav-btn idioma"
+          id="btn-idioma"
+          type="button"
+          aria-label={idioma === "es" ? "Switch to English" : "Cambiar a español"}
+          onClick={alternarIdioma}
+        >
+          <span data-l="es" className={idioma === "es" ? "on" : undefined}>
+            ES
+          </span>
+          <span data-l="en" className={idioma === "en" ? "on" : undefined}>
+            EN
+          </span>
+        </button>
+      </div>
+
       {resumen.isError && (
         <p role="alert" className="vidrio-relieve absolute left-1/2 top-24 z-20 -translate-x-1/2 rounded-xl px-4 py-2.5 text-sm">
-          Los datos por provincia no están disponibles ahora. Probá en un rato.
+          {t(
+            "Los datos por provincia no están disponibles ahora. Probá en un rato.",
+            "Provincial data is not available right now. Try again shortly.",
+          )}
         </p>
       )}
 
@@ -121,7 +197,7 @@ export function Relieve() {
             // Escondido queda una pestaña en el borde: acercar el cursor (o tocarla) lo vuelve a abrir.
             <button
               type="button"
-              aria-label="Mostrar el ranking"
+              aria-label={t("Mostrar el ranking", "Show ranking")}
               onMouseEnter={() => cambiar({ ranking: true })}
               onClick={() => cambiar({ ranking: true })}
               className="pestana-ranking pointer-events-auto absolute left-0 top-[68px] z-10 hidden h-[120px] w-10 items-center md:flex"
@@ -150,10 +226,14 @@ export function Relieve() {
             {!info?.disponible ? (
               <p className="px-2 text-sm text-white/50">{info?.ayuda}</p>
             ) : sinPrediccion ? (
-              <p className="px-2 text-sm text-white/50">La predicción no está disponible ahora. Probá en un rato.</p>
+              <p className="px-2 text-sm text-white/50">
+                {t("La predicción no está disponible ahora. Probá en un rato.", "Forecast is not available right now. Try again shortly.")}
+              </p>
             ) : ranking.length === 0 ? (
               <p className="px-2 text-sm text-white/50">
-                {resumen.isPending || (indicador === "prediccion" && prediccion.isPending) ? "Cargando…" : "Sin datos de este indicador ahora."}
+                {resumen.isPending || (indicador === "prediccion" && prediccion.isPending)
+                  ? t("Cargando…", "Loading…")
+                  : t("Sin datos de este indicador ahora.", "No data for this indicator right now.")}
               </p>
             ) : (
               <ol className="m-0 flex list-none flex-col p-0">
@@ -190,11 +270,14 @@ export function Relieve() {
           {!region && (
             // Más arriba que el borde: abajo a la derecha queda el botón de atribución del mapa (#251).
             <div data-guia="leyenda" className="vidrio-relieve absolute bottom-11 right-4 z-10 hidden max-w-[300px] rounded-xl p-3 text-xs md:block">
-              <div className="mb-1 font-titulos font-semibold">Cómo leer el mapa</div>
+              <div className="mb-1 font-titulos font-semibold">{t("Cómo leer el mapa", "How to read the map")}</div>
               <p className="mb-2 text-white/60">
                 {info?.disponible
-                  ? `${info.ayuda} Cuanto más alta y más oscura la región, ${indicador === "anomalia" ? "más se aleja de lo normal" : "más fuego"}.`
-                  : `${info?.ayuda} El resto del mapa sigue andando.`}
+                  ? t(
+                      `${info.ayuda} Cuanto más alta y más oscura la región, ${indicador === "anomalia" ? "más se aleja de lo normal" : "más fuego"}.`,
+                      `${info.ayuda} The taller and darker the region, ${indicador === "anomalia" ? "the further from normal" : "the more fire"}.`,
+                    )
+                  : t(`${info?.ayuda} El resto del mapa sigue andando.`, `${info?.ayuda} The rest of the map keeps working.`)}
               </p>
               {info?.disponible && (
                 <>
@@ -204,8 +287,8 @@ export function Relieve() {
                     ))}
                   </div>
                   <div className="mt-1 flex justify-between text-[11px] text-white/50">
-                    <span>{indicador === "anomalia" ? "menos que lo normal" : "menos"}</span>
-                    <span>{indicador === "anomalia" ? "más" : "más"}</span>
+                    <span>{indicador === "anomalia" ? t("menos que lo normal", "below normal") : t("menos", "less")}</span>
+                    <span>{t("más", "more")}</span>
                   </div>
                 </>
               )}
@@ -225,26 +308,26 @@ export function Relieve() {
 
       {!enVivo && (
         <div data-guia="controles" className="pointer-events-auto absolute right-4 top-1/2 z-20 flex -translate-y-1/2 flex-col gap-2">
-          <BotonRedondo etiqueta="Acercar" onClick={() => controlMapa.zoom(0.75)}>
+          <BotonRedondo etiqueta={t("Acercar", "Zoom in")} onClick={() => controlMapa.zoom(0.75)}>
             <Plus aria-hidden="true" className="size-4" />
           </BotonRedondo>
-          <BotonRedondo etiqueta="Alejar" onClick={() => controlMapa.zoom(1.33)}>
+          <BotonRedondo etiqueta={t("Alejar", "Zoom out")} onClick={() => controlMapa.zoom(1.33)}>
             <Minus aria-hidden="true" className="size-4" />
           </BotonRedondo>
-          <BotonRedondo etiqueta="Mirar al norte" onClick={() => controlMapa.norte()}>
+          <BotonRedondo etiqueta={t("Mirar al norte", "Reset north")} onClick={() => controlMapa.norte()}>
             <Compass aria-hidden="true" className="size-4 text-relieve-brillo" />
           </BotonRedondo>
           {/* Tu zona va siempre en plano, para dibujar sobre el mapa sin inclinación. */}
           {!zona && (
             <>
               <BotonRedondo
-                etiqueta={estado.plano ? "Ver en 3D" : "Ver en 2D, más liviano"}
+                etiqueta={estado.plano ? t("Ver en 3D", "View in 3D") : t("Ver en 2D, más liviano", "View in 2D, lighter")}
                 onClick={() => estado.cambiar({ plano: !estado.plano })}
               >
                 <span className="text-[10px] font-bold">{estado.plano ? "3D" : "2D"}</span>
               </BotonRedondo>
               <BotonRedondo
-                etiqueta={estado.giro ? "Detener el giro" : "Girar el mapa"}
+                etiqueta={estado.giro ? t("Detener el giro", "Stop rotation") : t("Girar el mapa", "Rotate map")}
                 activo={estado.giro}
                 onClick={() => estado.cambiar({ giro: !estado.giro })}
               >
@@ -270,9 +353,18 @@ export function Relieve() {
         <p
           className={`rounded-full bg-relieve-vidrio/60 px-3 py-1 text-[11px] text-white/70 ring-1 ring-white/10 ${region || zona ? "max-md:rounded-xl max-md:bg-relieve-panel max-md:shadow-lg" : ""} ${zona ? "md:rounded-xl" : ""}`}
         >
-          Charmy no reemplaza a los servicios de emergencia. Si ves fuego, llamá al{" "}
-          <strong className="text-relieve-brillo">100</strong> en Argentina o al{" "}
-          <strong className="text-relieve-brillo">132</strong> en Chile.
+          {t(
+            <>
+              Charmy no reemplaza a los servicios de emergencia. Si ves fuego, llamá al{" "}
+              <strong className="text-relieve-brillo">100</strong> en Argentina o al{" "}
+              <strong className="text-relieve-brillo">132</strong> en Chile.
+            </>,
+            <>
+              Charmy does not replace emergency services. If you see fire, call{" "}
+              <strong className="text-relieve-brillo">100</strong> in Argentina or{" "}
+              <strong className="text-relieve-brillo">132</strong> in Chile.
+            </>,
+          )}
         </p>
       </div>
     </div>

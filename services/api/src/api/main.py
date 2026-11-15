@@ -17,7 +17,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
-from api import avisos, calendario, cap, hotspots, prediccion, prediccion_zona, regiones, vivo
+from api import avisos, calendario, cap, hotspots, prediccion, prediccion_zona, regiones, telegram, vivo
 from api.datos import DatosNoDisponibles, copiar, version
 from api.errores import ErrorDeContrato, respuesta
 
@@ -127,6 +127,7 @@ v1.include_router(vivo.router)
 v1.include_router(regiones.router)
 v1.include_router(avisos.router)
 v1.include_router(cap.router)
+v1.include_router(telegram.router)  # botones de los avisos al instante (D-41)
 # Contexto del foco (carril B, services/contexto): tiempo con Meteomatics e imagen de Copernicus.
 v1.include_router(tiempo.router)
 v1.include_router(imagen.router)

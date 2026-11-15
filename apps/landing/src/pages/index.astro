@@ -6,8 +6,8 @@ import "../styles/global.css";
 import "../styles/landing.css";
 
 // Dominios por defecto de Cloudflare Pages (deploy-web.yml: proyectos charmy-app y charmy-juego).
-const URL_APP = "https://charmy-app.pages.dev";
-const URL_JUEGO = "https://charmy-juego.pages.dev";
+const URL_APP = "https://app.charmy.earth";
+const URL_JUEGO = "https://juego.charmy.earth";
 const URL_METODO = "https://github.com/cosmosnehu77/Charmy/blob/main/docs/metodologia/README.md";
 
 // Charmy guía: un dibujo por paso del recorrido, siempre desde el componente (nunca un SVG copiado).
@@ -120,7 +120,7 @@ const tira = [...instituciones, ...instituciones];
         <p class="bajada">Más de veinte años de focos de calor vistos desde el espacio, en un solo mapa.</p>
         <div class="acciones">
           <a class="boton" href={URL_APP}>Abrir la app <Fragment set:html={flecha} /></a>
-          <a class="enlace" href={URL_JUEGO}>Jugar a Charmy Brigada</a>
+          <a class="enlace" data-juego href={URL_JUEGO}>Jugar a Charmy Brigada</a>
         </div>
         <div class="desliza" aria-hidden="true"><i></i>Bajá para recorrer el mapa</div>
       </section>
@@ -259,10 +259,10 @@ const tira = [...instituciones, ...instituciones];
             <span class="eti">03 <i>·</i> Charmy Brigada</span>
             <h2 id="titulo-juego">Apagá los focos con Charmy.</h2>
             <p>Un juego para chicas y chicos sobre una maqueta en relieve de Sudamérica. El satélite pasa, aparecen focos y los apagás con agua, aviones y brigadas antes de que el viento los corra.</p>
-            <a class="boton" href={URL_JUEGO}>Jugar <Fragment set:html={flecha} /></a>
+            <a class="boton" data-juego href={URL_JUEGO}>Jugar <Fragment set:html={flecha} /></a>
           </div>
           <div class="escena">
-            <a class="captura" href={URL_JUEGO}><img src="/juego/partida.jpg" width="1120" height="673" loading="lazy" alt="Charmy Brigada en partida: la maqueta de Sudamérica en relieve, la barrida del satélite, focos encendidos y Charmy bombero" /></a>
+            <a class="captura" data-juego href={URL_JUEGO}><img src="/juego/partida.jpg" width="1120" height="673" loading="lazy" alt="Charmy Brigada en partida: la maqueta de Sudamérica en relieve, la barrida del satélite, focos encendidos y Charmy bombero" /></a>
           </div>
         </section>
 

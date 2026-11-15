@@ -4,6 +4,7 @@ import regionesJson from "../data/regiones.json";
 import Lenis from "lenis";
 import "lenis/dist/lenis.css";
 import { EN } from "./en";
+import { conIdioma, idiomaInicial } from "./idioma";
 import { ocultarBarra, progresoPaso, suave, tiempoLectura, tramo } from "./recorrido";
 
 type Region = { k: string; n: string; r: number[][]; bb?: number[][] };
@@ -520,11 +521,13 @@ function aplicarIdioma(id: string) {
   btnIdioma.querySelectorAll<HTMLElement>("span").forEach((s) => s.classList.toggle("on", s.dataset.l === idioma));
   btnIdioma.setAttribute("aria-label", idioma === "en" ? "Cambiar a español" : "Switch to English");
   etiquetaTema();
+  // El juego está en otro origen: el idioma le llega en el enlace.
+  document.querySelectorAll<HTMLAnchorElement>("a[data-juego]").forEach((a) => { a.href = conIdioma(a.href, idioma); });
   guardar("charmy-idioma", idioma);
 }
 btnTema.addEventListener("click", () => aplicarTema(raiz.dataset.tema === "oscuro" ? "claro" : "oscuro"));
 btnIdioma.addEventListener("click", () => aplicarIdioma(idioma === "en" ? "es" : "en"));
-aplicarIdioma(leer("charmy-idioma") ?? "es");
+aplicarIdioma(idiomaInicial(location.search, leer("charmy-idioma")));
 aplicarTema(raiz.dataset.tema ?? "claro");
 requestAnimationFrame(dibujar);
 

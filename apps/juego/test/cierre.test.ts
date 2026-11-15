@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { AVISO_SIMULADOS, CONSEJOS, cierreDePartida, focos, fraseDelFinal, miles } from "../src/cierre";
+import { AVISO_SIMULADOS, CONSEJOS, avisoSimulados, cierreDePartida, focos, fraseDelFinal, miles } from "../src/cierre";
 
 describe("cierreDePartida", () => {
   it("muestra un consejo de prevención", () => {
@@ -79,5 +79,31 @@ describe("números en palabras", () => {
   it("separa los miles con punto", () => {
     expect(miles(1240)).toBe("1.240");
     expect(miles(999.6)).toBe("1.000");
+  });
+});
+
+describe("cierre en inglés", () => {
+  const base = { puntos: 860, antes: 860, record: 1240, apagados: 31, barridas: 3, victoria: false, sumaRecord: true };
+
+  it("el consejo, el aviso y las fuentes fijas salen en inglés, con los mismos números de emergencia", () => {
+    const { consejo, fuentesFijas } = cierreDePartida(0, 1, "en");
+    expect(consejo).toMatch(/smoke or fire/);
+    expect(consejo).toContain("100");
+    expect(fuentesFijas).toMatch(/^You touched 1 fixed source:/);
+    expect(avisoSimulados("en")).toMatch(/simulated.*100.*132/);
+    expect(avisoSimulados("es")).toBe(AVISO_SIMULADOS);
+  });
+
+  it("la frase del final y los números van en inglés", () => {
+    expect(fraseDelFinal(base, "en")).toBe("You put out <b>31 fires</b> in 3 sweeps. You were <b>380 points</b> short of your record of 1,240.");
+    expect(fraseDelFinal({ ...base, record: 0 }, "en")).toContain("It's your first record.");
+    expect(fraseDelFinal({ ...base, sumaRecord: false, apagados: 1 }, "en")).toBe("You put out 1 fire in explorer mode. This mode doesn't count toward your record.");
+    expect(focos(1, "en")).toBe("1 fire");
+    expect(miles(1240, "en")).toBe("1,240");
+  });
+
+  it("en español no cambia nada", () => {
+    expect(fraseDelFinal(base, "es")).toBe(fraseDelFinal(base));
+    expect(cierreDePartida(2, 0, "es").consejo).toBe(CONSEJOS[2]);
   });
 });

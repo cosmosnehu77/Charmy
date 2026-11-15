@@ -1,47 +1,59 @@
 import { useMemo } from "react";
 import { type Indicador, Indicadores } from "@/components/Indicadores";
 import { MESES } from "@/calendario/grilla";
+import { localeActual, t, useIdioma } from "@/relieve/idioma";
 import type { ColeccionFocos } from "./consulta";
 import { resumenFocos } from "./estadisticas";
 
-const entero = new Intl.NumberFormat("es-AR");
-const decimal = new Intl.NumberFormat("es-AR", { maximumFractionDigits: 1 });
 /** «29 ene 2024»: corto, para que entre en el indicador. La fecha ya viene en UTC (AAAA-MM-DD). */
 const fecha = (iso: string) => `${Number(iso.slice(8, 10))} ${MESES[Number(iso.slice(5, 7)) - 1]!.toLowerCase()} ${iso.slice(0, 4)}`;
 const porcentaje = (parte: number, total: number) => `${Math.round((parte / total) * 100)} %`;
 
 /** Estadísticas de los focos que muestra el mapa (los mismos filtros). */
 export function ResumenFocos({ focos }: { focos: ColeccionFocos }) {
+  useIdioma((s) => s.idioma);
+  const entero = new Intl.NumberFormat(localeActual());
+  const decimal = new Intl.NumberFormat(localeActual(), { maximumFractionDigits: 1 });
   const r = useMemo(() => resumenFocos(focos.features), [focos]);
   if (r.total === 0) return null;
 
   const items: Indicador[] = [
     {
-      nombre: "Día con más focos",
+      nombre: t("Día con más focos", "Peak hotspot day"),
       valor: r.diaPico ? fecha(r.diaPico.fecha) : "—",
-      detalle: r.diaPico ? `${entero.format(r.diaPico.cantidad)} focos` : undefined,
+      detalle: r.diaPico ? t(`${entero.format(r.diaPico.cantidad)} focos`, `${entero.format(r.diaPico.cantidad)} hotspots`) : undefined,
     },
     {
-      nombre: "Días con focos",
+      nombre: t("Días con focos", "Days with hotspots"),
       valor: entero.format(r.diasConFoco),
-      detalle: `${decimal.format(r.total / r.diasConFoco)} focos por día`,
+      detalle: t(
+        `${decimal.format(r.total / r.diasConFoco)} focos por día`,
+        `${decimal.format(r.total / r.diasConFoco)} hotspots per day`,
+      ),
     },
-    { nombre: "De noche", valor: porcentaje(r.deNoche, r.total), detalle: `${entero.format(r.deNoche)} de ${entero.format(r.total)}` },
+    {
+      nombre: t("De noche", "At night"),
+      valor: porcentaje(r.deNoche, r.total),
+      detalle: t(`${entero.format(r.deNoche)} de ${entero.format(r.total)}`, `${entero.format(r.deNoche)} of ${entero.format(r.total)}`),
+    },
     {
       nombre: "MODIS / VIIRS",
       valor: `${entero.format(r.porInstrumento.MODIS)} / ${entero.format(r.porInstrumento.VIIRS)}`,
     },
     {
-      nombre: "Potencia máxima",
+      nombre: t("Potencia máxima", "Peak power"),
       valor: r.frpMax === null ? "—" : `${decimal.format(r.frpMax)} MW`,
-      detalle: r.frpMediana === null ? "Sin FRP" : `Mediana ${decimal.format(r.frpMediana)} MW`,
+      detalle:
+        r.frpMediana === null
+          ? t("Sin FRP", "No FRP")
+          : t(`Mediana ${decimal.format(r.frpMediana)} MW`, `Median ${decimal.format(r.frpMediana)} MW`),
     },
   ];
 
   return (
     <section aria-labelledby="titulo-resumen-focos" className="flex flex-col gap-2">
       <h3 id="titulo-resumen-focos" className="text-sm font-semibold">
-        Resumen de los focos
+        {t("Resumen de los focos", "Hotspot summary")}
       </h3>
       <Indicadores items={items} />
     </section>

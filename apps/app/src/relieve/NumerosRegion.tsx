@@ -4,15 +4,16 @@ import { MESES_LARGOS } from "@/calendario/grilla";
 import { Temporada } from "@/calendario/ResumenCalendario";
 import { type Indicador, Indicadores } from "@/components/Indicadores";
 import { useCalendarioRegion } from "./consultas";
+import { localeActual, t, useIdioma } from "./idioma";
 
 /** Por debajo de esta diferencia, el año se dice «parecido» a los anteriores: no se exagera un cambio chico. */
 const PARECIDO = 10;
 
 function comparacionAnio(acumulado: number, promedio: number): string {
-  if (promedio === 0) return acumulado > 0 ? "Más que otros años" : "Igual que otros años";
+  if (promedio === 0) return acumulado > 0 ? t("Más que otros años", "More than other years") : t("Igual que otros años", "Same as other years");
   const diferencia = Math.round((acumulado / promedio - 1) * 100);
-  if (Math.abs(diferencia) < PARECIDO) return "Parecido a otros años";
-  return `${diferencia > 0 ? "+" : "−"}${Math.abs(diferencia).toLocaleString("es-AR")} %`;
+  if (Math.abs(diferencia) < PARECIDO) return t("Parecido a otros años", "Similar to other years");
+  return `${diferencia > 0 ? "+" : "−"}${Math.abs(diferencia).toLocaleString(localeActual())} %`;
 }
 
 /**
@@ -31,6 +32,7 @@ export function NumerosRegion({
   total: number;
   conHistorial: boolean;
 }) {
+  useIdioma((s) => s.idioma);
   const calendario = useCalendarioRegion(conHistorial ? region : null);
   const celdas = useMemo(() => calendario.data?.cells ?? [], [calendario.data]);
   const anio = useMemo(() => anioContraLoNormal(celdas), [celdas]);
@@ -38,29 +40,42 @@ export function NumerosRegion({
 
   const items: Indicador[] = [
     {
-      nombre: "Puesto por focos",
-      valor: posicion >= 0 ? `${posicion + 1}.º de ${total}` : "Sin focos",
-      detalle: posicion >= 0 ? "en los últimos días" : undefined,
+      nombre: t("Puesto por focos", "Rank by hotspots"),
+      valor: posicion >= 0 ? t(`${posicion + 1}.º de ${total}`, `#${posicion + 1} of ${total}`) : t("Sin focos", "No hotspots"),
+      detalle: posicion >= 0 ? t("en los últimos días", "in recent days") : undefined,
     },
   ];
   if (anio) {
-    const contra = anio.desde === anio.hasta ? `${anio.desde}` : `el promedio de ${anio.desde} a ${anio.hasta}`;
+    const contra =
+      anio.desde === anio.hasta
+        ? `${anio.desde}`
+        : t(`el promedio de ${anio.desde} a ${anio.hasta}`, `the ${anio.desde}–${anio.hasta} average`);
     items.push({
-      nombre: `Año ${anio.anio}`,
+      nombre: t(`Año ${anio.anio}`, `Year ${anio.anio}`),
       valor: comparacionAnio(anio.acumulado, anio.promedio),
-      detalle: `hasta ${MESES_LARGOS[anio.hastaMes - 1]}, contra ${contra}`,
+      detalle: t(
+        `hasta ${MESES_LARGOS[anio.hastaMes - 1]}, contra ${contra}`,
+        `through ${MESES_LARGOS[anio.hastaMes - 1]}, vs. ${contra}`,
+      ),
     });
   }
 
   return (
     <section aria-labelledby={`numeros-${region}`} className="tema-relieve flex flex-col gap-3 border-t border-white/10 pt-3">
       <h3 id={`numeros-${region}`} className="text-[11.5px] uppercase tracking-wider text-white/50">
-        En números
+        {t("En números", "In numbers")}
       </h3>
       <Indicadores items={items} />
-      {conHistorial && calendario.isPending && <p className="text-xs text-white/55">Cargando la comparación con otros años…</p>}
+      {conHistorial && calendario.isPending && (
+        <p className="text-xs text-white/55">{t("Cargando la comparación con otros años…", "Loading comparison with previous years…")}</p>
+      )}
       {conHistorial && calendario.isError && (
-        <p className="text-xs text-white/55">La comparación con otros años no está disponible ahora. El resto de la ficha sigue andando.</p>
+        <p className="text-xs text-white/55">
+          {t(
+            "La comparación con otros años no está disponible ahora. El resto de la ficha sigue andando.",
+            "Comparison with previous years is not available right now. The rest of the card keeps working.",
+          )}
+        </p>
       )}
       {celdas.length > 0 && <Temporada temporada={resumen.temporada} mesMasActivo={resumen.mesMasActivo} />}
     </section>

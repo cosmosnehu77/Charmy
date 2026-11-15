@@ -102,3 +102,13 @@ describe("mejores partidas", () => {
     expect(cuando(0, ahora)).toBe("Antes");
   });
 });
+
+describe("cuándo, en inglés", () => {
+  const ahora = new Date(2026, 10, 15, 12).getTime(), DIA = 86_400_000;
+  it("dice cuándo fue cada partida", () => {
+    expect(cuando(ahora - 60_000, ahora, "en")).toBe("Today");
+    expect(cuando(ahora - DIA, ahora, "en")).toBe("Yesterday");
+    expect(cuando(ahora - 3 * DIA, ahora, "en")).toBe("3 days ago");
+    expect(cuando(0, ahora, "en")).toBe("Earlier");
+  });
+});

@@ -49,8 +49,8 @@ export function FichaRegion({
   const nivel = nivelRegion(ultimo?.value ?? null, posicion);
   const dice = ultimo
     ? t(
-        `En ${nombreMes(ultimo.month)} hubo ${num(ultimo.value, 1)} días-celda con fuego acá. Está ${nivelPercentil(ultimo.percentile ?? 50)}.`,
-        `In ${nombreMes(ultimo.month)} there were ${num(ultimo.value, 1)} fire cell-days here. That is ${nivelPercentil(ultimo.percentile ?? 50)}.`,
+        `En ${nombreMes(ultimo.month)} hubo ${num(ultimo.value, 1)} días de fuego acá. Está ${nivelPercentil(ultimo.percentile ?? 50)}.`,
+        `In ${nombreMes(ultimo.month)} there were ${num(ultimo.value, 1)} fire days here. That is ${nivelPercentil(ultimo.percentile ?? 50)}.`,
       )
     : p.hotspots
       ? t(
@@ -115,7 +115,7 @@ export function FichaRegion({
                 {ultimo ? num(ultimo.value, 1) : "—"}
               </b>
               <span className="text-sm leading-snug text-white/75">
-                {t("días-celda con fuego", "fire cell-days")}
+                {t("días de fuego", "fire days")}
                 <br />
                 {ultimo ? t(`en ${mes}`, `in ${mes}`) : t("sin historial", "no history")}
               </span>
@@ -223,7 +223,7 @@ function FichaPrediccion({ region }: { region: RegionResumen }) {
       <div className="flex items-center gap-3.5">
         <b className="font-titulos text-[56px] font-extrabold leading-[.9] tracking-tight text-relieve-brillo tabular-nums">{num(m.expected_cells, 1)}</b>
         <span className="text-sm leading-snug text-white/75">
-          {t("celdas con fuego esperadas", "fire cells expected")}
+          {t("cuadrados con fuego esperados", "squares with fire expected")}
           <br />
           {t(`en ${mes}; lo habitual es ${num(m.usual_cells, 1)}`, `in ${mes}; the usual is ${num(m.usual_cells, 1)}`)}
         </span>
@@ -240,14 +240,14 @@ function FichaPrediccion({ region }: { region: RegionResumen }) {
         <div className="mt-2 flex flex-col gap-2 text-[12.5px] leading-snug text-white/70">
           <p>
             {t(
-              "Divide el mapa en celdas de 0,1° (unos 11 km). Para cada una, un modelo de aprendizaje automático (LightGBM) mira el fuego de los últimos tres meses, el del mismo mes del año pasado y cuánto fuego suele haber en ese mes del año.",
-              "It splits the map into 0.1° cells (about 11 km). For each one, a machine-learning model (LightGBM) looks at fire in the last three months, in the same month last year and how much fire that month usually has.",
+              "Divide el mapa en cuadrados de unos 11 km (0,1°). Para cada una, un modelo de aprendizaje automático (LightGBM) mira el fuego de los últimos tres meses, el del mismo mes del año pasado y cuánto fuego suele haber en ese mes del año.",
+              "It splits the map into squares of about 11 km (0.1°). For each one, a machine-learning model (LightGBM) looks at fire in the last three months, in the same month last year and how much fire that month usually has.",
             )}
           </p>
           <p>
             {t(
-              "Con eso calcula la probabilidad de fuego en cada celda y las suma por provincia. «Lo habitual» es el promedio de ese mes en los años anteriores.",
-              "From that it estimates the chance of fire in each cell and adds them up per province. “The usual” is that month’s average in previous years.",
+              "Con eso calcula la probabilidad de fuego en cada cuadrado y las suma por provincia. «Lo habitual» es el promedio de ese mes en los años anteriores.",
+              "From that it estimates the chance of fire in each square and adds them up per province. “The usual” is that month’s average in previous years.",
             )}
           </p>
           <p>
@@ -289,7 +289,7 @@ function CalendarioRegion({ region }: { region: string }) {
   return (
     <div className="mt-3 overflow-x-auto">
       <table className="w-full min-w-[280px] border-separate border-spacing-0.5 font-mono text-[10px] text-white/55 tabular-nums">
-        <caption className="sr-only">{t("Calendario de quema por mes, en días-celda con fuego", "Monthly burn calendar, in fire cell-days")}</caption>
+        <caption className="sr-only">{t("Calendario de quema por mes, en días de fuego", "Monthly burn calendar, in fire days")}</caption>
         <thead>
           <tr>
             <th />
@@ -317,12 +317,12 @@ function CalendarioRegion({ region }: { region: string }) {
                     className="h-3 rounded-sm"
                     style={{ background: color }}
                     title={t(
-                      `${nombreMes(i + 1)} ${a}: ${num(c.value, 1)} días-celda${c.percentile != null ? `, percentil ${num(c.percentile)}` : ""}`,
-                      `${nombreMes(i + 1)} ${a}: ${num(c.value, 1)} cell-days${c.percentile != null ? `, percentile ${num(c.percentile)}` : ""}`,
+                      `${nombreMes(i + 1)} ${a}: ${num(c.value, 1)} días de fuego${c.percentile != null ? `, percentil ${num(c.percentile)}` : ""}`,
+                      `${nombreMes(i + 1)} ${a}: ${num(c.value, 1)} fire days${c.percentile != null ? `, percentile ${num(c.percentile)}` : ""}`,
                     )}
                   >
                     <span className="sr-only">
-                      {t(`${nombreMes(i + 1)} ${a}: ${num(c.value, 1)} días-celda`, `${nombreMes(i + 1)} ${a}: ${num(c.value, 1)} cell-days`)}
+                      {t(`${nombreMes(i + 1)} ${a}: ${num(c.value, 1)} días de fuego`, `${nombreMes(i + 1)} ${a}: ${num(c.value, 1)} fire days`)}
                     </span>
                   </td>
                 );
@@ -338,7 +338,7 @@ function CalendarioRegion({ region }: { region: string }) {
       </div>
       <div className="mt-1 flex justify-between text-[11px] text-white/50">
         <span>0</span>
-        <span>{t(`${num(max)} días-celda`, `${num(max)} cell-days`)}</span>
+        <span>{t(`${num(max)} días de fuego`, `${num(max)} fire days`)}</span>
       </div>
     </div>
   );

@@ -157,7 +157,7 @@ describe("focos en vivo", () => {
 describe("qué es lo normal (#381)", () => {
   it("el mes contra la mediana de ese mes en los años anteriores, desde 2001", () => {
     expect(textoLoNormal({ year: 2026, month: 10, value: 238, median: 742 })).toBe(
-      "En octubre de 2026 hubo 238 días-celda con fuego. Lo normal acá en octubre es 742: la mediana de los octubres de 2001 a 2025.",
+      "En octubre de 2026 hubo 238 días de fuego. Lo normal acá en octubre es 742: la mediana de los octubres de 2001 a 2025.",
     );
     expect(textoLoNormal({ year: 2026, month: 9, value: 12.25, median: 778.714 })).toContain("es 778,7:");
   });
@@ -385,9 +385,9 @@ describe("predicción por región (F4-D12, #347)", () => {
   });
 
   it("dice si se espera más, lo mismo o menos que lo habitual", () => {
-    expect(textoPrediccion(meses[0]!)).toBe("Se esperan 33,7 celdas con fuego, más que las 20 habituales.");
-    expect(textoPrediccion(meses[1]!)).toBe("Se esperan 9 celdas con fuego, como las 9,4 habituales.");
-    expect(textoPrediccion(meses[2]!)).toBe("Se esperan 2 celdas con fuego, menos que las 6 habituales.");
+    expect(textoPrediccion(meses[0]!)).toBe("Se esperan 33,7 cuadrados con fuego, más que los 20 habituales.");
+    expect(textoPrediccion(meses[1]!)).toBe("Se esperan 9 cuadrados con fuego, como los 9,4 habituales.");
+    expect(textoPrediccion(meses[2]!)).toBe("Se esperan 2 cuadrados con fuego, menos que los 6 habituales.");
   });
 
   it("en un área chica habla de probabilidad, contra la habitual", () => {

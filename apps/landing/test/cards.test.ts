@@ -64,6 +64,6 @@ describe("cards de la landing (F4-E1b, #286)", () => {
 
   it("la guía de Charmy no promete focos de un día real y se aparta sobre las cards", () => {
     expect(guion).not.toMatch(/día real|real day/);
-    expect(guion).toMatch(/\[\$\("modos"\), \$\("juego"\)\]\.forEach\(\(s\) => aparta\.observe\(s\)\)/);
+    expect(guion).toMatch(/\[\$\("modos"\), \$\("juego"\), \$\("gracias"\)\]\.forEach\(\(s\) => aparta\.observe\(s\)\)/);
   });
 });

@@ -257,7 +257,7 @@ function proy(c: Camara, x: number, y: number, z: number) {
 function calGrid() {
   if (movil) return { x0: W * 0.1, y0: H * 0.13, cw: (W * 0.84) / 12, ch: (H * 0.32) / 25 };
   const w = Math.min(W * 0.44, H * 1.05);
-  return { x0: W * 0.47, y0: H * 0.15, cw: w / 12, ch: (H * 0.72) / 25 };
+  return { x0: W * 0.42, y0: H * 0.15, cw: w / 12, ch: (H * 0.72) / 25 };
 }
 const contorno = (c: Camara, anillos: number[][]) => {
   for (const a of anillos) {
@@ -482,7 +482,7 @@ const aparta = new IntersectionObserver((es) => {
   es.forEach((e) => tapadas[e.isIntersecting ? "add" : "delete"](e.target));
   guiaEl.classList.toggle("aparte", tapadas.size > 0);
 }, { threshold: 0.15 });
-[$("modos"), $("juego")].forEach((s) => aparta.observe(s));
+[$("modos"), $("juego"), $("gracias")].forEach((s) => aparta.observe(s));
 // Entrada de cada tarjeta al llegar a su paso.
 if (!reducir) {
   const io = new IntersectionObserver((es) => es.forEach((e) => { if (e.isIntersecting) { e.target.classList.add("entra"); io.unobserve(e.target); } }), { threshold: 0.25 });
@@ -535,3 +535,34 @@ addEventListener("scroll", () => {
   barra.classList.toggle("oculta", ocultarBarra(scrollY, yAnterior));
   yAnterior = scrollY;
 }, { passive: true });
+
+/* ---------- Agradecimientos: abanico y foco ---------- */
+// El foco va con JS porque la card se corre al medio y deja de estar bajo el cursor: con :hover parpadea.
+{
+  const panel = $("gracias"), abanico = $("abanico"), boton = panel.querySelector<HTMLElement>(".abrir")!;
+  let foco: Element | null = null, dentro = false, quieto = 0, cand: Element | null = null, espera = 0;
+  const enfocar = (c: Element | null) => {
+    clearTimeout(espera); cand = null;
+    if (foco === c) return;
+    foco?.classList.remove("foco"); foco = c; dentro = false;
+    c?.classList.add("foco"); abanico.classList.toggle("con-foco", !!c);
+    if (!c) quieto = performance.now() + 500; // deja reabrir el abanico antes de elegir otra
+  };
+  boton.addEventListener("click", () => boton.setAttribute("aria-expanded", String(panel.classList.toggle("abierto"))));
+  panel.addEventListener("pointermove", (e) => {
+    if (e.pointerType !== "mouse") return;
+    const c = (e.target as Element).closest(".persona");
+    if (!foco) {
+      // Recién hace foco si el cursor se queda en la misma card: cruzar el abanico de lado a lado no dispara nada.
+      if (c === cand || performance.now() < quieto) return;
+      clearTimeout(espera); cand = c;
+      if (c) espera = window.setTimeout(() => enfocar(c), 220);
+    }
+    else if (c === foco) dentro = true;
+    else if (dentro) enfocar(null); // la siguió hasta el medio y salió
+  });
+  panel.addEventListener("pointerleave", () => enfocar(null));
+  panel.addEventListener("click", (e) => { const c = (e.target as Element).closest(".persona"); enfocar(c === foco ? null : c); });
+  abanico.addEventListener("focusin", (e) => { if ((e.target as Element).matches(".persona:focus-visible")) enfocar(e.target as Element); });
+  abanico.addEventListener("focusout", () => enfocar(null));
+}

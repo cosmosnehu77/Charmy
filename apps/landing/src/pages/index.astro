@@ -33,6 +33,16 @@ const equipo = [
   { nombre: "Angelo", login: "dimidio6" },
 ];
 
+// Ejemplo: las personas reales las pasa el equipo. Hasta entonces las cards muestran el formato, no nombres.
+const gracias = [
+  { nombre: "Nombre Apellido", rol: "Institución o rol", por: "Datos" },
+  { nombre: "Nombre Apellido", rol: "Institución o rol", por: "Mentoría" },
+  { nombre: "Nombre Apellido", rol: "Institución o rol", por: "Método" },
+  { nombre: "Nombre Apellido", rol: "Institución o rol", por: "Diseño" },
+  { nombre: "Nombre Apellido", rol: "Institución o rol", por: "Pruebas" },
+];
+const medioGracias = (gracias.length - 1) / 2;
+
 // Logos de Simple Icons (CC0), en el color de cada marca: son logos, no colores del tema.
 const herramientas = [
   { nombre: "Python", icono: "python", color: "#3776AB" },
@@ -323,6 +333,26 @@ const tira = [...instituciones, ...instituciones];
                 }
               </ul>
             </div>
+          </div>
+        </section>
+
+        <section class="gracias" id="gracias" aria-labelledby="titulo-gracias">
+          <span class="eti">Agradecimientos</span>
+          <h2 id="titulo-gracias">Gracias a quienes <em>nos acompañaron.</em></h2>
+          <p>Charmy salió adelante con ayuda. Pasá el cursor para ver a cada persona.</p>
+          <button type="button" class="abrir" aria-expanded="false" aria-controls="abanico">
+            <svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="M6 1v10M1 6h10" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" /></svg>
+            <span class="ver">Ver a todos</span><span class="cerrar">Cerrar</span>
+          </button>
+          <div class="abanico" id="abanico">
+            {
+              gracias.map((p, i) => (
+                <article class={`persona t${(i % 5) + 1}`} tabindex="0" style={`--d:${i - medioGracias};--a:${Math.abs(i - medioGracias)}`}>
+                  <header><div><strong>{p.nombre}</strong><span>{p.rol}</span></div><i>{p.por}</i></header>
+                  <div class="mono" aria-hidden="true">{p.nombre.split(" ").map((s) => s[0]).join("").slice(0, 2)}</div>
+                </article>
+              ))
+            }
           </div>
         </section>
 

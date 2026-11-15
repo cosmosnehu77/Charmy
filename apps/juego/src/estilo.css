@@ -721,7 +721,7 @@ html[data-tema="claro"] { --globo-acento: var(--ambar-hover); }
 .pausa-b.principal:hover { background: var(--ambar-hover); color: var(--mapa-dia-tinta); }
 .pausa-b.tenue { color: var(--texto); font-size: 15px; }
 .pausa-par { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-.pausa-tarjeta .secundario { justify-self: center; min-height: 44px; margin-top: 4px; }
+.pausa-tarjeta .secundario { justify-self: center; min-height: 44px; margin-top: 4px; display: inline-flex; align-items: center; text-decoration: none; }
 @media (prefers-reduced-motion: reduce) {
   .brasa::before, .llama, .chispas, #tituloFin, .fin-charmy { animation: none; }
 }

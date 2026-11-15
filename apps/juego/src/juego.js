@@ -1966,7 +1966,6 @@ function armarPausa() {
   $("#pausaGuia").addEventListener("click", () => { seguir(); abrirGuia(false); });
   $("#pausaSonido").addEventListener("click", () => { $("#silencio").click(); pintarPausa(); });
   $("#pausaTema").addEventListener("click", () => { alternarTema(); pintarPausa(); });
-  $("#pausaSalir").addEventListener("click", irAlInicio);
   // Si la pestaña queda oculta, la partida se pausa sola.
   document.addEventListener("visibilitychange", () => { if (document.hidden) pausar(); });
 }

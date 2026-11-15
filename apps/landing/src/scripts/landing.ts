@@ -170,19 +170,6 @@ const COLUMNAS = Object.entries(CELDAS).map(([k, c]) => { const [x, y] = k.split
 const MAXCOL = Math.max(...COLUMNAS.map((c) => c.c));
 const VIVOS = [[-71.9, -35.6], [-72.3, -36.9], [-70.6, -38.9], [-69.9, -37.6], [-64.4, -31.2], [-64.9, -31.9], [-71.4, -40.6], [-63.9, -30.6], [-72.6, -37.6], [-68.6, -38.2]];
 
-/* ---------- Gráfico del paso 1: empalme sin armonizar contra serie armonizada (ilustrativo) ---------- */
-{
-  const W = 380, H = 150, iz = 8, de = 8, ar = 10, ab = 22, r = prng(9), s: number[][] = [];
-  for (let a = 2001; a <= 2025; a++) { const b = 90 + 30 * Math.sin((a - 2001) * 0.8) + r() * 25; s.push([a, a < 2012 ? b : b * 3.9, b * 3.9 * (0.95 + r() * 0.1)]); }
-  const x = (a: number) => iz + ((a - 2001) / 24) * (W - iz - de), y = (v: number) => ar + (1 - v / 560) * (H - ar - ab);
-  const path = (i: number) => s.map((d, k) => (k ? "L" : "M") + x(d[0]).toFixed(1) + " " + y(d[i]).toFixed(1)).join("");
-  $("grafico").innerHTML = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Empalme sin armonizar con un salto en 2012, y serie armonizada continua" style="font-family:var(--fuente-mono)" font-size="10">
-  <line x1="${x(2012)}" x2="${x(2012)}" y1="${ar}" y2="${H - ab}" style="stroke:var(--l-linea)" stroke-dasharray="2 3"/><text x="${x(2012) + 5}" y="${ar + 8}" style="fill:var(--l-tenue)">2012 · VIIRS</text>
-  <path d="${path(1)}" fill="none" style="stroke:var(--l-tenue)" stroke-width="1.6" stroke-dasharray="4 3"/><path d="${path(2)}" fill="none" style="stroke:var(--l-ambar-txt)" stroke-width="2.4" stroke-linejoin="round"/>
-  <text x="${iz}" y="${H - 6}" style="fill:var(--l-tenue)">2001</text><text x="${W - de}" y="${H - 6}" style="fill:var(--l-tenue)" text-anchor="end">2025</text>
-  <text x="${W / 2}" y="${H - 6}" text-anchor="middle" style="fill:var(--l-tenue)" font-size="9" letter-spacing=".08em">ILUSTRATIVO</text></svg>`;
-}
-
 /* ---------- Colores del lienzo, resueltos desde los tokens del tema ---------- */
 const sonda = document.createElement("span");
 sonda.hidden = true;
@@ -458,7 +445,7 @@ const GUION = {
     "Elegí tu zona y te cuento si este mes es normal ahí.",
     "Cada fila es un año. Los meses más oscuros tuvieron más fuego.",
     "Estos focos son de las últimas horas. Si ves un incendio, llamá al 100 o al 132.",
-    "¿Jugamos? Apaguemos los focos de un día real.",
+    "¿Jugamos? Apaguemos los focos del mapa.",
   ],
   en: [
     "Hi! I'm Charmy. I'll show you when and where the south burns.",
@@ -467,7 +454,7 @@ const GUION = {
     "Pick your zone and I'll tell you if this month is normal there.",
     "Each row is a year. The darker months had more fire.",
     "These hotspots are from the last few hours. If you see a fire, call 100 or 132.",
-    "Shall we play? Let's put out the hotspots of a real day.",
+    "Shall we play? Let's put out the hotspots on the map.",
   ],
 };
 let idioma: "es" | "en" = "es";
@@ -489,8 +476,13 @@ function guia(p: number) {
   if (guiaEl.classList.contains("visible")) { guiaEl.classList.remove("visible"); tEntra = window.setTimeout(mostrar, reducir ? 200 : 700); }
   else tEntra = window.setTimeout(mostrar, primera ? 1600 : 450);
 }
-// El panel del juego ya muestra a Charmy: la guía se aparta mientras se ve.
-new IntersectionObserver(([e]) => guiaEl.classList.toggle("aparte", e.isIntersecting), { threshold: 0.35 }).observe($("juego"));
+// La guía se aparta sobre las cards de modos y del juego, para no tapar sus gráficos ni la captura.
+const tapadas = new Set<Element>();
+const aparta = new IntersectionObserver((es) => {
+  es.forEach((e) => tapadas[e.isIntersecting ? "add" : "delete"](e.target));
+  guiaEl.classList.toggle("aparte", tapadas.size > 0);
+}, { threshold: 0.15 });
+[$("modos"), $("juego")].forEach((s) => aparta.observe(s));
 // Entrada de cada tarjeta al llegar a su paso.
 if (!reducir) {
   const io = new IntersectionObserver((es) => es.forEach((e) => { if (e.isIntersecting) { e.target.classList.add("entra"); io.unobserve(e.target); } }), { threshold: 0.25 });

@@ -1,6 +1,7 @@
 """Noticias como señal (#279): respuestas grabadas del modelo y fallas simuladas, sin red."""
 
 import json
+import re
 from datetime import UTC, datetime, timedelta
 
 import httpx
@@ -127,12 +128,17 @@ def test_la_medicion_cuenta_aciertos_fallas_y_tiempos_sin_red():
         pedido = json.loads(req.content)["messages"][0]["content"]
         if "Araucanía" in pedido:
             return httpx.Response(503)
-        n = pedido.count("\n") - 1  # una línea por titular después del pedido
+        n = len(re.findall(r"^\d+\. ", pedido, re.MULTILINE))  # una línea numerada por titular
         return httpx.Response(200, json=respuesta_grabada(json.dumps(["apoya"] * n)))
 
     r = m.medir("modelo/prueba", cliente(manejador))
-    apoyan = sum(e == "apoya" for _, _, filas in m.MUESTRA[:2] for _, e in filas)
-    assert (r["aciertos"], r["fallas"], len(r["segundos"])) == (apoyan, 1, 3)
+    sanas = [filas for provincia, _, filas in m.MUESTRA if provincia != "Araucanía"]
+    reales = [filas for provincia, _, filas in m.MUESTRA_REAL if provincia != "Araucanía"]
+    fallan = sum(provincia == "Araucanía" for provincia, _, _ in m.MUESTRA + m.MUESTRA_REAL)
+    assert r["aciertos"] == sum(e == "apoya" for filas in sanas for _, e in filas)
+    assert r["aciertos_real"] == sum(e == "apoya" for filas in reales for _, e in filas)
+    assert r["apoya_de_mas"] == sum(e != "apoya" for filas in sanas + reales for _, e in filas)
+    assert (r["fallas"], len(r["segundos"])) == (fallan, len(m.MUESTRA) + len(m.MUESTRA_REAL))
     assert "| `modelo/prueba` |" in m.tabla([r])
 
 
@@ -160,7 +166,7 @@ def test_la_medicion_sigue_con_el_proximo_modelo_si_uno_falla_raro(monkeypatch):
 
     monkeypatch.setattr(m, "etiquetar", etiquetar_roto)
     roto, sano = m.medir("roto", cliente=None), m.medir("sano", cliente=None)
-    assert (roto["fallas"], sano["fallas"]) == (3, 0)
+    assert (roto["fallas"], sano["fallas"]) == (len(m.MUESTRA) + len(m.MUESTRA_REAL), 0)
 
 
 def test_las_opciones_del_modelo_van_en_el_pedido():
@@ -194,3 +200,14 @@ def test_produccion_usa_nemotron_lightning_sin_razonar():
     etiquetar(TITULARES, "Chubut", "Argentina", cliente(manejador))
     assert pedidos[0]["model"] == "nvidia/nemotron-3.5-lightning-30b-a3b"
     assert pedidos[0]["chat_template_kwargs"] == {"enable_thinking": False}
+
+
+def test_la_muestra_real_esta_marcada_y_cada_bloque_entra_en_un_pedido():
+    from worker import medir_noticias as m
+
+    assert "TITULARES REALES" in m.__doc__
+    for _, _, filas in m.MUESTRA + m.MUESTRA_REAL:
+        assert len(filas) <= noticias.MAX_TITULARES
+        assert {e for _, e in filas} <= noticias.ETIQUETAS
+    reales = {e for _, _, filas in m.MUESTRA_REAL for _, e in filas}
+    assert {"apoya", "sin_informacion"} <= reales

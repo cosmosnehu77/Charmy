@@ -147,7 +147,7 @@ pasaron la compuerta (D-10, RF-PRE-02): mejorar el error absoluto medio de la cl
 ## `entrenamiento`
 
 La entrada del modelo de predicción, para entrenar y probar modelos sin bajar los focos ni rearmar la armonización
-(F3-B5, D-31). Es exactamente la tabla con la que `pipeline.prediccion` entrena LightGBM: días con fuego de S-NPP
+(F3-B5, D-31). Es exactamente la tabla que arma `pipeline.prediccion` y con la que `prediccion.modelo` (`services/prediccion`) entrena LightGBM: días con fuego de S-NPP
 por celda y mes, sin las celdas de `fuentes_fijas`, solo en meses completos (S-NPP vio focos en al menos el 90 %
 de los días) y solo en celdas con fuego en al menos 5 años. Los meses sin fuego van con `fire_days = 0`.
 

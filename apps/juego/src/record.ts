@@ -1,3 +1,5 @@
+import type { Idioma } from "./idioma";
+
 /** Récord del jugador en este navegador. */
 export const CLAVE_RECORD = "charmy-brigada-record";
 /** Clave de cuando el juego se llamaba Charmy Kids: se sigue leyendo para no perder récords anteriores. */
@@ -73,8 +75,10 @@ const inicioDelDia = (t: number) => {
 };
 
 /** "Hoy", "Ayer", "Hace 3 días", en la hora local del jugador. Una marca sin fecha queda como "Antes". */
-export function cuando(t: number, ahora: number): string {
-  if (!t) return "Antes";
+export function cuando(t: number, ahora: number, idioma: Idioma = "es"): string {
+  const en = idioma === "en";
+  if (!t) return en ? "Earlier" : "Antes";
   const dias = Math.round((inicioDelDia(ahora) - inicioDelDia(t)) / 86_400_000);
+  if (en) return dias <= 0 ? "Today" : dias === 1 ? "Yesterday" : `${dias} days ago`;
   return dias <= 0 ? "Hoy" : dias === 1 ? "Ayer" : `Hace ${dias} días`;
 }

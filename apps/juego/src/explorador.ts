@@ -1,3 +1,4 @@
+import { localeDe, type Idioma } from "./idioma";
 import type { FocoActivo } from "./partida";
 
 /** Qué cambia entre el modo normal y el modo explorador (accesibilidad, RF-KID-11). */
@@ -29,24 +30,35 @@ export function siguiente(orden: number[], actual: number | null, paso: 1 | -1):
   return orden[(i + paso + orden.length) % orden.length]!;
 }
 
-const megavatios = (frp: number) => frp.toLocaleString("es-AR", { maximumFractionDigits: 1 });
+const TEXTO_FOCO = {
+  es: {
+    donde: (r: string | null) => (r ? `en ${r} (aproximado)` : "fuera de las regiones del mapa"),
+    numero: (p: number, t: number, donde: string) => `Foco ${p} de ${t}, ${donde}.`,
+    fija: "Es una fuente fija, como una industria o un volcán: no es un incendio y no hay que apagarla.",
+    potencia: (mw: string, g: number) => `Potencia ${mw} megavatios: hacen falta ${g === 1 ? "1 toque" : `${g} toques`}.`,
+    verificado: "Verificado.",
+    dudoso: "Confianza baja: puede ser una falsa alarma. Verificalo con la tecla V.",
+  },
+  en: {
+    donde: (r: string | null) => (r ? `in ${r} (approximate)` : "outside the map's regions"),
+    numero: (p: number, t: number, donde: string) => `Fire ${p} of ${t}, ${donde}.`,
+    fija: "It's a fixed source, like an industry or a volcano: it isn't a wildfire and doesn't need putting out.",
+    potencia: (mw: string, g: number) => `Power ${mw} megawatts: it takes ${g === 1 ? "1 tap" : `${g} taps`}.`,
+    verificado: "Verified.",
+    dudoso: "Low confidence: it may be a false alarm. Verify it with the V key.",
+  },
+} satisfies Record<Idioma, unknown>;
 
 /** Lo que el lector de pantalla dice de un foco: dónde está, su potencia y si es dudoso. Corto y sin jerga. */
-export function textoDeFoco(foco: FocoActivo, posicion: number, total: number, region: string | null): string {
-  const donde = region ? `en ${region} (aproximado)` : "fuera de las regiones del mapa";
-  const partes = [`Foco ${posicion} de ${total}, ${donde}.`];
+export function textoDeFoco(foco: FocoActivo, posicion: number, total: number, region: string | null, idioma: Idioma = "es"): string {
+  const T = TEXTO_FOCO[idioma];
+  const partes = [T.numero(posicion, total, T.donde(region))];
   if (foco.fuenteFija) {
-    partes.push("Es una fuente fija, como una industria o un volcán: no es un incendio y no hay que apagarla.");
+    partes.push(T.fija);
     return partes.join(" ");
   }
-  const toques = foco.golpes === 1 ? "1 toque" : `${foco.golpes} toques`;
-  partes.push(`Potencia ${megavatios(foco.frp)} megavatios: hacen falta ${toques}.`);
-  if (foco.confianza === "low") {
-    partes.push(
-      foco.verificado
-        ? "Verificado."
-        : "Confianza baja: puede ser una falsa alarma. Verificalo con la tecla V.",
-    );
-  }
+  const mw = foco.frp.toLocaleString(localeDe(idioma), { maximumFractionDigits: 1 });
+  partes.push(T.potencia(mw, foco.golpes));
+  if (foco.confianza === "low") partes.push(foco.verificado ? T.verificado : T.dudoso);
   return partes.join(" ");
 }

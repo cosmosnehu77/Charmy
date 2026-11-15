@@ -16,6 +16,12 @@ const enlaces = () => Array.from(doc.querySelectorAll("a"), (a) => a.getAttribut
 const texto = (id: string) => doc.getElementById(id)?.textContent ?? "";
 
 describe("landing", () => {
+  it("los enlaces al juego están marcados para llevar el idioma", () => {
+    const alJuego = Array.from(doc.querySelectorAll("a[href*='juego.pages.dev']"));
+    expect(alJuego.length).toBeGreaterThan(0);
+    for (const a of alJuego) expect(a.hasAttribute("data-juego"), a.outerHTML).toBe(true);
+  });
+
   it("tiene portada, recorrido, modos, juego, nosotros y créditos con encabezado accesible", () => {
     const ids = ["portada", "problema", "armonizacion", "zona", "calendario", "vivo", "modos", "juego", "nosotros", "creditos"];
     for (const id of ids) {

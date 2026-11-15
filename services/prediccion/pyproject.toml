@@ -1,7 +1,7 @@
 [project]
 name = "prediccion"
 version = "0.1.0"
-description = "Predicción a 1-3 meses: TimesFM 2.5 contra LightGBM con la compuerta D-10 (F3-E3, D-31)"
+description = "Predicción a 1-3 meses: TimesFM 3.0 contra LightGBM con la compuerta D-10 (F3-E3, D-31, R-E2)"
 requires-python = ">=3.12"
 dependencies = [
     "numpy>=2.5.4",
@@ -12,6 +12,7 @@ dependencies = [
 [project.optional-dependencies]
 # Pesado (torch): no se instala con `uv sync --all-packages`. Solo para correr la comparación real:
 # uv run --package prediccion --extra timesfm python -m prediccion ...
+# 3.0.2 es la versión del paquete `timesfm`, no del modelo: trae la 2.5 (`timesfm`) y la 3.0 (`timesfm3`).
 timesfm = ["timesfm[torch]==3.0.2"]
 
 [tool.uv.sources]

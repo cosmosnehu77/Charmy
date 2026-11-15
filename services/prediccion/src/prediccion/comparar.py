@@ -1,4 +1,7 @@
-"""TimesFM 2.5 contra LightGBM con la compuerta D-10 (F3-E3, D-31).
+"""TimesFM contra LightGBM con la compuerta D-10 (F3-E3, D-31, R-E2).
+
+El candidato es TimesFM 3.0 (D-31 actualizado el 15/11); la 2.5 queda para comparar. Las dos tienen la misma
+interfaz (`Pronosticador`).
 
 Usa la misma tabla (`entrenamiento`, celda × mes de S-NPP sin fuentes fijas) y la misma partición temporal
 que `pipeline.prediccion` (LightGBM): se prueba en las emisiones de los últimos años, con contextos que
@@ -20,11 +23,12 @@ import polars as pl
 from pipeline.esquema import ESQUEMAS
 from pipeline.prediccion import HORIZONTES, MIN_MEJORA, _ajustar, _predecir, filas, particion
 
-MODELO = "timesfm-2.5"
+MODELO = "timesfm-3.0"
 
 
 class Pronosticador(Protocol):
-    """La interfaz de `timesfm.TimesFM_2p5_200M_torch` que se usa: mediana y cuantiles [media, q10..q90]."""
+    """La interfaz que se usa: mediana y cuantiles [media, q10..q90] (la de TimesFM 2.5; la 3.0 va con
+    `timesfm3.Adaptador3`)."""
 
     def forecast(self, horizon: int, inputs: list[np.ndarray]) -> tuple[np.ndarray, np.ndarray]: ...
 

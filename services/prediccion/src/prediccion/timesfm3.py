@@ -1,7 +1,8 @@
 """TimesFM 3.0 con la interfaz de la comparación (`Pronosticador`): mediana y cuantiles [media, q10..q90].
 
 La 3.0 viene en el paquete `timesfm3` (dentro de `timesfm` 3.0.2) y se usa con `TimesFM3Forecaster`. Sus pesos
-(`google/timesfm-3.0-pytorch`) tienen licencia TimesFM Non-Commercial v1.0: se usan acá para evaluar.
+(`google/timesfm-3.0-pytorch`) tienen licencia TimesFM Non-Commercial v1.0. El líder la autorizó para
+Charmy, que es gratuito y sin fines de lucro (D-31, 15/11).
 """
 
 import numpy as np

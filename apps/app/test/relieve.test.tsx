@@ -306,6 +306,38 @@ describe("vista Relieve (F4-R1)", () => {
     }
   });
 
+  it("en En vivo, las estadísticas comparan con la ventana anterior, nombran las regiones y cuentan los veredictos (F4-D4)", async () => {
+    vivo.features.push({
+      type: "Feature",
+      id: "N21-sin-veredicto",
+      geometry: { type: "Point", coordinates: [-70.2, -39.1] },
+      properties: { acq_datetime: "2026-11-14T01:00:00Z", satellite: "N21", instrument: "VIIRS", confidence: "nominal", frp: 3.5, daynight: "N", verdict: "sin_confirmar" },
+    });
+    try {
+      montar();
+      const u = userEvent.setup();
+      await u.click(screen.getByRole("tab", { name: "En vivo" }));
+      const panel = await screen.findByRole("complementary", { name: "Resumen en vivo" });
+      const estadisticas = await within(panel).findByRole("region", { name: "Estadísticas en vivo" });
+      // Con 48 h no hay ventana anterior en /live: no se compara.
+      expect(within(panel).queryByText(/anteriores/)).not.toBeInTheDocument();
+      await u.click(within(panel).getByRole("button", { name: "24 h" }));
+      expect(within(panel).getByText("2 más que las 24 h anteriores")).toBeInTheDocument();
+      const regiones = within(estadisticas).getByRole("list", { name: "Regiones con más focos" });
+      expect(within(regiones).getByText("Neuquén")).toBeInTheDocument();
+      expect(within(regiones).getByText("2 focos")).toBeInTheDocument();
+      const veredictos = within(estadisticas).getByRole("list", { name: "Focos por veredicto" });
+      expect(within(veredictos).getByText("Probable: 1")).toBeInTheDocument();
+      expect(within(veredictos).getByText("Sin confirmar: 1")).toBeInTheDocument();
+      // Respeta el filtro de intensidad: con «Muy fuerte» queda solo el foco probable.
+      await u.click(within(panel).getByRole("button", { name: /Muy fuerte/ }));
+      expect(within(veredictos).queryByText("Sin confirmar: 1")).not.toBeInTheDocument();
+      expect(within(panel).getByText("1 más que las 24 h anteriores")).toBeInTheDocument();
+    } finally {
+      vivo.features.pop();
+    }
+  });
+
   it("en En vivo, destildar un satélite deja solo los focos del otro y cierra la ficha de un foco suyo (#271)", async () => {
     vivo.features.push({
       type: "Feature",

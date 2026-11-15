@@ -5,6 +5,7 @@ import { useVivo } from "@/vivo/estado";
 import { SATELITES_VIVO } from "@/vivo/satelites";
 import { ETIQUETAS_EVIDENCIA, TIPOS_EVIDENCIA, veredicto } from "@/vivo/veredictos";
 import type { FocoReciente } from "./datos";
+import { ComparacionVivo, EstadisticasVivo } from "./ResumenVivo";
 import { useRelieve } from "./estado";
 import { colorFoco, enNiveles, hace, type NivelFoco, nivelFoco, radioFoco, type RegionResumen } from "./logica";
 
@@ -53,9 +54,10 @@ export function PanelEnVivo({ focos, disponible, mensaje, regiones }: Props) {
   const fecha = ultimo ? new Date(ultimo).toISOString() : "";
 
   return (
+    // Con las estadísticas el panel crece: se desplaza adentro para no tapar el aviso de emergencias.
     <aside
       aria-label="Resumen en vivo"
-      className="vidrio-relieve pointer-events-auto absolute left-3 top-[76px] z-20 w-[min(270px,calc(100%-24px))] rounded-2xl px-4 py-3.5 text-white"
+      className="vidrio-relieve scroll-relieve pointer-events-auto absolute left-3 top-[76px] z-20 max-h-[calc(100dvh-140px)] w-[min(270px,calc(100%-24px))] overflow-y-auto rounded-2xl px-4 py-3.5 text-white"
     >
       <h2 className="flex items-center gap-2 font-titulos text-lg font-bold">
         <i aria-hidden="true" className="punto-vivo" />
@@ -78,6 +80,7 @@ export function PanelEnVivo({ focos, disponible, mensaje, regiones }: Props) {
               {visibles.length === 1 ? "foco" : "focos"} en las últimas {horasVivo} h
             </span>
           </div>
+          <ComparacionVivo focos={focos} ultimo={ultimo} horas={horasVivo} niveles={nivelesVivo} />
           <div role="group" aria-label="Ventana de tiempo" className="mt-3 flex gap-1 rounded-full bg-white/5 p-[3px]">
             {([6, 24, 48] as const).map((h) => (
               <button
@@ -151,6 +154,7 @@ export function PanelEnVivo({ focos, disponible, mensaje, regiones }: Props) {
               })}
             </div>
           </div>
+          <EstadisticasVivo visibles={visibles} nombre={nombre} />
           {masIntensos.length > 0 && (
             <div className="mt-3.5 border-t border-white/10 pt-3">
               <h3 className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-white/50">Más intensos</h3>

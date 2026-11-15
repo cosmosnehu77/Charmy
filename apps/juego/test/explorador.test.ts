@@ -3,7 +3,7 @@ import { REGLAS, ordenDeRecorrido, siguiente, textoDeFoco } from "../src/explora
 import { focoActivo, type FocoActivo } from "../src/partida";
 
 const foco = (id: number, x: number, y: number, extra: { frp?: number; confidence?: string; fuente_fija?: boolean } = {}) =>
-  focoActivo(id, { lat: -40, lon: -70, hora_utc: "04:00", frp: 1, confidence: "nominal", x, y, ...extra });
+  focoActivo(id, { lat: -40, lon: -70, frp: 1, confidence: "nominal", x, y, ...extra });
 
 describe("recorrido por teclado", () => {
   const focos: FocoActivo[] = [foco(3, 50, 200), foco(1, 300, 100), foco(2, 10, 100), foco(4, 10, 100)];

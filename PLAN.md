@@ -10,7 +10,7 @@
 
 **Fase activa:** 4
 **Líder:** `@cosmosnehu77`. Hasta que vuelva (probablemente en la fase 4), **líder interino `@daniace`** (D-28).
-**Versión:** 2.2 · **Última actualización:** 14 de noviembre de 2026
+**Versión:** 2.3 · **Última actualización:** 15 de noviembre de 2026
 
 ## Objetivo del proyecto
 
@@ -108,7 +108,7 @@ Lo que se usa hoy. La columna **Dec.** apunta a la decisión que lo justifica ([
 | Rampas de color | YlOrRd para conteos, PuOr o BrBG para anomalías | D | Aptas para daltonismo. | — |
 | Landing | Astro + GSAP (ScrollTrigger) | E | Alternativa: Motion. | — |
 | Mascota | SVG por capas a partir de `docs/charmy-base/`, animado con Motion o CSS | E | Rive queda como mejora opcional si alguien lo domina. | D-07 |
-| Juego | Phaser 4, pixel art 2D | E | Sprites con Pixelorama o LibreSprite, sonidos con jsfxr, mapa con Tiled. | D-11 |
+| Juego | PixiJS 8 sobre Vite, maqueta 3D de Sudamérica (relieve ilustrativo y mapa de Natural Earth) | E | Sonidos con Web Audio, sin archivos. | D-11, D-36 |
 | Mensajería | Bot de Telegram (aiogram) | A | Alternativa: correo. | D-08 |
 | Alerta estándar | OASIS CAP 1.2, un feed XML por zona | A | — | D-08 |
 | Tipografías y paleta | Bricolage Grotesque, IBM Plex Sans, IBM Plex Mono y la paleta de `docs/charmy-base/Paleta.dc.html` | D, E | Viven como tokens en `packages/ui`. | D-07 |
@@ -137,7 +137,7 @@ Las skills de `.claude/skills/` son rutas protegidas: cada dueño abre su PR y e
 |---|---|---|---|---|
 | Landing | `apps/landing/` | `@dimidio6` | público | — |
 | App | `apps/app/` | `@daniace` | público | Consume la API y `packages/charmy` |
-| Juego | `apps/juego/` | `@dimidio6` | público | Consume `data/muestras/dia-juego.json` |
+| Juego | `apps/juego/` | `@dimidio6` | público | Focos simulados: no consume datos ni la API (D-36) |
 | Componente Charmy | `packages/charmy/` | `@dimidio6` desde la fase 3 (hasta la 2, `@cosmosnehu77`) | app, landing, juego | `packages/charmy/README.md`: `<Charmy mood outfit size say />` |
 | Tokens de diseño | `packages/ui/` | `@daniace` | app, landing, juego | `packages/ui/tokens.css` |
 | Contrato de API | `packages/contracts/api/` | `@BrunoAguinaga0` | A, D, E | `openapi.yaml` + mock |
@@ -190,7 +190,7 @@ si nada: avisen en el tablero y propongan el PR que actualiza este documento.
 | D-08 | Avisos **híbridos**: el público reporta sin cuenta; las entidades reciben Telegram y un feed CAP por zona. En el MVP hay una entidad de demostración con zona precargada; la bandeja web con cuenta queda para después. | Menos fricción y nada de login que construir en 48 horas. | RF-ALE |
 | D-09 | Verificación con **varias señales** (satélite, fuente fija, noticias, reportes). El modelo de lenguaje solo etiqueta noticias. | Que no haya noticias no vuelve falso un foco. Cerca de Comodoro, el falso positivo típico son las antorchas de gas. | RF-VIV |
 | D-10 | La predicción tiene **compuerta**: solo se muestra si supera a la climatología en una prueba con años no vistos. | Evita mostrar un modelo que no aporta. | RF-PRE |
-| D-11 | El juego es 2D en pixel art. El 3D voxel queda fuera. | Alcance de 48 horas. | RF-KID |
+| D-11 | El juego es 2D en pixel art. El 3D voxel queda fuera. **Reemplazada por D-36.** | Alcance de 48 horas. | RF-KID |
 | D-12 | **Contratos antes que código.** Cada carril publica en la fase 1 su contrato con un mock o una muestra, y los demás trabajan contra eso. | Permite que varios agentes avancen en paralelo sin esperarse. | RNF-09 |
 | D-13 | Solo el worker consulta FIRMS, cada 30 minutos y con caché. El navegador nunca lo hace. | Respeta el límite de la API y protege la clave. | RNF-06 |
 | D-14 | El público no tiene cuentas. | Fricción y datos personales innecesarios. | RF-ALE-07 |
@@ -215,6 +215,7 @@ si nada: avisen en el tablero y propongan el PR que actualiza este documento.
 | D-33 | **Reloj propio para las tareas programadas.** El cron de GitHub nunca disparó en este repo (cero corridas `schedule` de `worker-vivo.yml` y `avisos.yml`, aun con el cron cambiado en #166). `.github/workflows/reloj.yml` corre casi 6 horas, dispara `avisos.yml` cada 5 minutos y `worker-vivo.yml` cada 15 con `workflow_dispatch`, y se relanza solo. Los cron de los dos flujos quedan como respaldo. | `workflow_dispatch` sí anda, no pide secretos nuevos (alcanza `GITHUB_TOKEN`) y es gratis en un repo público. Un Cron Trigger de Cloudflare necesitaría un token de GitHub fuera del repo. | RF-VIV-01, RF-ALE-02 |
 | D-34 | **Las tareas de `@dimidio6` pasan a `@daniace`.** `@dimidio6` se quedó sin acceso a internet. Sus tareas abiertas (F3-E3 #170, F4-E1 #60, F4-E2 #61, F5-E1 #68, F5-E2 #69) y sus carpetas (`apps/landing/`, `apps/juego/`, `packages/charmy/`, `services/alertas/`, `services/prediccion/`) pasan a `@daniace`. Cuando `@dimidio6` vuelva, el líder decide en el tablero qué se le devuelve. | Que el pulido de la fase 4 y la predicción no se detengan. | RNF-09 |
 | D-35 | **El juego pasa a llamarse Charmy Brigada y se amplía** (propuesta de `@dimidio6`, pendiente de aprobación del líder). El nombre cambia en todas las piezas; los IDs `RF-KID-*` y la carpeta `apps/juego/` no cambian. Excepción al congelamiento de la fase 3: entran RF-KID-04 y RF-KID-06 a RF-KID-12, como tareas de la fase 4 (F4-E4 a F4-E11, F4-B2, F4-C2 y F4-C3). El líder devolvió `apps/juego/` a `@dimidio6` el 15/11 (corrige D-34 solo para el juego; F3-E3 y lo demás siguen con `@daniace`). Condiciones: hasta el envío (F4-X1) el trabajo queda acotado a `apps/juego/` y no hay tareas nuevas para otros carriles: F4-B2, F4-C2 y F4-C3 empiezan después del envío. Mientras tanto el desafío del día juega la muestra, sin viento y sin fuentes fijas marcadas, y la tabla de puntajes espera. Nada de esto bloquea el envío; cada cambio deja el juego publicable; lo que no llegue pasa a la hoja de ruta, en este orden de caída: F4-E10, F4-E8, F4-E7, F4-E6. El juego pide los datos del día y el viento solo a la API de Charmy (`GET /game/day`), nunca a FIRMS ni a Meteomatics. | El juego hoy es de reflejos y usa poco el dato real: potencia, confianza, hora de pasada, fuentes fijas y viento ya están en los datos y en la API. Un nombre de brigada le habla a los chicos sin restringir la edad. | RF-KID-01, RF-KID-04, RF-KID-06 a RF-KID-12 |
+| D-36 | **El juego pasa a la maqueta 3D de Sudamérica en PixiJS, con focos simulados.** Reemplaza a D-11 y al juego en Phaser 4. La versión que armaron `@dimidio6` y `@cosmosnehu77` queda como definitiva (F4-E12): relieve ilustrativo, barridas del satélite, viento, brigadas, Charmy aguatero, costos en puntos, pausa y récord con las mejores partidas. Los focos son simulados y el juego lo dice al final, con el 100 y el 132; RF-KID-02 y RF-KID-10 salen del alcance y F4-E8, F4-B2 y F4-C2 dejan de hacer falta para el juego. La tabla de puntajes (F4-E10, F4-C3) queda para después. | Se ve y se juega mejor, y no depende de que la API del juego esté lista antes del envío. | RF-KID-01, RF-KID-03, RF-KID-05 a RF-KID-09, RF-KID-11, RF-KID-12 |
 
 ---
 
@@ -423,6 +424,7 @@ Si falta tiempo en el carril B, el orden es: fuentes fijas, tiempo, imagen y, po
 | — | F4-E9 | Modo explorador: sin reloj, sin escapes, con teclado y anuncios para lector de pantalla | `@dimidio6` (D-35) | `apps/juego/` | F4-E5 | RF-KID-11, RNF-04 | pendiente |
 | — | F4-E10 | Tabla de puntajes del desafío del día, con "no disponible" si la API no responde | `@dimidio6` (D-35) | `apps/juego/` | F4-E8, F4-C3 (después del envío) | RF-KID-04 | pendiente |
 | — | F4-E11 | Sonido generado con Web Audio, sin archivos ni dependencias nuevas, con silencio recordado | `@dimidio6` (D-35) | `apps/juego/` | F4-E4 | RF-KID-12 | pendiente |
+| #238 | F4-E12 | El juego pasa a la maqueta 3D de Sudamérica en PixiJS, con focos simulados; reemplaza al de Phaser (D-36) | `@cosmosnehu77` | `apps/juego/` | — | RF-KID-01, RF-KID-03, RF-KID-05 a RF-KID-09, RF-KID-11, RF-KID-12 | en revisión |
 | — | F4-B2 | `fuente_fija` en cada foco de `dia-juego.json` (contrato y muestra) | `@leonelcnr` | `data/muestras/`, `packages/contracts/datos/` | F4-X1 (después del envío, D-35) | RF-KID-06 | pendiente |
 | — | F4-C2 | `GET /game/day?date=`: focos de un día con la forma de `dia-juego.json`, `fuente_fija` por foco y el viento del día, con caché | `@BrunoAguinaga0` | `services/api/`, `packages/contracts/api/` | F4-X1 (después del envío, D-35), F4-B2 | RF-KID-10, RF-KID-08 | pendiente |
 | — | F4-C3 | `GET` y `POST /game/scores`: tabla del desafío del día, apodo filtrado sin datos personales, puntaje validado y límite de pedidos | `@BrunoAguinaga0` | `services/api/`, `packages/contracts/api/` | F4-X1 (después del envío, D-35) | RF-KID-04 | pendiente |
@@ -519,13 +521,14 @@ Qué tareas cubren cada requisito. Si un requisito de `REQUISITOS.md` no aparece
 | RF-ALE-05 | sin tarea (deseable) | hoja de ruta |
 | RF-ALE-07 | cumplido por diseño (D-14) | — |
 | RF-PRE-01, 02 | F3-B2, F3-B5, F3-E3 | 3, con compuerta |
-| RF-KID-01, 02, 03 | F1-B2, F1-E4, F3-E1, F4-E3 | 3 |
+| RF-KID-01, 03 | F1-E4, F3-E1, F4-E3, F4-E12 (D-36) | 3 |
+| RF-KID-02 | fuera (D-36: focos simulados) | — |
 | RF-KID-04 | F4-C3, F4-E10 (D-35) | 4 |
-| RF-KID-05 | sin tarea | hoja de ruta |
-| RF-KID-06, 07 | F4-B2, F4-E4, F4-E5 (D-35) | 4 |
-| RF-KID-08 | F4-C2, F4-E6 (D-35) | 4 |
+| RF-KID-05 | F4-E12 (D-36) | 4 |
+| RF-KID-06, 07 | F4-E4, F4-E5, F4-E12 (D-35, D-36) | 4 |
+| RF-KID-08 | F4-E6, F4-E12 (D-35, D-36) | 4 |
 | RF-KID-09 | F4-E7 (D-35) | 4 |
-| RF-KID-10 | F4-C2, F4-E8 (D-35) | 4 |
+| RF-KID-10 | fuera (D-36) | — |
 | RF-KID-11 | F4-E9 (D-35) | 4 |
 | RF-KID-12 | F4-E11 (D-35) | 4 |
 | RF-CTX-01 | F0-B2, F3-B3, F3-D4 | 3 |
@@ -576,7 +579,7 @@ La fase 5 no cubre requisitos nuevos: refuerza RNF-02 y RNF-10 sobre lo ya entre
 | Cuentas de entidades, zona dibujada por ellas y bandeja web | RF-ALE-05 | Login por enlace mágico. |
 | Vista diaria del calendario | RF-CAL-04 | — |
 | Vista global con focos recientes de todo el mundo | RF-MAP-08 | El método no depende de la región. |
-| Juego en 3D voxel | RF-KID-05 | — |
+| Desafío del día con focos reales en el juego | RF-KID-02, RF-KID-10 | Quedó fuera con D-36. Volvería con F4-C2 (`GET /game/day`) y la muestra de `data/muestras/dia-juego.json`. |
 | Variables del tiempo en la predicción | RF-PRE-01 | La cuenta de Meteomatics da histórico desde 1900 y pedidos por área, pero con 1.000 pedidos por día y hasta el 22/11. Alternativa abierta: ERA5-Land mensual. |
 | Fuente del tiempo después del 22/11/2026 | RF-CTX-01 | La cuenta del evento vence. Hace falta otra cuenta o una fuente abierta; mientras tanto el panel muestra "no disponible" (RNF-14). |
 | Imagen de antes y después, y severidad de la quema | RF-CTX-04 | Sentinel-2 con el índice NBR, vía Copernicus. |
@@ -611,6 +614,7 @@ La fase 5 no cubre requisitos nuevos: refuerza RNF-02 y RNF-10 sobre lo ya entre
 | 2026-11-14 | Versión 2.1.1. Reloj propio para worker-vivo y avisos (D-33). | encabezado, 3 | `@cosmosnehu77` |
 | 2026-11-14 | Versión 2.1.2. Las tareas y carpetas de `@dimidio6` pasan a `@daniace` (D-34). | encabezado, 3, 5 | `@cosmosnehu77` |
 | 2026-11-14 | Versión 2.2, con `REQUISITOS.md` 1.5. El juego pasa a llamarse Charmy Brigada y se amplía (D-35, pendiente de aprobación): tareas nuevas F4-E3 a F4-E11, y F4-B2, F4-C2 y F4-C3 después del envío. La tabla de puntajes sale de la hoja de ruta. | encabezado, 3, 5, 6, 8 | `@dimidio6` |
+| 2026-11-15 | Versión 2.3, con `REQUISITOS.md` 1.6. El juego pasa a la maqueta 3D de Sudamérica en PixiJS con focos simulados (D-36, reemplaza a D-11). Tarea nueva F4-E12 (#238). Cambian la tabla de tecnologías, la de componentes, la trazabilidad de RF-KID y la hoja de ruta. | encabezado, 1, 3, 5, 6, 8 | `@cosmosnehu77` |
 
 ## 10. Registro de cierres
 

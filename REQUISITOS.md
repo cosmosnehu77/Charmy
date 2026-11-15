@@ -6,7 +6,7 @@
 > **Regla de oro.** Todo requisito tiene un ID. Toda tarea de `PLAN.md` apunta a uno o más IDs.
 > Si se agrega, cambia o quita un requisito acá, `PLAN.md` se actualiza en el mismo PR (ver [Cómo cambiar este documento](#8-cómo-cambiar-este-documento)).
 
-**Versión:** 1.5 · **Última actualización:** 14 de noviembre de 2026
+**Versión:** 1.6 · **Última actualización:** 15 de noviembre de 2026
 
 ---
 
@@ -152,15 +152,15 @@ Hasta la versión 1.4 el juego se llamaba Charmy Kids. Los IDs conservan el pref
 | ID | Requisito | Prioridad |
 |---|---|---|
 | RF-KID-01 | Juego web en el que Charmy bombero apaga incendios, con partidas cortas, puntaje y un bucle que invite a volver a jugar. | Importante |
-| RF-KID-02 | Los focos del juego salen de un día real de datos satelitales. | Importante |
-| RF-KID-03 | Cada partida termina con un dato real y un consejo de prevención. | Importante |
+| RF-KID-02 | Los focos del juego salen de un día real de datos satelitales. | Fuera (D-36: el juego usa focos simulados) |
+| RF-KID-03 | Cada partida termina con un consejo de prevención y aclara que los focos son simulados y a qué número llamar. | Importante |
 | RF-KID-04 | Tabla de puntajes compartida entre jugadores, por desafío del día. El apodo es corto, sin datos personales y filtrado; el puntaje se valida en el servidor. | Deseable |
-| RF-KID-05 | Versión en 3D. | Fuera |
+| RF-KID-05 | Versión en 3D: una maqueta en relieve de Sudamérica que se gira, inclina, acerca y desplaza. | Deseable (D-36) |
 | RF-KID-06 | Cada foco se comporta según lo que midió el satélite: su potencia (FRP) define cuánto cuesta apagarlo y cuánto tarda en escaparse; un foco de confianza baja puede ser una falsa alarma que conviene verificar antes de gastar agua; una fuente fija (industria, antorcha de gas o volcán) no se apaga, y el cierre explica por qué. | Deseable |
-| RF-KID-07 | Los focos aparecen por pasadas del satélite, en el orden y la hora en que se detectaron, sobre el contorno de la región. | Deseable |
-| RF-KID-08 | Un foco que se escapa se propaga a su alrededor, con la dirección y la fuerza del viento real del día. Sin dato del viento, se propaga sin dirección y el juego sigue. | Deseable |
+| RF-KID-07 | Los focos aparecen por barridas animadas del satélite, en zonas de Sudamérica donde el fuego es habitual. | Deseable |
+| RF-KID-08 | Un foco que se escapa se propaga a su alrededor, con la dirección y la fuerza de un viento simulado que cambia durante la partida. | Deseable |
 | RF-KID-09 | Charmy tiene un tanque de agua que se recarga en los lagos y una herramienta por vestuario: bombero (apaga con agua), piloto (avión hidrante sobre una zona, con tiempo de recarga), científica (verifica un foco) y guía (cortafuegos). Su estado de ánimo acompaña la partida y la dificultad crece de a poco. | Deseable |
-| RF-KID-10 | Desafío del día: cada día se juegan los focos reales del día anterior, iguales para todos. Si los datos no llegan o hay muy pocos focos, se juega la muestra y se avisa. | Deseable |
+| RF-KID-10 | Desafío del día: cada día se juegan los focos reales del día anterior, iguales para todos. Si los datos no llegan o hay muy pocos focos, se juega la muestra y se avisa. | Fuera (D-36) |
 | RF-KID-11 | Modo explorador, para accesibilidad: sin reloj, los focos no se escapan, se juega con teclado y un lector de pantalla anuncia cada foco. No suma a la tabla de puntajes. | Deseable |
 | RF-KID-12 | El juego tiene sonido, con un botón de silencio que se recuerda entre visitas. | Deseable |
 
@@ -238,3 +238,4 @@ Un requisito sin tarea en `PLAN.md` no se está haciendo. Una tarea sin requisit
 | 2026-11-14 | Versión 1.3. El equipo activo pasa a ser de cuatro personas con agente; una quinta puede sumarse después. RNF-09 deja de fijar la cantidad de agentes. No cambia ningún requisito funcional. | `@cosmosnehu77` |
 | 2026-11-14 | Versión 1.4. Se agrega RNF-15: toda funcionalidad se entrega con pruebas automáticas que no dependen de la red. | `@cosmosnehu77` |
 | 2026-11-14 | Versión 1.5. El juego pasa a llamarse Charmy Brigada (D-35); los IDs `RF-KID-*` no cambian. Se agregan RF-KID-06 a RF-KID-12 (el dato real en la mecánica, propagación con viento, agua y herramientas, desafío del día, modo explorador y sonido) y RF-KID-04 se precisa. Todos son deseables: no cambian el criterio de MVP. | `@dimidio6` |
+| 2026-11-15 | Versión 1.6. El juego pasa a la maqueta 3D de Sudamérica en PixiJS con focos simulados (D-36): RF-KID-05 entra como deseable; RF-KID-02 y RF-KID-10 quedan fuera; RF-KID-03, RF-KID-07 y RF-KID-08 se ajustan a focos y viento simulados. | `@cosmosnehu77` |

@@ -9,7 +9,7 @@ export interface Viento {
 }
 
 /** Celdas encendidas a la vez como máximo: más allá, los focos que se escapan ya no se propagan. */
-export const TOPE_ENCENDIDAS = 20;
+export const TOPE_ENCENDIDAS = 40;
 /** Celdas nuevas que enciende un foco que se escapa. */
 export const CELDAS_POR_ESCAPE = 2;
 /** Con este viento (m/s) o más, la celda a favor del viento pesa 1 + SESGO_MAXIMO. */

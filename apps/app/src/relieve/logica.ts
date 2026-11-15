@@ -25,12 +25,12 @@ export const INDICADORES: { id: Indicador; nombre: string; unidad: string; ayuda
       return t("Focos", "Hotspots");
     },
     get unidad() {
-      return t("días-celda", "cell-days");
+      return t("días de fuego", "fire days");
     },
     get ayuda() {
       return t(
-        "Fuego del último mes cerrado, en días-celda: cada celda de 0,1° con fuego cuenta una vez por día.",
-        "Fire in the last full month, in cell-days: each 0.1° cell with fire counts once per day.",
+        "Fuego del último mes cerrado, en días de fuego: el mapa se divide en cuadrados de unos 11 km y cada cuadrado con fuego suma uno por día.",
+        "Fire in the last full month, in fire days: the map is split into squares of about 11 km and each square with fire adds one per day.",
       );
     },
     disponible: true,
@@ -65,12 +65,12 @@ export const INDICADORES: { id: Indicador; nombre: string; unidad: string; ayuda
       return t("Predicción", "Forecast");
     },
     get unidad() {
-      return t("celdas", "cells");
+      return t("cuadrados", "squares");
     },
     get ayuda() {
       return t(
-        "Celdas de 0,1° con fuego que el modelo espera el mes que viene. Es una estimación.",
-        "0.1° cells with fire expected by the model next month. This is an estimate.",
+        "Cuadrados de unos 11 km con fuego que el modelo espera el mes que viene. Es una estimación.",
+        "Squares of about 11 km with fire expected by the model next month. This is an estimate.",
       );
     },
     disponible: true,
@@ -101,13 +101,13 @@ const decimal = (v: number) => v.toLocaleString(localeActual(), { maximumFractio
 /** Una frase corta: cuántas celdas con fuego se esperan contra las habituales (±15 % cuenta como lo mismo). */
 export function textoPrediccion(m: MesPrediccion): string {
   if (enIngles()) {
-    const esperadas = `${decimal(m.expected_cells)} fire ${m.expected_cells === 1 ? "cell" : "cells"} expected`;
+    const esperadas = `${decimal(m.expected_cells)} ${m.expected_cells === 1 ? "square" : "squares"} with fire expected`;
     const habituales = `the usual ${decimal(m.usual_cells)}`;
     if (Math.abs(m.expected_cells - m.usual_cells) <= 0.15 * m.usual_cells) return `${esperadas}, similar to ${habituales}.`;
     return `${esperadas}, ${m.expected_cells > m.usual_cells ? "more" : "fewer"} than ${habituales}.`;
   }
-  const esperadas = `Se esperan ${decimal(m.expected_cells)} ${m.expected_cells === 1 ? "celda" : "celdas"} con fuego`;
-  const habituales = `las ${decimal(m.usual_cells)} habituales`;
+  const esperadas = `Se esperan ${decimal(m.expected_cells)} ${m.expected_cells === 1 ? "cuadrado" : "cuadrados"} con fuego`;
+  const habituales = `los ${decimal(m.usual_cells)} habituales`;
   if (Math.abs(m.expected_cells - m.usual_cells) <= 0.15 * m.usual_cells) return `${esperadas}, como ${habituales}.`;
   return `${esperadas}, ${m.expected_cells > m.usual_cells ? "más" : "menos"} que ${habituales}.`;
 }
@@ -377,8 +377,8 @@ export function textoLoNormal(u: { year: number; month: number; value: number; m
   if (u.median === null) return null;
   const mes = nombreMes(u.month);
   return t(
-    `En ${mes} de ${u.year} hubo ${decimal(u.value)} días-celda con fuego. Lo normal acá en ${mes} es ${decimal(u.median)}: la mediana de los ${mes}s de ${PRIMER_ANIO} a ${u.year - 1}.`,
-    `In ${mes} ${u.year} there were ${decimal(u.value)} fire cell-days. Normal here in ${mes} is ${decimal(u.median)}: the median of every ${mes} from ${PRIMER_ANIO} to ${u.year - 1}.`,
+    `En ${mes} de ${u.year} hubo ${decimal(u.value)} días de fuego. Lo normal acá en ${mes} es ${decimal(u.median)}: la mediana de los ${mes}s de ${PRIMER_ANIO} a ${u.year - 1}.`,
+    `In ${mes} ${u.year} there were ${decimal(u.value)} fire days. Normal here in ${mes} is ${decimal(u.median)}: the median of every ${mes} from ${PRIMER_ANIO} to ${u.year - 1}.`,
   );
 }
 

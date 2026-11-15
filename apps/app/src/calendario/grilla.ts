@@ -87,7 +87,7 @@ export function describirCelda(celda: CeldaCalendario | null, year: number, mes:
   if (!celda) return t(`${cuando}: sin dato`, `${cuando}: no data`);
   const origen = textoOrigen(celda.origin);
   return t(
-    `${cuando}: ${formatear(celda.value)} días-celda con fuego, anomalía ${conSigno(celda.anomaly)}, percentil ${Math.round(celda.percentile)} (mediana ${formatear(celda.median)}), ${origen}`,
-    `${cuando}: ${formatear(celda.value)} fire cell-days, anomaly ${conSigno(celda.anomaly)}, percentile ${Math.round(celda.percentile)} (median ${formatear(celda.median)}), ${origen}`,
+    `${cuando}: ${formatear(celda.value)} días de fuego, anomalía ${conSigno(celda.anomaly)}, percentil ${Math.round(celda.percentile)} (mediana ${formatear(celda.median)}), ${origen}`,
+    `${cuando}: ${formatear(celda.value)} fire days, anomaly ${conSigno(celda.anomaly)}, percentile ${Math.round(celda.percentile)} (median ${formatear(celda.median)}), ${origen}`,
   );
 }

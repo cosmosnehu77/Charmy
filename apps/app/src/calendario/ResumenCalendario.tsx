@@ -18,8 +18,8 @@ export function ResumenCalendario({ celdas }: { celdas: CeldaCalendario[] }) {
       nombre: t("Total del período", "Period total"),
       valor: formatear(r.total),
       detalle: t(
-        `días-celda · ${formatear(r.promedioMensual)} por mes`,
-        `cell-days · ${formatear(r.promedioMensual)} per month`,
+        `días de fuego · ${formatear(r.promedioMensual)} por mes`,
+        `fire days · ${formatear(r.promedioMensual)} per month`,
       ),
     },
     {

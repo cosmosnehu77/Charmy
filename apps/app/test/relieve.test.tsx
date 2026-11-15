@@ -217,7 +217,7 @@ describe("vista Relieve (F4-R1)", () => {
     // Qué es lo normal, con los dos números (#381).
     expect(
       within(ficha).getByText(
-        "En octubre de 2026 hubo 41,4 días-celda con fuego. Lo normal acá en octubre es 34,3: la mediana de los octubres de 2001 a 2025.",
+        "En octubre de 2026 hubo 41,4 días de fuego. Lo normal acá en octubre es 34,3: la mediana de los octubres de 2001 a 2025.",
       ),
     ).toBeInTheDocument();
     // Focos es un mes: no hay línea de días.
@@ -272,7 +272,7 @@ describe("vista Relieve (F4-R1)", () => {
     const ficha = screen.getByRole("region", { name: "Ficha de Neuquén" });
     const numeros = within(ficha).getByRole("region", { name: "En números" });
     expect(within(numeros).getByText("Puesto por focos").nextSibling).toHaveTextContent(/^1\.º de \d+$/);
-    // 2025 hasta enero: 3 días-celda; 2024 hasta enero: 1.
+    // 2025 hasta enero: 3 días de fuego; 2024 hasta enero: 1.
     const anio = await within(numeros).findByText("Año 2025");
     expect(anio.nextSibling).toHaveTextContent("+200 %");
     expect(anio.nextSibling?.nextSibling).toHaveTextContent("hasta enero, contra 2024");
@@ -586,7 +586,7 @@ describe("vista Relieve (F4-R1)", () => {
     await usuario.click(fila);
     const ficha = await screen.findByRole("region", { name: "Ficha de Neuquén" });
     expect(within(ficha).getByText("Noviembre 2026")).toBeInTheDocument();
-    expect(within(ficha).getByText("Se esperan 12,4 celdas con fuego, más que las 6 habituales.")).toBeInTheDocument();
+    expect(within(ficha).getByText("Se esperan 12,4 cuadrados con fuego, más que los 6 habituales.")).toBeInTheDocument();
     expect(within(ficha).getAllByText("Pronóstico")).toHaveLength(2);
     expect(within(ficha).getByText("Lo habitual, ajustado")).toBeInTheDocument();
     expect(within(ficha).getByText(/Es una estimación del modelo/)).toBeInTheDocument();

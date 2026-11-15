@@ -108,12 +108,12 @@ export function Calendario() {
           <p className="text-xs text-tinta-suave">
             {t(
               <>
-                Cada celda es un mes: días-celda con fuego, en equivalente VIIRS. La anomalía compara con la{" "}
+                Cada casilla es un mes: días de fuego, en equivalente VIIRS. La anomalía compara con la{" "}
                 {consulta.data.baseline}
                 {consulta.data.region ? `, región ${consulta.data.region}` : ""}.
               </>,
               <>
-                Each cell is a month: fire cell-days in VIIRS equivalent. Anomaly compares against the{" "}
+                Each box is a month: fire days in VIIRS equivalent. Anomaly compares against the{" "}
                 {consulta.data.baseline}
                 {consulta.data.region ? `, region ${consulta.data.region}` : ""}.
               </>,

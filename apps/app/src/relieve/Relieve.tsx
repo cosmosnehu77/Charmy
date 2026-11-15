@@ -277,8 +277,8 @@ export function Relieve() {
               <p className="mb-2 text-white/60">
                 {info?.disponible && indicador === "prediccion"
                   ? t(
-                      "La altura son las celdas con fuego que espera el modelo el mes que viene. El color, cómo se compara con lo habitual para ese mes: naranja, más fuego; violeta, menos; claro, lo de siempre.",
-                      "Height is the fire cells the model expects next month. Color is how that compares with the usual for that month: orange, more fire; purple, less; light, as usual.",
+                      "La altura son los cuadrados con fuego que espera el modelo el mes que viene. El color, cómo se compara con lo habitual para ese mes: naranja, más fuego; violeta, menos; claro, lo de siempre.",
+                      "Height is the squares with fire the model expects next month. Color is how that compares with the usual for that month: orange, more fire; purple, less; light, as usual.",
                     )
                   : info?.disponible
                   ? t(

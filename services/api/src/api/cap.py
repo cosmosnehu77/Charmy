@@ -9,7 +9,7 @@ from datetime import UTC, datetime
 
 from alertas.cap import AvisoCap, armar_cap
 from alertas.cliente import _foco_de_feature, _foco_de_reporte
-from alertas.zona import ZONA_DEMO
+from alertas.zona import ZONAS as ZONAS_DE_AVISOS
 from fastapi import APIRouter, Response
 
 from api.avisos import _fecha, _tablas
@@ -19,7 +19,7 @@ from api.vivo import _feature
 
 router = APIRouter()
 
-ZONAS = {ZONA_DEMO.id: ZONA_DEMO}
+ZONAS = {z.id: z for z in ZONAS_DE_AVISOS}  # las mismas zonas que el bot (D-39)
 MAXIMO = 100  # los avisos más recientes de la zona
 
 

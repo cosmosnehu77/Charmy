@@ -30,6 +30,7 @@ import {
   focosVivoVisibles,
   maximo,
   nombresPorZoom,
+  opacidadRegiones,
   type RegionResumen,
   valorIndicador,
 } from "./logica";
@@ -39,6 +40,13 @@ maplibregl.setWorkerUrl(urlWorker);
 /** Mapa base oscuro y claro de OpenFreeMap (sin clave): ciudades, rutas y calles debajo de las regiones. */
 export const ESTILO_OSCURO = "https://tiles.openfreemap.org/styles/dark";
 export const ESTILO_CLARO = "https://tiles.openfreemap.org/styles/positron";
+/**
+ * Imagen satelital (#396): mosaico Sentinel-2 sin nubes de EOX, teselas sin clave. Licencia CC BY-NC-SA 4.0: uso no
+ * comercial con la atribución en el mapa.
+ */
+export const TESELAS_SATELITAL = "https://tiles.maps.eox.at/wmts/1.0.0/s2cloudless-2024_3857/default/g/{z}/{y}/{x}.jpg";
+const ATRIBUCION_SATELITAL =
+  '<a href="https://cloudless.eox.at" target="_blank" rel="noopener">EOxCloudless</a> by EOX IT Services GmbH (Contains modified Copernicus Sentinel data 2024)';
 const VACIO = { type: "FeatureCollection" as const, features: [] };
 /** Metros de alto de una región con altura 1 (la de más fuego). */
 const ALTO_MAX = 380_000;
@@ -231,9 +239,10 @@ export default function MapaRelieve({ regiones, dias, focos, onHover }: Props) {
       m.setFeatureState({ source: "regiones", id: r.id }, { c: tono, h: a.actual });
     }
     // Con una provincia elegida, las regiones van opacas: las rutas y límites del mapa base no se mezclan (#251).
-    const opacidadReg = e.seleccion ? 1 : 0.92;
-    m.setPaintProperty("reg-2d", "fill-opacity", opacidadReg);
-    m.setPaintProperty("reg-3d", "fill-extrusion-opacity", opacidadReg);
+    const opacidad = opacidadRegiones(e.seleccion !== null, e.satelital);
+    m.setPaintProperty("reg-2d", "fill-opacity", opacidad.regiones);
+    m.setPaintProperty("reg-3d", "fill-extrusion-opacity", opacidad.regiones);
+    m.setPaintProperty("vivo-gris", "fill-opacity", opacidad.gris);
     m.setPaintProperty("reg-3d", "fill-extrusion-height", vivo ? ALTURA_VIVO : ALTURA);
     // Focos de los últimos días sobre el relieve: con una región elegida y fuera de Focos, que es un mes (#373).
     const dia = props.current.dias[e.linea.dia];
@@ -264,6 +273,7 @@ export default function MapaRelieve({ regiones, dias, focos, onHover }: Props) {
     }
     const capasReg = capasRegionesVisibles(e.plano, apagado);
     const visible = (id: string, si: boolean) => m.setLayoutProperty(id, "visibility", si ? "visible" : "none");
+    visible("satelital", e.satelital);
     visible("reg-2d", capasReg.reg2d);
     visible("reg-3d", capasReg.reg3d);
     visible("reg-borde-halo", capasReg.regBorde);
@@ -306,6 +316,23 @@ export default function MapaRelieve({ regiones, dias, focos, onHover }: Props) {
       const capas = m.getStyle().layers;
       const ultimaBase = capas.length - 1 - [...capas].reverse().findIndex((l) => l.type !== "symbol");
       const antes = capas[ultimaBase + 1]?.id;
+      // La imagen va sobre los rellenos y las rutas del mapa base y debajo de las provincias y los nombres.
+      m.addSource("satelital", {
+        type: "raster",
+        tiles: [TESELAS_SATELITAL],
+        tileSize: 256,
+        maxzoom: 15,
+        attribution: ATRIBUCION_SATELITAL,
+      });
+      m.addLayer(
+        {
+          id: "satelital",
+          type: "raster",
+          source: "satelital",
+          layout: { visibility: props.current.estado.satelital ? "visible" : "none" },
+        },
+        antes,
+      );
       m.addSource("regiones", { type: "geojson", data: VACIO, promoteId: "region" });
       m.addSource("agujas", { type: "geojson", data: VACIO });
       m.addSource("puntos", { type: "geojson", data: VACIO });

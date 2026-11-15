@@ -4,6 +4,7 @@ import {
   capaRegiones,
   capasRegionesVisibles,
   mapaPlano,
+  opacidadRegiones,
   colorFoco,
   escalaRegion,
   hace,
@@ -524,5 +525,16 @@ describe("el último mes de una región (F4-D15, #377)", () => {
     expect(serie[0]).toEqual({ dia: "2026-10-16", focos: 2 });
     expect(serie[1]).toEqual({ dia: "2026-10-17", focos: 0 });
     expect(serie[29]).toEqual({ dia: "2026-11-14", focos: 1 });
+  });
+});
+
+describe("vista satelital (#396)", () => {
+  it("con la imagen, las provincias se pintan más transparentes para que se vea el terreno", () => {
+    expect(opacidadRegiones(false, false)).toEqual({ regiones: 0.92, gris: 0.55 });
+    expect(opacidadRegiones(true, false)).toEqual({ regiones: 1, gris: 0.55 });
+    const sat = opacidadRegiones(false, true);
+    expect(sat.regiones).toBeLessThan(0.6);
+    expect(sat.gris).toBeLessThan(0.3);
+    expect(opacidadRegiones(true, true).regiones).toBeGreaterThan(sat.regiones);
   });
 });

@@ -138,11 +138,93 @@ export function escalaRegion(
   valor: number | null,
   max: number,
   indicador: Indicador,
+  props?: PropsRegion,
 ): { color: string; altura: number } {
   if (valor === null || (indicador !== "anomalia" && valor <= 0)) return { color: relieve.sinDato, altura: 0 };
   const t = indicador === "anomalia" ? Math.min(1, Math.max(0, valor / 100)) : Math.sqrt(valor / (max || 1));
+  // Predicción (F4-D15): la altura son las celdas esperadas; el color, cuánto se aleja de lo habitual.
+  if (indicador === "prediccion" && props) return { color: colorPrediccion(mesSiguiente(props)), altura: t };
   const rampa = indicador === "anomalia" ? rampaAnomalia : rampaConteo;
   return { color: rampa[Math.min(rampa.length - 1, Math.floor(t * rampa.length))] as string, altura: t };
+}
+
+/** El mes que viene de la predicción de una región (plazo 1), si llegó. */
+export function mesSiguiente(p: PropsRegion): MesPrediccion | undefined {
+  return p.prediccion?.find((m) => m.horizon === 1);
+}
+
+export type Sentido = "mas" | "menos" | "igual";
+
+/** Lo esperado contra lo habitual: cuántas veces y hacia dónde (±15 % cuenta como lo mismo). */
+export function comparacionPrediccion(m: MesPrediccion): { sentido: Sentido; veces: number | null } {
+  const veces = m.usual_cells > 0 ? m.expected_cells / m.usual_cells : null;
+  if (veces === null) return { sentido: m.expected_cells > 0 ? "mas" : "igual", veces };
+  return { sentido: veces > 1.15 ? "mas" : veces < 0.85 ? "menos" : "igual", veces };
+}
+
+/**
+ * Color de la predicción en la rampa divergente (apta para daltonismo): violeta intenso si se espera mucho menos
+ * que lo habitual, claro si es lo mismo, naranja intenso si se espera mucho más. Cada paso es un factor de √2:
+ * la mitad o el doble quedan a dos pasos del centro, un cuarto o cuatro veces en la punta.
+ */
+export function colorPrediccion(m: MesPrediccion | undefined): string {
+  if (!m || (m.expected_cells <= 0 && m.usual_cells <= 0)) return relieve.sinDato;
+  const centro = (rampaAnomalia.length - 1) / 2;
+  if (m.usual_cells <= 0) return rampaAnomalia[rampaAnomalia.length - 1] as string;
+  if (m.expected_cells <= 0) return rampaAnomalia[0] as string;
+  const pasos = Math.log2(m.expected_cells / m.usual_cells) * 2;
+  const i = Math.round(centro + Math.max(-centro, Math.min(centro, pasos)));
+  return rampaAnomalia[i] as string;
+}
+
+function cuantoMas(veces: number | null, sentido: Sentido): string {
+  const pct = (v: number) => `${Math.round(Math.abs(v - 1) * 100)} %`;
+  if (veces === null) return t("Se espera fuego donde normalmente casi no hay", "Fire is expected where there is usually almost none");
+  if (sentido === "mas") {
+    if (veces >= 1.9 && veces < 2.1) return t("Se espera el doble de lo habitual", "About twice the usual is expected");
+    if (veces >= 2.1) return t(`Se espera ${decimal(veces)} veces lo habitual`, `${decimal(veces)} times the usual is expected`);
+    return t(`Se espera un ${pct(veces)} más que lo habitual`, `${pct(veces)} more than usual is expected`);
+  }
+  if (veces > 0.45 && veces <= 0.55) return t("Se espera la mitad de lo habitual", "About half the usual is expected");
+  return t(`Se espera un ${pct(veces)} menos que lo habitual`, `${pct(veces)} less than usual is expected`);
+}
+
+/**
+ * Por qué se espera más o menos fuego en una región. El modelo mira el fuego de los últimos tres meses, el del
+ * mismo mes del año pasado y lo habitual de cada mes (D-40); de eso la ficha tiene a mano el último mes y su
+ * percentil, así que lo nombra cuando va en el mismo sentido que la predicción.
+ */
+export function porQuePrediccion(
+  m: MesPrediccion,
+  ultimo: { month: number; percentile?: number | null } | null | undefined,
+): string {
+  const { sentido, veces } = comparacionPrediccion(m);
+  const p = ultimo?.percentile ?? null;
+  if (sentido === "igual") {
+    return t(
+      "Se espera algo parecido a lo habitual: el fuego de los últimos meses no se aleja de lo normal para la época.",
+      "Something close to the usual is expected: fire in recent months is not far from normal for the season.",
+    );
+  }
+  const inicio = cuantoMas(veces, sentido);
+  const mismoSentido = p !== null && (sentido === "mas" ? p >= 55 : p <= 45);
+  if (ultimo && mismoSentido) {
+    const mes = nombreMes(ultimo.month);
+    const Mes = mes.charAt(0).toUpperCase() + mes.slice(1);
+    return sentido === "mas"
+      ? t(
+          `${inicio}. ${Mes} vino con más fuego que lo normal acá, y el modelo lo arrastra a los meses que vienen.`,
+          `${inicio}. ${Mes} had more fire than normal here, and the model carries that into the coming months.`,
+        )
+      : t(
+          `${inicio}. ${Mes} vino con menos fuego que lo normal acá, y el modelo lo arrastra a los meses que vienen.`,
+          `${inicio}. ${Mes} had less fire than normal here, and the model carries that into the coming months.`,
+        );
+  }
+  return t(
+    `${inicio}, por el fuego de los últimos meses y del mismo mes del año pasado.`,
+    `${inicio}, because of fire in recent months and in the same month last year.`,
+  );
 }
 
 export function rankingRegiones(regiones: RegionResumen[], indicador: Indicador, tope: number) {
@@ -152,7 +234,10 @@ export function rankingRegiones(regiones: RegionResumen[], indicador: Indicador,
     .filter((x): x is { id: string; nombre: string; valor: number } => x.valor !== null && x.valor > 0)
     .sort((a, b) => b.valor - a.valor)
     .slice(0, tope)
-    .map((x) => ({ ...x, color: escalaRegion(x.valor, max, indicador).color }));
+    .map((x) => ({
+      ...x,
+      color: escalaRegion(x.valor, max, indicador, regiones.find((r) => r.id === x.id)?.properties).color,
+    }));
 }
 
 export type Tono = "alto" | "medio" | "bajo" | "cero";
@@ -398,4 +483,51 @@ export function capasRegionesVisibles(plano: boolean, apagado: boolean) {
     regBorde: en2d,
     reg3d: !apagado && !plano,
   };
+}
+
+/** Los 30 días que muestra «El último mes»: hasta ayer, que es el último día completo del histórico. */
+export function periodoUltimoMes(hoy: string): { desde: string; hasta: string } {
+  const dia = (n: number) => new Date(Date.parse(`${hoy}T00:00:00Z`) - n * 86_400_000).toISOString().slice(0, 10);
+  return { desde: dia(30), hasta: dia(1) };
+}
+
+type Geometria = { type: string; coordinates: unknown };
+
+function poligonosDe(g: Geometria): Anillo[][] {
+  return (g.type === "Polygon" ? [g.coordinates] : g.coordinates) as Anillo[][];
+}
+
+/** Caja oeste, sur, este, norte del contorno de una región, para pedirle a /hotspots solo esa zona. */
+export function cajaDeRegion(g: Geometria): [number, number, number, number] {
+  let [o, s, e, n] = [Infinity, Infinity, -Infinity, -Infinity];
+  for (const p of poligonosDe(g))
+    for (const [x = 0, y = 0] of p[0] ?? []) {
+      o = Math.min(o, x);
+      s = Math.min(s, y);
+      e = Math.max(e, x);
+      n = Math.max(n, y);
+    }
+  return [o, s, e, n];
+}
+
+/** Focos por día UTC de `dias` días desde `desde`, contando solo los que caen dentro del contorno de la región. */
+export function serieUltimoMes(
+  focos: { geometry: { coordinates: number[] }; properties: { acq_datetime: string } }[],
+  g: Geometria,
+  desde: string,
+  dias: number,
+): { dia: string; focos: number }[] {
+  const inicio = Date.parse(`${desde}T00:00:00Z`);
+  const serie = Array.from({ length: dias }, (_, i) => ({
+    dia: new Date(inicio + i * 86_400_000).toISOString().slice(0, 10),
+    focos: 0,
+  }));
+  const poligonos = poligonosDe(g);
+  for (const f of focos) {
+    const i = Math.floor((Date.parse(f.properties.acq_datetime) - inicio) / 86_400_000);
+    const [lon = 0, lat = 0] = f.geometry.coordinates;
+    const d = serie[i];
+    if (d && poligonos.some((p) => dentroDePoligono(p, lon, lat))) d.focos++;
+  }
+  return serie;
 }

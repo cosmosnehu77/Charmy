@@ -202,7 +202,7 @@ export default function MapaRelieve({ regiones, dias, focos, onHover }: Props) {
       regionesPuestas.current = rs;
     }
     for (const r of rs) {
-      const { color, altura } = escalaRegion(valorIndicador(r.properties, indicador), max, indicador);
+      const { color, altura } = escalaRegion(valorIndicador(r.properties, indicador), max, indicador, r.properties);
       let meta = altura;
       let tono = color;
       if (e.seleccion && r.id !== e.seleccion) {

@@ -273,7 +273,12 @@ export function Relieve() {
             <div data-guia="leyenda" className="vidrio-relieve absolute bottom-11 right-4 z-10 hidden max-w-[300px] rounded-xl p-3 text-xs md:block">
               <div className="mb-1 font-titulos font-semibold">{t("Cómo leer el mapa", "How to read the map")}</div>
               <p className="mb-2 text-white/60">
-                {info?.disponible
+                {info?.disponible && indicador === "prediccion"
+                  ? t(
+                      "La altura son las celdas con fuego que espera el modelo el mes que viene. El color, cómo se compara con lo habitual para ese mes: naranja, más fuego; violeta, menos; claro, lo de siempre.",
+                      "Height is the fire cells the model expects next month. Color is how that compares with the usual for that month: orange, more fire; purple, less; light, as usual.",
+                    )
+                  : info?.disponible
                   ? t(
                       `${info.ayuda} Cuanto más alta y más oscura la región, ${indicador === "anomalia" ? "más se aleja de lo normal" : "más fuego"}.`,
                       `${info.ayuda} The taller and darker the region, ${indicador === "anomalia" ? "the further from normal" : "the more fire"}.`,
@@ -283,13 +288,19 @@ export function Relieve() {
               {info?.disponible && (
                 <>
                   <div className="flex h-2 overflow-hidden rounded-sm" aria-hidden="true">
-                    {(indicador === "anomalia" ? rampaAnomalia : rampaConteo).map((c) => (
+                    {(indicador === "anomalia" || indicador === "prediccion" ? rampaAnomalia : rampaConteo).map((c) => (
                       <i key={c} className="flex-1" style={{ background: c }} />
                     ))}
                   </div>
                   <div className="mt-1 flex justify-between text-[11px] text-white/50">
-                    <span>{indicador === "anomalia" ? t("menos que lo normal", "below normal") : t("menos", "less")}</span>
-                    <span>{t("más", "more")}</span>
+                    <span>
+                      {indicador === "anomalia"
+                        ? t("menos que lo normal", "below normal")
+                        : indicador === "prediccion"
+                          ? t("menos que lo habitual", "less than usual")
+                          : t("menos", "less")}
+                    </span>
+                    <span>{indicador === "prediccion" ? t("más que lo habitual", "more than usual") : t("más", "more")}</span>
                   </div>
                 </>
               )}

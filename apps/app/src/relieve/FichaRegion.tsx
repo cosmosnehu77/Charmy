@@ -5,12 +5,16 @@ import { useCalendarioRegion } from "./consultas";
 import type { FocoReciente } from "./datos";
 import { DetalleFoco } from "./EnVivo";
 import { NumerosRegion } from "./NumerosRegion";
-import { useRelieve } from "./estado";
+import { indicadorDe, useRelieve } from "./estado";
+import { UltimoMes } from "./UltimoMes";
 import { enIngles, localeActual, t, useIdioma } from "./idioma";
 import {
+  comparacionPrediccion,
+  mesSiguiente,
   nivelPercentil,
   nivelRegion,
   nombreMes,
+  porQuePrediccion,
   rankingRegiones,
   type RegionResumen,
   textoPrediccion,
@@ -36,6 +40,7 @@ export function FichaRegion({
   useIdioma((s) => s.idioma);
   const alternarRegion = useRelieve((s) => s.alternarRegion);
   const cambiar = useRelieve((s) => s.cambiar);
+  const enPrediccion = useRelieve((s) => indicadorDe(s.pestana) === "prediccion");
   const p = region.properties;
   const posicion = rankingRegiones(regiones, "focos", 39).findIndex((r) => r.id === region.id);
   const nivel = nivelRegion(p.hotspots ?? null, posicion);
@@ -97,6 +102,8 @@ export function FichaRegion({
           <div className="px-5 pb-20 md:pb-5">
             <DetalleFoco foco={foco} avisoEnCelular={false} />
           </div>
+        ) : enPrediccion ? (
+          <FichaPrediccion region={region} />
         ) : (
           <div className="flex flex-col gap-4 px-5 pb-20 pt-1 md:pb-5">
             <span className={`nivel-relieve ${TONOS[nivel.tono]}`}>{nivel.texto}</span>
@@ -146,18 +153,24 @@ export function FichaRegion({
                 )}
               </div>
             </dl>
-            {p.prediccion && (
-              <div className="border-t border-white/10 pt-3">
-                <PrediccionMeses meses={p.prediccion} texto={textoPrediccion} />
-              </div>
-            )}
+            <UltimoMes region={region} />
             <NumerosRegion region={region.id} posicion={posicion} total={regiones.length} conHistorial={ultimo != null} />
             <div className="flex items-end gap-2">
               <Charmy size={64} mood="explica" outfit="cientifica" decorative className="shrink-0" />
               <p className="mb-3.5 rounded-[14px] rounded-bl-[4px] bg-white/10 px-3 py-2.5 text-[13.5px] leading-snug">{dice}</p>
             </div>
             {ultimo && <CalendarioPlegado region={region.id} />}
-            {/* En celular ya se ve el aviso fijo de abajo; acá se repetía. */}
+            <AvisoFicha />
+          </div>
+        )}
+      </div>
+    </section>
+  );
+}
+
+/** En celular ya se ve el aviso fijo de abajo; en la ficha se repetía. */
+function AvisoFicha() {
+  return (
             <p className="hidden rounded-xl bg-white/5 px-3 py-2.5 text-xs leading-snug text-white/75 md:block">
               {t(
                 <>
@@ -172,10 +185,77 @@ export function FichaRegion({
                 </>,
               )}
             </p>
-          </div>
-        )}
+  );
+}
+
+const TONO_SENTIDO = { mas: "nivel-alto", igual: "nivel-medio", menos: "nivel-bajo" } as const;
+
+/**
+ * Ficha de una provincia en la pestaña Predicción (F4-D15): solo la predicción, sin los focos, la intensidad ni el
+ * calendario, que ya están en las otras pestañas. Dice cuánto se espera contra lo habitual, por qué y cómo predice.
+ */
+function FichaPrediccion({ region }: { region: RegionResumen }) {
+  const p = region.properties;
+  const m = mesSiguiente(p);
+  if (!m || !p.prediccion) {
+    return (
+      <div className="flex flex-col gap-4 px-5 pb-20 pt-1 md:pb-5">
+        <p className="text-sm text-white/65">{t("No hay predicción para esta región.", "There is no forecast for this region.")}</p>
+        <AvisoFicha />
       </div>
-    </section>
+    );
+  }
+  const { sentido } = comparacionPrediccion(m);
+  const mes = nombreMes(Number(m.month.slice(5, 7)));
+  const etiqueta =
+    sentido === "mas"
+      ? t("Más fuego que lo habitual", "More fire than usual")
+      : sentido === "menos"
+        ? t("Menos fuego que lo habitual", "Less fire than usual")
+        : t("Como lo habitual", "About as usual");
+  return (
+    <div className="flex flex-col gap-4 px-5 pb-20 pt-1 md:pb-5">
+      <span className={`nivel-relieve ${TONO_SENTIDO[sentido]}`}>{etiqueta}</span>
+      <div className="flex items-center gap-3.5">
+        <b className="font-titulos text-[56px] font-extrabold leading-[.9] tracking-tight text-relieve-brillo tabular-nums">{num(m.expected_cells, 1)}</b>
+        <span className="text-sm leading-snug text-white/75">
+          {t("celdas con fuego esperadas", "fire cells expected")}
+          <br />
+          {t(`en ${mes}; lo habitual es ${num(m.usual_cells, 1)}`, `in ${mes}; the usual is ${num(m.usual_cells, 1)}`)}
+        </span>
+      </div>
+      <div className="flex items-end gap-2">
+        <Charmy size={64} mood="explica" outfit="cientifica" decorative className="shrink-0" />
+        <p className="mb-3.5 rounded-[14px] rounded-bl-[4px] bg-white/10 px-3 py-2.5 text-[13.5px] leading-snug">{porQuePrediccion(m, p.last_month)}</p>
+      </div>
+      <div className="border-t border-white/10 pt-3">
+        <PrediccionMeses meses={p.prediccion} texto={textoPrediccion} />
+      </div>
+      <details className="calendario-relieve border-t border-white/10 pt-3">
+        <summary>{t("Cómo predice Charmy", "How Charmy forecasts")}</summary>
+        <div className="mt-2 flex flex-col gap-2 text-[12.5px] leading-snug text-white/70">
+          <p>
+            {t(
+              "Divide el mapa en celdas de 0,1° (unos 11 km). Para cada una, un modelo de aprendizaje automático (LightGBM) mira el fuego de los últimos tres meses, el del mismo mes del año pasado y cuánto fuego suele haber en ese mes del año.",
+              "It splits the map into 0.1° cells (about 11 km). For each one, a machine-learning model (LightGBM) looks at fire in the last three months, in the same month last year and how much fire that month usually has.",
+            )}
+          </p>
+          <p>
+            {t(
+              "Con eso calcula la probabilidad de fuego en cada celda y las suma por provincia. «Lo habitual» es el promedio de ese mes en los años anteriores.",
+              "From that it estimates the chance of fire in each cell and adds them up per province. “The usual” is that month’s average in previous years.",
+            )}
+          </p>
+          <p>
+            {t(
+              `Se probó contra lo habitual en los últimos dos años: para el mes que viene acierta un ${num(m.skill_vs_climatology * 100)} % mejor. No usa el clima: se probó y no mejoraba. Más allá de dos meses es menos seguro y se acerca a lo habitual.`,
+              `It was tested against the usual over the last two years: for next month it scores ${num(m.skill_vs_climatology * 100)} % better. It does not use weather: that was tested and did not help. Beyond two months it is less certain and stays close to the usual.`,
+            )}
+          </p>
+        </div>
+      </details>
+      <AvisoFicha />
+    </div>
   );
 }
 

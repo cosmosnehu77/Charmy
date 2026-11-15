@@ -547,6 +547,71 @@ describe("vista Relieve (F4-R1)", () => {
     expect(within(ficha).getAllByText("Pronóstico")).toHaveLength(2);
     expect(within(ficha).getByText("Lo habitual, ajustado")).toBeInTheDocument();
     expect(within(ficha).getByText(/Es una estimación del modelo/)).toBeInTheDocument();
+    // F4-D15: la ficha de Predicción explica por qué y deja afuera lo que ya está en las otras pestañas.
+    expect(
+      within(ficha).getByText(
+        "Se espera el doble de lo habitual. Octubre vino con más fuego que lo normal acá, y el modelo lo arrastra a los meses que vienen.",
+      ),
+    ).toBeInTheDocument();
+    expect(within(ficha).getByText("Cómo predice Charmy")).toBeInTheDocument();
+    expect(within(ficha).queryByText("Intensidad total")).not.toBeInTheDocument();
+    expect(within(ficha).queryByText("Ver el calendario de quema")).not.toBeInTheDocument();
+    expect(within(ficha).queryByText("El último mes")).not.toBeInTheDocument();
+    expect(within(ficha).queryByText(/en los últimos días/)).not.toBeInTheDocument();
+  });
+
+  describe("el último mes en la ficha (F4-D15)", () => {
+    beforeEach(() => {
+      vi.useFakeTimers({ toFake: ["Date"] });
+      vi.setSystemTime(new Date("2026-11-15T12:00:00Z"));
+    });
+    afterEach(() => vi.useRealTimers());
+
+    it("cuenta los focos de la provincia por día en los últimos 30 días", async () => {
+      const base = fetchSimulado.getMockImplementation()!;
+      fetchSimulado.mockImplementation(async (url, init) => {
+        if (String(url).includes("/hotspots"))
+          return new Response(
+            JSON.stringify({
+              type: "FeatureCollection",
+              truncated: false,
+              features: [
+                { type: "Feature", geometry: { type: "Point", coordinates: [-70, -39] }, properties: { acq_datetime: "2026-11-10T15:00:00Z" } },
+                { type: "Feature", geometry: { type: "Point", coordinates: [-70, -39] }, properties: { acq_datetime: "2026-11-10T04:00:00Z" } },
+                { type: "Feature", geometry: { type: "Point", coordinates: [-70, -39] }, properties: { acq_datetime: "2026-10-20T15:00:00Z" } },
+                { type: "Feature", geometry: { type: "Point", coordinates: [-60, -30] }, properties: { acq_datetime: "2026-11-10T15:00:00Z" } },
+              ],
+            }),
+          );
+        return base(url, init);
+      });
+      montar();
+      const usuario = userEvent.setup();
+      const ranking = await screen.findByRole("region", { name: "Ranking" });
+      await usuario.click(await within(ranking).findByRole("button", { name: /Neuquén/ }));
+      const ficha = await screen.findByRole("region", { name: "Ficha de Neuquén" });
+      expect(within(ficha).getByText("El último mes")).toBeInTheDocument();
+      expect(await within(ficha).findByText(/3 focos en 30 días/)).toBeInTheDocument();
+      expect(within(ficha).getByText(/El día con más focos fue el 10 de noviembre \(2\)/)).toBeInTheDocument();
+      const pedido = fetchSimulado.mock.calls.map(([x]) => String(x)).find((x) => x.includes("/hotspots"));
+      expect(pedido).toContain("bbox=-71,-40,-69,-38");
+      expect(pedido).toContain("from=2026-10-16");
+      expect(pedido).toContain("to=2026-11-14");
+    });
+
+    it("si el histórico no responde, lo dice y el resto de la ficha sigue", async () => {
+      const base = fetchSimulado.getMockImplementation()!;
+      fetchSimulado.mockImplementation(async (url, init) =>
+        String(url).includes("/hotspots") ? new Response("{}", { status: 503 }) : base(url, init),
+      );
+      montar();
+      const usuario = userEvent.setup();
+      const ranking = await screen.findByRole("region", { name: "Ranking" });
+      await usuario.click(await within(ranking).findByRole("button", { name: /Neuquén/ }));
+      const ficha = await screen.findByRole("region", { name: "Ficha de Neuquén" });
+      expect(await within(ficha).findByText("El último mes no está disponible ahora.")).toBeInTheDocument();
+      expect(within(ficha).getByText("Intensidad total")).toBeInTheDocument();
+    });
   });
 
   it("si la predicción no responde, solo esa pestaña lo dice (F4-D12)", async () => {

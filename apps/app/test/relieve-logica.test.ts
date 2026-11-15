@@ -25,6 +25,12 @@ import {
   plazoPrediccion,
   textoPrediccion,
   textoProbabilidad,
+  colorPrediccion,
+  comparacionPrediccion,
+  porQuePrediccion,
+  cajaDeRegion,
+  periodoUltimoMes,
+  serieUltimoMes,
   nombresPorZoom,
   ubicarGlobo,
   type RegionResumen,
@@ -369,5 +375,101 @@ describe("capas de regiones en 2D y 3D", () => {
     expect(capasRegionesVisibles(true, false)).toEqual({ vivoGris: false, reg2d: true, regBorde: true, reg3d: false });
     expect(capasRegionesVisibles(false, true)).toEqual({ vivoGris: true, reg2d: false, regBorde: true, reg3d: false });
     expect(capasRegionesVisibles(true, true)).toEqual({ vivoGris: true, reg2d: false, regBorde: true, reg3d: false });
+  });
+});
+
+describe("predicción contra lo habitual (F4-D15, #377)", () => {
+  const mes = (esperadas: number, habituales: number, horizon = 1): MesPrediccion => ({
+    month: "2026-11",
+    horizon,
+    kind: horizon <= 2 ? "forecast" : "usual_adjusted",
+    probability: 0.5,
+    usual_probability: 0.5,
+    expected_cells: esperadas,
+    usual_cells: habituales,
+    level: "media",
+    skill_vs_climatology: 0.12,
+  });
+
+  it("el color va de violeta intenso (mucho menos) a claro (lo habitual) y naranja intenso (mucho más)", () => {
+    expect(colorPrediccion(mes(2, 10))).toBe(rampaAnomalia[0]);
+    expect(colorPrediccion(mes(10, 10))).toBe(rampaAnomalia[3]);
+    expect(colorPrediccion(mes(11, 10))).toBe(rampaAnomalia[3]);
+    expect(colorPrediccion(mes(40, 10))).toBe(rampaAnomalia[6]);
+    expect(colorPrediccion(mes(5, 10))).toBe(rampaAnomalia[1]);
+    expect(colorPrediccion(mes(20, 10))).toBe(rampaAnomalia[5]);
+  });
+
+  it("sin habitual: con algo esperado es más; sin nada, sin dato", () => {
+    expect(colorPrediccion(mes(3, 0))).toBe(rampaAnomalia[6]);
+    expect(colorPrediccion(mes(0, 0))).toBe(relieve.sinDato);
+    expect(colorPrediccion(undefined)).toBe(relieve.sinDato);
+  });
+
+  it("en la pestaña Predicción, el mapa se pinta contra lo habitual y la altura sigue las celdas", () => {
+    const [a] = conPrediccion(REGIONES, {
+      model: "m",
+      emission: "2026-10",
+      regions: [{ region: "A", zone: { cells: 5, no_history: false }, months: [mes(40, 10)] }],
+    });
+    expect(escalaRegion(40, 40, "prediccion", a!.properties)).toEqual({ color: rampaAnomalia[6], altura: 1 });
+    expect(rankingRegiones([a!], "prediccion", 5)[0]!.color).toBe(rampaAnomalia[6]);
+  });
+
+  it("compara con ±15 % como lo habitual", () => {
+    expect(comparacionPrediccion(mes(20, 10)).sentido).toBe("mas");
+    expect(comparacionPrediccion(mes(10.5, 10)).sentido).toBe("igual");
+    expect(comparacionPrediccion(mes(5, 10)).sentido).toBe("menos");
+    expect(comparacionPrediccion(mes(20, 10)).veces).toBeCloseTo(2);
+  });
+
+  it("explica por qué: nombra el último mes si va en el mismo sentido", () => {
+    const ultimo = (percentile: number) => ({ year: 2026, month: 10, value: 10, median: 8, percentile });
+    expect(porQuePrediccion(mes(20, 10), ultimo(85))).toBe(
+      "Se espera el doble de lo habitual. Octubre vino con más fuego que lo normal acá, y el modelo lo arrastra a los meses que vienen.",
+    );
+    expect(porQuePrediccion(mes(5, 10), ultimo(10))).toBe(
+      "Se espera la mitad de lo habitual. Octubre vino con menos fuego que lo normal acá, y el modelo lo arrastra a los meses que vienen.",
+    );
+    expect(porQuePrediccion(mes(10, 10), ultimo(50))).toBe(
+      "Se espera algo parecido a lo habitual: el fuego de los últimos meses no se aleja de lo normal para la época.",
+    );
+    expect(porQuePrediccion(mes(13, 10), null)).toBe(
+      "Se espera un 30 % más que lo habitual, por el fuego de los últimos meses y del mismo mes del año pasado.",
+    );
+  });
+});
+
+describe("el último mes de una región (F4-D15, #377)", () => {
+  const cuadrado = { type: "Polygon", coordinates: [[[-66, -28], [-63, -28], [-63, -25], [-66, -25], [-66, -28]]] };
+
+  it("el período son los 30 días hasta ayer", () => {
+    expect(periodoUltimoMes("2026-11-15")).toEqual({ desde: "2026-10-16", hasta: "2026-11-14" });
+  });
+
+  it("la caja de la región sale de su contorno", () => {
+    expect(cajaDeRegion(cuadrado)).toEqual([-66, -28, -63, -25]);
+  });
+
+  it("cuenta por día UTC solo los focos dentro del contorno, con 0 en los días sin focos", () => {
+    const foco = (lon: number, lat: number, acq: string) => ({
+      geometry: { coordinates: [lon, lat] },
+      properties: { acq_datetime: acq },
+    });
+    const serie = serieUltimoMes(
+      [
+        foco(-64, -26, "2026-10-16T18:00:00Z"),
+        foco(-64, -26, "2026-10-16T05:00:00Z"),
+        foco(-64, -27, "2026-11-14T23:59:00Z"),
+        foco(-70, -26, "2026-10-17T18:00:00Z"),
+      ],
+      cuadrado,
+      "2026-10-16",
+      30,
+    );
+    expect(serie).toHaveLength(30);
+    expect(serie[0]).toEqual({ dia: "2026-10-16", focos: 2 });
+    expect(serie[1]).toEqual({ dia: "2026-10-17", focos: 0 });
+    expect(serie[29]).toEqual({ dia: "2026-11-14", focos: 1 });
   });
 });

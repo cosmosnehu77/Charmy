@@ -11,6 +11,7 @@ from alertas.zona import Zona
 log = logging.getLogger(__name__)
 
 SATELITES = {"N20": "NOAA-20", "N21": "NOAA-21"}
+ESPERA_VIENTO_S = 15  # el viento es opcional (D-37): si tarda, el aviso sale sin él
 
 
 def _foco_de_feature(f: dict) -> Foco:
@@ -23,7 +24,8 @@ def _foco_de_feature(f: dict) -> Foco:
     if p.get("verdict"):
         detalle += f", veredicto: {p['verdict']}"
     return Foco(id=f["id"], tipo="foco_satelital", lat=lat, lon=lon,
-                cuando=datetime.fromisoformat(p["acq_datetime"]), detalle=detalle)
+                cuando=datetime.fromisoformat(p["acq_datetime"]), detalle=detalle,
+                celda=p.get("cell_id"), confianza=p["confidence"], veredicto=p.get("verdict"))
 
 
 def _foco_de_reporte(r: dict) -> Foco:
@@ -41,7 +43,9 @@ class ClienteCharmy:
 
     async def viento(self, lat: float, lon: float) -> Viento | None:
         try:
-            r = await self._http.get("/weather", params={"lat": lat, "lon": lon, "hours": 0})
+            r = await self._http.get(
+                "/weather", params={"lat": lat, "lon": lon, "hours": 0}, timeout=ESPERA_VIENTO_S
+            )
             r.raise_for_status()
             ahora = r.json()["now"]
             return Viento(velocidad_kmh=ahora["wind_speed_ms"] * 3.6, direccion_deg=ahora["wind_dir_deg"])

@@ -36,6 +36,18 @@ def test_el_viento_se_pasa_a_kmh():
     assert viento == Viento(velocidad_kmh=8.2 * 3.6, direccion_deg=270)
 
 
+def test_el_viento_tiene_su_propia_espera_corta():
+    # El viento es opcional (D-37): no puede comerse los 120 s que se le dan a /live.
+    esperas = []
+
+    def manejador(req: httpx.Request) -> httpx.Response:
+        esperas.append(req.extensions["timeout"]["read"])
+        return httpx.Response(200, json=WEATHER)
+
+    asyncio.run(cliente(manejador).viento(-41.95, -71.53))
+    assert esperas == [15]
+
+
 def test_si_weather_falla_el_viento_queda_no_disponible():
     def con_503(req):
         return httpx.Response(503, json={"code": "datos_no_disponibles", "message": "x"})
@@ -64,7 +76,7 @@ LIVE = {
             "properties": {
                 "acq_datetime": "2026-11-14T04:55:00Z", "satellite": "N20", "instrument": "VIIRS",
                 "confidence": "nominal", "frp": 4.8, "daynight": "N", "fixed_source": False,
-                "verdict": "probable",
+                "verdict": "probable", "cell_id": "-42.0_-71.6",
             },
         },
         {
@@ -74,7 +86,7 @@ LIVE = {
             "properties": {
                 "acq_datetime": "2026-11-14T05:12:00Z", "satellite": "N21", "instrument": "VIIRS",
                 "confidence": "high", "frp": 9.8, "daynight": "N", "fixed_source": True,
-                "verdict": "fuente_fija",
+                "verdict": "fuente_fija", "cell_id": "-42.2_-71.3",
             },
         },
     ],
@@ -93,6 +105,7 @@ def test_focos_en_vivo_de_la_zona_sin_fuentes_fijas():
     assert (foco.tipo, foco.lat, foco.lon) == ("foco_satelital", -41.95, -71.53)
     assert foco.cuando == datetime(2026, 11, 14, 4, 55, tzinfo=UTC)
     assert foco.detalle == "VIIRS NOAA-20, confianza nominal, 4,8 MW, veredicto: probable"
+    assert (foco.celda, foco.confianza, foco.veredicto) == ("-42.0_-71.6", "nominal", "probable")
 
 
 def test_un_foco_sin_frp_se_avisa_igual():

@@ -17,6 +17,10 @@ class Foco:
     lon: float
     cuando: datetime
     detalle: str
+    # Solo los focos satelitales: celda de 0,1° (cell_id), confianza y veredicto de la verificación (D-09).
+    celda: str | None = None
+    confianza: str | None = None
+    veredicto: str | None = None
 
 
 @dataclass(frozen=True)

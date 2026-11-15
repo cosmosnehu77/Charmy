@@ -12,8 +12,10 @@ CHAT = -100123
 
 
 def foco(id_: str, lat: float = -41.95, lon: float = -71.53, tipo="foco_satelital") -> Foco:
+    satelital = tipo == "foco_satelital"
     return Foco(id=id_, tipo=tipo, lat=lat, lon=lon,
-                cuando=datetime(2026, 11, 14, 4, 55, tzinfo=UTC), detalle="muestra")
+                cuando=datetime(2026, 11, 14, 4, 55, tzinfo=UTC), detalle="muestra",
+                veredicto="confirmado" if satelital else None, confianza="nominal" if satelital else None)
 
 
 class ApiFalsa:

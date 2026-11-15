@@ -109,7 +109,8 @@ def test_sin_toques_no_confirma_nada():
 
 def test_la_corrida_procesa_botones_y_despues_avisa_lo_nuevo():
     foco = Foco(id="f1", tipo="foco_satelital", lat=-41.95, lon=-71.53,
-                cuando=datetime(2026, 11, 14, 4, 55, tzinfo=UTC), detalle="muestra")
+                cuando=datetime(2026, 11, 14, 4, 55, tzinfo=UTC), detalle="muestra",
+                veredicto="confirmado", confianza="high")
     api, tg = ApiFalsa(focos=[foco]), TelegramFalso([toque(5, botones("a-1")[0][1])])
     asyncio.run(corrida(api, tg, ZONA_DEMO, CHAT))
 
@@ -119,7 +120,8 @@ def test_la_corrida_procesa_botones_y_despues_avisa_lo_nuevo():
 
 def test_la_corrida_deja_una_linea_de_resumen_en_el_registro(caplog):
     foco = Foco(id="f1", tipo="foco_satelital", lat=-41.95, lon=-71.53,
-                cuando=datetime(2026, 11, 14, 4, 55, tzinfo=UTC), detalle="muestra")
+                cuando=datetime(2026, 11, 14, 4, 55, tzinfo=UTC), detalle="muestra",
+                veredicto="confirmado", confianza="high")
     api = ApiFalsa(focos=[foco])
     tg = TelegramFalso([toque(5, botones("a-1")[0][1]), toque(6, "otra:cosa")])
     with caplog.at_level(logging.INFO, logger="alertas.corrida"):

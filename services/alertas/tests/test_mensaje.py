@@ -37,7 +37,7 @@ def test_si_no_hay_viento_lo_dice_y_el_mensaje_sale_igual():
 
 
 def test_el_numero_de_emergencias_depende_del_pais_de_la_zona():
-    chile = Zona(id="demo-cl", nombre="Araucanía", bbox=(-73.0, -39.0, -71.0, -37.5), pais="CL")
+    chile = Zona(id="demo-cl", nombre="Araucanía", lat=-38.7, lon=-72.6, radio_km=50, pais="CL")
     assert "llamá al 132" in armar_mensaje(FOCO, chile, None)
 
 

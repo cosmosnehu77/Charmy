@@ -5,7 +5,7 @@ from datetime import UTC, datetime
 
 from alertas.prueba import mensaje_de_prueba, prueba
 from alertas.telegram import TelegramAiogram
-from alertas.zona import ZONA_DEMO
+from alertas.zona import ZONA_DEMO, ZONAS
 
 AHORA = datetime(2026, 11, 15, 16, 0, tzinfo=UTC)
 
@@ -20,15 +20,16 @@ def test_el_mensaje_de_prueba_dice_que_es_prueba_y_tiene_el_formato_real():
     assert "15/11/2026 13:00 (hora de Argentina)" in texto
 
 
-def test_la_prueba_manda_un_solo_mensaje_sin_botones():
+def test_la_prueba_manda_un_mensaje_sin_botones_a_cada_grupo_con_su_zona():
     enviados = []
 
     class TelegramFalso:
         async def enviar(self, chat_id, texto, teclado, responder_a=None):
-            enviados.append((chat_id, teclado))
+            enviados.append((chat_id, texto.split("(")[1].split(")")[0], teclado))
 
-    asyncio.run(prueba(TelegramFalso(), ZONA_DEMO, -100123, AHORA))
-    assert enviados == [(-100123, [])]
+    norte = ZONAS[2]
+    asyncio.run(prueba(TelegramFalso(), [(ZONA_DEMO, -100123), (norte, -100456)], AHORA))
+    assert enviados == [(-100123, "Comarca Andina", []), (-100456, norte.nombre, [])]
 
 
 def test_sin_botones_telegram_no_recibe_teclado():

@@ -5,6 +5,7 @@ los focos y reportes nuevos. No guarda nada entre corridas: `POST /alerts` dice 
 """
 
 import logging
+from collections.abc import Sequence
 from dataclasses import dataclass
 from typing import Protocol
 
@@ -70,12 +71,12 @@ async def procesar_toques(api: Api, tg: Telegram) -> int:
     return guardados
 
 
-async def corrida(api: Api, tg: Telegram, zona: Zona, chat_id: int) -> None:
+async def corrida(api: Api, tg: Telegram, destinos: Sequence[tuple[Zona, int]]) -> None:
     """Una corrida que deja una línea de resumen en el registro (Actions), aunque no haya nada que avisar."""
     guardados = await procesar_toques(api, tg)
-    r = await avisar(api, tg.enviar, zona, chat_id, set())
+    r = await avisar(api, tg.enviar, destinos, {})
     log.info(
-        "corrida: botones %d · focos en vivo %d · reportes %d · nuevos en la zona %d · avisos mandados %d"
-        " · envíos fallidos %d · actualizaciones %d",
-        guardados, r.focos, r.reportes, r.nuevos, r.mandados, r.fallidos, r.actualizados,
+        "corrida: zonas %d · botones %d · focos en vivo %d · reportes %d · nuevos en las zonas %d"
+        " · avisos mandados %d · envíos fallidos %d · actualizaciones %d",
+        len(destinos), guardados, r.focos, r.reportes, r.nuevos, r.mandados, r.fallidos, r.actualizados,
     )

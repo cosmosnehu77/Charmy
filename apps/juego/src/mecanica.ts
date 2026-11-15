@@ -1,7 +1,9 @@
 import type { FocoEnPantalla } from "./datos";
 
+/** Cuánto dura una partida. */
+export const DURACION_PARTIDA_MS = 70_000;
 /** Cuánto duran todas las pasadas juntas: deja lugar a que el último foco viva antes de que termine la partida. */
-export const DURACION_PASADAS_MS = 52_000;
+export const DURACION_PASADAS_MS = 62_000;
 
 export interface Potencia {
   /** Toques que hacen falta para apagarlo. */
@@ -12,10 +14,10 @@ export interface Potencia {
 
 /** De la potencia radiativa (FRP, en MW) a la vida del foco: más potente, más toques y menos tiempo. */
 const TABLA: { desdeMw: number; potencia: Potencia }[] = [
-  { desdeMw: 30, potencia: { toques: 4, escapeMs: 3500 } },
-  { desdeMw: 10, potencia: { toques: 3, escapeMs: 4000 } },
-  { desdeMw: 2, potencia: { toques: 2, escapeMs: 4500 } },
-  { desdeMw: 0, potencia: { toques: 1, escapeMs: 5000 } },
+  { desdeMw: 30, potencia: { toques: 4, escapeMs: 4200 } },
+  { desdeMw: 10, potencia: { toques: 3, escapeMs: 4800 } },
+  { desdeMw: 2, potencia: { toques: 2, escapeMs: 5400 } },
+  { desdeMw: 0, potencia: { toques: 1, escapeMs: 6000 } },
 ];
 
 export function potencia(frp: number): Potencia {

@@ -57,6 +57,16 @@ const herramientas = [
   { nombre: "Telegram", icono: "telegram", color: "#26A5E4" },
 ] as const;
 
+// Canales de Telegram donde salen los avisos de peligro de incendio, uno por zona.
+const canales = [
+  { zona: "Comarca Andina", url: "https://t.me/+29kxDW2TpcVlMDY5" },
+  { zona: "Norte de Salta", url: "https://t.me/+ABJdg2Zmsko4OTcx" },
+  { zona: "Impenetrable chaqueño", url: "https://t.me/+5kIYhu5NmCthMmVh" },
+];
+// El avión solo: es el recorte del logo de Telegram (Simple Icons), sin el círculo que lo rodea.
+const avion = `<svg class="tg" viewBox="4.4 6.6 13.8 12" aria-hidden="true"><path fill="currentColor" d="M16.906 7.224${iconos.telegram.split("zm4.962 7.224")[1]}"/></svg>`;
+const COLOR_TELEGRAM = herramientas.find((h) => h.icono === "telegram")!.color;
+
 const instituciones = [
   { logo: "/logos/nasa.svg", alt: "NASA", alto: 86 },
   { logo: "/logos/invap.png", alt: "INVAP", alto: 44 },
@@ -263,6 +273,30 @@ const tira = [...instituciones, ...instituciones];
           </div>
           <div class="escena">
             <a class="captura" data-juego href={URL_JUEGO}><img src="/juego/partida.jpg" width="1120" height="673" loading="lazy" alt="Charmy Brigada en partida: la maqueta de Sudamérica en relieve, la barrida del satélite, focos encendidos y Charmy bombero" /></a>
+          </div>
+        </section>
+
+        <section class="modo t" id="avisos" aria-labelledby="titulo-avisos" style={`--telegram:${COLOR_TELEGRAM}`}>
+          <div class="modo-txt">
+            <span class="eti"><Fragment set:html={avion} />Avisos por Telegram</span>
+            <h2 id="titulo-avisos">El aviso te llega <em>antes que el humo.</em></h2>
+            <p>Charmy publica los avisos de peligro de incendio de cada zona en su canal de Telegram. Elegí la tuya y sumate.</p>
+          </div>
+          <div class="escena">
+            <div class="burbuja">
+              <header><span class="vivo"></span>Charmy · Comarca Andina<small>Ejemplo</small></header>
+              <p>Peligro de incendio alto hoy en la zona. Evitá hacer fuego. Si ves humo, llamá al 100.</p>
+              <time>09:41</time>
+            </div>
+            {
+              canales.map((c) => (
+                <a class="canal" href={c.url} target="_blank" rel="noopener">
+                  <Fragment set:html={avion} />
+                  <strong>{c.zona}</strong>
+                  <span class="pil">Unirme <Fragment set:html={flecha} /></span>
+                </a>
+              ))
+            }
           </div>
         </section>
 

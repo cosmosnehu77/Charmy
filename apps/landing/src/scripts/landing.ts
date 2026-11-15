@@ -483,7 +483,7 @@ const aparta = new IntersectionObserver((es) => {
   es.forEach((e) => tapadas[e.isIntersecting ? "add" : "delete"](e.target));
   guiaEl.classList.toggle("aparte", tapadas.size > 0);
 }, { threshold: 0.15 });
-[$("modos"), $("juego"), $("gracias")].forEach((s) => aparta.observe(s));
+[$("modos"), $("juego"), $("avisos"), $("gracias")].forEach((s) => aparta.observe(s));
 // Entrada de cada tarjeta al llegar a su paso.
 if (!reducir) {
   const io = new IntersectionObserver((es) => es.forEach((e) => { if (e.isIntersecting) { e.target.classList.add("entra"); io.unobserve(e.target); } }), { threshold: 0.25 });

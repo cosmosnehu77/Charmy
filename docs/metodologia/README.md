@@ -201,10 +201,12 @@ uv run --package pipeline python -m pipeline.firms <carpeta FIRMS> --out data/fo
 uv run --package pipeline python -m pipeline.fuentes_fijas --focos data/focos --out data/pub
 uv run --package pipeline python -m pipeline.armonizacion --focos data/focos --regiones data/muestras/regiones.geojson --out data/pub
 uv run --package pipeline python -m pipeline.prediccion --focos data/focos --out data/pub
-uv run --package pipeline python -m pipeline.medicion --entrenamiento data/pub/entrenamiento.parquet
+uv run --package prediccion python -m prediccion.modelo --entrenamiento data/pub/entrenamiento.parquet --out data/pub
+uv run --package prediccion python -m prediccion.medicion --entrenamiento data/pub/entrenamiento.parquet
 uv run --package pipeline python -m pipeline.cobertura --focos data/focos --entrenamiento data/pub/entrenamiento.parquet --desde 2025-01 --hasta 2026-10
 ```
 
 El archivo histórico se pide en el sitio de FIRMS y llega por correo como CSV. Con el histórico completo, la
-armonización usa unos 950 MB de memoria y la predicción unos 4,3 GB durante 8 minutos. La medición lee solo
+armonización usa unos 950 MB de memoria. `pipeline.prediccion` arma solo la tabla de entrenamiento, y el modelo
+(`prediccion.modelo`, en `services/prediccion`) entrena con ella en unos 4 a 5 minutos. La medición lee solo
 `entrenamiento.parquet` (unos 5,6 GB, 1 minuto), y la cobertura, los focos (unos 4,6 GB, 6 segundos).

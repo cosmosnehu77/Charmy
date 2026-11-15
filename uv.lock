@@ -1468,7 +1468,6 @@ name = "pipeline"
 version = "0.1.0"
 source = { editable = "services/pipeline" }
 dependencies = [
-    { name = "lightgbm" },
     { name = "numpy" },
     { name = "polars" },
     { name = "shapely" },
@@ -1476,7 +1475,6 @@ dependencies = [
 
 [package.metadata]
 requires-dist = [
-    { name = "lightgbm", specifier = ">=4.7.0" },
     { name = "numpy", specifier = ">=2.5.4" },
     { name = "polars", specifier = ">=2.1.0" },
     { name = "shapely", specifier = ">=2.2.0" },
@@ -1524,6 +1522,7 @@ name = "prediccion"
 version = "0.1.0"
 source = { editable = "services/prediccion" }
 dependencies = [
+    { name = "lightgbm" },
     { name = "numpy" },
     { name = "pipeline" },
     { name = "polars" },
@@ -1536,6 +1535,7 @@ timesfm = [
 
 [package.metadata]
 requires-dist = [
+    { name = "lightgbm", specifier = ">=4.7.0" },
     { name = "numpy", specifier = ">=2.5.4" },
     { name = "pipeline", editable = "services/pipeline" },
     { name = "polars", specifier = ">=2.1.0" },

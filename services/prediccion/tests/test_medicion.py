@@ -5,8 +5,8 @@ from datetime import date
 
 import polars as pl
 import pytest
-from pipeline.medicion import UMBRAL, desvio_poisson, deteccion, medir, prueba_con_referencias, skill, top
-from test_prediccion import mensual
+from prediccion.medicion import UMBRAL, desvio_poisson, deteccion, medir, prueba_con_referencias, skill, top
+from test_modelo import mensual
 
 
 def test_desvio_de_poisson_con_valores_a_mano():
@@ -104,7 +104,7 @@ def test_skill_del_modelo_contra_cada_referencia():
 
 
 def test_prueba_con_referencias_usa_la_particion_de_prediccion():
-    from pipeline.prediccion import filas, particion
+    from prediccion.modelo import filas, particion
 
     m = mensual(0.8, celdas=4)
     p = prueba_con_referencias(m)

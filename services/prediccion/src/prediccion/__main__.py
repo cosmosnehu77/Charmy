@@ -15,7 +15,8 @@ import json
 import sys
 from pathlib import Path
 
-from prediccion.comparar import comparar, leer_entrenamiento, mejora_lightgbm
+from prediccion.comparar import comparar, mejora_lightgbm
+from prediccion.modelo import leer_entrenamiento
 
 PESOS_2_5 = "google/timesfm-2.5-200m-pytorch"  # Apache-2.0. Los de la 3.0 están en prediccion.timesfm3.
 

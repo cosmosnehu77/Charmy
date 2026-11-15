@@ -36,7 +36,7 @@ export const useRelieve = create<EstadoRelieve>()((set) => ({
   elegirPestana: (pestana) =>
     set((s) => (pestana === "vivo" ? { pestana, seleccion: null, linea: LINEA_LIBRE } : { pestana, focoVivo: s.focoVivo })),
   alternarRegion: (id) =>
-    set((s) => ({ seleccion: id !== null && id === s.seleccion ? null : id, linea: LINEA_LIBRE })),
+    set((s) => ({ seleccion: id !== null && id === s.seleccion ? null : id, focoVivo: null, linea: LINEA_LIBRE })),
   usarLinea: (cambio) => set((s) => ({ linea: { ...s.linea, ...cambio } })),
   cambiar: (cambio) => set(cambio),
 }));

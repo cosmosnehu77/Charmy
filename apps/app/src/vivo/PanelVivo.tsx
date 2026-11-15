@@ -1,8 +1,10 @@
+import { MapPin } from "lucide-react";
 import { useId } from "react";
 import { bboxDeArea } from "@/consulta/consulta";
 import { useConsulta } from "@/estado/consulta";
 import { AvisoEmergencias } from "@/components/AvisoEmergencias";
 import { Button } from "@/components/ui/button";
+import { urlGoogleMaps, urlGoogleMapsEmbed } from "@/lib/enlaces";
 import { useFocosVivo, useEvidencia } from "./consultas";
 import { useVivo } from "./estado";
 import { ETIQUETAS_EVIDENCIA, TIPOS_EVIDENCIA, veredicto } from "./veredictos";
@@ -18,9 +20,13 @@ const hora = new Intl.DateTimeFormat("es-AR", {
   timeZone: "America/Argentina/Buenos_Aires",
 });
 
-function Detalle({ id }: { id: string }) {
+const coord = new Intl.NumberFormat("es-AR", { minimumFractionDigits: 3, maximumFractionDigits: 3 });
+
+function Detalle({ id, coordenadas }: { id: string; coordenadas?: number[] }) {
   const evidencia = useEvidencia(id);
   const cambiar = useVivo((s) => s.cambiar);
+  const lon = coordenadas?.[0];
+  const lat = coordenadas?.[1];
   return (
     <section aria-label="Foco reciente" className="flex flex-col gap-2 rounded-tarjeta border p-3">
       <div className="flex items-center justify-between gap-2">
@@ -29,6 +35,35 @@ function Detalle({ id }: { id: string }) {
           Cerrar
         </Button>
       </div>
+      {lat !== undefined && lon !== undefined && (
+        <div className="flex flex-col gap-2">
+          <div className="flex flex-wrap items-center justify-between gap-2 text-xs">
+            <span className="font-mono text-tinta-suave">
+              Ubicación: {coord.format(lat)}, {coord.format(lon)}
+            </span>
+            <a
+              href={urlGoogleMaps(lat, lon)}
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="Ver ubicación en Google Maps"
+              title="Ver ubicación en Google Maps"
+              className="inline-flex items-center gap-1 rounded-control border px-2 py-0.5 font-medium underline-offset-2 hover:bg-accent hover:underline"
+            >
+              <MapPin aria-hidden="true" className="size-3.5 shrink-0" />
+              <span>Google Maps</span>
+            </a>
+          </div>
+          <div className="overflow-hidden rounded-control border">
+            <iframe
+              title="Previsualización de la ubicación en Google Maps"
+              src={urlGoogleMapsEmbed(lat, lon)}
+              loading="lazy"
+              referrerPolicy="no-referrer-when-downgrade"
+              className="block h-32 w-full border-0"
+            />
+          </div>
+        </div>
+      )}
       {evidencia.isPending && <p className="text-sm text-tinta-suave">Buscando la evidencia…</p>}
       {evidencia.isError && (
         <p className="text-sm">La evidencia de este foco no está disponible ahora.</p>
@@ -138,7 +173,12 @@ export function PanelVivo() {
           </ul>
         </>
       )}
-      {visible && seleccionado && <Detalle id={seleccionado} />}
+      {visible && seleccionado && (
+        <Detalle
+          id={seleccionado}
+          coordenadas={vivo.data?.features.find((f) => f.id === seleccionado)?.geometry.coordinates}
+        />
+      )}
     </section>
   );
 }

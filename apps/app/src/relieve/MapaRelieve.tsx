@@ -297,6 +297,12 @@ export default function MapaRelieve({ regiones, dias, focos, onHover }: Props) {
         est.cambiar({ focoVivo: elegido ? Number(elegido.properties?.k) : null });
         return;
       }
+      const capaFoco = est.plano ? "reg-puntos" : "reg-agujas";
+      const fFoco = m.getLayer(capaFoco) ? m.queryRenderedFeatures(e.point, { layers: [capaFoco] })[0] : undefined;
+      if (fFoco?.properties?.k !== undefined) {
+        est.cambiar({ focoVivo: Number(fFoco.properties.k) });
+        return;
+      }
       const f = m.getLayer("reg-3d") ? m.queryRenderedFeatures(e.point, { layers: ["reg-3d"] })[0] : undefined;
       const id = (f?.properties?.region as string | undefined) ?? null;
       if (id || est.seleccion) est.alternarRegion(id ?? est.seleccion);

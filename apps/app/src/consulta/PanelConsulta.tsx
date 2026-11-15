@@ -241,26 +241,3 @@ export function Resultado({
     </div>
   );
 }
-
-export function PanelConsulta() {
-  const { focos, errorFechas, consulta, hayArea } = useFocos();
-  const modo = useApp((s) => s.modo);
-  const mesReproduccion = useConsulta((s) => s.mesReproduccion);
-  return (
-    <div className="flex flex-col gap-5">
-      <Area />
-      <Fechas error={errorFechas} />
-      {/* Serie, confianza y potencia son términos técnicos: solo en el modo experto (RF-MOD-01). */}
-      {modo === "experto" && <Filtros />}
-      {modo === "experto" && hayArea && !errorFechas && <Reproduccion />}
-      <Resultado
-        focos={focos?.features.length ?? null}
-        cargando={consulta.isFetching}
-        fallo={consulta.isError}
-        hayArea={hayArea && !errorFechas}
-        total={consulta.data?.truncated ? (consulta.data.total ?? null) : null}
-        mes={mesReproduccion}
-      />
-    </div>
-  );
-}

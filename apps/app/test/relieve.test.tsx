@@ -116,7 +116,7 @@ beforeEach(() => {
     return new Response(JSON.stringify({ status: "ok" }));
   });
   vi.stubGlobal("fetch", fetchSimulado);
-  useApp.setState({ vista: "relieve" });
+  useApp.setState({ modo: "novato" });
   useConsulta.setState(estadoInicialConsulta("2026-11-14"));
   useVivo.setState({ satelites: ["N20", "N21"] });
   useRelieve.setState({
@@ -342,13 +342,25 @@ describe("vista Relieve (F4-R1)", () => {
     expect(screen.getByRole("tablist", { name: "Indicador" })).toBeInTheDocument();
   });
 
-  it("se puede ir a la consulta por área y volver", async () => {
+  it("abajo a la izquierda quedan solo Charmy y el aviso: no hay enlaces a otras vistas (#276)", async () => {
     montar();
-    const u = userEvent.setup();
-    await u.click(screen.getByRole("button", { name: "Consulta por área y fechas" }));
-    expect(useApp.getState().vista).toBe("consulta");
-    await u.click(screen.getByRole("button", { name: "Mapa por provincia" }));
-    expect(useApp.getState().vista).toBe("relieve");
+    await screen.findByRole("region", { name: "Ranking" });
+    expect(screen.getByRole("button", { name: /Charmy: ¿necesitás ayuda\?/ })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Consulta por área y fechas" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "Charmy Brigada" })).not.toBeInTheDocument();
+    expect(screen.queryByText(/regiones$/)).not.toBeInTheDocument();
+  });
+
+  it("si los datos en vivo están atrasados, En vivo lo dice (RF-VIV-01)", async () => {
+    resumen.live = { ...resumen.live, stale: true, message: "Los focos en vivo están atrasados: el último dato es de hace 3 horas." } as never;
+    try {
+      montar();
+      await userEvent.setup().click(screen.getByRole("tab", { name: "En vivo" }));
+      const panel = await screen.findByRole("complementary", { name: "Resumen en vivo" });
+      expect(await within(panel).findByText(/están atrasados/)).toBeInTheDocument();
+    } finally {
+      resumen.live = { available: true, fetched_at: "2026-11-14T11:30:00Z", stale: false };
+    }
   });
 
   it("la ficha del foco en vivo dice su veredicto y por qué (RF-VIV-02)", async () => {
@@ -379,8 +391,8 @@ describe("tu zona en Relieve (#262)", () => {
     expect(useConsulta.getState().dibujando).toBe("rectangle");
     expect(within(panel).getByText(/dos esquinas opuestas/)).toBeInTheDocument();
     expect(within(panel).getByLabelText("Desde")).toHaveValue("2022-01-01");
-    // Los filtros técnicos van plegados.
-    expect(within(panel).getByText("Más filtros")).toBeInTheDocument();
+    // Los filtros técnicos, solo en el modo experto (RF-MOD-01).
+    expect(within(panel).queryByLabelText("Serie")).not.toBeInTheDocument();
     expect(screen.getByText(/no reemplaza a los servicios de emergencia/)).toBeInTheDocument();
   });
 
@@ -413,5 +425,34 @@ describe("tu zona en Relieve (#262)", () => {
     await u.click(screen.getByRole("button", { name: "Dibujar polígono" }));
     await u.click(screen.getByRole("tab", { name: "Focos" }));
     expect(useConsulta.getState().dibujando).toBeNull();
+  });
+
+  it("en experto suma filtros, reproducción y validación, y un foco tocado muestra sus atributos (RF-MOD-02, #276)", async () => {
+    useApp.setState({ modo: "experto" });
+    useConsulta.setState({ area: { type: "Polygon", coordinates: [[[-72, -43], [-71, -43], [-71, -42], [-72, -42], [-72, -43]]] } });
+    useRelieve.setState({
+      pestana: "zona",
+      focoZona: {
+        lon: -71.3,
+        lat: -42.9,
+        propiedades: { acq_datetime: "2025-01-10T15:00:00Z", satellite: "N20", instrument: "VIIRS", confidence: "high", frp: 12, daynight: "D" },
+      },
+    });
+    try {
+      montar();
+      const panel = screen.getByRole("complementary", { name: "Tu zona" });
+      expect(within(panel).getByLabelText("Serie")).toBeInTheDocument();
+      expect(await within(panel).findByRole("group", { name: "Reproducir por mes" })).toBeInTheDocument();
+      expect(within(panel).getByRole("region", { name: "Validación de la armonización" })).toBeInTheDocument();
+      const ficha = screen.getByRole("region", { name: "Atributos del foco" });
+      expect(within(ficha).getByText("NOAA-20 (VIIRS)")).toBeInTheDocument();
+      expect(within(ficha).getByText("12 MW")).toBeInTheDocument();
+      await userEvent.setup().click(within(panel).getByRole("radio", { name: "Novato" }));
+      expect(within(panel).queryByLabelText("Serie")).not.toBeInTheDocument();
+      expect(screen.queryByRole("region", { name: "Atributos del foco" })).not.toBeInTheDocument();
+      expect(useConsulta.getState().area).not.toBeNull();
+    } finally {
+      useApp.setState({ modo: "novato" });
+    }
   });
 });

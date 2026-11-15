@@ -1,6 +1,8 @@
 import { MapPin, X } from "lucide-react";
 import { urlGoogleMaps, urlGoogleMapsEmbed } from "@/lib/enlaces";
 import { useEvidencia } from "@/vivo/consultas";
+import { useVivo } from "@/vivo/estado";
+import { SATELITES_VIVO } from "@/vivo/satelites";
 import { ETIQUETAS_EVIDENCIA, TIPOS_EVIDENCIA, veredicto } from "@/vivo/veredictos";
 import type { FocoReciente } from "./datos";
 import { useRelieve } from "./estado";
@@ -17,9 +19,17 @@ interface Props {
   mensaje?: string;
 }
 
-/** Panel de En vivo: cuántos focos hay, la ventana de tiempo, la leyenda de tamaños y los más intensos. */
+/**
+ * Panel de En vivo: cuántos focos hay, la ventana de tiempo, los satélites, la leyenda de tamaños y los más intensos.
+ * `focos` llega ya filtrado por satélite.
+ */
 export function PanelEnVivo({ focos, disponible, mensaje, regiones }: Props) {
   const { horasVivo, nivelesVivo, cambiar } = useRelieve();
+  const { satelites, cambiar: cambiarVivo } = useVivo();
+  const alternarSatelite = (codigo: string, si: boolean) => {
+    cambiarVivo({ satelites: si ? [...satelites, codigo] : satelites.filter((c) => c !== codigo) });
+    cambiar({ focoVivo: null });
+  };
   const ultimo = focos.reduce((m, f) => Math.max(m, f.t), 0);
   const visibles = focos.filter((f) => f.t >= ultimo - horasVivo * 3_600_000 && enNiveles(f.frp, nivelesVivo));
   const alternarNivel = (n: NivelFoco) =>
@@ -70,6 +80,31 @@ export function PanelEnVivo({ focos, disponible, mensaje, regiones }: Props) {
               </button>
             ))}
           </div>
+          {/* Como el filtro por satélite de FIRMS (#261): solo los que publican en vivo (D-13). */}
+          <div role="group" aria-label="Satélites" className="mt-2 flex gap-1.5">
+            {SATELITES_VIVO.map((s) => {
+              const elegido = satelites.includes(s.codigo);
+              return (
+                <label
+                  key={s.codigo}
+                  className={`flex flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-full px-2 py-1.5 text-xs font-semibold ring-1 transition ${
+                    elegido ? "bg-white/15 text-white ring-relieve-brillo/60" : "text-white/60 ring-white/10 hover:bg-white/10"
+                  }`}
+                >
+                  <input
+                    type="checkbox"
+                    className="size-3.5 accent-relieve-brillo"
+                    checked={elegido}
+                    onChange={(e) => alternarSatelite(s.codigo, e.target.checked)}
+                  />
+                  {s.nombre}
+                </label>
+              );
+            })}
+          </div>
+          {satelites.length === 0 && (
+            <p className="mt-2 text-xs text-relieve-brillo">Elegí al menos un satélite para ver los focos.</p>
+          )}
           <div className="mt-3.5 border-t border-white/10 pt-3">
             <h3 className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-white/50">Tamaño = intensidad</h3>
             {/* Cada nivel filtra: se ven solo los niveles elegidos; sin ninguno, todos (#251). */}

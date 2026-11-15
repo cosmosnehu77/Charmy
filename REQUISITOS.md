@@ -131,7 +131,7 @@ Una vizcacha de fuego, Charmy, acompaña al usuario en toda la experiencia.
 | ID | Requisito | Prioridad |
 |---|---|---|
 | RF-ALE-01 | Cualquier persona puede reportar un foco sin crear una cuenta. | Importante |
-| RF-ALE-02 | Las entidades aliadas (bomberos, Defensa Civil, brigadas) reciben un aviso inmediato de los focos y reportes dentro de su zona, por un canal de mensajería que ya usen. | Importante |
+| RF-ALE-02 | Las entidades aliadas (bomberos, Defensa Civil, brigadas) reciben un aviso inmediato de los focos verificados y de los reportes dentro de su zona, por un canal de mensajería que ya usen. Un foco se avisa cuando su veredicto (RF-VIV-02) es confirmado, o probable con confianza nominal o alta, y un mismo incendio se avisa una sola vez, para no saturar el canal (D-37). | Importante |
 | RF-ALE-03 | La entidad puede marcar el estado de un aviso (visto, en camino, controlado, falso) y eso mejora la verificación. | Importante |
 | RF-ALE-04 | Los avisos se publican también en un formato estándar de alerta que otros sistemas puedan consumir. | Importante |
 | RF-ALE-05 | Las entidades tienen cuenta propia, definen su zona y ven sus avisos dentro de la app. | Deseable |

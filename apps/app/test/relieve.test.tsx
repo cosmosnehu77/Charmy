@@ -6,6 +6,7 @@ import { useApp } from "@/estado/app";
 import { estadoInicialConsulta, useConsulta } from "@/estado/consulta";
 import { urlGoogleMaps, urlGoogleMapsEmbed } from "@/lib/enlaces";
 import { useRelieve } from "@/relieve/estado";
+import { useVivo } from "@/vivo/estado";
 
 // jsdom no tiene WebGL: el mapa de Relieve se revisa en el navegador.
 vi.mock("@/relieve/MapaRelieve", () => ({ default: () => <div data-testid="mapa-relieve" /> }));
@@ -117,6 +118,7 @@ beforeEach(() => {
   vi.stubGlobal("fetch", fetchSimulado);
   useApp.setState({ vista: "relieve" });
   useConsulta.setState(estadoInicialConsulta("2026-11-14"));
+  useVivo.setState({ satelites: ["N20", "N21"] });
   useRelieve.setState({
     pestana: "focos",
     seleccion: null,
@@ -268,6 +270,34 @@ describe("vista Relieve (F4-R1)", () => {
       expect(within(panel).queryByRole("button", { name: /3,5 MW/ })).not.toBeInTheDocument();
       await u.click(muyFuerte);
       expect(within(panel).getByText("2")).toBeInTheDocument();
+    } finally {
+      vivo.features.pop();
+    }
+  });
+
+  it("en En vivo, destildar un satélite deja solo los focos del otro y cierra la ficha de un foco suyo (#271)", async () => {
+    vivo.features.push({
+      type: "Feature",
+      id: "N21-sat",
+      geometry: { type: "Point", coordinates: [-70.2, -39.1] },
+      properties: { acq_datetime: "2026-11-14T06:00:00Z", satellite: "N21", instrument: "VIIRS", confidence: "nominal", frp: 3.5, daynight: "N", verdict: "sin_confirmar" },
+    });
+    try {
+      montar();
+      const u = userEvent.setup();
+      await u.click(screen.getByRole("tab", { name: "En vivo" }));
+      const panel = await screen.findByRole("complementary", { name: "Resumen en vivo" });
+      expect(await within(panel).findByText("2")).toBeInTheDocument();
+      await u.click(within(panel).getByRole("button", { name: /3,5 MW/ }));
+      expect(screen.getByRole("region", { name: "Ficha del foco" })).toBeInTheDocument();
+      expect(within(panel).getByRole("checkbox", { name: "NOAA-20" })).toBeChecked();
+      await u.click(within(panel).getByRole("checkbox", { name: "NOAA-21" }));
+      expect(useVivo.getState().satelites).toEqual(["N20"]);
+      expect(within(panel).getByText("1")).toBeInTheDocument();
+      expect(within(panel).queryByRole("button", { name: /3,5 MW/ })).not.toBeInTheDocument();
+      expect(screen.queryByRole("region", { name: "Ficha del foco" })).not.toBeInTheDocument();
+      await u.click(within(panel).getByRole("checkbox", { name: "NOAA-20" }));
+      expect(within(panel).getByText(/Elegí al menos un satélite/)).toBeInTheDocument();
     } finally {
       vivo.features.pop();
     }

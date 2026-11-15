@@ -7,6 +7,8 @@ interface EstadoVivo {
   seleccionado: string | null;
   /** Formulario de reporte abierto (RF-ALE-01). */
   reportando: boolean;
+  /** Satélites cuyos focos se muestran, en la lista y en el mapa (códigos de FIRMS: `N20`, `N21`). */
+  satelites: string[];
   cambiar: (parcial: Partial<Omit<EstadoVivo, "cambiar">>) => void;
 }
 
@@ -14,5 +16,6 @@ export const useVivo = create<EstadoVivo>()((set) => ({
   visible: false,
   seleccionado: null,
   reportando: false,
+  satelites: ["N20", "N21"],
   cambiar: (parcial) => set(parcial),
 }));

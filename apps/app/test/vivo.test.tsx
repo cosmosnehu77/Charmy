@@ -5,6 +5,7 @@ import App from "@/App";
 import { useApp } from "@/estado/app";
 import { estadoInicialConsulta, useConsulta } from "@/estado/consulta";
 import { useVivo } from "@/vivo/estado";
+import { filtrarPorSatelite } from "@/vivo/satelites";
 
 vi.mock("@/mapa/Mapa", () => ({ default: () => <div data-testid="mapa" /> }));
 
@@ -91,7 +92,7 @@ beforeEach(() => {
   vi.stubGlobal("fetch", fetchSimulado);
   useConsulta.setState({ ...estadoInicialConsulta("2026-11-14") });
   useApp.setState({ modo: "novato", perfilMapa: "2d", recorridoVisto: true });
-  useVivo.setState({ visible: false, seleccionado: null, reportando: false });
+  useVivo.setState({ visible: false, seleccionado: null, reportando: false, satelites: ["N20", "N21"] });
 });
 afterEach(() => {
   vi.unstubAllEnvs();
@@ -128,6 +129,39 @@ describe("focos en vivo (RF-VIV-01, RF-VIV-02)", () => {
     montar();
     await userEvent.setup().click(screen.getByRole("checkbox", { name: /focos de las últimas 48 horas/i }));
     expect(await screen.findByText("Los focos son de la consulta de las 05:30.")).toBeInTheDocument();
+  });
+});
+
+describe("filtro por satélite de los focos en vivo", () => {
+  it("deja solo los focos de los satélites elegidos", () => {
+    const ids = (sats: string[]) => filtrarPorSatelite(vivo.features, sats).map((f) => f.id);
+    expect(ids(["N20", "N21"])).toEqual([vivo.features[0]?.id, vivo.features[1]?.id]);
+    expect(ids(["N20"])).toEqual([vivo.features[1]?.id]);
+    expect(ids([])).toEqual([]);
+  });
+
+  it("al destildar NOAA-21, la lista muestra solo los focos de NOAA-20", async () => {
+    montar();
+    const u = userEvent.setup();
+    await u.click(screen.getByRole("checkbox", { name: /focos de las últimas 48 horas/i }));
+    const lista = await screen.findByRole("list", { name: "Focos recientes" });
+    expect(screen.getByRole("checkbox", { name: "NOAA-20" })).toBeChecked();
+    await u.click(screen.getByRole("checkbox", { name: "NOAA-21" }));
+    const items = within(lista).getAllByRole("listitem");
+    expect(items).toHaveLength(1);
+    expect(items[0]).toHaveTextContent(/Probable/);
+    expect(items[0]).not.toHaveTextContent(/fuente fija/);
+    expect(screen.getByText(/^1 foco de VIIRS/)).toHaveTextContent("(NOAA-20)");
+  });
+
+  it("sin ningún satélite elegido, lo dice", async () => {
+    montar();
+    const u = userEvent.setup();
+    await u.click(screen.getByRole("checkbox", { name: /focos de las últimas 48 horas/i }));
+    await screen.findByRole("list", { name: "Focos recientes" });
+    await u.click(screen.getByRole("checkbox", { name: "NOAA-20" }));
+    await u.click(screen.getByRole("checkbox", { name: "NOAA-21" }));
+    expect(screen.getByText(/Elegí al menos un satélite/)).toBeInTheDocument();
   });
 });
 

@@ -129,7 +129,61 @@ entrenar. Un plazo se publica solo si mejora el error medio absoluto en más de 
 | 2 meses | +3,3 % | Sí |
 | 3 meses | +0,4 % | No |
 
-Según D-31, el carril E va a probar TimesFM 2.5 contra LightGBM con la misma compuerta y los mismos años de prueba.
+Las mejoras son del backtest completo: todas las celdas, emisiones de 2025-01 a 2026-09.
+
+**TimesFM 2.5** (D-31) se probó contra LightGBM con la misma partición (F3-E3, PR #194) y no se publica. Su mejora en
+el MAE (+32 % a +34 %) es efecto de la métrica: devuelve casi la mediana, que en la mayoría de las celdas es cero, y
+decir siempre cero mejora todavía más. Queda LightGBM.
+
+### Por qué el MAE solo no alcanza (R-B1)
+
+El 85 % de las celdas-mes de prueba no tiene fuego. El error absoluto medio premia decir cero: «siempre cero» tiene
+menos MAE que la climatología y que el modelo, aunque nunca anticipa un fuego. Por eso la predicción se mide también
+con métricas que no premian decir cero. Se usan las mismas filas, la misma partición y el mismo modelo que la
+compuerta:
+
+- **Desvío de Poisson:** castiga mucho predecir casi cero donde hubo fuego. Es la métrica natural de un conteo de días.
+- **Detección:** una celda-mes es *predicha quemada* si la probabilidad de al menos un día con fuego,
+  `1 − e^(−μ)`, es del 50 % o más, es decir si `μ ≥ ln 2 ≈ 0,69` días. Se informan el recall (qué parte de las
+  quemadas detecta) y la precisión (qué parte de las predichas se quemó).
+- **10 % de mayor riesgo:** de las celdas-mes con mayor valor esperado, qué fracción se quemó (precisión) y qué parte
+  de todas las quemadas captura. No depende de un umbral y muestra si el modelo sabe ordenar el riesgo.
+
+Se compara contra la climatología, «siempre cero» y la persistencia (repetir el mes de emisión).
+
+| Plazo | Predicción | Desvío de Poisson | MAE | Recall | Precisión | Precisión 10 % | Captura 10 % |
+|---|---|---|---|---|---|---|---|
+| 1 mes | LightGBM | 0,82 | 0,42 | 0,50 | 0,50 | 0,58 | 0,39 |
+| 1 mes | Climatología | 1,26 | 0,45 | 0,52 | 0,42 | 0,52 | 0,35 |
+| 1 mes | Siempre cero | 8,18 | 0,30 | 0 | — | — | — |
+| 1 mes | Persistencia | 4,14 | 0,39 | 0,44 | 0,42 | 0,48 | 0,32 |
+| 2 meses | LightGBM | 0,89 | 0,45 | 0,51 | 0,43 | 0,52 | 0,36 |
+| 2 meses | Climatología | 1,25 | 0,46 | 0,52 | 0,40 | 0,50 | 0,35 |
+| 2 meses | Siempre cero | 7,66 | 0,28 | 0 | — | — | — |
+| 2 meses | Persistencia | 4,98 | 0,42 | 0,35 | 0,34 | 0,37 | 0,26 |
+| 3 meses | LightGBM | 0,94 | 0,48 | 0,52 | 0,44 | 0,54 | 0,36 |
+| 3 meses | Climatología | 1,28 | 0,48 | 0,54 | 0,42 | 0,53 | 0,35 |
+| 3 meses | Siempre cero | 8,30 | 0,30 | 0 | — | — | — |
+| 3 meses | Persistencia | 6,13 | 0,48 | 0,29 | 0,30 | 0,32 | 0,21 |
+
+Mejora de LightGBM en desvío de Poisson (en MAE entre paréntesis):
+
+| Plazo | Contra la climatología | Contra siempre cero | Contra la persistencia |
+|---|---|---|---|
+| 1 mes | +34,8 % (+8,1 %) | +90,0 % (−40,4 %) | +80,2 % (−6,5 %) |
+| 2 meses | +29,1 % (+3,3 %) | +88,4 % (−60,5 %) | +82,2 % (−6,0 %) |
+| 3 meses | +26,2 % (+0,4 %) | +88,7 % (−58,8 %) | +84,7 % (−0,6 %) |
+
+En desvío, LightGBM supera a las tres referencias en los tres plazos. En el 10 % de mayor riesgo acierta más que la
+climatología (58 % contra 52 % a un mes). Su recall es parecido al de la climatología, pero con más precisión. En MAE
+pierde contra «siempre cero» y contra la persistencia, que es justamente el sesgo de esa métrica. Esta medición **no
+cambia lo publicado**: la compuerta sigue siendo la de D-10 hasta que se revise (R-A1).
+
+**Ventana de prueba (R-B2).** S-NPP publicó focos hasta el 2/11/2026. En la ventana de prueba solo julio de 2026
+quedó incompleto: S-NPP vio focos en 25 de 31 días, y por eso no entra en la tabla. A marzo, abril, junio y agosto
+de 2026 les faltan de 1 a 4 días, pero S-NPP ve en ellos más del 85 % de lo que ve NOAA-20 en las mismas celdas. Si
+se los saca de la prueba, la mejora en MAE pasa de +8,1 / +3,3 / +0,4 % a +8,9 / +3,7 / +0,7 % y la compuerta decide
+lo mismo: la ventana es confiable. `pipeline.cobertura` arma este informe.
 
 ## Uso de inteligencia artificial (RNF-07)
 
@@ -147,7 +201,10 @@ uv run --package pipeline python -m pipeline.firms <carpeta FIRMS> --out data/fo
 uv run --package pipeline python -m pipeline.fuentes_fijas --focos data/focos --out data/pub
 uv run --package pipeline python -m pipeline.armonizacion --focos data/focos --regiones data/muestras/regiones.geojson --out data/pub
 uv run --package pipeline python -m pipeline.prediccion --focos data/focos --out data/pub
+uv run --package pipeline python -m pipeline.medicion --entrenamiento data/pub/entrenamiento.parquet
+uv run --package pipeline python -m pipeline.cobertura --focos data/focos --entrenamiento data/pub/entrenamiento.parquet --desde 2025-01 --hasta 2026-10
 ```
 
 El archivo histórico se pide en el sitio de FIRMS y llega por correo como CSV. Con el histórico completo, la
-armonización usa unos 950 MB de memoria y la predicción unos 4,3 GB durante 8 minutos.
+armonización usa unos 950 MB de memoria y la predicción unos 4,3 GB durante 8 minutos. La medición lee solo
+`entrenamiento.parquet` (unos 5,6 GB, 1 minuto), y la cobertura, los focos (unos 4,6 GB, 6 segundos).

@@ -106,7 +106,7 @@ Lo que se usa hoy. La columna **Dec.** apunta a la decisión que lo justifica ([
 | Dibujo de área | Terra Draw + Turf.js | D | Más el ingreso manual de latitud y longitud. | — |
 | Gráficos | Observable Plot | D | Alternativa: ECharts, que trae calendario nativo. | — |
 | Rampas de color | YlOrRd para conteos, PuOr o BrBG para anomalías | D | Aptas para daltonismo. | — |
-| Landing | Astro + GSAP (ScrollTrigger) | E | Alternativa: Motion. | — |
+| Landing | Astro + GSAP (ScrollTrigger) y Lenis para el scroll suave | E | Lenis suaviza el scroll nativo sin mover el contenido (las tarjetas sticky siguen andando); ScrollSmoother de GSAP se descartó porque las rompe. Se apaga con movimiento reducido. Alternativa: Motion. | — |
 | Mascota | SVG por capas a partir de `docs/charmy-base/`, animado con Motion o CSS | E | Rive queda como mejora opcional si alguien lo domina. | D-07 |
 | Juego | Phaser 4, pixel art 2D | E | Sprites con Pixelorama o LibreSprite, sonidos con jsfxr, mapa con Tiled. | D-11 |
 | Mensajería | Bot de Telegram (aiogram) | A | Alternativa: correo. | D-08 |

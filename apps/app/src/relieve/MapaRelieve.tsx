@@ -21,6 +21,7 @@ import {
   AGRUPAR_ZONA,
   alturaDelDia,
   capaRegiones,
+  mapaPlano,
   capasRegionesVisibles,
   CORTES_FOCO,
   escalaRegion,
@@ -622,11 +623,11 @@ export default function MapaRelieve({ regiones, dias, focos, onHover }: Props) {
     });
   }, [tema]);
 
-  // Plano o relieve; En vivo siempre plano.
+  // Plano o relieve, según el botón 2D/3D; en Experto, plano mientras se dibuja.
   useEffect(() => {
     const m = mapa.current;
     if (!m) return;
-    const plano = estado.plano || estado.pestana === "vivo" || estado.pestana === "zona";
+    const plano = mapaPlano(estado.pestana, estado.plano, dibujando);
     m.easeTo({ pitch: plano ? 0 : 55, bearing: plano ? 0 : m.getBearing(), duration: reducido() ? 0 : 800 });
     if (plano) {
       m.dragRotate.disable();
@@ -635,7 +636,7 @@ export default function MapaRelieve({ regiones, dias, focos, onHover }: Props) {
       m.dragRotate.enable();
       m.touchZoomRotate.enableRotation();
     }
-  }, [estado.plano, estado.pestana]);
+  }, [estado.plano, estado.pestana, dibujando]);
 
   // Volar a la región elegida o al área de Tu zona, o volver al país entero.
   useEffect(() => {
@@ -661,8 +662,8 @@ export default function MapaRelieve({ regiones, dias, focos, onHover }: Props) {
     m.fitBounds(caja, {
       padding,
       maxZoom: zona && area ? 11 : 6.5,
-      pitch: estado.plano || zona ? 0 : region ? 58 : 55,
-      bearing: zona ? 0 : m.getBearing(),
+      pitch: mapaPlano(estado.pestana, estado.plano, useConsulta.getState().dibujando) ? 0 : region ? 58 : 55,
+      bearing: m.getBearing(),
       duration: reducido() ? 0 : 1200,
     });
   }, [estado.seleccion, estado.plano, estado.pestana, area]);

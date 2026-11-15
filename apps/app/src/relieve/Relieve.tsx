@@ -321,8 +321,8 @@ export function Relieve() {
         </>
       )}
 
-      {!enVivo && (
-        <div data-guia="controles" className="pointer-events-auto absolute right-4 top-1/2 z-20 flex -translate-y-1/2 flex-col gap-2">
+      {/* Los controles van en todas las pestañas: En vivo y Experto también se ven en 3D. */}
+      <div data-guia="controles" className="pointer-events-auto absolute right-4 top-1/2 z-20 flex -translate-y-1/2 flex-col gap-2">
           <BotonRedondo etiqueta={t("Acercar", "Zoom in")} onClick={() => controlMapa.zoom(0.75)}>
             <Plus aria-hidden="true" className="size-4" />
           </BotonRedondo>
@@ -332,15 +332,15 @@ export function Relieve() {
           <BotonRedondo etiqueta={t("Mirar al norte", "Reset north")} onClick={() => controlMapa.norte()}>
             <Compass aria-hidden="true" className="size-4 text-relieve-brillo" />
           </BotonRedondo>
-          {/* Tu zona va siempre en plano, para dibujar sobre el mapa sin inclinación. */}
-          {!zona && (
+          <BotonRedondo
+            etiqueta={estado.plano ? t("Ver en 3D", "View in 3D") : t("Ver en 2D, más liviano", "View in 2D, lighter")}
+            onClick={() => estado.cambiar({ plano: !estado.plano })}
+          >
+            <span className="text-[10px] font-bold">{estado.plano ? "3D" : "2D"}</span>
+          </BotonRedondo>
+          {/* El giro queda para los indicadores: en En vivo y Experto los grupos de focos se rearman al mover el mapa. */}
+          {!enVivo && !zona && (
             <>
-              <BotonRedondo
-                etiqueta={estado.plano ? t("Ver en 3D", "View in 3D") : t("Ver en 2D, más liviano", "View in 2D, lighter")}
-                onClick={() => estado.cambiar({ plano: !estado.plano })}
-              >
-                <span className="text-[10px] font-bold">{estado.plano ? "3D" : "2D"}</span>
-              </BotonRedondo>
               <BotonRedondo
                 etiqueta={estado.giro ? t("Detener el giro", "Stop rotation") : t("Girar el mapa", "Rotate map")}
                 activo={estado.giro}
@@ -351,7 +351,6 @@ export function Relieve() {
             </>
           )}
         </div>
-      )}
 
       {/* z-20: la ayuda de Charmy y el aviso de emergencias quedan por encima del ranking, la leyenda y la línea de tiempo.
           En celular la ficha sale como hoja desde abajo: Charmy se guarda y el aviso queda encima (#218).

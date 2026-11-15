@@ -387,6 +387,21 @@ describe("vista Relieve (F4-R1)", () => {
     }
   });
 
+  it("En vivo y Experto tienen los controles del mapa, con el cambio a 2D y 3D", async () => {
+    montar();
+    const u = userEvent.setup();
+    await u.click(screen.getByRole("tab", { name: "En vivo" }));
+    expect(screen.getByRole("button", { name: "Acercar" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Alejar" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Mirar al norte" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Ver en 2D, más liviano" })).toBeInTheDocument();
+    await u.click(screen.getByRole("tab", { name: "Experto" }));
+    expect(screen.getByRole("button", { name: "Acercar" })).toBeInTheDocument();
+    await u.click(screen.getByRole("button", { name: "Ver en 2D, más liviano" }));
+    expect(useRelieve.getState().plano).toBe(true);
+    expect(screen.getByRole("button", { name: "Ver en 3D" })).toBeInTheDocument();
+  });
+
   it("en En vivo, tocar un nivel de intensidad deja solo esos focos (#251)", async () => {
     vivo.features.push({
       type: "Feature",

@@ -28,6 +28,10 @@ describe("página del juego", () => {
       expect(html).toMatch(new RegExp(`<button type="button" data-herramienta="${h}" aria-pressed="(true|false)"`));
     }
   });
+  it("tiene el botón del modo explorador y una región que anuncia a los lectores de pantalla", () => {
+    expect(html).toMatch(/<button type="button" id="explorador"[^>]*>Modo explorador/);
+    expect(html).toMatch(/<p id="anuncio" class="solo-lector" aria-live="polite">/);
+  });
   it("tiene descripción y el aviso de emergencias", () => {
     expect(html).toMatch(/<meta name="description" content="[^"]+"/);
     expect(html).toMatch(/no reemplaza a los servicios de emergencia/);

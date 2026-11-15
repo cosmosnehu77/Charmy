@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import dia from "../../../data/muestras/dia-juego.json";
 import type { DiaJuego } from "../src/datos";
-import { CONSEJOS, cierreDePartida } from "../src/cierre";
+import { CONSEJOS, cierreDePartida, focos } from "../src/cierre";
 
 const real = dia as DiaJuego;
 
@@ -45,5 +45,13 @@ describe("cierre con fuentes fijas", () => {
   it("si no tocaste ninguna, no dice nada", () => {
     expect(cierreDePartida(real, 0).fuentesFijas).toBeNull();
     expect(cierreDePartida(real, 0, 0).fuentesFijas).toBeNull();
+  });
+});
+
+describe("cantidad de focos en palabras", () => {
+  it("usa singular y plural", () => {
+    expect(focos(0)).toBe("0 focos");
+    expect(focos(1)).toBe("1 foco");
+    expect(focos(142)).toBe("142 focos");
   });
 });

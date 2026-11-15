@@ -8,6 +8,7 @@ export type Anillo = Punto[];
 /** Lo que se usa de data/muestras/regiones.geojson. */
 export interface GeoJson {
   features: {
+    properties: { nombre: string; pais: string };
     geometry: { type: "Polygon"; coordinates: Anillo[] } | { type: "MultiPolygon"; coordinates: Anillo[][] };
   }[];
 }
@@ -15,6 +16,8 @@ export interface GeoJson {
 export interface Contorno {
   bbox: Recuadro;
   anillos: Anillo[];
+  /** "Región, País" de cada anillo, en el mismo orden. */
+  nombres: string[];
 }
 
 /** Cuánto se aleja como mucho el contorno simplificado del original, en grados (unos 5 km, entre 1 y 3 píxeles del lienzo). */
@@ -69,13 +72,16 @@ const redondear = ([lon, lat]: Punto): Punto => [Math.round(lon * 100) / 100, Ma
  * Se calcula una vez con `pnpm contorno` y se guarda en src/fondo.json.
  */
 export function contornoDelDia(regiones: GeoJson, bbox: Recuadro, tolerancia = TOLERANCIA): Contorno {
-  const anillos = regiones.features
-    .flatMap((f) => (f.geometry.type === "Polygon" ? [f.geometry.coordinates] : f.geometry.coordinates))
-    .map((poligono) => poligono[0]!)
-    .filter((anillo) => tocaRecuadro(anillo, bbox) && esGrande(anillo))
-    .map((anillo) => simplificar(anillo, tolerancia).map(redondear))
-    .filter((anillo) => anillo.length >= 4);
-  return { bbox, anillos };
+  const conNombre = regiones.features
+    .flatMap((f) => {
+      const nombre = `${f.properties.nombre}, ${f.properties.pais}`;
+      const poligonos = f.geometry.type === "Polygon" ? [f.geometry.coordinates] : f.geometry.coordinates;
+      return poligonos.map((poligono) => ({ nombre, anillo: poligono[0]! }));
+    })
+    .filter(({ anillo }) => tocaRecuadro(anillo, bbox) && esGrande(anillo))
+    .map(({ nombre, anillo }) => ({ nombre, anillo: simplificar(anillo, tolerancia).map(redondear) }))
+    .filter(({ anillo }) => anillo.length >= 4);
+  return { bbox, anillos: conNombre.map((c) => c.anillo), nombres: conNombre.map((c) => c.nombre) };
 }
 
 /** De longitud y latitud a coordenadas del área de juego: el recuadro ocupa toda el área, con el norte arriba. */
@@ -102,4 +108,21 @@ export function encuadre([oeste, sur, este, norte]: Recuadro, area: Area): Encua
   }
   const alto = area.ancho / proporcion;
   return { ancho: area.ancho, alto, dx: 0, dy: (area.alto - alto) / 2 };
+}
+
+/** ¿El punto está dentro del anillo? (rayo hacia el este, regla par-impar). */
+function adentro([lon, lat]: Punto, anillo: Anillo): boolean {
+  let dentro = false;
+  for (let i = 0, j = anillo.length - 1; i < anillo.length; j = i++) {
+    const [xi, yi] = anillo[i]!;
+    const [xj, yj] = anillo[j]!;
+    if (yi > lat !== yj > lat && lon < ((xj - xi) * (lat - yi)) / (yj - yi) + xi) dentro = !dentro;
+  }
+  return dentro;
+}
+
+/** La región aproximada (sobre el contorno simplificado) donde cae un punto, o null si cae fuera de todas. */
+export function regionEn(contorno: Contorno, punto: Punto): string | null {
+  const i = contorno.anillos.findIndex((anillo) => adentro(punto, anillo));
+  return i === -1 ? null : (contorno.nombres[i] ?? null);
 }

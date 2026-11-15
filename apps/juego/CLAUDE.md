@@ -35,6 +35,10 @@ pnpm --filter @charmy/juego contorno  # regenera src/fondo.json desde data/muest
   el navegador, que sigue leyendo la clave de cuando el juego se llamaba Charmy Kids) son puros y probados.
 - Las herramientas (una por vestuario de Charmy) se eligen en una barra de HTML (`#herramientas`, `src/barra.ts`),
   para el dedo, el teclado (1 a 4) y el lector de pantalla. Charmy en el nivel lleva el vestuario de la herramienta.
+- Modo explorador (accesibilidad, `src/explorador.ts`): un botón de HTML en el pie arranca el nivel con
+  `{ modo: "explorador" }`. Sin reloj, sin escapes, sin gastar agua y sin récord. Flechas y Tab recorren los focos,
+  Enter o Espacio apagan, V verifica y Escape termina. Lo que dice el lector de pantalla va a `anunciar()` (la región
+  `aria-live` `#anuncio`). `src/fondo.json` guarda el nombre de cada región para decir dónde está el foco.
 - El sonido sale de `SONIDO` (`src/sonido.ts`, Web Audio, sin archivos). El silencio es un botón de HTML en el pie
   y se recuerda en el navegador.
 - En las escenas, todo tiempo de juego sale del reloj de la escena (`this.time`, `TimerEvent`), nunca de `this.time.now`

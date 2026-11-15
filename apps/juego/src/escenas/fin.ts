@@ -1,8 +1,10 @@
 import { interfaz, paleta } from "@charmy/ui";
 import Phaser from "phaser";
-import { CONSEJOS, cierreDePartida } from "../cierre";
-import { ANCHO, DIA, LINEAS, SONIDO, TEXTO, Y, almacen, boton, claveCharmy } from "../comun";
+import { CONSEJOS, cierreDePartida, focos } from "../cierre";
+import { ANCHO, DIA, LINEAS, SONIDO, TEXTO, Y, almacen, anunciar, boton, claveCharmy } from "../comun";
 import { estadoDelCierre } from "../ritmo";
+import { REGLAS } from "../explorador";
+import type { Modo } from "./nivel";
 import type { Marcador } from "../partida";
 import { guardarRecord, leerRecord } from "../record";
 
@@ -11,9 +13,11 @@ export class Fin extends Phaser.Scene {
     super("fin");
   }
 
-  create(m: Marcador) {
+  create(m: Marcador & { modo?: Modo }) {
+    const modo = m.modo ?? "normal";
     const record = leerRecord(almacen());
-    const esRecord = m.puntos > record;
+    // El modo explorador no suma récord (RF-KID-11).
+    const esRecord = REGLAS[modo].sumaRecord && m.puntos > record;
     if (esRecord) guardarRecord(almacen(), m.puntos);
     SONIDO.tocar("fin");
     const { dato, consejo, fuentesFijas } = cierreDePartida(
@@ -22,6 +26,11 @@ export class Fin extends Phaser.Scene {
       m.fijasTocadas,
     );
 
+    const resumen =
+      modo === "explorador"
+        ? `Apagaste ${focos(m.apagados)} en el modo explorador. Este modo no suma récord.`
+        : `Apagaste ${focos(m.apagados)}. Tu mejor combo fue x${m.mejorCombo}.`;
+    anunciar(`Terminaste. ${resumen} ${consejo} Enter para jugar otra vez.`);
     this.add.image(ANCHO / 2, Y(120), claveCharmy("bombero", estadoDelCierre(m, esRecord)));
     this.add
       .text(ANCHO / 2, Y(210), esRecord ? `¡Nuevo récord: ${m.puntos} puntos!` : `Hiciste ${m.puntos} puntos`, {
@@ -31,7 +40,7 @@ export class Fin extends Phaser.Scene {
       })
       .setOrigin(0.5);
     this.add
-      .text(ANCHO / 2, Y(255), `Apagaste ${m.apagados} focos. Tu mejor combo fue x${m.mejorCombo}.`, {
+      .text(ANCHO / 2, Y(255), resumen, {
         ...TEXTO,
         ...LINEAS,
         fontSize: "18px",
@@ -41,6 +50,6 @@ export class Fin extends Phaser.Scene {
     this.add
       .text(ANCHO / 2, Y(420), consejo, { ...TEXTO, ...LINEAS, fontSize: "20px", color: interfaz.exito })
       .setOrigin(0.5);
-    boton(this, ANCHO / 2, Y(520), "Jugar otra vez", () => this.scene.start("nivel"));
+    boton(this, ANCHO / 2, Y(520), "Jugar otra vez", () => this.scene.start("nivel", { modo }));
   }
 }

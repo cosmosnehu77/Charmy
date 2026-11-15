@@ -19,6 +19,9 @@ export function fechaLarga(iso: string): string {
   return `${dia} de ${MESES[(mes ?? 1) - 1]} de ${anio}`;
 }
 
+/** "1 foco", "2 focos". */
+export const focos = (n: number) => `${n} ${n === 1 ? "foco" : "focos"}`;
+
 export interface Cierre {
   dato: string;
   consejo: string;

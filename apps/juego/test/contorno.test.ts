@@ -3,7 +3,7 @@ import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 import dia from "../../../data/muestras/dia-juego.json";
 import contorno from "../src/fondo.json";
-import { contornoDelDia, encuadre, proyectar, simplificar, type Anillo, type GeoJson } from "../src/contorno";
+import { contornoDelDia, encuadre, proyectar, regionEn, simplificar, type Anillo, type Contorno, type GeoJson } from "../src/contorno";
 
 const ruta = (r: string) => fileURLToPath(new URL(r, import.meta.url));
 const regiones = JSON.parse(readFileSync(ruta("../../../data/muestras/regiones.geojson"), "utf8")) as GeoJson;
@@ -86,5 +86,18 @@ describe("encuadre del mapa", () => {
     expect(e.ancho).toBe(200);
     expect(e.dx).toBe(0);
     expect(e.dy).toBeCloseTo((1000 - e.alto) / 2, 5);
+  });
+});
+
+describe("región de un punto", () => {
+  it("cada anillo del contorno trae el nombre de su región y su país", () => {
+    expect(contorno.nombres).toHaveLength(contorno.anillos.length);
+    expect(contorno.nombres).toContain("Neuquén, Argentina");
+  });
+
+  it("encuentra la región aproximada de un punto, o null fuera del mapa", () => {
+    expect(regionEn(contorno as Contorno, [-68.06, -38.95])).toBe("Neuquén, Argentina"); // ciudad de Neuquén
+    expect(regionEn(contorno as Contorno, [-71.31, -41.13])).toBe("Río Negro, Argentina"); // Bariloche
+    expect(regionEn(contorno as Contorno, [-60, -45])).toBeNull(); // el mar
   });
 });

@@ -3,6 +3,9 @@
 # focos y reportes nuevos de la zona. No guarda nada entre corridas: POST /alerts dice si un aviso ya se mandó.
 # Secretos del repo: TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID y CHARMY_SERVICE_TOKEN (el mismo que la API).
 # Variable opcional: CHARMY_API_URL (sin /api/v1).
+# A mano, con la opción "prueba", manda al grupo un solo aviso de prueba (sin botones ni API, #303).
+# Si una corrida falla y la anterior había salido bien, abre el issue "Bot de avisos caído" asignado a quien
+# atiende el bot (variable RESPONSABLE_AVISOS, por defecto dimidio6); cuando vuelve a andar, lo cierra.
 name: Avisos
 
 on:
@@ -10,9 +13,15 @@ on:
     # Minutos no redondos: GitHub demora o saltea los cron de los minutos más pedidos (0, 15, 30, 45).
     - cron: "2-59/5 * * * *"
   workflow_dispatch:
+    inputs:
+      prueba:
+        description: Mandar un aviso de prueba al grupo (sin botones, no toca la API)
+        type: boolean
+        default: false
 
 permissions:
   contents: read
+  issues: write   # abrir y cerrar el issue "Bot de avisos caído"
 
 concurrency:
   group: avisos
@@ -44,4 +53,30 @@ jobs:
           CHARMY_SERVICE_TOKEN: ${{ secrets.CHARMY_SERVICE_TOKEN }}
           CHARMY_API_URL: ${{ vars.CHARMY_API_URL || 'https://charmy-j36m.onrender.com' }}
         # Los tokens no se imprimen; si apareciera uno, GitHub tapa los secretos en el registro.
-        run: uv run --package alertas python -m alertas
+        run: uv run --package alertas python -m alertas ${{ inputs.prueba && '--prueba' || '' }}
+      - name: Avisar si el bot empieza a fallar
+        # Una vez por caída: si el issue ya está abierto, no se suma nada.
+        if: failure() && !inputs.prueba
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          RESPONSABLE: ${{ vars.RESPONSABLE_AVISOS || 'dimidio6' }}
+          CORRIDA: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          titulo="Bot de avisos caído"
+          abierto="$(gh issue list --state open --search "\"$titulo\" in:title" --json number --jq '.[0].number // empty')"
+          if [ -z "$abierto" ]; then
+            gh issue create --title "$titulo" --assignee "$RESPONSABLE" --label carril-a \
+              --body "Falló una corrida del bot de avisos: $CORRIDA. Mientras siga así, las entidades no reciben avisos. Este issue se cierra solo cuando una corrida vuelve a salir bien."
+          fi
+      - name: Cerrar el aviso de caída si el bot volvió
+        if: success() && env.HAY_SECRETOS == 'true' && !inputs.prueba
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          CORRIDA: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          abierto="$(gh issue list --state open --search '"Bot de avisos caído" in:title' --json number --jq '.[0].number // empty')"
+          if [ -n "$abierto" ]; then
+            gh issue close "$abierto" --comment "El bot volvió a andar: $CORRIDA"
+          fi

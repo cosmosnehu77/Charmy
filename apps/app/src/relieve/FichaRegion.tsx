@@ -14,6 +14,7 @@ import {
   nivelPercentil,
   nivelRegion,
   nombreMes,
+  textoLoNormal,
   porQuePrediccion,
   rankingRegiones,
   type RegionResumen,
@@ -63,6 +64,7 @@ export function FichaRegion({
             "Recent hotspots are not available right now. The rest of the card keeps working.",
           );
   const mes = ultimo ? nombreMes(ultimo.month) : "";
+  const loNormal = ultimo ? textoLoNormal(ultimo) : null;
 
   return (
     <section
@@ -146,6 +148,7 @@ export function FichaRegion({
                       <span>{t("Normal", "Normal")}</span>
                       <span>{t("Más", "More")}</span>
                     </span>
+                    {loNormal && <small className="text-[12.5px] leading-snug text-white/55">{loNormal}</small>}
                   </dd>
                 ) : (
                   <dd className="m-0 flex flex-col gap-1">

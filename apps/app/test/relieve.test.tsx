@@ -214,8 +214,20 @@ describe("vista Relieve (F4-R1)", () => {
     expect(within(ficha).getByText("41,4")).toBeInTheDocument();
     expect(within(ficha).getByText("en octubre")).toBeInTheDocument();
     expect(within(ficha).getByText(/Octubre 2026: bastante por encima de lo normal/)).toBeInTheDocument();
+    // Qué es lo normal, con los dos números (#381).
+    expect(
+      within(ficha).getByText(
+        "En octubre de 2026 hubo 41,4 días-celda con fuego. Lo normal acá en octubre es 34,3: la mediana de los octubres de 2001 a 2025.",
+      ),
+    ).toBeInTheDocument();
     // Focos es un mes: no hay línea de días.
     expect(screen.queryByRole("group", { name: "Focos por día en Neuquén" })).not.toBeInTheDocument();
+  });
+
+  it("la leyenda de Focos aclara que el color compara las provincias entre sí (#381)", async () => {
+    montar();
+    await screen.findByRole("region", { name: "Ranking" });
+    expect(screen.getByText(/El color compara las provincias entre sí, no con lo normal/)).toBeInTheDocument();
   });
 
   it("elegir una provincia abre su ficha y la línea de tiempo; elegirla de nuevo las cierra", async () => {

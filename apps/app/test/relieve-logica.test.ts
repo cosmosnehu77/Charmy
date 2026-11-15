@@ -26,6 +26,7 @@ import {
   plazoPrediccion,
   textoPrediccion,
   textoProbabilidad,
+  textoLoNormal,
   colorPrediccion,
   comparacionPrediccion,
   porQuePrediccion,
@@ -149,6 +150,18 @@ describe("focos en vivo", () => {
     const ahora = new Date("2026-11-14T12:00:00Z");
     expect(hace(ahora, "2026-11-14T11:40:00Z")).toBe("hace menos de 1 h");
     expect(hace(ahora, "2026-11-14T07:00:00Z")).toBe("hace 5 h");
+  });
+});
+
+describe("qué es lo normal (#381)", () => {
+  it("el mes contra la mediana de ese mes en los años anteriores, desde 2001", () => {
+    expect(textoLoNormal({ year: 2026, month: 10, value: 238, median: 742 })).toBe(
+      "En octubre de 2026 hubo 238 días-celda con fuego. Lo normal acá en octubre es 742: la mediana de los octubres de 2001 a 2025.",
+    );
+    expect(textoLoNormal({ year: 2026, month: 9, value: 12.25, median: 778.714 })).toContain("es 778,7:");
+  });
+  it("sin mediana no hay frase", () => {
+    expect(textoLoNormal({ year: 2026, month: 10, value: 3, median: null })).toBeNull();
   });
 });
 

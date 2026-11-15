@@ -636,3 +636,42 @@
 .tema-relieve [data-state="on"] {
   color: var(--relieve-panel);
 }
+
+/* Ranking: entra y sale deslizándose desde el borde, no de golpe (#281). */
+.ranking-relieve {
+  transition:
+    opacity 0.32s ease,
+    transform 0.32s cubic-bezier(0.2, 0.8, 0.2, 1),
+    visibility 0s linear 0.32s;
+  opacity: 0;
+  transform: translateX(-24px) scale(0.98);
+  visibility: hidden;
+  pointer-events: none;
+}
+.ranking-relieve[data-abierto="true"] {
+  transition:
+    opacity 0.32s ease,
+    transform 0.32s cubic-bezier(0.2, 0.8, 0.2, 1),
+    visibility 0s;
+  opacity: 1;
+  transform: none;
+  visibility: visible;
+  pointer-events: auto;
+}
+.pestana-ranking {
+  animation: relieve-pestana 0.3s ease 0.2s both;
+}
+@keyframes relieve-pestana {
+  from {
+    opacity: 0;
+    transform: translateX(-12px);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .ranking-relieve,
+  .ranking-relieve[data-abierto="true"],
+  .pestana-ranking {
+    transition: none;
+    animation: none;
+  }
+}

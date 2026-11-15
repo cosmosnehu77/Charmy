@@ -1,7 +1,9 @@
 import { Charmy } from "@charmy/charmy";
 import { rampaConteo } from "@charmy/ui";
-import { X } from "lucide-react";
+import { ArrowLeft, X } from "lucide-react";
 import { useCalendarioRegion } from "./consultas";
+import type { FocoReciente } from "./datos";
+import { DetalleFoco } from "./EnVivo";
 import { useRelieve } from "./estado";
 import {
   nivelPercentil,
@@ -14,9 +16,21 @@ import {
 const num = (v: number, d = 0) => v.toLocaleString("es-AR", { minimumFractionDigits: d, maximumFractionDigits: d });
 const TONOS = { alto: "nivel-alto", medio: "nivel-medio", bajo: "nivel-bajo", cero: "nivel-cero" } as const;
 
-/** Ficha simple de una provincia o región: estado, un número grande, dos datos explicados y el calendario plegado. */
-export function FichaRegion({ region, regiones }: { region: RegionResumen; regiones: RegionResumen[] }) {
+/**
+ * Ficha simple de una provincia o región: estado, un número grande, dos datos explicados y el calendario plegado.
+ * Si se elige uno de sus focos, la misma ficha muestra el foco, con una flecha para volver (#236).
+ */
+export function FichaRegion({
+  region,
+  regiones,
+  foco,
+}: {
+  region: RegionResumen;
+  regiones: RegionResumen[];
+  foco?: FocoReciente;
+}) {
   const alternarRegion = useRelieve((s) => s.alternarRegion);
+  const cambiar = useRelieve((s) => s.cambiar);
   const p = region.properties;
   const posicion = rankingRegiones(regiones, "focos", 39).findIndex((r) => r.id === region.id);
   const nivel = nivelRegion(p.hotspots ?? null, posicion);
@@ -34,79 +48,100 @@ export function FichaRegion({ region, regiones }: { region: RegionResumen; regio
     <section
       aria-label={`Ficha de ${p.name}`}
       data-guia="ficha"
-      className="ficha-relieve pointer-events-auto absolute inset-x-0 bottom-0 z-30 flex max-h-[72%] flex-col overflow-y-auto rounded-t-[20px] text-white md:inset-x-auto md:bottom-4 md:right-4 md:top-24 md:max-h-none md:w-[380px] md:rounded-[20px]"
+      className="ficha-relieve pointer-events-auto absolute inset-x-2 bottom-2 z-30 flex max-h-[72%] flex-col overflow-hidden rounded-[20px] text-white md:inset-x-auto md:bottom-4 md:right-4 md:top-24 md:max-h-none md:w-[380px]"
     >
-      <header className="sticky top-0 z-10 flex items-start justify-between gap-3 bg-relieve-panel/95 px-5 pb-2.5 pt-4">
-        <div className="min-w-0">
-          <span className="block text-xs text-white/55">{p.country}</span>
-          <h2 className="mt-0.5 text-[26px] font-bold leading-tight tracking-tight">{p.name}</h2>
-        </div>
-        <button
-          type="button"
-          onClick={() => alternarRegion(null)}
-          aria-label="Cerrar la ficha"
-          className="grid size-[34px] shrink-0 place-items-center rounded-full bg-white/10 hover:bg-white/15"
-        >
-          <X aria-hidden="true" className="size-4" />
-        </button>
-      </header>
-      {/* En celular el aviso de emergencias queda encima del final de la hoja: este espacio deja leer lo último. */}
-      <div className="flex flex-col gap-4 px-5 pb-20 pt-1 md:pb-5">
-        <span className={`nivel-relieve ${TONOS[nivel.tono]}`}>{nivel.texto}</span>
-        <div className="flex items-center gap-3.5">
-          <b className="font-titulos text-[56px] font-extrabold leading-[.9] tracking-tight text-relieve-brillo tabular-nums">
-            {p.hotspots === null || p.hotspots === undefined ? "—" : num(p.hotspots)}
-          </b>
-          <span className="text-sm leading-snug text-white/75">
-            {p.hotspots === 1 ? "foco de calor" : "focos de calor"}
-            <br />
-            en los últimos días
-          </span>
-        </div>
-        <dl className="m-0 flex flex-col">
-          <div className="border-t border-white/10 py-3">
-            <dt className="mb-1 text-[11.5px] uppercase tracking-wider text-white/50">Intensidad total</dt>
-            <dd className="m-0 flex flex-col gap-1">
-              <b className="text-base font-semibold">{p.frp_mw === null || p.frp_mw === undefined ? "—" : `${num(p.frp_mw)} MW`}</b>
-              <small className="text-[12.5px] leading-snug text-white/55">
-                Cuánta energía liberó el fuego. Más alto, fuego más fuerte.
-              </small>
-            </dd>
-          </div>
-          <div className="border-t border-white/10 py-3">
-            <dt className="mb-1 text-[11.5px] uppercase tracking-wider text-white/50">Comparado con lo normal</dt>
-            {ultimo ? (
-              <dd className="m-0 flex flex-col gap-1">
-                <b className="text-base font-semibold">
-                  {mes.charAt(0).toUpperCase() + mes.slice(1)} {ultimo.year}: {nivelPercentil(ultimo.percentile ?? 50)}
-                </b>
-                <span className="medidor-relieve" aria-hidden="true">
-                  <i style={{ left: `${Math.min(97, Math.max(3, ultimo.percentile ?? 50))}%` }} />
-                </span>
-                <span className="flex justify-between text-[11px] text-white/50" aria-hidden="true">
-                  <span>Menos</span>
-                  <span>Normal</span>
-                  <span>Más</span>
-                </span>
-              </dd>
-            ) : (
-              <dd className="m-0 flex flex-col gap-1">
-                <b className="text-base font-semibold">Sin historial para esta región</b>
-              </dd>
+      {/* El desplazamiento va adentro: así la barra no rompe el redondeo del panel. */}
+      <div className="scroll-relieve flex min-h-0 flex-1 flex-col overflow-y-auto">
+        <header className="sticky top-0 z-10 flex items-start justify-between gap-3 bg-relieve-panel/95 px-5 pb-2.5 pt-4">
+          <div className="flex min-w-0 items-start gap-2.5">
+            {foco && (
+              <button
+                type="button"
+                onClick={() => cambiar({ focoVivo: null })}
+                aria-label={`Volver a ${p.name}`}
+                className="mt-1 grid size-[34px] shrink-0 place-items-center rounded-full bg-white/10 hover:bg-white/15"
+              >
+                <ArrowLeft aria-hidden="true" className="size-4" />
+              </button>
             )}
+            <div className="min-w-0">
+              <span className="block text-xs text-white/55">{foco ? `Foco en ${p.name}` : p.country}</span>
+              <h2 className="mt-0.5 text-[26px] font-bold leading-tight tracking-tight">{foco ? "Foco de calor" : p.name}</h2>
+            </div>
           </div>
-        </dl>
-        <div className="flex items-end gap-2">
-          <Charmy size={64} mood="explica" outfit="cientifica" decorative className="shrink-0" />
-          <p className="mb-3.5 rounded-[14px] rounded-bl-[4px] bg-white/10 px-3 py-2.5 text-[13.5px] leading-snug">{dice}</p>
-        </div>
-        {ultimo && <CalendarioPlegado region={region.id} />}
-        {/* En celular ya se ve el aviso fijo de abajo; acá se repetía. */}
-        <p className="hidden rounded-xl bg-white/5 px-3 py-2.5 text-xs leading-snug text-white/75 md:block">
-          Charmy no reemplaza a los servicios de emergencia. Si ves fuego, llamá al{" "}
-          <strong className="text-relieve-brillo">100</strong> en Argentina o al{" "}
-          <strong className="text-relieve-brillo">132</strong> en Chile.
-        </p>
+          <button
+            type="button"
+            onClick={() => alternarRegion(null)}
+            aria-label="Cerrar la ficha"
+            className="grid size-[34px] shrink-0 place-items-center rounded-full bg-white/10 hover:bg-white/15"
+          >
+            <X aria-hidden="true" className="size-4" />
+          </button>
+        </header>
+        {/* En celular el aviso de emergencias queda encima del final de la hoja: este espacio deja leer lo último. */}
+        {foco ? (
+          <div className="px-5 pb-20 md:pb-5">
+            <DetalleFoco foco={foco} avisoEnCelular={false} />
+          </div>
+        ) : (
+          <div className="flex flex-col gap-4 px-5 pb-20 pt-1 md:pb-5">
+            <span className={`nivel-relieve ${TONOS[nivel.tono]}`}>{nivel.texto}</span>
+            <div className="flex items-center gap-3.5">
+              <b className="font-titulos text-[56px] font-extrabold leading-[.9] tracking-tight text-relieve-brillo tabular-nums">
+                {p.hotspots === null || p.hotspots === undefined ? "—" : num(p.hotspots)}
+              </b>
+              <span className="text-sm leading-snug text-white/75">
+                {p.hotspots === 1 ? "foco de calor" : "focos de calor"}
+                <br />
+                en los últimos días
+              </span>
+            </div>
+            <dl className="m-0 flex flex-col">
+              <div className="border-t border-white/10 py-3">
+                <dt className="mb-1 text-[11.5px] uppercase tracking-wider text-white/50">Intensidad total</dt>
+                <dd className="m-0 flex flex-col gap-1">
+                  <b className="text-base font-semibold">{p.frp_mw === null || p.frp_mw === undefined ? "—" : `${num(p.frp_mw)} MW`}</b>
+                  <small className="text-[12.5px] leading-snug text-white/55">
+                    Cuánta energía liberó el fuego. Más alto, fuego más fuerte.
+                  </small>
+                </dd>
+              </div>
+              <div className="border-t border-white/10 py-3">
+                <dt className="mb-1 text-[11.5px] uppercase tracking-wider text-white/50">Comparado con lo normal</dt>
+                {ultimo ? (
+                  <dd className="m-0 flex flex-col gap-1">
+                    <b className="text-base font-semibold">
+                      {mes.charAt(0).toUpperCase() + mes.slice(1)} {ultimo.year}: {nivelPercentil(ultimo.percentile ?? 50)}
+                    </b>
+                    <span className="medidor-relieve" aria-hidden="true">
+                      <i style={{ left: `${Math.min(97, Math.max(3, ultimo.percentile ?? 50))}%` }} />
+                    </span>
+                    <span className="flex justify-between text-[11px] text-white/50" aria-hidden="true">
+                      <span>Menos</span>
+                      <span>Normal</span>
+                      <span>Más</span>
+                    </span>
+                  </dd>
+                ) : (
+                  <dd className="m-0 flex flex-col gap-1">
+                    <b className="text-base font-semibold">Sin historial para esta región</b>
+                  </dd>
+                )}
+              </div>
+            </dl>
+            <div className="flex items-end gap-2">
+              <Charmy size={64} mood="explica" outfit="cientifica" decorative className="shrink-0" />
+              <p className="mb-3.5 rounded-[14px] rounded-bl-[4px] bg-white/10 px-3 py-2.5 text-[13.5px] leading-snug">{dice}</p>
+            </div>
+            {ultimo && <CalendarioPlegado region={region.id} />}
+            {/* En celular ya se ve el aviso fijo de abajo; acá se repetía. */}
+            <p className="hidden rounded-xl bg-white/5 px-3 py-2.5 text-xs leading-snug text-white/75 md:block">
+              Charmy no reemplaza a los servicios de emergencia. Si ves fuego, llamá al{" "}
+              <strong className="text-relieve-brillo">100</strong> en Argentina o al{" "}
+              <strong className="text-relieve-brillo">132</strong> en Chile.
+            </p>
+          </div>
+        )}
       </div>
     </section>
   );

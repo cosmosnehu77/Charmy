@@ -3,6 +3,7 @@
  * el nivel de la ficha y el tamaño de los focos en vivo. Sin React ni MapLibre, para poder probarla.
  */
 import type { components } from "@charmy/contracts-api";
+import type { StyleSpecification } from "maplibre-gl";
 import { rampaAnomalia, rampaConteo, relieve } from "@charmy/ui";
 
 export type Resumen = components["schemas"]["RegionsSummary"];
@@ -191,4 +192,28 @@ export function ubicarGlobo(
   }
   const x = rect.left + rect.width / 2 - ancho / 2;
   return ajustar(x, rect.bottom + sep + alto <= H ? rect.bottom + sep : rect.top - alto - sep, false);
+}
+
+/**
+ * Zoom desde el que aparece cada nombre del mapa base (capas de OpenFreeMap). Con el país entero a la vista solo
+ * quedan los países; al acercar aparecen las ciudades grandes, las provincias y después el resto (#236).
+ */
+const ZOOM_NOMBRES: Record<string, number> = {
+  place_city_large: 4.5,
+  place_state: 5.5,
+  place_city: 6.5,
+  place_town: 8,
+  place_village: 10,
+  place_suburb: 11,
+  place_other: 11,
+};
+
+export function nombresPorZoom(estilo: StyleSpecification): StyleSpecification {
+  return {
+    ...estilo,
+    layers: estilo.layers.map((c) => {
+      const min = ZOOM_NOMBRES[c.id];
+      return min === undefined ? c : { ...c, minzoom: Math.max(c.minzoom ?? 0, min) };
+    }),
+  };
 }

@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { render, screen, within } from "@testing-library/react";
+import { act, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import App from "@/App";
 import { useApp } from "@/estado/app";
@@ -170,6 +170,29 @@ describe("vista Relieve (F4-R1)", () => {
     await u.click(screen.getByRole("button", { name: /Charmy: ¿necesitás ayuda\?/ }));
     const recorrido = await screen.findByRole("dialog", { name: "¡Hola! Soy Charmy" });
     expect(recorrido.parentElement).toBe(document.body);
+  });
+
+  it("con una provincia abierta, el foco se ve en la misma ficha y la flecha vuelve a la provincia (#236)", async () => {
+    montar();
+    const u = userEvent.setup();
+    const ranking = await screen.findByRole("region", { name: "Ranking" });
+    await u.click(await within(ranking).findByRole("button", { name: /Neuquén/ }));
+    // El foco de la muestra cae en Neuquén; en el mapa se elige tocando su aguja.
+    await screen.findByText("Entre las de más fuego");
+    act(() => useRelieve.getState().cambiar({ focoVivo: 0 }));
+    const ficha = screen.getByRole("region", { name: "Ficha de Neuquén" });
+    expect(screen.queryByRole("region", { name: "Ficha del foco" })).not.toBeInTheDocument();
+    expect(within(ficha).getByText("42,5")).toBeInTheDocument();
+    expect(within(ficha).queryByText("Entre las de más fuego")).not.toBeInTheDocument();
+    await u.click(within(ficha).getByRole("button", { name: "Volver a Neuquén" }));
+    expect(useRelieve.getState().focoVivo).toBeNull();
+    expect(within(ficha).getByText("Entre las de más fuego")).toBeInTheDocument();
+  });
+
+  it("cerrar la provincia también cierra el foco elegido (#236)", () => {
+    useRelieve.setState({ seleccion: "AR-Q", focoVivo: 0 });
+    useRelieve.getState().alternarRegion(null);
+    expect(useRelieve.getState()).toMatchObject({ seleccion: null, focoVivo: null });
   });
 
   it("la lupa busca provincias sin importar los acentos", async () => {

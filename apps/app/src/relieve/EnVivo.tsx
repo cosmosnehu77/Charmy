@@ -109,30 +109,45 @@ export function PanelEnVivo({ focos, disponible, mensaje, regiones }: Props) {
   );
 }
 
-/** Ficha de un foco en vivo. */
+/** Ficha de un foco en vivo, sola: en En vivo o cuando no hay una provincia abierta. */
 export function FichaFoco({ foco, regiones }: { foco: FocoReciente; regiones: RegionResumen[] }) {
   const cambiar = useRelieve((s) => s.cambiar);
   const region = regiones.find((r) => r.id === foco.region);
-  const ultimo = new Date();
   return (
     <section
       aria-label="Ficha del foco"
-      className="ficha-relieve pointer-events-auto absolute inset-x-3 bottom-3 z-30 max-h-[78%] overflow-y-auto rounded-[18px] px-[18px] py-4 text-white md:inset-x-auto md:bottom-auto md:right-3 md:top-[76px] md:max-h-[calc(100%-92px)] md:w-[300px]"
+      className="ficha-relieve pointer-events-auto absolute inset-x-3 bottom-3 z-30 flex max-h-[78%] flex-col overflow-hidden rounded-[20px] text-white md:inset-x-auto md:bottom-auto md:right-3 md:top-[76px] md:max-h-[calc(100%-92px)] md:w-[300px]"
     >
-      <header className="flex items-start justify-between gap-2.5">
-        <div>
-          <span className="text-xs text-white/55">{region?.properties.country ?? "Fuera de las regiones"}</span>
-          <h3 className="mt-0.5 text-xl font-bold leading-tight">{region?.properties.name ?? "Sin región asignada"}</h3>
-        </div>
-        <button
-          type="button"
-          onClick={() => cambiar({ focoVivo: null })}
-          aria-label="Cerrar la ficha del foco"
-          className="grid size-[30px] shrink-0 place-items-center rounded-full bg-white/10 hover:bg-white/15"
-        >
-          <X aria-hidden="true" className="size-4" />
-        </button>
-      </header>
+      {/* El desplazamiento va adentro: así la barra no rompe el redondeo del panel (#236). */}
+      <div className="scroll-relieve overflow-y-auto px-[18px] py-4">
+        <header className="flex items-start justify-between gap-2.5">
+          <div>
+            <span className="text-xs text-white/55">{region?.properties.country ?? "Fuera de las regiones"}</span>
+            <h3 className="mt-0.5 text-xl font-bold leading-tight">{region?.properties.name ?? "Sin región asignada"}</h3>
+          </div>
+          <button
+            type="button"
+            onClick={() => cambiar({ focoVivo: null })}
+            aria-label="Cerrar la ficha del foco"
+            className="grid size-[30px] shrink-0 place-items-center rounded-full bg-white/10 hover:bg-white/15"
+          >
+            <X aria-hidden="true" className="size-4" />
+          </button>
+        </header>
+        <DetalleFoco foco={foco} />
+      </div>
+    </section>
+  );
+}
+
+/**
+ * Lo que se sabe de un foco. Va en su propia ficha o dentro de la ficha de su provincia; ahí, en celular, el aviso
+ * de emergencias ya está fijo abajo y no se repite.
+ */
+export function DetalleFoco({ foco, avisoEnCelular = true }: { foco: FocoReciente; avisoEnCelular?: boolean }) {
+  const ultimo = new Date();
+  return (
+    <>
       <div className="mb-1 mt-3 flex items-baseline gap-2">
         <b className="font-titulos text-[40px] font-extrabold leading-none tabular-nums" style={{ color: colorFoco(foco.frp) }}>
           {num(foco.frp, 1)}
@@ -184,11 +199,13 @@ export function FichaFoco({ foco, regiones }: { foco: FocoReciente; regiones: Re
         La intensidad (FRP) es la energía que irradia el fuego. Un foco es calor detectado desde el espacio: puede ser un
         incendio, una quema o una fuente fija.
       </p>
-      <p className="mt-2.5 rounded-xl bg-white/5 px-3 py-2.5 text-xs leading-snug text-white/75">
+      <p
+        className={`mt-2.5 rounded-xl bg-white/5 px-3 py-2.5 text-xs leading-snug text-white/75 ${avisoEnCelular ? "" : "hidden md:block"}`}
+      >
         Charmy no reemplaza a los servicios de emergencia. Si ves fuego, llamá al{" "}
         <strong className="text-relieve-brillo">100</strong> en Argentina o al{" "}
         <strong className="text-relieve-brillo">132</strong> en Chile.
       </p>
-    </section>
+    </>
   );
 }

@@ -177,11 +177,12 @@ export function Relieve() {
 
           {region && (
             <>
-              <FichaRegion region={region} regiones={regiones} />
+              <FichaRegion region={region} regiones={regiones} foco={focoElegido} />
               <LineaTiempo region={region} dias={dias} />
             </>
           )}
-          {focoElegido && <FichaFoco foco={focoElegido} regiones={regiones} />}
+          {/* Con una provincia abierta, el foco va dentro de su ficha: una sola ficha a la vez (#236). */}
+          {focoElegido && !region && <FichaFoco foco={focoElegido} regiones={regiones} />}
         </>
       )}
 

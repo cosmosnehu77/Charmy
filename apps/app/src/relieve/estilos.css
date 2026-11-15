@@ -20,6 +20,12 @@
 .relieve .maplibregl-ctrl-attrib a {
   color: inherit;
 }
+/* En celular la atribución sube por encima del aviso de emergencias, que si no la deja ver por detrás (#236). */
+@media (max-width: 767px) {
+  .relieve .maplibregl-ctrl-bottom-right {
+    bottom: 64px;
+  }
+}
 
 /* Vidrio: todos los paneles flotantes. */
 .vidrio-relieve {
@@ -38,6 +44,22 @@
   -webkit-backdrop-filter: blur(14px);
   backdrop-filter: blur(14px);
   animation: relieve-entra 0.35s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+/* Barra de desplazamiento de las fichas: fina y naranja, dentro del panel redondeado (#236). */
+.scroll-relieve {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-oscuro-acento) transparent;
+}
+.scroll-relieve::-webkit-scrollbar {
+  width: 6px;
+}
+.scroll-relieve::-webkit-scrollbar-track {
+  margin: 16px 0;
+  background: transparent;
+}
+.scroll-relieve::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background: var(--color-oscuro-acento);
 }
 @keyframes relieve-entra {
   from {

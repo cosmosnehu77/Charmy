@@ -21,7 +21,8 @@ concurrency:
 jobs:
   corrida:
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    # /live y el viento pueden tardar hasta 120 s cada uno con la API despertándose (D-37).
+    timeout-minutes: 10
     env:
       HAY_SECRETOS: >-
         ${{ secrets.TELEGRAM_BOT_TOKEN != '' && secrets.TELEGRAM_CHAT_ID != '' && secrets.CHARMY_SERVICE_TOKEN != '' }}

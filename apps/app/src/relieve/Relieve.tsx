@@ -1,9 +1,10 @@
 import { rampaAnomalia, rampaConteo } from "@charmy/ui";
 import { ChevronRight, Compass, Minus, Plus, RotateCw } from "lucide-react";
-import { lazy, Suspense, useEffect, useState } from "react";
+import { lazy, Suspense, useEffect, useMemo, useState } from "react";
 import { useApp } from "@/estado/app";
 import { useConsulta } from "@/estado/consulta";
 import { URL_JUEGO, URL_LANDING } from "@/lib/enlaces";
+import { useVivo } from "@/vivo/estado";
 import { CharmyGuia } from "./CharmyGuia";
 import { controlMapa } from "./controlMapa";
 import { useDatosRelieve } from "./datos";
@@ -42,7 +43,11 @@ export function Relieve() {
   const ranking = rankingRegiones(regiones, indicador, 5);
   const masFuego = rankingRegiones(regiones, "focos", 1)[0]?.id ?? null;
   const live = resumen.data?.live;
-  const focoElegido = estado.focoVivo !== null ? focos.find((f) => f.k === estado.focoVivo) : undefined;
+  // En En vivo, solo los focos de los satélites elegidos: en el panel, en el mapa y en la ficha (#271).
+  const satelites = useVivo((s) => s.satelites);
+  const focosVivo = useMemo(() => focos.filter((f) => satelites.includes(f.satelite)), [focos, satelites]);
+  const focoElegido =
+    estado.focoVivo !== null ? (enVivo ? focosVivo : focos).find((f) => f.k === estado.focoVivo) : undefined;
   const regionSobre = regiones.find((r) => r.id === sobre.id);
   const focoSobre = sobre.foco !== null ? focos.find((f) => f.k === sobre.foco) : undefined;
   const [sobreRanking, setSobreRanking] = useState(false);
@@ -67,7 +72,7 @@ export function Relieve() {
     <div className="relieve relative h-full min-h-[560px] overflow-hidden bg-relieve-fondo text-white">
       <div aria-hidden="true" className="relieve-brillo-fondo pointer-events-none absolute inset-0" />
       <Suspense fallback={<p className="absolute inset-0 grid place-items-center text-sm text-white/60">Cargando el mapa…</p>}>
-        <MapaRelieve regiones={regiones} dias={dias} focos={focos} onHover={setSobre} />
+        <MapaRelieve regiones={regiones} dias={dias} focos={enVivo ? focosVivo : focos} onHover={setSobre} />
       </Suspense>
 
       {(regionSobre || focoSobre) && (
@@ -99,7 +104,7 @@ export function Relieve() {
       {enVivo ? (
         <>
           <PanelEnVivo
-            focos={focos}
+            focos={focosVivo}
             regiones={regiones}
             disponible={!vivo.isError && live?.available !== false}
             mensaje={live?.message}

@@ -6,7 +6,7 @@
 > **Regla de oro.** Todo requisito tiene un ID. Toda tarea de `PLAN.md` apunta a uno o más IDs.
 > Si se agrega, cambia o quita un requisito acá, `PLAN.md` se actualiza en el mismo PR (ver [Cómo cambiar este documento](#8-cómo-cambiar-este-documento)).
 
-**Versión:** 1.7 · **Última actualización:** 15 de noviembre de 2026
+**Versión:** 1.6 · **Última actualización:** 15 de noviembre de 2026
 
 ---
 
@@ -92,9 +92,9 @@ Una vizcacha de fuego, Charmy, acompaña al usuario en toda la experiencia.
 
 | ID | Requisito | Prioridad |
 |---|---|---|
-| RF-MOD-01 | ~~Modo novato~~. Retirado en la versión 1.7 (F4-D7): la app tiene un solo modo, el experto. La ayuda de Charmy sigue en su recorrido (RF-CHA-05). | Fuera |
+| RF-MOD-01 | Modo novato: lenguaje simple, sin siglas, una conclusión clara por área ("este mes está por encima de lo normal") y ayuda de Charmy. | Imprescindible |
 | RF-MOD-02 | Modo experto: acceso a todos los datos, filtros, métricas de validación y descargas, con los atributos originales de cada foco. | Imprescindible |
-| RF-MOD-03 | ~~Cambiar de modo sin perder el área ni las fechas~~. Retirado en la versión 1.7 (F4-D7): ya no hay modos entre los que cambiar. | Fuera |
+| RF-MOD-03 | Cambiar de modo en cualquier momento sin perder el área ni las fechas elegidas. | Imprescindible |
 
 ### 5.6 Charmy, la mascota (CHA)
 
@@ -213,7 +213,7 @@ El MVP está alcanzado cuando, en la versión publicada:
 
 1. Una persona elige un área y un período, ve el calendario armonizado con sus anomalías y descarga el CSV (RF-ARM-01, RF-CAL-01 a 03, RF-MAP-01/02/04, RF-EXP-01).
 2. Puede ver por qué la armonización es confiable (RF-ARM-04).
-3. Puede usar la app en modo experto, con la ayuda de Charmy, en 2D o en 3D (RF-MOD-02, RF-MAP-06, RF-CHA-05).
+3. Puede usar la app en modo novato con Charmy o en modo experto, en 2D o en 3D (RF-MOD, RF-MAP-06, RF-CHA-05).
 4. La landing presenta el proyecto y al equipo (RF-LAN).
 5. El repositorio es público, sin secretos y con su documentación (RNF-01, RNF-06, RNF-07).
 
@@ -239,4 +239,3 @@ Un requisito sin tarea en `PLAN.md` no se está haciendo. Una tarea sin requisit
 | 2026-11-14 | Versión 1.4. Se agrega RNF-15: toda funcionalidad se entrega con pruebas automáticas que no dependen de la red. | `@cosmosnehu77` |
 | 2026-11-14 | Versión 1.5. El juego pasa a llamarse Charmy Brigada (D-35); los IDs `RF-KID-*` no cambian. Se agregan RF-KID-06 a RF-KID-12 (el dato real en la mecánica, propagación con viento, agua y herramientas, desafío del día, modo explorador y sonido) y RF-KID-04 se precisa. Todos son deseables: no cambian el criterio de MVP. | `@dimidio6` |
 | 2026-11-15 | Versión 1.6. El juego pasa a la maqueta 3D de Sudamérica en PixiJS con focos simulados (D-36): RF-KID-05 entra como deseable; RF-KID-02 y RF-KID-10 quedan fuera; RF-KID-03, RF-KID-07 y RF-KID-08 se ajustan a focos y viento simulados. | `@cosmosnehu77` |
-| 2026-11-15 | Versión 1.7. Se retira el modo novato (F4-D7, #314): RF-MOD-01 y RF-MOD-03 quedan fuera y la app tiene un solo modo, el experto (RF-MOD-02). | `@daniace` |

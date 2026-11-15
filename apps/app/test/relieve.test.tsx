@@ -182,8 +182,6 @@ describe("vista Relieve (F4-R1)", () => {
       "Experto",
       "En vivo",
     ]);
-    // Experto va sin ícono (F4-D8).
-    expect(within(pestanas).getByRole("tab", { name: "Experto" }).querySelector("svg")).toBeNull();
     const ranking = await screen.findByRole("region", { name: "Ranking" });
     expect(await within(ranking).findByText("Neuquén")).toBeInTheDocument();
     expect(screen.getByText(/no reemplaza a los servicios de emergencia/)).toBeInTheDocument();
@@ -330,14 +328,40 @@ describe("vista Relieve (F4-R1)", () => {
     vi.restoreAllMocks();
   });
 
-  it("en la píldora, la pestaña elegida va en naranja y el hover pasa las letras a naranja (#281)", async () => {
+  it("en la píldora cada pestaña lleva su ícono y solo la elegida abre su nombre, en un círculo naranja (#406)", async () => {
     montar();
+    const pestanas = within(screen.getByRole("tablist", { name: "Indicador" })).getAllByRole("tab");
+    for (const p of pestanas) {
+      expect(p.querySelector("svg")).not.toBeNull();
+      expect(p).toHaveAttribute("title", p.textContent);
+    }
     const elegida = screen.getByRole("tab", { selected: true });
-    expect(elegida).toHaveClass("bg-charmy-llama");
-    expect(elegida).not.toHaveClass("bg-white");
+    expect(elegida.querySelector(".pildora-icono")).toHaveClass("bg-charmy-llama");
+    expect(elegida.querySelector(".pildora-etiqueta")).toHaveAttribute("data-abierta", "true");
     const otra = screen.getByRole("tab", { name: "Experto" });
-    expect(otra).toHaveClass("hover:text-charmy-llama");
-    expect(otra).not.toHaveClass("hover:text-white");
+    expect(otra.querySelector(".pildora-icono")).not.toHaveClass("bg-charmy-llama");
+    expect(otra.querySelector(".pildora-etiqueta")).toHaveAttribute("data-abierta", "false");
+    await userEvent.setup().click(otra);
+    expect(otra.querySelector(".pildora-etiqueta")).toHaveAttribute("data-abierta", "true");
+  });
+
+  it("en la píldora, Charmy, las pestañas y la lupa van en piezas de vidrio separadas, y el título sale del logo (#406)", () => {
+    montar();
+    const charmy = screen.getByRole("link", { name: "Charmy: ir a la página de inicio" });
+    expect(charmy).toHaveClass("vidrio-relieve");
+    expect(within(charmy).getByText("Charmy").closest(".pildora-titulo")).not.toBeNull();
+    expect(screen.getByRole("tablist", { name: "Indicador" })).toHaveClass("vidrio-relieve");
+  });
+
+  it("en la píldora, las flechas pasan de pestaña y dan la vuelta (#406)", async () => {
+    montar();
+    const u = userEvent.setup();
+    screen.getByRole("tab", { name: "Focos" }).focus();
+    await u.keyboard("{ArrowRight}");
+    expect(screen.getByRole("tab", { name: "Intensidad" })).toHaveAttribute("aria-selected", "true");
+    expect(screen.getByRole("tab", { name: "Intensidad" })).toHaveFocus();
+    await u.keyboard("{ArrowLeft}{ArrowLeft}");
+    expect(screen.getByRole("tab", { name: "En vivo" })).toHaveAttribute("aria-selected", "true");
   });
 
   it("con una provincia abierta, el foco se ve en la misma ficha y la flecha vuelve a la provincia (#236)", async () => {

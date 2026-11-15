@@ -107,6 +107,189 @@
   }
 }
 
+/* Píldora del mapa (#406, boceto 6 de los bocetos de la navbar): Charmy, pestañas y lupa en piezas de vidrio.
+   Las pestañas inactivas muestran solo el ícono; la elegida abre su nombre junto a un círculo naranja.
+   «Charmy» se esconde debajo del logo y sale con el mouse sobre la píldora o con el foco del teclado dentro. */
+.pildora-relieve {
+  --pildora-b: 42px;
+  --pildora-icono: 18px;
+  gap: 8px;
+  max-width: calc(100% - 16px);
+}
+.pildora-charmy {
+  display: flex;
+  flex: none;
+  align-items: center;
+  height: calc(var(--pildora-b) + 12px);
+  padding: 0 calc((var(--pildora-b) + 12px - 36px) / 2);
+  border-radius: 999px;
+  color: white;
+  transition: padding 0.32s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+/* El dibujo de la cabeza ocupa del 10 % al 100 % del alto: se sube 2 px para que quede centrado en su círculo. */
+.pildora-charmy > .charmy-raiz {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  translate: 0 -2px;
+}
+.pildora-titulo {
+  display: grid;
+  grid-template-columns: 0fr;
+  opacity: 0;
+  transform: translateX(-28px);
+  transition:
+    grid-template-columns 0.32s cubic-bezier(0.2, 0.8, 0.2, 1),
+    padding 0.32s cubic-bezier(0.2, 0.8, 0.2, 1),
+    opacity 0.25s,
+    transform 0.32s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.pildora-titulo > span {
+  overflow: hidden;
+  white-space: nowrap;
+  min-width: 0;
+}
+.pildora-relieve:is(:hover, :focus-within) .pildora-charmy {
+  padding-right: 14px;
+}
+.pildora-relieve:is(:hover, :focus-within) .pildora-titulo {
+  grid-template-columns: 1fr;
+  padding-left: 8px;
+  opacity: 1;
+  transform: none;
+}
+.pildora-pestanas {
+  display: flex;
+  min-width: 0;
+  gap: 2px;
+  padding: 6px;
+  overflow-x: auto;
+  border-radius: 999px;
+}
+.pildora-pestana {
+  position: relative;
+  display: flex;
+  flex: none;
+  align-items: center;
+  height: var(--pildora-b);
+  border-radius: 999px;
+  font-size: 14.5px;
+  transition:
+    background 0.3s,
+    color 0.3s,
+    padding 0.3s;
+}
+.pildora-pestana[aria-selected="true"] {
+  padding-right: 14px;
+  background: var(--relieve-apagada);
+}
+.pildora-icono {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: var(--pildora-b);
+  height: var(--pildora-b);
+  border-radius: 999px;
+  transition:
+    background 0.3s,
+    color 0.3s;
+}
+.pildora-icono svg {
+  width: var(--pildora-icono);
+  height: var(--pildora-icono);
+}
+.pildora-pestana[aria-selected="true"] .pildora-icono svg {
+  fill: currentColor;
+  fill-opacity: 0.22;
+}
+.pildora-etiqueta {
+  display: grid;
+  grid-template-columns: 0fr;
+  opacity: 0;
+  transition:
+    grid-template-columns 0.32s cubic-bezier(0.2, 0.8, 0.2, 1),
+    padding 0.32s cubic-bezier(0.2, 0.8, 0.2, 1),
+    opacity 0.25s;
+}
+.pildora-etiqueta > span {
+  overflow: hidden;
+  white-space: nowrap;
+  min-width: 0;
+}
+.pildora-etiqueta[data-abierta="true"] {
+  grid-template-columns: 1fr;
+  padding-left: 8px;
+  opacity: 1;
+}
+/* En vivo: el punto que late va sobre el ícono, con un aro del color del vidrio. */
+.pildora-pestana > .punto-vivo {
+  position: absolute;
+  top: 7px;
+  left: calc(var(--pildora-b) - 13px);
+  width: 8px;
+  height: 8px;
+  outline: 2px solid var(--relieve-vidrio);
+}
+.pildora-pestana[aria-selected="true"] > .punto-vivo {
+  outline-color: var(--charmy-llama);
+}
+.pildora-relieve .buscador-relieve {
+  height: calc(var(--pildora-b) + 12px);
+  padding: 6px;
+}
+.pildora-relieve .buscador-lupa {
+  width: var(--pildora-b);
+  height: var(--pildora-b);
+}
+/* Teléfono: las seis pestañas entran sin scroll con la elegida abierta; el título no sale (no hay hover). */
+@media (max-width: 480px) {
+  .pildora-relieve {
+    --pildora-b: 32px;
+    --pildora-icono: 16px;
+    gap: 2px;
+  }
+  .pildora-charmy {
+    width: calc(var(--pildora-b) + 4px);
+    height: calc(var(--pildora-b) + 4px);
+    padding: 0;
+    justify-content: center;
+  }
+  .pildora-relieve:is(:hover, :focus-within) .pildora-charmy {
+    padding-right: 0;
+  }
+  .pildora-charmy > .charmy-raiz {
+    translate: 0 -1px;
+  }
+  .pildora-charmy svg {
+    width: 28px;
+    height: 28px;
+  }
+  .pildora-titulo {
+    display: none;
+  }
+  .pildora-pestanas {
+    gap: 0;
+    padding: 3px;
+  }
+  .pildora-pestana {
+    font-size: 13px;
+  }
+  .pildora-pestana[aria-selected="true"] {
+    padding-right: 10px;
+  }
+  .pildora-etiqueta[data-abierta="true"] {
+    padding-left: 5px;
+  }
+  .pildora-relieve .buscador-relieve {
+    height: calc(var(--pildora-b) + 4px);
+    padding: 2px;
+  }
+  /* Tema e idioma bajan debajo de la píldora: arriba a la derecha la tapaban (pasaba también antes de #406). */
+  .relieve .nav-acc {
+    top: 56px;
+  }
+}
+
 /* Lupa: crece al tocarla, borde y halo naranja, sin el rectángulo del navegador. */
 .buscador-relieve {
   position: relative;
@@ -615,6 +798,11 @@
   }
   .buscador-relieve,
   .buscador-campo,
+  .pildora-charmy,
+  .pildora-titulo,
+  .pildora-pestana,
+  .pildora-icono,
+  .pildora-etiqueta,
   .guia-foco,
   .guia-grupo,
   .barra-dia {
@@ -914,4 +1102,10 @@ html[data-tema="claro"] .relieve [class*="bg-white/"] {
 }
 html[data-tema="claro"] .relieve [role="tab"][aria-selected="true"] {
   color: var(--mapa-noche-fondo);
+}
+
+/* Píldora en tema claro (#406): la cápsula de la pestaña elegida pasa a papel elevado, con tinta legible. */
+html[data-tema="claro"] .relieve .pildora-pestana[aria-selected="true"] {
+  background: var(--mapa-dia-elevado);
+  color: var(--mapa-dia-tinta);
 }

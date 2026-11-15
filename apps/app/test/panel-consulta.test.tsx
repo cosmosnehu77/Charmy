@@ -71,6 +71,8 @@ afterEach(() => {
 
 async function elegirPunto(lat: string, lon: string) {
   const u = userEvent.setup();
+  // El punto con radio es una de las formas del paso Dónde (F4-D8).
+  if (!screen.queryByLabelText("Latitud")) await u.click(screen.getByRole("button", { name: "Punto" }));
   await u.clear(screen.getByLabelText("Latitud"));
   await u.type(screen.getByLabelText("Latitud"), lat);
   await u.clear(screen.getByLabelText("Longitud"));

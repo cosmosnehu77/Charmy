@@ -15,7 +15,7 @@ interface Reporte {
   description?: string;
 }
 
-/** Reporte ciudadano sin cuenta (RF-ALE-01). No pide ni manda datos personales (RNF-05). */
+/** Reporte ciudadano sin cuenta (RF-ALE-01). No pide ni manda datos personales (RNF-05). Se abre con `reportando`. */
 export function FormReporte() {
   const id = useId();
   const { reportando, cambiar } = useVivo();
@@ -32,13 +32,8 @@ export function FormReporte() {
       }),
   });
 
-  if (!reportando) {
-    return (
-      <Button variant="outline" size="sm" className="self-start" onClick={() => cambiar({ reportando: true })}>
-        Reportar un foco
-      </Button>
-    );
-  }
+  // El botón que lo abre va en el encabezado del panel de Experto (F4-D8).
+  if (!reportando) return null;
 
   const enviar = (e: FormEvent) => {
     e.preventDefault();

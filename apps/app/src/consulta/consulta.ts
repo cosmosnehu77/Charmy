@@ -103,3 +103,18 @@ export function filtrarFocos(coleccion: ColeccionFocos, f: FiltrosLocales): Cole
     ),
   };
 }
+
+const SERIES: Record<Fuente, string> = { harmonized: "Armonizada", modis: "MODIS", viirs: "VIIRS" };
+const CONFIANZAS: Record<Confianza, string> = {
+  low: "cualquier confianza",
+  nominal: "confianza nominal o más",
+  high: "confianza alta",
+};
+
+/** Una línea con los filtros elegidos, para el paso Filtros plegado (F4-D8). Potencia y momento, solo si filtran. */
+export function resumenFiltros(f: { fuente: Fuente; confianzaMin: Confianza; frpMin: number; momento: Momento }): string {
+  const partes = [SERIES[f.fuente], CONFIANZAS[f.confianzaMin]];
+  if (f.frpMin > 0) partes.push(`${f.frpMin} MW o más`);
+  if (f.momento !== "todos") partes.push(f.momento === "D" ? "de día" : "de noche");
+  return partes.join(" · ");
+}

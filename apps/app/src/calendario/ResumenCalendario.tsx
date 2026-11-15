@@ -31,8 +31,8 @@ export function ResumenCalendario({ celdas }: { celdas: CeldaCalendario[] }) {
       <h3 id="titulo-estadisticas" className="sr-only">
         Estadísticas del calendario
       </h3>
-      {/* En escritorio el calendario va en su hoja ancha: los cuatro en una fila. */}
-      <Indicadores items={items} className="md:grid-cols-4" />
+      {/* Va al costado de la grilla en la hoja ancha (F4-D8): dos por fila. */}
+      <Indicadores items={items} />
       <Temporada temporada={r.temporada} mesMasActivo={r.mesMasActivo} />
     </section>
   );

@@ -65,6 +65,7 @@ describe("búsqueda por localidad (RF-MAP-03)", () => {
   it("busca en Georef y al elegir un resultado arma el área alrededor de la localidad", async () => {
     montar();
     const u = userEvent.setup();
+    await u.click(screen.getByRole("button", { name: "Localidad" }));
     await u.type(screen.getByLabelText("Buscar una localidad"), "esquel");
     await u.click(screen.getByRole("button", { name: "Buscar" }));
     const pedido = fetchSimulado.mock.calls.map(([x]) => new URL(String(x))).find((x) => x.pathname.includes("georef"));
@@ -81,10 +82,11 @@ describe("búsqueda por localidad (RF-MAP-03)", () => {
     georefFalla = true;
     montar();
     const u = userEvent.setup();
+    await u.click(screen.getByRole("button", { name: "Localidad" }));
     await u.type(screen.getByLabelText("Buscar una localidad"), "esquel");
     await u.click(screen.getByRole("button", { name: "Buscar" }));
     expect(await screen.findByText(/la búsqueda de localidades no está disponible/i)).toBeInTheDocument();
-    expect(screen.getByLabelText("Latitud")).toBeInTheDocument();
+    expect(screen.getByRole("group", { name: "Cómo marcar el área" })).toBeInTheDocument();
     expect(await screen.findByTestId("mapa")).toBeInTheDocument();
   });
 });

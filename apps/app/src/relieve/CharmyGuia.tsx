@@ -1,6 +1,8 @@
 import { Charmy, type Mood } from "@charmy/charmy";
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { useRelieve } from "./estado";
+import { ubicarGlobo } from "./logica";
 
 /**
  * Charmy guía (RF-CHA-05): espera abajo a la izquierda; al tocarlo recorre la pantalla con un foco que va de un
@@ -132,31 +134,12 @@ export function CharmyGuia({ regionMasFuego }: { regionMasFuego: string | null }
     ir(0, 1);
   };
 
-  // Charmy y su globo se ubican al costado del elemento con más lugar.
+  // Charmy y su globo se ubican al costado del elemento, o debajo si es uno de arriba de la pantalla.
   useLayoutEffect(() => {
     if (!abierto) return;
     const W = window.innerWidth;
     const H = window.innerHeight;
-    const gw = Math.min(430, W - 24);
-    const gh = globo.current?.offsetHeight ?? 190;
-    let x: number;
-    let y: number;
-    let izquierda = false;
-    if (!rect) {
-      x = (W - gw) / 2;
-      y = (H - gh) / 2;
-    } else if (rect.right + 16 + gw <= W) {
-      x = rect.right + 16;
-      y = rect.top + rect.height / 2 - gh / 2;
-    } else if (rect.left - 16 - gw >= 0) {
-      x = rect.left - 16 - gw;
-      y = rect.top + rect.height / 2 - gh / 2;
-      izquierda = true;
-    } else {
-      x = rect.left + rect.width / 2 - gw / 2;
-      y = rect.bottom + 16 + gh <= H ? rect.bottom + 16 : rect.top - gh - 16;
-    }
-    setPosicion({ x: Math.min(Math.max(12, x), W - gw - 12), y: Math.min(Math.max(12, y), H - gh - 12), izquierda });
+    setPosicion(ubicarGlobo(rect, { W, H, ancho: Math.min(430, W - 24), alto: globo.current?.offsetHeight ?? 190 }));
     siguienteRef.current?.focus();
   }, [abierto, rect, paso]);
 
@@ -184,7 +167,8 @@ export function CharmyGuia({ regionMasFuego }: { regionMasFuego: string | null }
           <b>¿Necesitás ayuda?</b>Tocame y te muestro cómo usar el mapa.
         </span>
       </button>
-      {abierto && actual && (
+      {/* En `body`: dentro de la vista quedaba atrapado en la capa del bloque de abajo, debajo de la píldora y la ficha (#226). */}
+      {abierto && actual && createPortal(
         <div
           role="dialog"
           aria-modal="true"
@@ -242,7 +226,8 @@ export function CharmyGuia({ regionMasFuego }: { regionMasFuego: string | null }
               </div>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body,
       )}
     </>
   );

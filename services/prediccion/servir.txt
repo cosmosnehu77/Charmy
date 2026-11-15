@@ -1,5 +1,5 @@
 # Lo que instala la imagen del servidor (Dockerfile). Tiene que estar también en pyproject.toml, con la
-# misma versión mínima: lo comprueba tests/test_imagen.py.
+# misma versión mínima: lo comprueba tests/test_imagen_servidor.py.
 fastapi>=0.162.7
 lightgbm>=4.7.0
 numpy>=2.5.4

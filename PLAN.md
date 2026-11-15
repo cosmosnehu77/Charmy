@@ -10,7 +10,7 @@
 
 **Fase activa:** 4
 **Líder:** `@cosmosnehu77`. Hasta que vuelva (probablemente en la fase 4), **líder interino `@daniace`** (D-28).
-**Versión:** 2.1.2 · **Última actualización:** 14 de noviembre de 2026
+**Versión:** 2.2 · **Última actualización:** 14 de noviembre de 2026
 
 ## Objetivo del proyecto
 
@@ -214,6 +214,7 @@ si nada: avisen en el tablero y propongan el PR que actualiza este documento.
 | D-32 | **Guion y video al final.** El guion, la grabación y las slides (F0-F1 #11, F1-F1 #28, F3-F1 #55, F4-F1 #62) quedan sin dueño y se hacen al final, con la implementación ya refinada. La fase 3 se cierra sin el guion (su criterio pedía la demo según el guion) y se abre la 4. F3-B5 (#169) y F3-E3 (#170) siguen en la fase 4 con las condiciones de D-31. | El equipo prefiere trabajar la implementación y mostrarla pulida; un guion escrito antes se rehace. | RNF-07, RNF-11 |
 | D-33 | **Reloj propio para las tareas programadas.** El cron de GitHub nunca disparó en este repo (cero corridas `schedule` de `worker-vivo.yml` y `avisos.yml`, aun con el cron cambiado en #166). `.github/workflows/reloj.yml` corre casi 6 horas, dispara `avisos.yml` cada 5 minutos y `worker-vivo.yml` cada 15 con `workflow_dispatch`, y se relanza solo. Los cron de los dos flujos quedan como respaldo. | `workflow_dispatch` sí anda, no pide secretos nuevos (alcanza `GITHUB_TOKEN`) y es gratis en un repo público. Un Cron Trigger de Cloudflare necesitaría un token de GitHub fuera del repo. | RF-VIV-01, RF-ALE-02 |
 | D-34 | **Las tareas de `@dimidio6` pasan a `@daniace`.** `@dimidio6` se quedó sin acceso a internet. Sus tareas abiertas (F3-E3 #170, F4-E1 #60, F4-E2 #61, F5-E1 #68, F5-E2 #69) y sus carpetas (`apps/landing/`, `apps/juego/`, `packages/charmy/`, `services/alertas/`, `services/prediccion/`) pasan a `@daniace`. Cuando `@dimidio6` vuelva, el líder decide en el tablero qué se le devuelve. | Que el pulido de la fase 4 y la predicción no se detengan. | RNF-09 |
+| D-35 | **El juego pasa a llamarse Charmy Brigada y se amplía** (propuesta de `@dimidio6`, pendiente de aprobación del líder). El nombre cambia en todas las piezas; los IDs `RF-KID-*` y la carpeta `apps/juego/` no cambian. Excepción al congelamiento de la fase 3: entran RF-KID-04 y RF-KID-06 a RF-KID-12, como tareas de la fase 4 (F4-E4 a F4-E11, F4-B2, F4-C2 y F4-C3), si el líder devuelve `apps/juego/` a `@dimidio6` (D-34). Condiciones: nada de esto bloquea el envío (F4-X1) ni toca lo ya entregado fuera de `apps/juego/`; cada tarea deja el juego publicable; lo que no llegue pasa a la hoja de ruta, en este orden de caída: F4-E10, F4-E8, F4-E7, F4-E6. El juego pide los datos del día y el viento solo a la API de Charmy (`GET /game/day`), nunca a FIRMS ni a Meteomatics. | El juego hoy es de reflejos y usa poco el dato real: potencia, confianza, hora de pasada, fuentes fijas y viento ya están en los datos y en la API. Un nombre de brigada le habla a los chicos sin restringir la edad. | RF-KID-01, RF-KID-04, RF-KID-06 a RF-KID-12 |
 
 ---
 
@@ -384,7 +385,7 @@ A recorre el flujo en producción y publica lo que esté roto.
 | #50 | F3-D2 | Modo experto: selector de serie, panel de validación, atributos originales, descargas extra, reproducción temporal | `@daniace` | `apps/app/` | F2-D2 | RF-MOD-02, RF-ARM-04, RF-EXP-02, RF-MAP-07 | pendiente |
 | #51 | F3-D3 | Capa de focos recientes con veredicto y evidencia; formulario de reporte | `@daniace` | `apps/app/` | F2-D1 (usa el mock; datos reales con F3-C1 a C3) | RF-VIV-01, RF-VIV-02, RF-ALE-01, RF-ALE-06 | pendiente |
 | #52 | F3-D4 | Panel de contexto del foco: viento, riesgo de incendio e imagen satelital reciente como capa del mapa, con su fecha, nubosidad y atribución | `@daniace` | `apps/app/` | F2-D1 (usa el mock; datos reales con F3-B3 y F3-B4) | RF-CTX-01, RF-CTX-03, RNF-14 | pendiente |
-| #53 | F3-E1 | Charmy Kids: un nivel jugable con focos de un día real, puntaje, combo y cierre educativo | `@dimidio6` | `apps/juego/` | F1-E4 (usa F1-B2) | RF-KID-01, RF-KID-02, RF-KID-03 | pendiente |
+| #53 | F3-E1 | Charmy Brigada (antes Charmy Kids): un nivel jugable con focos de un día real, puntaje, combo y cierre educativo | `@dimidio6` | `apps/juego/` | F1-E4 (usa F1-B2) | RF-KID-01, RF-KID-02, RF-KID-03 | pendiente |
 | #54 | F3-E2 | Charmy completo: los seis estados y los cinco vestuarios | `@dimidio6` | `packages/charmy/` | F2-E1 | RF-CHA-02, RF-CHA-03 | pendiente |
 | #170 | F3-E3 | Predicción en `services/prediccion/`: TimesFM 2.5 contra LightGBM con la compuerta D-10 y los mismos años de prueba (D-31). Después de F3-A1 y F3-A2 | `@daniace` (D-34) | `services/prediccion/` | F3-B5 | RF-PRE-01, RF-PRE-02 | pendiente |
 | #55 | F3-F1 | Grabar la demo y armar las slides | sin asignar, al final (D-32) | `docs/entrega/` | — | RNF-07 | al final |
@@ -413,6 +414,18 @@ Si falta tiempo en el carril B, el orden es: fuentes fijas, tiempo, imagen y, po
 | #59 | F4-D1 | Pulido de la app: accesibilidad, ancho de teléfono y textos | `@daniace` | `apps/app/` | fase 3 | RNF-03, RNF-04 | pendiente |
 | #60 | F4-E1 | Pulido de la landing; enlaces entre las tres piezas | `@daniace` (D-34) | `apps/landing/` | fase 3 | RF-LAN-04, RNF-12 | pendiente |
 | #61 | F4-E2 | Pulido del juego | `@daniace` (D-34) | `apps/juego/` | F3-E1 | RNF-12 | pendiente |
+| #183 | F4-E3 | El juego pasa a llamarse Charmy Brigada en todas las piezas; requisitos y tareas de D-35 | `@dimidio6` | `apps/juego/`, y el nombre en `apps/app/`, `apps/landing/`, `packages/charmy/`, `docs/` | — | RF-KID-01, RNF-12 | en revisión |
+| — | F4-E4 | Base del juego: una escena por archivo, estado de la partida en un módulo puro, números aleatorios con semilla, grilla de celdas y contorno de la región de fondo | `@dimidio6` (D-35) | `apps/juego/` | F4-E3 | RF-KID-07 | pendiente |
+| — | F4-E5 | El dato real en la mecánica: potencia como vida del foco, confianza y verificación, fuentes fijas como trampa, pasadas del satélite | `@dimidio6` (D-35) | `apps/juego/` | F4-E4 (fuentes fijas reales con F4-B2) | RF-KID-06, RF-KID-07 | pendiente |
+| — | F4-E6 | Propagación de los focos que se escapan, sesgada por el viento; sin viento, sin sesgo | `@dimidio6` (D-35) | `apps/juego/` | F4-E4 (viento real con F4-C2) | RF-KID-08 | pendiente |
+| — | F4-E7 | Agua y lagos, herramientas por vestuario (bombero, piloto, científica, guía), estados de Charmy según la partida, curva de dificultad y castigo suave | `@dimidio6` (D-35) | `apps/juego/` | F4-E5 | RF-KID-09 | pendiente |
+| — | F4-E8 | Desafío del día: focos reales de ayer (hora de Argentina) con la fecha como semilla; respaldo en la muestra si la API falla o hay pocos focos | `@dimidio6` (D-35) | `apps/juego/` | F4-E5, F4-C2 (usa el mock) | RF-KID-10, RF-KID-02 | pendiente |
+| — | F4-E9 | Modo explorador: sin reloj, sin escapes, con teclado y anuncios para lector de pantalla | `@dimidio6` (D-35) | `apps/juego/` | F4-E5 | RF-KID-11, RNF-04 | pendiente |
+| — | F4-E10 | Tabla de puntajes del desafío del día, con "no disponible" si la API no responde | `@dimidio6` (D-35) | `apps/juego/` | F4-E8, F4-C3 (usa el mock) | RF-KID-04 | pendiente |
+| — | F4-E11 | Sonido generado con Web Audio, sin archivos ni dependencias nuevas, con silencio recordado | `@dimidio6` (D-35) | `apps/juego/` | F4-E4 | RF-KID-12 | pendiente |
+| — | F4-B2 | `fuente_fija` en cada foco de `dia-juego.json` (contrato y muestra) | `@leonelcnr` | `data/muestras/`, `packages/contracts/datos/` | — | RF-KID-06 | pendiente |
+| — | F4-C2 | `GET /game/day?date=`: focos de un día con la forma de `dia-juego.json`, `fuente_fija` por foco y el viento del día, con caché | `@BrunoAguinaga0` | `services/api/`, `packages/contracts/api/` | F4-B2 | RF-KID-10, RF-KID-08 | pendiente |
+| — | F4-C3 | `GET` y `POST /game/scores`: tabla del desafío del día, apodo filtrado sin datos personales, puntaje validado y límite de pedidos | `@BrunoAguinaga0` | `services/api/`, `packages/contracts/api/` | — | RF-KID-04 | pendiente |
 | #62 | F4-F1 | Video o slides finales | sin asignar, al final (D-32) | `docs/entrega/` | F3-F1 | RNF-07, RNF-11 | al final |
 | #63 | F4-X1 | Envío en la plataforma de Space Apps | carril F y `@cosmosnehu77` | — | F4-A1, F4-F1 | RNF-01 | pendiente |
 
@@ -506,8 +519,15 @@ Qué tareas cubren cada requisito. Si un requisito de `REQUISITOS.md` no aparece
 | RF-ALE-05 | sin tarea (deseable) | hoja de ruta |
 | RF-ALE-07 | cumplido por diseño (D-14) | — |
 | RF-PRE-01, 02 | F3-B2, F3-B5, F3-E3 | 3, con compuerta |
-| RF-KID-01, 02, 03 | F1-B2, F1-E4, F3-E1 | 3 |
-| RF-KID-04, 05 | sin tarea | hoja de ruta |
+| RF-KID-01, 02, 03 | F1-B2, F1-E4, F3-E1, F4-E3 | 3 |
+| RF-KID-04 | F4-C3, F4-E10 (D-35) | 4 |
+| RF-KID-05 | sin tarea | hoja de ruta |
+| RF-KID-06, 07 | F4-B2, F4-E4, F4-E5 (D-35) | 4 |
+| RF-KID-08 | F4-C2, F4-E6 (D-35) | 4 |
+| RF-KID-09 | F4-E7 (D-35) | 4 |
+| RF-KID-10 | F4-C2, F4-E8 (D-35) | 4 |
+| RF-KID-11 | F4-E9 (D-35) | 4 |
+| RF-KID-12 | F4-E11 (D-35) | 4 |
 | RF-CTX-01 | F0-B2, F3-B3, F3-D4 | 3 |
 | RF-CTX-02 | F3-A1 | 3 |
 | RF-CTX-03 | F0-B2, F3-B4, F3-D4 | 3 |
@@ -556,7 +576,6 @@ La fase 5 no cubre requisitos nuevos: refuerza RNF-02 y RNF-10 sobre lo ya entre
 | Cuentas de entidades, zona dibujada por ellas y bandeja web | RF-ALE-05 | Login por enlace mágico. |
 | Vista diaria del calendario | RF-CAL-04 | — |
 | Vista global con focos recientes de todo el mundo | RF-MAP-08 | El método no depende de la región. |
-| Tabla de puntajes compartida | RF-KID-04 | Usa la API. |
 | Juego en 3D voxel | RF-KID-05 | — |
 | Variables del tiempo en la predicción | RF-PRE-01 | La cuenta de Meteomatics da histórico desde 1900 y pedidos por área, pero con 1.000 pedidos por día y hasta el 22/11. Alternativa abierta: ERA5-Land mensual. |
 | Fuente del tiempo después del 22/11/2026 | RF-CTX-01 | La cuenta del evento vence. Hace falta otra cuenta o una fuente abierta; mientras tanto el panel muestra "no disponible" (RNF-14). |
@@ -591,6 +610,7 @@ La fase 5 no cubre requisitos nuevos: refuerza RNF-02 y RNF-10 sobre lo ya entre
 | 2026-11-14 | Versión 2.1. Se cierra la fase 3 y se abre la 4. El guion y el video quedan sin dueño y para el final (D-32). | encabezado, 3, 5, 10 | `@cosmosnehu77` |
 | 2026-11-14 | Versión 2.1.1. Reloj propio para worker-vivo y avisos (D-33). | encabezado, 3 | `@cosmosnehu77` |
 | 2026-11-14 | Versión 2.1.2. Las tareas y carpetas de `@dimidio6` pasan a `@daniace` (D-34). | encabezado, 3, 5 | `@cosmosnehu77` |
+| 2026-11-14 | Versión 2.2, con `REQUISITOS.md` 1.5. El juego pasa a llamarse Charmy Brigada y se amplía (D-35, pendiente de aprobación): tareas nuevas F4-E3 a F4-E11, F4-B2, F4-C2 y F4-C3. La tabla de puntajes sale de la hoja de ruta. | encabezado, 3, 5, 6, 8 | `@dimidio6` |
 
 ## 10. Registro de cierres
 

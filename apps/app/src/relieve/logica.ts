@@ -5,6 +5,7 @@
 import type { components } from "@charmy/contracts-api";
 import type { StyleSpecification } from "maplibre-gl";
 import { rampaAnomalia, rampaConteo, relieve } from "@charmy/ui";
+import type { Pestana } from "./estado";
 import { enIngles, localeActual, t } from "./idioma";
 
 export type Resumen = components["schemas"]["RegionsSummary"];
@@ -515,6 +516,14 @@ export function capasRegionesVisibles(plano: boolean, apagado: boolean) {
     regBorde: en2d,
     reg3d: !apagado && !plano,
   };
+}
+
+/**
+ * Si el mapa va plano (sin inclinación). Todas las pestañas siguen el botón 2D/3D; en Experto, además, el mapa
+ * se aplana mientras hay una herramienta de dibujo elegida, para trazar el área sin perspectiva.
+ */
+export function mapaPlano(pestana: Pestana, plano: boolean, dibujando: string | null): boolean {
+  return plano || (pestana === "zona" && dibujando !== null);
 }
 
 /** Los 30 días que muestra «El último mes»: hasta ayer, que es el último día completo del histórico. */

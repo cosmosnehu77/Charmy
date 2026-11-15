@@ -3,6 +3,7 @@ import {
   alturaDelDia,
   capaRegiones,
   capasRegionesVisibles,
+  mapaPlano,
   colorFoco,
   escalaRegion,
   hace,
@@ -412,6 +413,21 @@ describe("capas de regiones en 2D y 3D", () => {
     expect(capasRegionesVisibles(true, false)).toEqual({ vivoGris: false, reg2d: true, regBorde: true, reg3d: false });
     expect(capasRegionesVisibles(false, true)).toEqual({ vivoGris: true, reg2d: false, regBorde: true, reg3d: false });
     expect(capasRegionesVisibles(true, true)).toEqual({ vivoGris: true, reg2d: false, regBorde: true, reg3d: false });
+  });
+});
+
+describe("mapa plano o inclinado por pestaña", () => {
+  it("los indicadores y En vivo siguen el botón 2D/3D", () => {
+    expect(mapaPlano("focos", false, null)).toBe(false);
+    expect(mapaPlano("focos", true, null)).toBe(true);
+    expect(mapaPlano("vivo", false, null)).toBe(false);
+    expect(mapaPlano("vivo", true, null)).toBe(true);
+  });
+
+  it("Experto se ve en 3D, pero mientras se dibuja el área el mapa va plano", () => {
+    expect(mapaPlano("zona", false, null)).toBe(false);
+    expect(mapaPlano("zona", true, null)).toBe(true);
+    expect(mapaPlano("zona", false, "rectangle")).toBe(true);
   });
 });
 

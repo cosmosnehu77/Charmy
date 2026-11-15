@@ -10,7 +10,7 @@
 
 **Fase activa:** 4
 **Líder:** `@cosmosnehu77`. Hasta que vuelva (probablemente en la fase 4), **líder interino `@daniace`** (D-28).
-**Versión:** 2.3.4 · **Última actualización:** 15 de noviembre de 2026
+**Versión:** 2.3.3 · **Última actualización:** 15 de noviembre de 2026
 
 ## Objetivo del proyecto
 
@@ -415,7 +415,6 @@ Si falta tiempo en el carril B, el orden es: fuentes fijas, tiempo, imagen y, po
 | #58 | F4-C1 | Datos cacheados para la demo, servicios despiertos y errores claros | `@BrunoAguinaga0` | `services/api/`, `services/worker/` | fase 3 | RNF-02 | pendiente |
 | #59 | F4-D1 | Pulido de la app: accesibilidad, ancho de teléfono y textos | `@daniace` | `apps/app/` | fase 3 | RNF-03, RNF-04 | pendiente |
 | #260 | F4-D2 | Filtro por satélite (NOAA-20, NOAA-21) en el panel «En vivo» y la capa del mapa 2D, como en FIRMS. Se filtra en el navegador con el campo `satellite` de `/live`, sin cambiar el contrato. El histórico (`/hotspots`, que necesita un parámetro nuevo) y la vista Relieve quedan fuera | `@daniace` | `apps/app/` | F3-D3 | RF-VIV-01 | hecho |
-| #297 | F4-D3 | Toggle e indicador para dibujar el área en Tu zona, y estadísticas del calendario y de los focos del área, calculadas en el navegador con los datos que ya llegan, sin cambiar el contrato | `@daniace` | `apps/app/` | F2-D1, F2-D2 | RF-MAP-02, RF-CAL-03 | hecho |
 | #60 | F4-E1 | Pulido de la landing; enlaces entre las tres piezas | `@daniace` (D-34) | `apps/landing/` | fase 3 | RF-LAN-04, RNF-12 | pendiente |
 | #61 | F4-E2 | Pulido del juego | `@daniace` (D-34) | `apps/juego/` | F3-E1 | RNF-12 | pendiente |
 | #183 | F4-E3 | El juego pasa a llamarse Charmy Brigada en todas las piezas; requisitos y tareas de D-35 | `@dimidio6` | `apps/juego/`, y el nombre en `apps/app/`, `apps/landing/`, `packages/charmy/`, `docs/` | — | RF-KID-01, RNF-12 | en revisión |
@@ -504,9 +503,9 @@ Qué tareas cubren cada requisito. Si un requisito de `REQUISITOS.md` no aparece
 | RF-ARM-01, 02, 03 | F1-B1, F2-B1 | 2 |
 | RF-ARM-04 | F2-B2, F2-C2, F3-D2, F4-B1 | 3 |
 | RF-ARM-05 | F3-B1, F3-C3 | 3 |
-| RF-CAL-01, 02, 03, 05 | F2-B2, F2-C2, F2-D2; F4-D3 (estadísticas) | 2, 4 |
+| RF-CAL-01, 02, 03, 05 | F2-B2, F2-C2, F2-D2 | 2 |
 | RF-CAL-04 | sin tarea (deseable) | hoja de ruta |
-| RF-MAP-01, 02, 04, 05 | F2-C1, F2-D1; F4-D3 (toggle de dibujo) | 2, 4 |
+| RF-MAP-01, 02, 04, 05 | F2-C1, F2-D1 | 2 |
 | RF-MAP-03, 07 | F3-D1, F3-D2 | 3 |
 | RF-MAP-06 | F0-D1, F1-D2 | 1 |
 | RF-MAP-08 | F0-B1 (cobertura); vista global sin tarea | 2 / hoja de ruta |
@@ -620,7 +619,6 @@ La fase 5 no cubre requisitos nuevos: refuerza RNF-02 y RNF-10 sobre lo ya entre
 | 2026-11-15 | Versión 2.3, con `REQUISITOS.md` 1.6. El juego pasa a la maqueta 3D de Sudamérica en PixiJS con focos simulados (D-36, reemplaza a D-11). Tarea nueva F4-E12 (#238). Cambian la tabla de tecnologías, la de componentes, la trazabilidad de RF-KID y la hoja de ruta. | encabezado, 1, 3, 5, 6, 8 | `@cosmosnehu77` |
 | 2026-11-15 | Versión 2.3.2. Tarea nueva F4-D2 (#260): filtro por satélite en los focos en vivo, ya fusionada en #261. | encabezado, 5, 6 | `@daniace` |
 | 2026-11-15 | Versión 2.3.3. TimesFM 3.0 pasa a ser el candidato de la predicción en lugar de la 2.5, autorizada por el líder porque Charmy es gratuito y sin fines de lucro (actualiza D-31, R-E2 #253). La compuerta D-10 no cambia. | 1.1, 3 | `@dimidio6` |
-| 2026-11-15 | Versión 2.3.4. Tarea nueva F4-D3 (#297): toggle e indicador para dibujar el área en Tu zona, y estadísticas del calendario y de los focos. | encabezado, 5, 6 | `@daniace` |
 
 ## 10. Registro de cierres
 

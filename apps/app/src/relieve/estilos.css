@@ -830,6 +830,13 @@ html[data-tema="claro"] .vidrio-relieve {
     0 12px 34px color-mix(in srgb, var(--mapa-dia-tinta) 14%, transparent);
   color: var(--mapa-dia-tinta);
 }
+/* Encabezado fijo dentro de una hoja con scroll (el calendario de Experto): mismo fondo que la hoja, sin transparencia. */
+.cabecera-fija {
+  background: var(--relieve-panel);
+}
+html[data-tema="claro"] .cabecera-fija {
+  background: var(--mapa-dia-panel);
+}
 html[data-tema="claro"] .ficha-relieve {
   background: color-mix(in srgb, var(--mapa-dia-panel) 95%, transparent);
   box-shadow:

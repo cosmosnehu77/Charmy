@@ -113,9 +113,10 @@ describe("calendario (F2-D2)", () => {
     expect(within(tabla).getAllByRole("columnheader").map((c) => c.textContent)).toEqual([
       "Año", "Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic",
     ]);
-    const filas = within(tabla).getAllByRole("rowheader");
+    const [, cuerpo] = within(tabla).getAllByRole("rowgroup");
+    const filas = within(cuerpo!).getAllByRole("rowheader");
     expect(filas.map((f) => f.textContent)).toEqual(["2025", "2026"]);
-    expect(within(tabla).getAllByRole("cell")).toHaveLength(24);
+    expect(within(cuerpo!).getAllByRole("cell")).toHaveLength(24);
   });
 
   it("pide el calendario del área y los años del período", async () => {
@@ -165,22 +166,71 @@ describe("calendario (F2-D2)", () => {
   });
 });
 
-describe("estadísticas del calendario", () => {
-  it("resume el período: total, mes pico, año con más fuego y meses fuera de lo normal", async () => {
+describe("estadísticas del calendario (F4-R2)", () => {
+  const verEstadisticas = async () => {
     montar(<Calendario />);
-    const resumen = await screen.findByRole("region", { name: "Estadísticas del calendario" });
+    await userEvent.setup().click(await screen.findByRole("radio", { name: "Estadísticas" }));
+    return screen.getByRole("region", { name: "Estadísticas del calendario" });
+  };
+
+  it("son una tercera opción después de Cantidad, y la grilla queda sola", async () => {
+    montar(<Calendario />);
+    const opciones = within(await screen.findByRole("radiogroup", { name: /qué mostrar/i })).getAllByRole("radio");
+    expect(opciones.map((o) => o.textContent)).toEqual(["Anomalía", "Cantidad", "Estadísticas"]);
+    expect(screen.queryByRole("region", { name: "Estadísticas del calendario" })).not.toBeInTheDocument();
+  });
+
+  it("en Estadísticas no hay grilla; vuelve con Anomalía", async () => {
+    await verEstadisticas();
+    expect(screen.queryByRole("table", { name: /calendario de quema/i })).not.toBeInTheDocument();
+    await userEvent.setup().click(screen.getByRole("radio", { name: "Anomalía" }));
+    expect(screen.getByRole("table", { name: /calendario de quema/i })).toBeInTheDocument();
+  });
+
+  it("resume el período: total, mes pico, año con más fuego y meses fuera de lo normal", async () => {
+    const resumen = await verEstadisticas();
     expect(within(resumen).getByText("Total del período").nextSibling).toHaveTextContent("25,1");
     expect(within(resumen).getByText("Mes pico").nextSibling).toHaveTextContent("enero de 2025");
     expect(within(resumen).getByText("Año con más fuego").nextSibling).toHaveTextContent("2025");
     expect(within(resumen).getByText("Meses sobre lo normal").nextSibling).toHaveTextContent("1 de 3");
   });
 
+  it("compara el último año con los anteriores hasta el mismo mes", async () => {
+    const resumen = await verEstadisticas();
+    expect(within(resumen).getByText("Año 2026").nextSibling).toHaveTextContent("−86 %");
+  });
+
+  it("muestra el total de cada año con sus meses fuera de lo normal", async () => {
+    const resumen = await verEstadisticas();
+    const anios = within(resumen).getByRole("list", { name: /cada año/i });
+    const filas = within(anios).getAllByRole("listitem");
+    expect(filas).toHaveLength(2);
+    expect(filas[0]).toHaveTextContent(/2025.*22.*1 sobre lo normal/);
+    expect(filas[1]).toHaveTextContent(/2026.*3,1/);
+  });
+
   it("la temporada muestra el promedio de cada mes, con su texto para lectores de pantalla", async () => {
-    montar(<Calendario />);
-    const temporada = await screen.findByRole("list", { name: /temporada/i });
+    const resumen = await verEstadisticas();
+    const temporada = within(resumen).getByRole("list", { name: /temporada/i });
     expect(within(temporada).getAllByRole("listitem")).toHaveLength(12);
     expect(within(temporada).getByRole("listitem", { name: /enero: 12,6 en promedio/i })).toBeInTheDocument();
     expect(within(temporada).getByRole("listitem", { name: /marzo: sin dato/i })).toBeInTheDocument();
+  });
+
+  it("dice de qué origen sale cada mes", async () => {
+    const resumen = await verEstadisticas();
+    expect(within(resumen).getByText(/VIIRS medido/)).toHaveTextContent(/3 meses/);
+  });
+
+  it("sin «Minimizar» no se puede plegar; con él, el botón avisa", async () => {
+    const minimizar = vi.fn();
+    const { unmount } = montar(<Calendario />);
+    await screen.findByRole("table");
+    expect(screen.queryByRole("button", { name: /minimizar el calendario/i })).not.toBeInTheDocument();
+    unmount();
+    montar(<Calendario onMinimizar={minimizar} />);
+    await userEvent.setup().click(await screen.findByRole("button", { name: /minimizar el calendario/i }));
+    expect(minimizar).toHaveBeenCalledOnce();
   });
 });
 

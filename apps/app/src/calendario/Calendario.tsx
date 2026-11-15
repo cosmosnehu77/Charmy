@@ -1,5 +1,5 @@
 import { colorSinDato, rampaAnomalia, rampaConteo } from "@charmy/ui";
-import { Download } from "lucide-react";
+import { ChevronDown, Download } from "lucide-react";
 import { useState } from "react";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { bboxDeArea, rutaCsv } from "@/consulta/consulta";
@@ -48,9 +48,12 @@ function Leyenda({ vista }: { vista: Vista }) {
   );
 }
 
-export function Calendario() {
+/** Con `onMinimizar`, la hoja del calendario se puede plegar a una barra (F4-R2): lo decide quien la muestra. */
+export function Calendario({ onMinimizar }: { onMinimizar?: () => void } = {}) {
   useIdioma((s) => s.idioma);
   const [vista, setVista] = useState<Vista>("anomalia");
+  // Estadísticas es la tercera opción (F4-R2); la grilla recuerda si estaba en Anomalía o Cantidad (y las descargas también).
+  const [verEstadisticas, setVerEstadisticas] = useState(false);
   const { area, desde, hasta, fuente, confianzaMin } = useConsulta();
   const { consulta, desdeAnio, hastaAnio, hayConsulta } = useCalendario();
 
@@ -59,8 +62,13 @@ export function Calendario() {
   const csv = area ? `${urlApi()}${rutaCsv({ bbox: bboxDeArea(area), desde, hasta, fuente, confianzaMin })}` : null;
 
   return (
-    <section aria-labelledby="titulo-calendario" data-guia="calendario" className="flex flex-col gap-3 p-4">
-      <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+    <section aria-labelledby="titulo-calendario" data-guia="calendario" className="@container flex flex-col gap-3 p-4">
+      {/* En la hoja de escritorio el encabezado queda fijo arriba: el botón de minimizar no se va con el scroll. */}
+      <div
+        className={`flex flex-wrap items-center gap-x-4 gap-y-2 ${
+          onMinimizar ? "cabecera-fija sticky top-0 z-10 -mx-4 -mt-4 px-4 pb-2 pt-4" : ""
+        }`}
+      >
         <h2 id="titulo-calendario" className="text-lg font-semibold">
           {t("Calendario de quema", "Burn calendar")}
         </h2>
@@ -69,10 +77,21 @@ export function Calendario() {
             {t("Dato de ejemplo", "Sample data")}
           </span>
         )}
-        <ToggleGroup type="single" aria-label={t("Qué mostrar en el calendario", "Calendar view")} value={vista} onValueChange={(v) => v && setVista(v as Vista)}>
+        <ToggleGroup
+          type="single"
+          aria-label={t("Qué mostrar en el calendario", "Calendar view")}
+          value={verEstadisticas ? "estadisticas" : vista}
+          onValueChange={(v) => {
+            if (!v) return;
+            setVerEstadisticas(v === "estadisticas");
+            if (v !== "estadisticas") setVista(v as Vista);
+          }}
+        >
           <ToggleGroupItem value="anomalia">{t("Anomalía", "Anomaly")}</ToggleGroupItem>
           <ToggleGroupItem value="cantidad">{t("Cantidad", "Count")}</ToggleGroupItem>
+          <ToggleGroupItem value="estadisticas">{t("Estadísticas", "Statistics")}</ToggleGroupItem>
         </ToggleGroup>
+        <div className="ml-auto flex items-center gap-2">
         {consulta.isSuccess && consulta.data.cells.length > 0 ? (
           <Descargas calendario={consulta.data} desdeAnio={desdeAnio} hastaAnio={hastaAnio} vista={vista} csv={csv} />
         ) : (
@@ -84,6 +103,18 @@ export function Calendario() {
             </a>
           )
         )}
+        {onMinimizar && (
+          <button
+            type="button"
+            onClick={onMinimizar}
+            aria-label={t("Minimizar el calendario", "Minimize the calendar")}
+            title={t("Minimizar", "Minimize")}
+            className="grid size-8 shrink-0 place-items-center rounded-full border border-borde hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          >
+            <ChevronDown aria-hidden="true" className="size-4" />
+          </button>
+        )}
+        </div>
       </div>
 
       {consulta.isPending && <p className="text-sm text-tinta-suave">{t("Armando el calendario…", "Building calendar…")}</p>}
@@ -119,9 +150,10 @@ export function Calendario() {
               </>,
             )}
           </p>
-          {/* En la hoja ancha de escritorio, la grilla a la izquierda y las estadísticas al costado (F4-D8). */}
-          <div className="flex flex-col gap-3 xl:grid xl:grid-cols-[minmax(0,1fr)_260px] xl:items-start xl:gap-4">
-          <div className="flex min-w-0 flex-col gap-3 xl:order-1">
+          {verEstadisticas ? (
+            <ResumenCalendario celdas={consulta.data.cells} />
+          ) : (
+            <>
           <Leyenda vista={vista} />
           <div className="overflow-x-auto">
             <table className="w-full min-w-[28rem] table-fixed border-separate border-spacing-0.5 text-center font-mono text-[11px]">
@@ -167,13 +199,11 @@ export function Calendario() {
               </tbody>
             </table>
           </div>
-          </div>
-          <div className="xl:order-2">
-            <ResumenCalendario celdas={consulta.data.cells} />
-          </div>
-          </div>
+            </>
+          )}
         </>
       )}
     </section>
   );
 }
+

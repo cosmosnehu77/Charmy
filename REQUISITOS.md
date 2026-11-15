@@ -6,7 +6,7 @@
 > **Regla de oro.** Todo requisito tiene un ID. Toda tarea de `PLAN.md` apunta a uno o más IDs.
 > Si se agrega, cambia o quita un requisito acá, `PLAN.md` se actualiza en el mismo PR (ver [Cómo cambiar este documento](#8-cómo-cambiar-este-documento)).
 
-**Versión:** 1.7 · **Última actualización:** 15 de noviembre de 2026
+**Versión:** 1.8 · **Última actualización:** 15 de noviembre de 2026
 
 ---
 
@@ -131,7 +131,7 @@ Una vizcacha de fuego, Charmy, acompaña al usuario en toda la experiencia.
 | ID | Requisito | Prioridad |
 |---|---|---|
 | RF-ALE-01 | Cualquier persona puede reportar un foco sin crear una cuenta. | Importante |
-| RF-ALE-02 | Las entidades aliadas (bomberos, Defensa Civil, brigadas) reciben un aviso inmediato de los focos verificados y de los reportes dentro de su zona, por un canal de mensajería que ya usen. Un foco se avisa cuando su veredicto (RF-VIV-02) es confirmado, o probable con confianza nominal o alta, y un mismo incendio se avisa una sola vez, para no saturar el canal (D-37). | Importante |
+| RF-ALE-02 | Las entidades aliadas (bomberos, Defensa Civil, brigadas) reciben un aviso inmediato de los focos verificados y de los reportes dentro de su zona, por un canal de mensajería que ya usen. Un foco se avisa cuando su veredicto (RF-VIV-02) es confirmado, o probable con confianza nominal o alta, y un mismo incendio se avisa una sola vez, para no saturar el canal (D-37). Cada entidad recibe solo lo de su zona: un solo bot atiende varias zonas, cada una un punto con radio y con su grupo (D-39). | Importante |
 | RF-ALE-03 | La entidad puede marcar el estado de un aviso (visto, en camino, controlado, falso) y eso mejora la verificación. | Importante |
 | RF-ALE-04 | Los avisos se publican también en un formato estándar de alerta que otros sistemas puedan consumir. | Importante |
 | RF-ALE-05 | Las entidades tienen cuenta propia, definen su zona y ven sus avisos dentro de la app. | Deseable |
@@ -240,3 +240,4 @@ Un requisito sin tarea en `PLAN.md` no se está haciendo. Una tarea sin requisit
 | 2026-11-14 | Versión 1.5. El juego pasa a llamarse Charmy Brigada (D-35); los IDs `RF-KID-*` no cambian. Se agregan RF-KID-06 a RF-KID-12 (el dato real en la mecánica, propagación con viento, agua y herramientas, desafío del día, modo explorador y sonido) y RF-KID-04 se precisa. Todos son deseables: no cambian el criterio de MVP. | `@dimidio6` |
 | 2026-11-15 | Versión 1.6. El juego pasa a la maqueta 3D de Sudamérica en PixiJS con focos simulados (D-36): RF-KID-05 entra como deseable; RF-KID-02 y RF-KID-10 quedan fuera; RF-KID-03, RF-KID-07 y RF-KID-08 se ajustan a focos y viento simulados. | `@cosmosnehu77` |
 | 2026-11-15 | Versión 1.7. Se retira el modo novato (F4-D7, #314): RF-MOD-01 y RF-MOD-03 quedan fuera y la app tiene un solo modo, el experto (RF-MOD-02). | `@daniace` |
+| 2026-11-15 | Versión 1.8. RF-ALE-02: cada entidad recibe solo los avisos de su zona; un solo bot atiende varias zonas, cada una un punto con radio y con su grupo (D-39). | `@dimidio6` |

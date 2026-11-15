@@ -160,6 +160,15 @@ export const AGRUPAR_VIVO = { clusterRadius: 50, clusterMinPoints: 3, clusterMax
  */
 export const AGRUPAR_ZONA = { clusterRadius: 50, clusterMinPoints: 3, clusterMaxZoom: 12 } as const;
 
+/** Desde cuántos focos un grupo late, para que se vean primero los incendios grandes. */
+export const GRUPO_LATE = 100;
+
+/** Aspecto de un grupo de focos: crece con la cantidad y toma el color de su foco más intenso. */
+export function estiloGrupo(cantidad: number, frpMax: number | null | undefined) {
+  const diametro = cantidad >= 200 ? 54 : cantidad >= 50 ? 44 : cantidad >= 10 ? 36 : 30;
+  return { diametro, color: colorFoco(frpMax), late: cantidad >= GRUPO_LATE, texto: cantidad.toLocaleString("es-AR") };
+}
+
 export function hace(ahora: Date, cuando: string): string {
   const horas = Math.round((ahora.getTime() - new Date(cuando).getTime()) / 3_600_000);
   return horas < 1 ? "hace menos de 1 h" : `hace ${horas} h`;

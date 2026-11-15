@@ -677,3 +677,62 @@
     animation: none;
   }
 }
+
+/* Grupos de focos (#333, #343): núcleo translúcido con el color de su foco más intenso y un halo suave. */
+.grupo-focos {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: var(--grupo-d);
+  height: var(--grupo-d);
+  padding: 0;
+  border: 1px solid color-mix(in srgb, var(--grupo-color) 70%, white);
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--grupo-color) 62%, transparent);
+  box-shadow:
+    0 0 0 calc(var(--grupo-d) * 0.18) color-mix(in srgb, var(--grupo-color) 18%, transparent),
+    0 0 calc(var(--grupo-d) * 0.5) color-mix(in srgb, var(--grupo-color) 30%, transparent);
+  backdrop-filter: blur(2px);
+  color: white;
+  font-family: var(--fuente-titulos);
+  font-size: 13px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
+  text-shadow: 0 1px 2px color-mix(in srgb, var(--relieve-vidrio) 70%, transparent);
+  cursor: pointer;
+  transition: transform 0.15s ease-out;
+}
+.grupo-focos:hover {
+  transform: scale(1.08);
+}
+.grupo-focos:focus-visible {
+  outline: 2px solid white;
+  outline-offset: 3px;
+}
+/* Los grupos de 100 focos o más laten: un anillo que crece y se apaga. */
+.grupo-focos-late::before {
+  content: "";
+  position: absolute;
+  inset: -1px;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--grupo-color) 35%, transparent);
+  animation: grupo-late 2.2s ease-out infinite;
+  pointer-events: none;
+  z-index: -1;
+}
+@keyframes grupo-late {
+  0% {
+    transform: scale(1);
+    opacity: 0.8;
+  }
+  100% {
+    transform: scale(1.9);
+    opacity: 0;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .grupo-focos-late::before {
+    animation: none;
+  }
+}

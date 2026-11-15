@@ -11,6 +11,16 @@ import { colorFoco, enNiveles, hace, type NivelFoco, nivelFoco, radioFoco, type 
 const num = (v: number, d = 0) => v.toLocaleString("es-AR", { minimumFractionDigits: d, maximumFractionDigits: d });
 const SATELITES: Record<string, string> = { N20: "NOAA-20", N21: "NOAA-21", Terra: "Terra (MODIS)", Aqua: "Aqua (MODIS)" };
 const CONFIANZA: Record<string, string> = { low: "baja", nominal: "nominal", high: "alta" };
+/** La lista es la alternativa accesible al mapa (RNF-04): más de esto no se puede recorrer. */
+const MAXIMO_LISTA = 50;
+const horaArgentina = new Intl.DateTimeFormat("es-AR", {
+  day: "numeric",
+  month: "short",
+  hour: "2-digit",
+  minute: "2-digit",
+  hourCycle: "h23",
+  timeZone: "America/Argentina/Buenos_Aires",
+});
 
 interface Props {
   focos: FocoReciente[];
@@ -24,7 +34,7 @@ interface Props {
  * `focos` llega ya filtrado por satélite.
  */
 export function PanelEnVivo({ focos, disponible, mensaje, regiones }: Props) {
-  const { horasVivo, nivelesVivo, cambiar } = useRelieve();
+  const { horasVivo, nivelesVivo, focoVivo, cambiar } = useRelieve();
   const { satelites, cambiar: cambiarVivo } = useVivo();
   const alternarSatelite = (codigo: string, si: boolean) => {
     cambiarVivo({ satelites: si ? [...satelites, codigo] : satelites.filter((c) => c !== codigo) });
@@ -39,6 +49,7 @@ export function PanelEnVivo({ focos, disponible, mensaje, regiones }: Props) {
     });
   const nombre = (id: string | null) => regiones.find((r) => r.id === id)?.properties.name ?? "Fuera de las regiones";
   const masIntensos = [...visibles].sort((a, b) => b.frp - a.frp).slice(0, 5);
+  const masNuevos = [...visibles].sort((a, b) => b.t - a.t);
   const fecha = ultimo ? new Date(ultimo).toISOString() : "";
 
   return (
@@ -159,6 +170,41 @@ export function PanelEnVivo({ focos, disponible, mensaje, regiones }: Props) {
                 ))}
               </ol>
             </div>
+          )}
+          {/* Con teclado o lector de pantalla, los focos se recorren acá; en el mapa solo se tocan (RNF-04). */}
+          {visibles.length > 0 && (
+            <details className="mt-3.5 border-t border-white/10 pt-3">
+              <summary className="cursor-pointer rounded-lg px-1.5 py-1 text-[13px] font-semibold text-white/80 hover:bg-white/10">
+                Lista de focos ({num(visibles.length)})
+              </summary>
+              {visibles.length > MAXIMO_LISTA && (
+                <p className="mt-1.5 px-1.5 text-xs text-white/55">
+                  Los {MAXIMO_LISTA} más nuevos de {num(visibles.length)}; el mapa los muestra todos.
+                </p>
+              )}
+              <ol aria-label="Focos en vivo" className="scroll-relieve m-0 mt-1.5 flex max-h-36 list-none flex-col gap-0.5 overflow-y-auto p-0 md:max-h-56">
+                {masNuevos.slice(0, MAXIMO_LISTA).map((f) => {
+                  const v = veredicto(f.veredicto);
+                  return (
+                    <li key={f.k}>
+                      <button
+                        type="button"
+                        aria-pressed={focoVivo === f.k}
+                        onClick={() => cambiar({ focoVivo: f.k })}
+                        className="grid w-full grid-cols-[auto_1fr] items-baseline gap-x-2 rounded-lg px-1.5 py-1.5 text-left text-[13px] hover:bg-white/10 aria-pressed:bg-white/15"
+                      >
+                        {/* El color nunca va solo: el veredicto también va en texto. */}
+                        <span aria-hidden="true" className="size-[9px] rounded-full ring-1 ring-white/40" style={{ background: v.color }} />
+                        <b className="font-semibold">{v.texto}</b>
+                        <span className="col-start-2 text-xs text-white/60">
+                          {nombre(f.region)} · {horaArgentina.format(f.t)}
+                        </span>
+                      </button>
+                    </li>
+                  );
+                })}
+              </ol>
+            </details>
           )}
         </>
       )}

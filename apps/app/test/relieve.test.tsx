@@ -334,6 +334,61 @@ describe("vista Relieve (F4-R1)", () => {
     }
   });
 
+  it("En vivo tiene la lista de todos sus focos, del más nuevo al más viejo, con el veredicto en texto (RNF-04)", async () => {
+    vivo.features.push({
+      type: "Feature",
+      id: "N21-lista",
+      geometry: { type: "Point", coordinates: [-70.2, -39.1] },
+      properties: { acq_datetime: "2026-11-14T06:00:00Z", satellite: "N21", instrument: "VIIRS", confidence: "nominal", frp: 3.5, daynight: "N", verdict: "sin_confirmar" },
+    });
+    try {
+      montar();
+      const u = userEvent.setup();
+      await u.click(screen.getByRole("tab", { name: "En vivo" }));
+      const panel = await screen.findByRole("complementary", { name: "Resumen en vivo" });
+      // Con teclado: la lista se abre con Enter sobre su título.
+      within(panel).getByText(/Lista de focos \(2\)/).focus();
+      await u.keyboard("{Enter}");
+      const lista = within(panel).getByRole("list", { name: "Focos en vivo" });
+      const items = within(lista).getAllByRole("button");
+      expect(items).toHaveLength(2);
+      expect(items[0]).toHaveTextContent(/Sin confirmar/);
+      expect(items[1]).toHaveTextContent(/Probable/);
+      await u.click(items[0] as HTMLElement);
+      expect(screen.getByRole("region", { name: "Ficha del foco" })).toBeInTheDocument();
+      const pedido = fetchSimulado.mock.calls.map(([x]) => String(x)).find((x) => x.includes("/evidence"));
+      expect(pedido).toContain("N21-lista");
+      // La lista sigue los mismos filtros que el resto del panel.
+      await u.click(within(panel).getByRole("button", { name: /Muy fuerte/ }));
+      expect(within(lista).getAllByRole("button")).toHaveLength(1);
+      expect(within(lista).getByRole("button")).toHaveTextContent(/Probable/);
+    } finally {
+      vivo.features.pop();
+    }
+  });
+
+  it("con más de 50 focos, la lista muestra los 50 más nuevos y dice cuántos hay", async () => {
+    const extra = Array.from({ length: 55 }, (_, i) => ({
+      type: "Feature",
+      id: `N20-extra-${i}`,
+      geometry: { type: "Point", coordinates: [-70.5, -39.5] },
+      properties: { acq_datetime: `2026-11-14T04:${String(i).padStart(2, "0")}:00Z`, satellite: "N20", instrument: "VIIRS", confidence: "nominal", frp: 5, daynight: "N", verdict: "probable" },
+    }));
+    vivo.features.push(...extra);
+    try {
+      montar();
+      const u = userEvent.setup();
+      await u.click(screen.getByRole("tab", { name: "En vivo" }));
+      const panel = await screen.findByRole("complementary", { name: "Resumen en vivo" });
+      await u.click(within(panel).getByText(/Lista de focos \(56\)/));
+      const lista = within(panel).getByRole("list", { name: "Focos en vivo" });
+      expect(within(lista).getAllByRole("button")).toHaveLength(50);
+      expect(within(panel).getByText(/Los 50 más nuevos de 56/)).toBeInTheDocument();
+    } finally {
+      vivo.features.splice(-extra.length);
+    }
+  });
+
   it("la lupa busca provincias sin importar los acentos", async () => {
     montar();
     const u = userEvent.setup();

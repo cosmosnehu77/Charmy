@@ -1,5 +1,6 @@
 import { Flag, MapPin, X } from "lucide-react";
 import { useEffect, useId, useRef, useState } from "react";
+import { BarraCalendario } from "@/calendario/BarraCalendario";
 import { Calendario } from "@/calendario/Calendario";
 import { useCalendario } from "@/calendario/useCalendario";
 import { Seguro } from "@/components/Seguro";
@@ -73,9 +74,11 @@ export function Zona() {
   const { hayConsulta } = useCalendario();
   const { reportando, cambiar: cambiarVivo } = useVivo();
   const ancho = useEsAncho();
+  // En escritorio la hoja del calendario tapa medio mapa: se puede minimizar a una barra (F4-R2).
+  const [minimizado, setMinimizado] = useState(false);
   const calendario = hayConsulta && (
     <Seguro nombre={t("El calendario", "The calendar")}>
-      <Calendario />
+      <Calendario onMinimizar={ancho ? () => setMinimizado(true) : undefined} />
     </Seguro>
   );
 
@@ -187,8 +190,12 @@ export function Zona() {
       )}
       <FichaAtributos />
       {ancho && calendario && (
-        <div className="tema-relieve ficha-relieve scroll-relieve pointer-events-auto absolute bottom-11 left-[364px] right-[72px] z-20 max-h-[46%] overflow-y-auto rounded-[20px]">
-          {calendario}
+        <div
+          className={`tema-relieve ficha-relieve scroll-relieve pointer-events-auto absolute bottom-11 left-[364px] right-[72px] z-20 overflow-y-auto ${
+            minimizado ? "rounded-full" : "max-h-[46%] rounded-[20px]"
+          }`}
+        >
+          {minimizado ? <BarraCalendario onAbrir={() => setMinimizado(false)} /> : calendario}
         </div>
       )}
     </>

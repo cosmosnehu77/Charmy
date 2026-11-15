@@ -158,6 +158,7 @@ beforeEach(() => {
     seleccion: null,
     linea: { activa: false, dia: 0, play: false },
     plano: false,
+    satelital: false,
     focoVivo: null,
     nivelesVivo: [],
     ranking: true,
@@ -400,6 +401,20 @@ describe("vista Relieve (F4-R1)", () => {
     await u.click(screen.getByRole("button", { name: "Ver en 2D, más liviano" }));
     expect(useRelieve.getState().plano).toBe(true);
     expect(screen.getByRole("button", { name: "Ver en 3D" })).toBeInTheDocument();
+  });
+
+  it("el botón satelital cambia el mapa a la imagen y, otra vez, vuelve al modelo (#396)", async () => {
+    montar();
+    const u = userEvent.setup();
+    for (const pestana of ["Focos", "En vivo", "Experto"]) {
+      await u.click(screen.getByRole("tab", { name: pestana }));
+      expect(screen.getByRole("button", { name: "Ver imagen satelital" })).toHaveAttribute("aria-pressed", "false");
+    }
+    await u.click(screen.getByRole("button", { name: "Ver imagen satelital" }));
+    expect(useRelieve.getState().satelital).toBe(true);
+    await u.click(screen.getByRole("button", { name: "Volver al modelo" }));
+    expect(useRelieve.getState().satelital).toBe(false);
+    expect(screen.getByRole("button", { name: "Ver imagen satelital" })).toHaveAttribute("aria-pressed", "false");
   });
 
   it("en En vivo, tocar un nivel de intensidad deja solo esos focos (#251)", async () => {

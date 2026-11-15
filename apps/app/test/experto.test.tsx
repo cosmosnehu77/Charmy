@@ -170,3 +170,18 @@ describe("atributos de un foco sin FRP", () => {
     expect(Object.fromEntries(atributosFoco(p))["Potencia radiativa (FRP)"]).toBe("sin dato");
   });
 });
+
+describe("calendario minimizable (F4-R2)", () => {
+  it("se minimiza a una barra con el total y el mes pico, y se vuelve a abrir", async () => {
+    const usuario = userEvent.setup();
+    montar();
+    await screen.findByRole("table", { name: /calendario de quema/i });
+    await usuario.click(screen.getByRole("button", { name: /minimizar el calendario/i }));
+    expect(screen.queryByRole("table", { name: /calendario de quema/i })).not.toBeInTheDocument();
+    const barra = screen.getByRole("region", { name: "Calendario de quema minimizado" });
+    expect(within(barra).getByText(/días de fuego/)).toBeInTheDocument();
+    expect(within(barra).getByText(/pico/i)).toBeInTheDocument();
+    await usuario.click(within(barra).getByRole("button", { name: /abrir el calendario/i }));
+    expect(await screen.findByRole("table", { name: /calendario de quema/i })).toBeInTheDocument();
+  });
+});

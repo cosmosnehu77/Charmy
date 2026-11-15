@@ -104,8 +104,8 @@ export const PASOS_EXPERTO: Paso[] = [
     },
     get texto() {
       return t(
-        "Cada casilla es un mes. En Anomalía, naranja es más fuego que lo normal para ese mes y violeta, menos; en Cantidad ves los días de fuego. En Descargas bajás los focos y el calendario.",
-        "Each box is a month. In Anomaly, orange means more fire than normal for that month and purple means less; in Count you see fire days. Under Downloads you can export hotspots and the calendar.",
+        "Cada casilla es un mes. En Anomalía, naranja es más fuego que lo normal para ese mes y violeta, menos; en Cantidad ves los días de fuego. En Estadísticas tenés los totales, cada año y la temporada. En Descargas bajás los focos y el calendario.",
+        "Each box is a month. In Anomaly, orange means more fire than normal for that month and purple means less; in Count you see fire days. Statistics has the totals, each year and the season. Under Downloads you can export hotspots and the calendar.",
       );
     },
   },

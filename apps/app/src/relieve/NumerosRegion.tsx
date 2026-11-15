@@ -1,20 +1,10 @@
 import { useMemo } from "react";
 import { anioContraLoNormal, resumenCalendario } from "@/calendario/estadisticas";
 import { MESES_LARGOS } from "@/calendario/grilla";
-import { Temporada } from "@/calendario/ResumenCalendario";
+import { Temporada, textoComparacion } from "@/calendario/ResumenCalendario";
 import { type Indicador, Indicadores } from "@/components/Indicadores";
 import { useCalendarioRegion } from "./consultas";
-import { localeActual, t, useIdioma } from "./idioma";
-
-/** Por debajo de esta diferencia, el año se dice «parecido» a los anteriores: no se exagera un cambio chico. */
-const PARECIDO = 10;
-
-function comparacionAnio(acumulado: number, promedio: number): string {
-  if (promedio === 0) return acumulado > 0 ? t("Más que otros años", "More than other years") : t("Igual que otros años", "Same as other years");
-  const diferencia = Math.round((acumulado / promedio - 1) * 100);
-  if (Math.abs(diferencia) < PARECIDO) return t("Parecido a otros años", "Similar to other years");
-  return `${diferencia > 0 ? "+" : "−"}${Math.abs(diferencia).toLocaleString(localeActual())} %`;
-}
+import { t, useIdioma } from "./idioma";
 
 /**
  * «En números» de la ficha de provincia (F4-D5): puesto en el ranking, este año contra los anteriores y la temporada.
@@ -55,7 +45,7 @@ export function NumerosRegion({
         : t(`el promedio de ${anio.desde} a ${anio.hasta}`, `the ${anio.desde}–${anio.hasta} average`);
     items.push({
       nombre: t(`Año ${anio.anio}`, `Year ${anio.anio}`),
-      valor: comparacionAnio(anio.acumulado, anio.promedio),
+      valor: textoComparacion(anio.acumulado, anio.promedio),
       detalle: t(
         `hasta ${MESES_LARGOS[anio.hastaMes - 1]}, contra ${contra}`,
         `through ${MESES_LARGOS[anio.hastaMes - 1]}, vs. ${contra}`,

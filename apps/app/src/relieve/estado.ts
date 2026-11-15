@@ -14,6 +14,8 @@ interface EstadoRelieve {
   /** Línea de tiempo: en uso, día elegido (índice de `days`) y si está reproduciendo. */
   linea: { activa: boolean; dia: number; play: boolean };
   plano: boolean;
+  /** Mapa base con la imagen satelital en vez del modelo (#396). */
+  satelital: boolean;
   giro: boolean;
   /** Ventana de En vivo, en horas. */
   horasVivo: 6 | 24 | 48;
@@ -32,7 +34,7 @@ interface EstadoRelieve {
   alternarRegion: (id: string | null) => void;
   usarLinea: (cambio: Partial<EstadoRelieve["linea"]>) => void;
   cambiar: (
-    cambio: Partial<Pick<EstadoRelieve, "plano" | "giro" | "horasVivo" | "focoVivo" | "nivelesVivo" | "ranking" | "guia" | "focoZona">>,
+    cambio: Partial<Pick<EstadoRelieve, "plano" | "satelital" | "giro" | "horasVivo" | "focoVivo" | "nivelesVivo" | "ranking" | "guia" | "focoZona">>,
   ) => void;
 }
 
@@ -43,6 +45,7 @@ export const useRelieve = create<EstadoRelieve>()((set) => ({
   seleccion: null,
   linea: LINEA_LIBRE,
   plano: false,
+  satelital: false,
   giro: true,
   horasVivo: 48,
   focoVivo: null,

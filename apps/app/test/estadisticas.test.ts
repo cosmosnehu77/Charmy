@@ -1,6 +1,6 @@
 import type { components } from "@charmy/contracts-api";
 import type { CeldaCalendario } from "@/calendario/grilla";
-import { anioContraLoNormal, resumenCalendario } from "@/calendario/estadisticas";
+import { anioContraLoNormal, porAnio, porOrigen, resumenCalendario } from "@/calendario/estadisticas";
 import { resumenFocos } from "@/consulta/estadisticas";
 
 type Foco = components["schemas"]["Hotspot"];
@@ -8,6 +8,35 @@ type Foco = components["schemas"]["Hotspot"];
 // Valores inventados con la forma del contrato.
 const celda = (year: number, month: number, value: number, percentile: number) =>
   ({ year, month, value, median: 2, anomaly: value - 2, percentile, origin: "viirs_medido" }) as CeldaCalendario;
+
+describe("detalle del calendario (F4-R2)", () => {
+  const celdas = [
+    celda(2024, 1, 10, 80),
+    celda(2024, 2, 4, 50),
+    celda(2025, 1, 22, 99),
+    celda(2025, 2, 0, 20),
+    celda(2025, 7, 1, 10),
+  ];
+
+  it("porAnio suma cada año, cuenta sus meses y los que quedaron fuera de lo normal, en orden", () => {
+    expect(porAnio(celdas)).toEqual([
+      { year: 2024, total: 14, meses: 2, sobre: 1, bajo: 0, sinFuego: 0 },
+      { year: 2025, total: 23, meses: 3, sobre: 1, bajo: 2, sinFuego: 1 },
+    ]);
+  });
+
+  it("porOrigen cuenta los meses de cada origen, del más usado al menos usado", () => {
+    const mezcla = [...celdas, { ...celda(2012, 3, 1, 50), origin: "modis_convertido" } as CeldaCalendario];
+    expect(porOrigen(mezcla)).toEqual([
+      { origin: "viirs_medido", meses: 5 },
+      { origin: "modis_convertido", meses: 1 },
+    ]);
+  });
+
+  it("el resumen cuenta los meses sin fuego (valor 0)", () => {
+    expect(resumenCalendario(celdas).mesesSinFuego).toBe(1);
+  });
+});
 
 describe("resumenCalendario", () => {
   const celdas = [

@@ -572,3 +572,12 @@ export function serieUltimoMes(
   }
   return serie;
 }
+
+/**
+ * Opacidad de las provincias (`reg-2d`, `reg-3d`) y del gris de En vivo. Con una provincia elegida van opacas para
+ * que las rutas del mapa base no se mezclen (#251); con la imagen satelital (#396), transparentes para ver el terreno.
+ */
+export function opacidadRegiones(seleccion: boolean, satelital: boolean): { regiones: number; gris: number } {
+  if (satelital) return { regiones: seleccion ? 0.7 : 0.45, gris: 0.15 };
+  return { regiones: seleccion ? 1 : 0.92, gris: 0.55 };
+}

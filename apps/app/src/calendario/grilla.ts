@@ -69,7 +69,7 @@ export function colorTexto(fondo: string): string {
 }
 
 /** Cómo se obtuvo cada valor (esquema.md). Un origen nuevo que no esté acá se muestra tal cual. */
-function textoOrigen(origin: string): string {
+export function textoOrigen(origin: string): string {
   if (origin === "modis_convertido") return t("MODIS convertido", "converted MODIS");
   if (origin === "modis_medido") return t("MODIS medido", "measured MODIS");
   if (origin === "viirs_medido") return t("VIIRS medido", "measured VIIRS");

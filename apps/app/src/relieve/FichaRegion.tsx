@@ -4,6 +4,7 @@ import { ArrowLeft, X } from "lucide-react";
 import { useCalendarioRegion } from "./consultas";
 import type { FocoReciente } from "./datos";
 import { DetalleFoco } from "./EnVivo";
+import { NumerosRegion } from "./NumerosRegion";
 import { useRelieve } from "./estado";
 import {
   nivelPercentil,
@@ -129,6 +130,7 @@ export function FichaRegion({
                 )}
               </div>
             </dl>
+            <NumerosRegion region={region.id} posicion={posicion} total={regiones.length} conHistorial={ultimo != null} />
             <div className="flex items-end gap-2">
               <Charmy size={64} mood="explica" outfit="cientifica" decorative className="shrink-0" />
               <p className="mb-3.5 rounded-[14px] rounded-bl-[4px] bg-white/10 px-3 py-2.5 text-[13.5px] leading-snug">{dice}</p>

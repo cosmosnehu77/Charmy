@@ -87,6 +87,7 @@ const focosZona = {
 
 const fetchSimulado = vi.fn<typeof fetch>();
 let resumenFalla = false;
+let calendarioFalla = false;
 
 function montar() {
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
@@ -100,6 +101,7 @@ function montar() {
 beforeEach(() => {
   vi.stubEnv("VITE_API_URL", "http://api.prueba/api/v1");
   resumenFalla = false;
+  calendarioFalla = false;
   fetchSimulado.mockReset();
   fetchSimulado.mockImplementation(async (url) => {
     const u = String(url);
@@ -112,7 +114,9 @@ beforeEach(() => {
     if (u.includes("/weather") || u.includes("/imagery")) return new Response("{}", { status: 503 });
     if (u.includes("/live")) return new Response(JSON.stringify(vivo));
     if (u.includes("/calendar"))
-      return new Response(JSON.stringify({ unit: "u", baseline: "b", region: "AR-Q", provisional: false, cells: [{ year: 2025, month: 1, value: 3, median: 2, anomaly: 1, percentile: 60 }] }));
+      return calendarioFalla
+        ? new Response("{}", { status: 500 })
+        : new Response(JSON.stringify({ unit: "u", baseline: "b", region: "AR-Q", provisional: false, cells: [{ year: 2024, month: 1, value: 1, median: 1, anomaly: 0, percentile: 50 }, { year: 2025, month: 1, value: 3, median: 2, anomaly: 1, percentile: 60 }] }));
     return new Response(JSON.stringify({ status: "ok" }));
   });
   vi.stubGlobal("fetch", fetchSimulado);
@@ -183,6 +187,33 @@ describe("vista Relieve (F4-R1)", () => {
     expect(within(linea).getByText("13/11 · 15 focos")).toBeInTheDocument();
     await u.click(within(ranking).getByRole("button", { name: /Neuquén/ }));
     expect(screen.queryByRole("region", { name: "Ficha de Neuquén" })).not.toBeInTheDocument();
+  });
+
+  it("la ficha suma sus números: puesto, este año contra los anteriores y la temporada (F4-D5)", async () => {
+    montar();
+    const u = userEvent.setup();
+    const ranking = await screen.findByRole("region", { name: "Ranking" });
+    await u.click(await within(ranking).findByRole("button", { name: /Neuquén/ }));
+    const ficha = screen.getByRole("region", { name: "Ficha de Neuquén" });
+    const numeros = within(ficha).getByRole("region", { name: "En números" });
+    expect(within(numeros).getByText("Puesto por focos").nextSibling).toHaveTextContent(/^1\.º de \d+$/);
+    // 2025 hasta enero: 3 días-celda; 2024 hasta enero: 1.
+    const anio = await within(numeros).findByText("Año 2025");
+    expect(anio.nextSibling).toHaveTextContent("+200 %");
+    expect(anio.nextSibling?.nextSibling).toHaveTextContent("hasta enero, contra 2024");
+    expect(within(numeros).getByRole("list", { name: /temporada/i })).toBeInTheDocument();
+  });
+
+  it("si el calendario de la región falla, la ficha sigue y esa parte dice que no está disponible (F4-D5)", async () => {
+    calendarioFalla = true;
+    montar();
+    const u = userEvent.setup();
+    const ranking = await screen.findByRole("region", { name: "Ranking" });
+    await u.click(await within(ranking).findByRole("button", { name: /Neuquén/ }));
+    const ficha = screen.getByRole("region", { name: "Ficha de Neuquén" });
+    expect(await within(ficha).findByText(/La comparación con otros años no está disponible ahora/)).toBeInTheDocument();
+    expect(within(ficha).getByText("30")).toBeInTheDocument();
+    expect(within(ficha).getByText("Puesto por focos")).toBeInTheDocument();
   });
 
   it("en celular, con la ficha abierta, el aviso de emergencias queda encima y Charmy guía se guarda (#218)", async () => {

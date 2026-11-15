@@ -1,15 +1,29 @@
-import { paleta, rampaConteo } from "@charmy/ui";
+import { interfaz, paleta, rampaConteo } from "@charmy/ui";
 import Phaser from "phaser";
 import { ALTO, ANCHO, DIA, SONIDO, TEXTO, color, dibujarFondo } from "../comun";
 import { cargarDia } from "../datos";
-import { apagarFoco, encenderFoco, escaparFoco, nuevaPartida, planDeNivel, type FocoActivo, type Partida } from "../partida";
+import { DURACION_PASADAS_MS, planPorPasadas, potencia, type Ventana } from "../mecanica";
+import {
+  encenderFoco,
+  escaparFoco,
+  focoActivo,
+  golpearFoco,
+  nuevaPartida,
+  verificarFoco,
+  type FocoActivo,
+  type Partida,
+} from "../partida";
 
 const DURACION_MS = 60_000;
-/** Cuánto tarda un foco sin apagar en escaparse. */
-const VIDA_FOCO_MS = 4_000;
 const MARGEN = 20;
 /** Lugar para el marcador, que ocupa dos líneas. */
 const ARRIBA = 60;
+/** Cuánto hay que mantener apretado un foco de confianza baja para verificarlo. */
+const VERIFICAR_MS = 500;
+/** Lado del cuadro de un foco: crece con los toques que le faltan. */
+const lado = (golpes: number) => 7 + 3 * golpes;
+/** Hora de Argentina (UTC−3) de una hora UTC. */
+const horaArgentina = (horaUtc: number) => (horaUtc + 21) % 24;
 
 export class Nivel extends Phaser.Scene {
   private partida: Partida = nuevaPartida();
@@ -29,10 +43,13 @@ export class Nivel extends Phaser.Scene {
     // Margen arriba para el marcador y a los costados para que ningún foco quede cortado.
     const area = { ancho: ANCHO - 2 * MARGEN, alto: ALTO - ARRIBA - MARGEN };
     dibujarFondo(this, { x: MARGEN, y: ARRIBA }, area);
-    const focos = cargarDia(DIA, area);
-    planDeNivel(focos, DURACION_MS - VIDA_FOCO_MS).forEach((foco, id) => {
+    const plan = planPorPasadas(cargarDia(DIA, area), area.alto, DURACION_PASADAS_MS);
+    for (const ventana of plan.ventanas) {
+      this.time.delayedCall(ventana.desdeMs, () => this.pasada(ventana, area.alto));
+    }
+    plan.focos.forEach((foco, id) => {
       this.time.delayedCall(foco.apareceMs, () =>
-        this.encender({ id, x: foco.x + MARGEN, y: foco.y + ARRIBA, frp: foco.frp }),
+        this.encender(focoActivo(id, { ...foco, x: foco.x + MARGEN, y: foco.y + ARRIBA })),
       );
     });
     this.reloj = this.time.delayedCall(DURACION_MS, () => {
@@ -40,40 +57,107 @@ export class Nivel extends Phaser.Scene {
     });
   }
 
+  /** La franja del satélite cruza el área de juego mientras dura su pasada. */
+  private pasada(v: Ventana, alto: number) {
+    const [desde, hasta] = v.haciaElSur ? [ARRIBA, ARRIBA + alto] : [ARRIBA + alto, ARRIBA];
+    const franja = this.add.rectangle(ANCHO / 2, desde, ANCHO, 6, color(paleta.llama)).setAlpha(0.35).setDepth(5);
+    const rotulo = this.add
+      .text(12, desde, `Pasada del satélite: ${horaArgentina(v.hora)} h`, {
+        ...TEXTO,
+        fontSize: "13px",
+        color: interfaz.tintaSuave,
+      })
+      .setOrigin(0, v.haciaElSur ? 1 : 0)
+      .setDepth(5);
+    this.tweens.add({
+      targets: [franja, rotulo],
+      y: hasta,
+      duration: v.hastaMs - v.desdeMs,
+      onComplete: () => {
+        franja.destroy();
+        rotulo.destroy();
+      },
+    });
+  }
+
   private encender(foco: FocoActivo) {
     this.partida = encenderFoco(this.partida, foco);
-    const { x, y, frp } = foco;
-    // Más potencia (FRP), color más intenso de la rampa de conteo.
-    const tono = rampaConteo[Math.min(rampaConteo.length - 1, 3 + Math.floor(Math.log2(1 + frp)))]!;
-    const cuadro = this.add.rectangle(Math.round(x), Math.round(y), 10, 10, color(tono));
+    const { id, x, y, frp } = foco;
+    // Más potencia (FRP), color más intenso de la rampa de conteo. Una fuente fija va en gris y no titila.
+    const tono = foco.fuenteFija
+      ? interfaz.tintaSuave
+      : rampaConteo[Math.min(rampaConteo.length - 1, 3 + Math.floor(Math.log2(1 + frp)))]!;
+    const cuadro = this.add.rectangle(Math.round(x), Math.round(y), lado(foco.golpes), lado(foco.golpes), color(tono));
     cuadro.setInteractive({
       hitArea: new Phaser.Geom.Rectangle(-12, -12, 34, 34),
       hitAreaCallback: Phaser.Geom.Rectangle.Contains,
       useHandCursor: true,
     });
-    const titila = this.tweens.add({ targets: cuadro, scale: 1.4, duration: 300, yoyo: true, repeat: -1 });
+    const titila = foco.fuenteFija
+      ? null
+      : this.tweens.add({ targets: cuadro, scale: 1.3, duration: 300, yoyo: true, repeat: -1 });
+    // Confianza baja: puede ser una falsa alarma. Se marca con "?" hasta que se verifica.
+    const duda =
+      foco.confianza === "low"
+        ? this.add.text(x, y - 10, "?", { ...TEXTO, fontSize: "14px", color: interfaz.tinta }).setOrigin(0.5, 1)
+        : null;
     const borrar = () => {
-      titila.stop();
+      titila?.stop();
       cuadro.destroy();
+      duda?.destroy();
     };
-    const escape = this.time.delayedCall(VIDA_FOCO_MS, () => {
+    const escape = this.time.delayedCall(potencia(frp).escapeMs, () => {
       borrar();
-      this.partida = escaparFoco(this.partida, foco.id);
-      SONIDO.tocar("escape");
+      this.partida = escaparFoco(this.partida, id);
+      if (!foco.fuenteFija) SONIDO.tocar("escape");
     });
-    cuadro.once("pointerdown", () => {
+
+    const golpe = () => {
+      const antes = this.partida.marcador.puntos;
+      this.partida = golpearFoco(this.partida, id, this.reloj.getElapsed());
+      const { marcador } = this.partida;
+      const sigue = this.partida.activos.find((f) => f.id === id);
+      if (marcador.puntos < antes) this.flotar(x, y, `-${antes - marcador.puntos}`, interfaz.peligro);
+      if (sigue) {
+        cuadro.setSize(lado(sigue.golpes), lado(sigue.golpes));
+        SONIDO.tocar("apagar");
+        return;
+      }
       escape.remove();
       borrar();
-      this.partida = apagarFoco(this.partida, foco.id, this.reloj.getElapsed());
-      const { combo } = this.partida.marcador;
-      SONIDO.tocar(combo > 1 ? "combo" : "apagar");
-      if (combo > 1) {
-        const aviso = this.add
-          .text(x, y - 12, `x${combo}`, { ...TEXTO, fontSize: "14px", color: paleta.acento })
-          .setOrigin(0.5);
-        this.tweens.add({ targets: aviso, y: y - 36, alpha: 0, duration: 600, onComplete: () => aviso.destroy() });
+      if (foco.fuenteFija) {
+        SONIDO.tocar("escape");
+        return;
       }
+      SONIDO.tocar(marcador.combo > 1 ? "combo" : "apagar");
+      if (marcador.combo > 1) this.flotar(x, y, `x${marcador.combo}`, paleta.acento);
+    };
+
+    let mantener: Phaser.Time.TimerEvent | null = null;
+    cuadro.on("pointerdown", () => {
+      const actual = this.partida.activos.find((f) => f.id === id);
+      if (!actual) return;
+      if (actual.confianza !== "low" || actual.verificado) return golpe();
+      // Mantener apretado verifica; soltar antes es un toque sin verificar.
+      mantener = this.time.delayedCall(VERIFICAR_MS, () => {
+        mantener = null;
+        this.partida = verificarFoco(this.partida, id);
+        duda?.setText("✓");
+      });
     });
+    const soltar = () => {
+      if (!mantener) return;
+      mantener.remove();
+      mantener = null;
+      golpe();
+    };
+    cuadro.on("pointerup", soltar);
+    cuadro.on("pointerout", soltar);
+  }
+
+  private flotar(x: number, y: number, texto: string, tinta: string) {
+    const aviso = this.add.text(x, y - 12, texto, { ...TEXTO, fontSize: "14px", color: tinta }).setOrigin(0.5).setDepth(6);
+    this.tweens.add({ targets: aviso, y: y - 36, alpha: 0, duration: 600, onComplete: () => aviso.destroy() });
   }
 
   update() {

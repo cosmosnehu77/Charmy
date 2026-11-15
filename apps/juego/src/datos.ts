@@ -7,6 +7,8 @@ export interface FocoDelDia {
   hora_utc: string;
   frp: number;
   confidence: string;
+  /** Industria, antorcha de gas o volcán: calor de todos los días, no un incendio (F4-B2; hoy la muestra no lo trae). */
+  fuente_fija?: boolean;
 }
 
 export interface DiaJuego {

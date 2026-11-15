@@ -1,5 +1,7 @@
 import { MapPin, X } from "lucide-react";
 import { urlGoogleMaps, urlGoogleMapsEmbed } from "@/lib/enlaces";
+import { useEvidencia } from "@/vivo/consultas";
+import { ETIQUETAS_EVIDENCIA, TIPOS_EVIDENCIA, veredicto } from "@/vivo/veredictos";
 import type { FocoReciente } from "./datos";
 import { useRelieve } from "./estado";
 import { colorFoco, enNiveles, hace, type NivelFoco, nivelFoco, radioFoco, type RegionResumen } from "./logica";
@@ -174,6 +176,7 @@ export function DetalleFoco({ foco, avisoEnCelular = true }: { foco: FocoRecient
         </b>
         <span className="text-[13px] text-white/70">MW · {nivelFoco(foco.frp)}</span>
       </div>
+      <Veredicto foco={foco} />
       <dl className="mt-3 grid grid-cols-[auto_1fr] gap-x-3.5 gap-y-2 text-[13.5px]">
         <dt className="text-white/55">Detectado</dt>
         <dd className="m-0 text-right font-semibold tabular-nums">
@@ -227,5 +230,49 @@ export function DetalleFoco({ foco, avisoEnCelular = true }: { foco: FocoRecient
         <strong className="text-relieve-brillo">132</strong> en Chile.
       </p>
     </>
+  );
+}
+
+/**
+ * Veredicto del foco y la evidencia que lo sostiene (RF-VIV-02). El veredicto sale de varias señales, nunca de la IA
+ * sola (D-09). Si la evidencia no llega, se dice y el resto de la ficha sigue.
+ */
+function Veredicto({ foco }: { foco: FocoReciente }) {
+  const evidencia = useEvidencia(foco.id);
+  const v = veredicto(evidencia.data?.verdict ?? foco.veredicto);
+  return (
+    <section aria-label="Veredicto" className="mt-3 rounded-xl bg-white/5 px-3 py-2.5 text-[13px]">
+      <p className="flex items-center gap-2">
+        <i aria-hidden="true" className="size-2.5 rounded-full" style={{ background: v.color }} />
+        <strong>{v.texto}</strong>
+      </p>
+      <p className="mt-1 text-xs leading-snug text-white/60">
+        El veredicto combina satélite, fuentes fijas, noticias y reportes. La IA solo ayuda a leer noticias: que no haya
+        noticias no vuelve falso un foco.
+      </p>
+      {evidencia.isPending && <p className="mt-2 text-xs text-white/55">Buscando la evidencia…</p>}
+      {evidencia.isError && <p className="mt-2 text-xs text-white/70">La evidencia de este foco no está disponible ahora.</p>}
+      {evidencia.isSuccess &&
+        (evidencia.data.evidence.length === 0 ? (
+          <p className="mt-2 text-xs text-white/55">Todavía no hay evidencia además del satélite.</p>
+        ) : (
+          <ul className="mt-2 flex flex-col gap-1.5">
+            {evidencia.data.evidence.map((e) => (
+              <li key={`${e.kind}-${e.title}`} className="flex flex-col">
+                <span className="text-[11px] text-white/50">
+                  {TIPOS_EVIDENCIA[e.kind] ?? e.kind} · {ETIQUETAS_EVIDENCIA[e.label] ?? e.label}
+                </span>
+                {e.url ? (
+                  <a href={e.url} target="_blank" rel="noopener noreferrer" className="text-relieve-brillo underline underline-offset-2">
+                    {e.title}
+                  </a>
+                ) : (
+                  <span>{e.title}</span>
+                )}
+              </li>
+            ))}
+          </ul>
+        ))}
+    </section>
   );
 }

@@ -3,6 +3,7 @@ import { act, fireEvent, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import App from "@/App";
 import { useApp } from "@/estado/app";
+import { estadoInicialConsulta, useConsulta } from "@/estado/consulta";
 import { urlGoogleMaps, urlGoogleMapsEmbed } from "@/lib/enlaces";
 import { useRelieve } from "@/relieve/estado";
 
@@ -61,7 +62,24 @@ const vivo = {
       type: "Feature",
       id: "N20-2026-11-14T05:12:00Z--39.00000--70.00000",
       geometry: { type: "Point", coordinates: [-70, -39] },
-      properties: { acq_datetime: "2026-11-14T05:12:00Z", satellite: "N20", instrument: "VIIRS", confidence: "high", frp: 42.5, daynight: "N" },
+      properties: { acq_datetime: "2026-11-14T05:12:00Z", satellite: "N20", instrument: "VIIRS", confidence: "high", frp: 42.5, daynight: "N", verdict: "probable" },
+    },
+  ],
+};
+const evidencia = {
+  verdict: "probable",
+  score: 0.64,
+  signals: { satellite: 0.8, fixed_source: 0, news: 0.5, reports: 0 },
+  evidence: [{ kind: "noticia", title: "Titular de ejemplo sobre un incendio", url: "https://example.org/n", label: "apoya" }],
+};
+const focosZona = {
+  type: "FeatureCollection",
+  truncated: false,
+  features: [
+    {
+      type: "Feature",
+      geometry: { type: "Point", coordinates: [-71.3, -42.9] },
+      properties: { acq_datetime: "2025-01-10T15:00:00Z", source: "viirs", confidence: "high", frp: 12, daynight: "D" },
     },
   ],
 };
@@ -88,6 +106,9 @@ beforeEach(() => {
       return resumenFalla
         ? new Response(JSON.stringify({ code: "datos_no_disponibles", message: "No disponible" }), { status: 503 })
         : new Response(JSON.stringify(resumen));
+    if (u.includes("/evidence")) return new Response(JSON.stringify(evidencia));
+    if (u.includes("/hotspots")) return new Response(JSON.stringify(focosZona));
+    if (u.includes("/weather") || u.includes("/imagery")) return new Response("{}", { status: 503 });
     if (u.includes("/live")) return new Response(JSON.stringify(vivo));
     if (u.includes("/calendar"))
       return new Response(JSON.stringify({ unit: "u", baseline: "b", region: "AR-Q", provisional: false, cells: [{ year: 2025, month: 1, value: 3, median: 2, anomaly: 1, percentile: 60 }] }));
@@ -95,6 +116,7 @@ beforeEach(() => {
   });
   vi.stubGlobal("fetch", fetchSimulado);
   useApp.setState({ vista: "relieve" });
+  useConsulta.setState(estadoInicialConsulta("2026-11-14"));
   useRelieve.setState({
     pestana: "focos",
     seleccion: null,
@@ -122,6 +144,7 @@ describe("vista Relieve (F4-R1)", () => {
       "Riesgo",
       "Predicción",
       "En vivo",
+      "Tu zona",
     ]);
     const ranking = await screen.findByRole("region", { name: "Ranking" });
     expect(await within(ranking).findByText("Neuquén")).toBeInTheDocument();
@@ -230,7 +253,7 @@ describe("vista Relieve (F4-R1)", () => {
       type: "Feature",
       id: "N21-chico",
       geometry: { type: "Point", coordinates: [-70.2, -39.1] },
-      properties: { acq_datetime: "2026-11-14T06:00:00Z", satellite: "N21", instrument: "VIIRS", confidence: "nominal", frp: 3.5, daynight: "N" },
+      properties: { acq_datetime: "2026-11-14T06:00:00Z", satellite: "N21", instrument: "VIIRS", confidence: "nominal", frp: 3.5, daynight: "N", verdict: "sin_confirmar" },
     });
     try {
       montar();
@@ -296,5 +319,69 @@ describe("vista Relieve (F4-R1)", () => {
     expect(useApp.getState().vista).toBe("consulta");
     await u.click(screen.getByRole("button", { name: "Mapa por provincia" }));
     expect(useApp.getState().vista).toBe("relieve");
+  });
+
+  it("la ficha del foco en vivo dice su veredicto y por qué (RF-VIV-02)", async () => {
+    montar();
+    const u = userEvent.setup();
+    await u.click(screen.getByRole("tab", { name: "En vivo" }));
+    const panel = await screen.findByRole("complementary", { name: "Resumen en vivo" });
+    await u.click(await within(panel).findByRole("button", { name: /Neuquén.*42,5 MW/ }));
+    const ficha = screen.getByRole("region", { name: "Ficha del foco" });
+    expect(within(ficha).getByText("Probable")).toBeInTheDocument();
+    expect(await within(ficha).findByRole("link", { name: "Titular de ejemplo sobre un incendio" })).toHaveAttribute(
+      "href",
+      "https://example.org/n",
+    );
+    const pedido = fetchSimulado.mock.calls.map(([x]) => String(x)).find((x) => x.includes("/evidence"));
+    expect(pedido).toContain(encodeURIComponent("N20-2026-11-14T05:12:00Z--39.00000--70.00000"));
+  });
+});
+
+describe("tu zona en Relieve (#262)", () => {
+  it("elegir Tu zona abre su panel con las herramientas de dibujo y esconde el ranking", async () => {
+    montar();
+    const u = userEvent.setup();
+    await u.click(screen.getByRole("tab", { name: "Tu zona" }));
+    const panel = screen.getByRole("complementary", { name: "Tu zona" });
+    expect(screen.queryByRole("region", { name: "Ranking" })).not.toBeInTheDocument();
+    await u.click(within(panel).getByRole("button", { name: "Dibujar rectángulo" }));
+    expect(useConsulta.getState().dibujando).toBe("rectangle");
+    expect(within(panel).getByText(/dos esquinas opuestas/)).toBeInTheDocument();
+    expect(within(panel).getByLabelText("Desde")).toHaveValue("2022-01-01");
+    // Los filtros técnicos van plegados.
+    expect(within(panel).getByText("Más filtros")).toBeInTheDocument();
+    expect(screen.getByText(/no reemplaza a los servicios de emergencia/)).toBeInTheDocument();
+  });
+
+  it("con un punto y un radio: focos, calendario con CSV, contexto y reporte; borrar el área los saca", async () => {
+    montar();
+    const u = userEvent.setup();
+    await u.click(screen.getByRole("tab", { name: "Tu zona" }));
+    const panel = screen.getByRole("complementary", { name: "Tu zona" });
+    await u.type(within(panel).getByLabelText("Latitud"), "-42,9");
+    await u.type(within(panel).getByLabelText("Longitud"), "-71,3");
+    await u.click(within(panel).getByRole("button", { name: "Usar este punto" }));
+    expect(useConsulta.getState().area?.type).toBe("Polygon");
+    expect(await within(panel).findByText("1 foco en el área y el período.")).toBeInTheDocument();
+    const calendario = await screen.findByRole("region", { name: "Calendario de quema" });
+    expect(within(calendario).getByRole("link", { name: /Descargar CSV/ })).toHaveAttribute(
+      "href",
+      expect.stringContaining("http://api.prueba/api/v1/"),
+    );
+    expect(within(panel).getByRole("region", { name: "Contexto del lugar" })).toBeInTheDocument();
+    expect(within(panel).getByRole("button", { name: "Reportar un foco" })).toBeInTheDocument();
+    await u.click(within(panel).getByRole("button", { name: "Borrar área" }));
+    expect(useConsulta.getState().area).toBeNull();
+    expect(screen.queryByRole("region", { name: "Calendario de quema" })).not.toBeInTheDocument();
+  });
+
+  it("salir de Tu zona apaga la herramienta de dibujo", async () => {
+    montar();
+    const u = userEvent.setup();
+    await u.click(screen.getByRole("tab", { name: "Tu zona" }));
+    await u.click(screen.getByRole("button", { name: "Dibujar polígono" }));
+    await u.click(screen.getByRole("tab", { name: "Focos" }));
+    expect(useConsulta.getState().dibujando).toBeNull();
   });
 });

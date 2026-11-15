@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { urlGoogleMaps, urlGoogleMapsEmbed } from "@/lib/enlaces";
 import { useFocosVivo, useEvidencia } from "./consultas";
 import { useVivo } from "./estado";
+import { filtrarPorSatelite, SATELITES_VIVO } from "./satelites";
 import { ETIQUETAS_EVIDENCIA, TIPOS_EVIDENCIA, veredicto } from "./veredictos";
 
 /** La lista es una ayuda accesible al mapa: más de esto no se puede recorrer. */
@@ -105,12 +106,12 @@ function Detalle({ id, coordenadas }: { id: string; coordenadas?: number[] }) {
 /** Focos de las últimas 48 horas con su veredicto (RF-VIV-01, RF-VIV-02). */
 export function PanelVivo() {
   const id = useId();
-  const { visible, seleccionado, cambiar } = useVivo();
+  const { visible, seleccionado, satelites, cambiar } = useVivo();
   const vivo = useFocosVivo();
   const area = useConsulta((s) => s.area);
   // Con un área elegida, la lista muestra solo sus focos; el mapa sigue mostrando todos.
   const caja = area ? bboxDeArea(area) : null;
-  const focos = [...(vivo.data?.features ?? [])]
+  const focos = filtrarPorSatelite(vivo.data?.features ?? [], satelites)
     .filter((f) => {
       if (!caja) return true;
       const [lon, lat] = f.geometry.coordinates;
@@ -142,11 +143,41 @@ export function PanelVivo() {
       {visible && vivo.data?.stale && vivo.data.message && (
         <p className="rounded-control border border-aviso-borde p-2 text-sm text-aviso-texto">{vivo.data.message}</p>
       )}
-      {visible && vivo.isSuccess && (
+      {visible && (
+        <fieldset className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm">
+          <legend className="sr-only">Satélites</legend>
+          <span aria-hidden="true" className="text-tinta-suave">
+            Satélites:
+          </span>
+          {SATELITES_VIVO.map((s) => (
+            <label key={s.codigo} className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                className="size-4 accent-[var(--color-acento)]"
+                checked={satelites.includes(s.codigo)}
+                onChange={(e) =>
+                  cambiar({
+                    satelites: e.target.checked ? [...satelites, s.codigo] : satelites.filter((c) => c !== s.codigo),
+                    seleccionado: null,
+                  })
+                }
+              />
+              {s.nombre}
+            </label>
+          ))}
+        </fieldset>
+      )}
+      {visible && vivo.isSuccess && satelites.length === 0 && (
+        <p className="text-sm text-tinta-suave">Elegí al menos un satélite para ver sus focos.</p>
+      )}
+      {visible && vivo.isSuccess && satelites.length > 0 && (
         <>
           <p className="text-xs text-tinta-suave">
-            {focos.length === 1 ? "1 foco" : `${focos.length} focos`} de VIIRS{caja ? " en el área" : ""} (NOAA-20 y
-            NOAA-21).{" "}
+            {focos.length === 1 ? "1 foco" : `${focos.length} focos`} de VIIRS{caja ? " en el área" : ""} (
+            {SATELITES_VIVO.filter((s) => satelites.includes(s.codigo))
+              .map((s) => s.nombre)
+              .join(" y ")}
+            ).{" "}
             {focos.length > MAXIMO_LISTA ? `Mostramos los ${MAXIMO_LISTA} más nuevos; el mapa los muestra todos. ` : ""}
             Tocá uno para ver por qué tiene ese veredicto.
           </p>

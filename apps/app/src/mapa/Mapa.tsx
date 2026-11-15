@@ -4,7 +4,7 @@ import * as maplibregl from "maplibre-gl";
 import urlWorker from "maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url";
 import { TerraDraw, TerraDrawPolygonMode, TerraDrawRectangleMode } from "terra-draw";
 import { TerraDrawMapLibreGLAdapter } from "terra-draw-maplibre-gl-adapter";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { bboxDeArea, type Poligono } from "@/consulta/consulta";
 import { useFocos } from "@/consulta/useFocos";
 import { useApp } from "@/estado/app";
@@ -13,6 +13,7 @@ import { atributosFoco } from "@/experto/atributos";
 import { urlGoogleMaps, urlGoogleMapsEmbed } from "@/lib/enlaces";
 import { useFocosVivo } from "@/vivo/consultas";
 import { useVivo } from "@/vivo/estado";
+import { filtrarPorSatelite } from "@/vivo/satelites";
 import { useContexto } from "@/contexto/estado";
 import { agregarCapas, datosArea, ponerImagen } from "./capas";
 import { esFallaDelEstilo, LIMITES_MVP, perfiles, transformarEstilo } from "./perfiles";
@@ -59,7 +60,11 @@ export default function Mapa() {
   const { focos } = useFocos();
   const vivoVisible = useVivo((s) => s.visible);
   const { data: vivoDatos } = useFocosVivo();
-  const vivo = vivoVisible ? (vivoDatos ?? null) : null;
+  const satelites = useVivo((s) => s.satelites);
+  const vivo = useMemo(
+    () => (vivoVisible && vivoDatos ? { ...vivoDatos, features: filtrarPorSatelite(vivoDatos.features, satelites) } : null),
+    [vivoVisible, vivoDatos, satelites],
+  );
   const capaImagen = useContexto((s) => s.capa);
   const [falla, setFalla] = useState(false);
 

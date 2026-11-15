@@ -642,6 +642,14 @@ html[data-tema="claro"] { --globo-acento: var(--ambar-hover); }
 .brasa-txt { position: relative; display: grid; justify-items: center; gap: 14px; padding: 44px 24px 110px; text-align: center; }
 .brasa-txt h1 { margin: 0; font: 800 clamp(44px, 8vw, 72px)/1 var(--titulos); letter-spacing: -.02em; color: var(--mapa-noche-tinta); }
 .brasa-txt h1 em { font-style: italic; color: var(--mapa-noche-acento); }
+/* ES/EN, como en la landing: el idioma activo va resaltado. */
+.idioma-btn {
+  display: inline-flex; gap: 2px; padding: 3px; border-radius: 100px; border: 1px solid rgba(242, 240, 232, .35);
+  background: rgba(11, 13, 10, .62); font: 500 12px/1 var(--mono); letter-spacing: .06em; cursor: pointer;
+}
+.idioma-btn span { padding: 7px 10px; border-radius: 100px; color: var(--mapa-noche-tinta); opacity: .7; transition: background .2s, color .2s, opacity .2s; }
+.idioma-btn span.on { background: var(--mapa-noche-tinta); color: var(--mapa-dia-tinta); opacity: 1; }
+.idioma-btn:hover { border-color: var(--mapa-noche-tinta); }
 #recordInicio { margin: 0; font: 500 12px/1.4 var(--mono); letter-spacing: .14em; text-transform: uppercase; color: var(--mapa-noche-acento); }
 .brasa-frase { margin: 0; max-width: 420px; font-size: 18px; line-height: 1.5; color: var(--mapa-noche-tinta); }
 .brasa-boton {

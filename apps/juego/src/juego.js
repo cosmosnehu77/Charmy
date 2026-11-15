@@ -8,11 +8,12 @@ import "@charmy/ui/tokens.css";
 import { Application, Container, Graphics, Mesh, MeshGeometry, Particle, ParticleContainer, Sprite, Text, Texture } from "pixi.js";
 import "./estilo.css";
 import { crearAzar } from "./azar";
-import { AYUDAS } from "./barra";
-import { AVISO_SIMULADOS, CONSEJOS, cierreDePartida, focos as focosTxt, fraseDelFinal, miles } from "./cierre";
+import { ayudas } from "./barra";
+import { CONSEJOS, avisoSimulados, cierreDePartida, focos, fraseDelFinal, miles as milesDe } from "./cierre";
 import { adentro, contornoDe, encuadre, proyectar, regionEn } from "./contorno";
 import { REGLAS, ordenDeRecorrido, siguiente, textoDeFoco } from "./explorador";
 import { aCelda, centroDe, crearGrilla } from "./grilla";
+import { conIdioma, guardarIdioma, idiomaInicial, localeDe } from "./idioma";
 import { LAGOS, RIOS, lagoTocado } from "./lagos";
 import { potencia } from "./mecanica";
 import {
@@ -28,11 +29,33 @@ import {
 import { estadoDeCharmy, estadoDelCierre } from "./ritmo";
 import { crearSonido, guardarSilencio, leerSilencio } from "./sonido";
 import sudamerica from "./sudamerica.json";
+import { HTML, TEXTOS } from "./textos";
 
 /** El almacenamiento del navegador, o uno vacío si está bloqueado (modo privado, permisos). */
 function almacen() {
   try { const s = window.localStorage; s.getItem("x"); return s; } catch { return { getItem: () => null, setItem: () => {} }; }
 }
+
+// ---------- Idioma: el mismo que en la landing (viene en el enlace, ?idioma=en) ----------
+let idioma = idiomaInicial(location.search, almacen());
+guardarIdioma(almacen(), idioma);
+/** Los textos del idioma activo (src/textos.ts). */
+const tx = () => TEXTOS[idioma];
+const miles = (n) => milesDe(n, idioma);
+const focosTxt = (n) => focos(n, idioma);
+/** Pone los textos fijos del HTML (data-t, data-t-aria, data-t-title, data-t-contenido) en el idioma activo. */
+function traducirPagina() {
+  const h = HTML[idioma];
+  document.documentElement.lang = idioma;
+  for (const el of document.querySelectorAll("[data-t]")) el.textContent = h[el.dataset.t];
+  for (const el of document.querySelectorAll("[data-t-aria]")) el.setAttribute("aria-label", h[el.dataset.tAria]);
+  for (const el of document.querySelectorAll("[data-t-title]")) el.title = h[el.dataset.tTitle];
+  for (const el of document.querySelectorAll("[data-t-contenido]")) el.setAttribute("content", h[el.dataset.tContenido]);
+  for (const el of document.querySelectorAll("#idioma [data-l]")) el.classList.toggle("on", el.dataset.l === idioma);
+  const salir = document.querySelector("#pausaSalir");
+  salir.href = conIdioma(salir.href, idioma);
+}
+traducirPagina();
 /** Rampa de potencia de los focos: las clases más fuertes de la YlOrRd de @charmy/ui. */
 const RAMPA = rampaConteo.slice(2);
 
@@ -565,7 +588,7 @@ function encender(foco) {
         SONIDO.tocar("escape");
         if (reglas.reloj) { tiempoMs -= CASTIGO_ESCAPE_MS; tiempoExtra(-CASTIGO_ESCAPE_MS); }
         sismo(0.6);
-        reaccionar("alerta", "¡Se escapó uno!");
+        reaccionar("alerta", tx().escapo);
         propagarFuego(foco);
       })
     : null;
@@ -676,8 +699,8 @@ function propagarFuego(foco, maximo = CELDAS_POR_ESCAPE) {
   if (frenos.length && reglas.gastaAgua) {
     const m = partida.marcador;
     partida = premiarCortafuegos(partida, frenos.length);
-    for (const c of frenos) { const p = centroDe(GRILLA, c); flotar(p.x, p.y, `Frenado +${PREMIO_CORTAFUEGOS}`, 0x9bbf6a, 1); }
-    reaccionar("festeja", "¡El cortafuegos lo frenó!");
+    for (const c of frenos) { const p = centroDe(GRILLA, c); flotar(p.x, p.y, tx().frenado(PREMIO_CORTAFUEGOS), 0x9bbf6a, 1); }
+    reaccionar("festeja", tx().cortafuegosFreno);
   }
   // El fuego no salta al mar.
   const nuevas = propagar(GRILLA, celda(foco), encendidas, azar, viento, partida.cortafuegos)
@@ -745,7 +768,7 @@ function dibujarPasada() {
   capas.satelite.position.set(sat.x, sat.y);
   capas.satelite.scale.set(clamp(sat.k * 0.55, 0.45, 0.85));
   rotuloPasada.position.set(Math.max(pts[0] - 6, rotuloPasada.width + 8), pts[1]);
-  rotuloPasada.text = `Barrida ${v.n} · ${v.sat}`;
+  rotuloPasada.text = tx().barrida(v.n, v.sat);
 }
 
 function lanzarVueloDelAvion(x, z) {
@@ -851,14 +874,14 @@ function lagoEnPantalla(sx, sy) {
 function elegir(h) {
   partida = elegirHerramienta(partida, h);
   for (const [n, b] of herramientaBotones) b.setAttribute("aria-pressed", String(n === h));
-  document.querySelector("#ayuda").textContent = AYUDAS[h];
+  document.querySelector("#ayuda").textContent = ayudas(idioma)[h];
 }
 function alLago() {
   if (partida.agua === TANQUE) return;
   partida = recargar(partida);
   SONIDO.tocar("recarga");
-  flotar(...ultimoLago(), "Tanque lleno", 0x7cbcd6, 1);
-  reaccionar("festeja", "¡Tanque lleno!");
+  flotar(...ultimoLago(), tx().tanqueLleno, 0x7cbcd6, 1);
+  reaccionar("festeja", tx().tanqueLlenoCharmy);
   if (reglas.gastaAgua) agotarFuente(lagoUsado);
 }
 let lagoUsado = LAGOS_P[0];
@@ -870,12 +893,12 @@ function tocarMapa(x, y) {
   if (lago) { lagoUsado = lago; return alLago(); }
   if (x < 0 || y < 0 || x > A || y > H) return;
   if (partida.herramienta === "piloto") {
-    if (reloj < partida.avionListoMs) { flotar(x, y, `Avión en ${Math.ceil((partida.avionListoMs - reloj) / 1000)} s`, 0x868d80); return; }
+    if (reloj < partida.avionListoMs) { flotar(x, y, tx().avionEn(Math.ceil((partida.avionListoMs - reloj) / 1000)), 0x868d80); return; }
     if (!pagar("piloto", x, y)) return;
     const antes = partida.marcador;
     partida = lanzarAvion(partida, x, y, reloj);
     lanzarVueloDelAvion(x, y);
-    reaccionar("explica", "¡Avión en camino!");
+    reaccionar("explica", tx().avionEnCamino);
     SONIDO.tocar("recarga");
     sincronizar("avion", 0.55);
     festejar(antes, x, y);
@@ -910,18 +933,18 @@ function soltar() {
 function verificarEnMapa(id) {
   const f = buscar(partida, id);
   if (!f) return;
-  if (f.confianza !== "low" || f.verificado) { flotar(f.x, f.y, "Es fuego de verdad", 0x868d80); return; }
+  if (f.confianza !== "low" || f.verificado) { flotar(f.x, f.y, tx().esFuego, 0x868d80); return; }
   if (reglas.gastaAgua && azar() < PROB_FALSA_ALARMA) {
     partida = descartarFalsaAlarma(partida, id);
-    flotar(f.x, f.y, `Falsa alarma +${PREMIO_FALSA_ALARMA}`, 0x9bbf6a, 1);
-    reaccionar("festeja", "Era una falsa alarma");
+    flotar(f.x, f.y, tx().falsaAlarma(PREMIO_FALSA_ALARMA), 0x9bbf6a, 1);
+    reaccionar("festeja", tx().eraFalsa);
     SONIDO.tocar("combo");
     sincronizar("falsa");
     return;
   }
   partida = verificarFoco(partida, id);
-  flotar(f.x, f.y, "Es real: apagalo", 0xe89d5b, 1);
-  reaccionar("alerta", "Ese es real");
+  flotar(f.x, f.y, tx().esReal, 0xe89d5b, 1);
+  reaccionar("alerta", tx().eseEsReal);
   SONIDO.tocar("recarga");
   sincronizar();
 }
@@ -930,7 +953,7 @@ function tocar(id) {
   const foco = partida.activos.find((f) => f.id === id);
   if (!foco) return;
   const ordenAntes = ordenDeRecorrido(partida.activos);
-  if (partida.herramienta === "bombero" && partida.agua < 1) { flotar(foco.x, foco.y, "Sin agua: buscá una fuente", 0xf0866a, 1); reaccionar("explica", "Te quedaste sin agua"); return; }
+  if (partida.herramienta === "bombero" && partida.agua < 1) { flotar(foco.x, foco.y, tx().sinAgua, 0xf0866a, 1); reaccionar("explica", tx().teQuedasteSinAgua); return; }
   const antes = partida.marcador;
   if (partida.herramienta === "cientifica") verificarEnMapa(id);
   else partida = tocarFoco(partida, id, reloj);
@@ -1076,7 +1099,7 @@ function enfocar(id) {
   const foco = partida.activos.find((f) => f.id === id);
   if (!foco) return;
   const orden = ordenDeRecorrido(partida.activos);
-  anunciar(textoDeFoco(foco, orden.indexOf(foco.id) + 1, orden.length, regiones.get(foco.id) ?? null));
+  anunciar(textoDeFoco(foco, orden.indexOf(foco.id) + 1, orden.length, regiones.get(foco.id) ?? null, idioma));
 }
 function trasTocar(id, ordenAntes) {
   if (partida.activos.some((f) => f.id === id)) return enfocar(id);
@@ -1084,7 +1107,7 @@ function trasTocar(id, ordenAntes) {
   if (quedan === 0) return terminar();
   const proximo = siguiente(ordenAntes, id, 1);
   elegido = null;
-  anunciar(`Apagado. Quedan ${focosTxt(quedan)}.`);
+  anunciar(tx().apagadoQuedan(focosTxt(quedan)));
   programar(1200, () => enfocar(proximo));
 }
 function dibujarElegido() {
@@ -1104,7 +1127,7 @@ const sueltos = () => partida.activos.reduce((n, f) => n + (f.fuenteFija ? 0 : 1
 const reanimar = (el, clase) => { el.classList.remove(clase); void el.offsetWidth; el.classList.add(clase); };
 function tiempoExtra(ms) {
   const el = $("#tiempoExtra");
-  el.textContent = `${ms > 0 ? "+" : "−"}${(Math.abs(ms) / 1000).toLocaleString("es-AR", { maximumFractionDigits: 1 })} s`;
+  el.textContent = `${ms > 0 ? "+" : "−"}${(Math.abs(ms) / 1000).toLocaleString(localeDe(idioma), { maximumFractionDigits: 1 })} s`;
   el.dataset.signo = ms > 0 ? "mas" : "menos";
   reanimar(el, "sube");
 }
@@ -1117,7 +1140,7 @@ function sismo(fuerza) {
 }
 function estallido(combo) {
   const el = $("#estallido");
-  el.textContent = `¡Combo x${combo}!`;
+  el.textContent = tx().combo(combo);
   el.dataset.nivel = combo >= 6 ? "3" : combo >= 4 ? "2" : "1";
   reanimar(el, "pum");
 }
@@ -1125,7 +1148,7 @@ function estallido(combo) {
 function pagar(herramienta, x, y) {
   if (!reglas.gastaAgua) return true;
   const cobrada = cobrar(partida, herramienta);
-  if (!cobrada) { flotar(x, y, `Faltan ${COSTOS[herramienta] - partida.marcador.puntos} puntos`, 0xf0866a, 1); SONIDO.tocar("escape"); reaccionar("pensando", "Faltan puntos"); return false; }
+  if (!cobrada) { flotar(x, y, tx().faltanPuntos(COSTOS[herramienta] - partida.marcador.puntos), 0xf0866a, 1); SONIDO.tocar("escape"); reaccionar("pensando", tx().faltanPuntosCharmy); return false; }
   partida = cobrada;
   return true;
 }
@@ -1140,7 +1163,7 @@ function festejar(antes, x, y) {
   }
   SONIDO.tocar(m.combo > 1 ? "combo" : "apagar");
   flotar(x, y, `+${m.puntos - antes.puntos}`, m.combo > 1 ? 0xe89d5b : 0xf2f0e8, Math.min(4, m.combo - 1));
-  reaccionar("festeja", m.combo >= 2 ? `¡Combo x${m.combo}!` : "¡Bien!", 1300);
+  reaccionar("festeja", m.combo >= 2 ? tx().combo(m.combo) : tx().bien, 1300);
   if (m.combo >= 2) estallido(m.combo);
   if (m.combo >= 3) sismo(Math.min(1, m.combo / 8));
 }
@@ -1220,17 +1243,16 @@ function barrida() {
   }
   programar(BARRIDA_MS, () => { barridasCompletas++; });
   programar(BARRIDA_MS + PAUSA_BARRIDA_MS, barrida);
-  const donde = [...new Set(zonasActivas.map((z) => z.n))].join(" y ");
-  anunciar(`Barrida ${n} de ${v.sat}, ${haciaElSur ? "de norte a sur" : "de sur a norte"}. Hay más fuego en ${donde}.`);
-  reaccionar(n === 1 ? "saluda" : "explica", n === 1 ? "¡A apagar!" : `Barrida ${n}: mirá ${zonasActivas[0].n}`, 2200);
+  const donde = [...new Set(zonasActivas.map((z) => tx().zona(z.n)))].join(tx().y);
+  anunciar(tx().barridaAnuncio(n, v.sat, haciaElSur, donde));
+  reaccionar(n === 1 ? "saluda" : "explica", n === 1 ? tx().aApagar : tx().barridaMira(n, tx().zona(zonasActivas[0].n)), 2200);
 }
 
 // ---------- Viento: cambia de dirección, inclina las llamas y empuja el fuego ----------
 const VIENTO_CAMBIO_MS = 13_000, VIENTO_SALTA_DESDE_MS = 7;
-const RUMBOS = ["norte", "noreste", "este", "sudeste", "sur", "sudoeste", "oeste", "noroeste"];
 let viento = { desdeGrados: 225, velocidadMs: 6 }, vientoMeta = { ...viento };
 let rafagas;
-const rumbo = (grados) => RUMBOS[Math.round((((grados % 360) + 360) % 360) / 45) % 8];
+const rumbo = (grados) => tx().rumbos[Math.round((((grados % 360) + 360) % 360) / 45) % 8];
 /** Hacia dónde sopla, en coordenadas del mapa (x al este, z al sur). */
 const haciaViento = () => { const a = ((viento.desdeGrados + 180) * Math.PI) / 180; return { x: Math.sin(a), z: -Math.cos(a) }; };
 function vientoEnPantalla() {
@@ -1245,8 +1267,8 @@ function cambiarViento() {
   programar(2600, saltoPorViento);
   SONIDO.tocar("viento");
   reanimar($("#vientoDato"), "cambia");
-  reaccionar("alerta", `Ahora el viento viene del ${rumbo(vientoMeta.desdeGrados)}`, 2200);
-  anunciar(`Cambió el viento: ahora sopla del ${rumbo(vientoMeta.desdeGrados)} a ${Math.round(vientoMeta.velocidadMs * 3.6)} kilómetros por hora.`);
+  reaccionar("alerta", tx().vientoViene(rumbo(vientoMeta.desdeGrados)), 2200);
+  anunciar(tx().vientoAnuncio(rumbo(vientoMeta.desdeGrados), Math.round(vientoMeta.velocidadMs * 3.6)));
 }
 /** Con viento fuerte, uno o dos focos tiran brasas a la celda de al lado, a favor del viento. */
 function saltoPorViento() {
@@ -1256,7 +1278,7 @@ function saltoPorViento() {
     const [foco] = viejos.splice(Math.floor(azar() * viejos.length), 1);
     const antes = partida.activos.length;
     propagarFuego(foco, 1);
-    if (partida.activos.length > antes) flotar(foco.x, foco.y, "¡Viento!", 0xf0866a, 1);
+    if (partida.activos.length > antes) flotar(foco.x, foco.y, tx().vientoFlotar, 0xf0866a, 1);
   }
 }
 function avanzarViento(dt) {
@@ -1298,10 +1320,10 @@ function agotarFuente(l) {
   const nueva = libres[Math.floor(azar() * libres.length)];
   fuentes.delete(l.i); fuentes.add(nueva.i);
   cam.sucia = true;
-  flotar(nueva.x, nueva.y, "Nueva fuente", 0x7cbcd6, 1);
+  flotar(nueva.x, nueva.y, tx().nuevaFuente, 0x7cbcd6, 1);
   for (let n = 0; n < 14; n++) emitir(agua, { x: nueva.x + (Math.random() - 0.5) * 8, y: altura(nueva.x, nueva.y) + 1, z: nueva.y + (Math.random() - 0.5) * 8, vy: 30 + Math.random() * 20, g: -70, vida: 1, s0: 0.3, s1: 0.2, estirar: 2, tint: 0xa8dcf3 });
-  anunciar(`Se agotó ${l.nombre}. Ahora hay agua en ${nueva.nombre}.`);
-  reaccionar("explica", `Ahora hay agua en ${nueva.nombre}`, 2800);
+  anunciar(tx().fuenteAgotada(l.nombre, nueva.nombre));
+  reaccionar("explica", tx().aguaEn(nueva.nombre), 2800);
 }
 
 // ---------- Charmy aguatero: va a la fuente más cercana y vuelve con agua para el tanque ----------
@@ -1309,14 +1331,14 @@ function agotarFuente(l) {
 const AGUATERO = { viajes: 2, velocidad: 42, carga: 4, esperaMs: 700 };
 let aguatero = null;
 function desplegarAguatero(x, z) {
-  if (muestra(MAR, x, z) > 0.5) { flotar(x, z, "Ahí hay mar", 0x868d80); return; }
-  if (aguatero) { flotar(x, z, "Ya hay un aguatero", 0x868d80, 1); return; }
+  if (muestra(MAR, x, z) > 0.5) { flotar(x, z, tx().mar, 0x868d80); return; }
+  if (aguatero) { flotar(x, z, tx().yaHayAguatero, 0x868d80, 1); return; }
   if (!pagar("aguatero", x, z)) return;
   const sprite = new Sprite(texCharmy["bombero-explica"]);
   sprite.anchor.set(0.5, 0.92);
   capas.focos.addChild(sprite);
   aguatero = { x, z, casa: { x, z }, fase: "ida", destino: null, espera: 0, viajes: 0, sprite, mira: 1, sale: 0 };
-  reaccionar("explica", "¡Voy por agua!");
+  reaccionar("explica", tx().voyPorAgua);
   SONIDO.tocar("recarga");
 }
 function moverAguatero(dt) {
@@ -1347,10 +1369,10 @@ function moverAguatero(dt) {
   // Volvió: descarga en el tanque.
   const antes = partida.agua;
   partida = { ...partida, agua: Math.min(TANQUE, partida.agua + AGUATERO.carga) };
-  flotar(a.x, a.z, `+${partida.agua - antes} de agua`, 0x7cbcd6, 1);
+  flotar(a.x, a.z, tx().deAgua(partida.agua - antes), 0x7cbcd6, 1);
   SONIDO.tocar("recarga");
   a.viajes++; a.sprite.texture = texCharmy["bombero-explica"];
-  if (a.viajes >= AGUATERO.viajes) { a.sale = tiempoReal; flotar(a.x, a.z, "¡Listo, me voy!", 0x868d80); } else { a.fase = "ida"; a.destino = null; }
+  if (a.viajes >= AGUATERO.viajes) { a.sale = tiempoReal; flotar(a.x, a.z, tx().meVoy, 0x868d80); } else { a.fase = "ida"; a.destino = null; }
 }
 function dibujarAguatero() {
   const a = aguatero;
@@ -1395,14 +1417,14 @@ function pintarCharmy() {
 const BRIGADA = { max: 3, velocidad: 30, focos: 3, vidaMs: 32_000, golpeMs: 600, alcance: 3 };
 let unidades = [];
 function desplegarBrigada(x, z) {
-  if (muestra(MAR, x, z) > 0.5) { flotar(x, z, "Ahí hay mar", 0x868d80); return; }
-  if (unidades.length >= BRIGADA.max) { flotar(x, z, `Máximo ${BRIGADA.max} brigadas`, 0x868d80, 1); return; }
+  if (muestra(MAR, x, z) > 0.5) { flotar(x, z, tx().mar, 0x868d80); return; }
+  if (unidades.length >= BRIGADA.max) { flotar(x, z, tx().maxBrigadas(BRIGADA.max), 0x868d80, 1); return; }
   if (!pagar("brigada", x, z)) return;
   const sprite = new Sprite(TEX.camion);
   sprite.anchor.set(0.5, 0.85);
   capas.focos.addChild(sprite);
   unidades.push({ x, z, objetivo: null, apagados: 0, nacio: reloj, trabajo: 0, sprite, mira: 1, sale: 0 });
-  reaccionar("explica", "¡Allá va la brigada!");
+  reaccionar("explica", tx().allaVa);
   SONIDO.tocar("recarga");
   for (let n = 0; n < 10; n++) emitir(humo, { x: x + (Math.random() - 0.5) * 6, y: altura(x, z) + 1, z: z + (Math.random() - 0.5) * 6, vy: 4, vida: 0.8, s0: 0.1, s1: 0.3, a0: 0.5, tint: 0xb99b67 });
 }
@@ -1525,8 +1547,8 @@ function empezar(m = "normal") {
   if (!MOVIMIENTO_REDUCIDO) { cam.pitch = 1.1; }
   cam.panX = 0; cam.panZ = 0; objetivo.zoom = 1;
   cam.sucia = true;
-  if (modo === "explorador") anunciar(`Modo explorador, sin reloj: ${partida.activos.length} focos simulados. Usá las flechas o Tab para recorrerlos, Enter o Espacio para apagar, V para verificar y Escape para terminar.`);
-  else anunciar(`Empieza la partida con ${TIEMPO_INICIAL_MS / 1000} segundos. Cada foco apagado suma tiempo. ${AYUDAS.bombero}`);
+  if (modo === "explorador") anunciar(tx().inicioExplorador(partida.activos.length));
+  else anunciar(tx().inicioNormal(TIEMPO_INICIAL_MS / 1000, ayudas(idioma).bombero));
 }
 /** `causa`: "tiempo" (se acabó el reloj), "victoria" (no quedó ningún foco) o nada (modo explorador o Escape). */
 function terminar(causa = "") {
@@ -1542,22 +1564,22 @@ function terminar(causa = "") {
   if (esRecord) guardarRecord(almacen(), m.puntos);
   SONIDO.tocar(victoria ? "victoria" : "fin");
   if (victoria) sismo(1);
-  const { consejo } = cierreDePartida(Math.floor(Math.random() * CONSEJOS.length), m.fijasTocadas);
+  const { consejo } = cierreDePartida(Math.floor(Math.random() * CONSEJOS.length), m.fijasTocadas, idioma);
   const ahora = Date.now();
   let mejores = leerMejores(almacen(), record);
   if (reglas.sumaRecord && m.puntos > 0) { mejores = sumarMejor(mejores, m.puntos, ahora); guardarMejores(almacen(), mejores); }
-  const frase = fraseDelFinal({ puntos: m.puntos, antes, record, apagados: m.apagados, barridas: barridaN, victoria, sumaRecord: reglas.sumaRecord });
-  const chip = victoria ? (esRecord ? "¡Apagaste todo! Récord nuevo" : "¡Apagaste todo!") : esRecord ? "Récord nuevo" : causa === "tiempo" ? "Se acabó el tiempo" : "Fin de la partida";
+  const frase = fraseDelFinal({ puntos: m.puntos, antes, record, apagados: m.apagados, barridas: barridaN, victoria, sumaRecord: reglas.sumaRecord }, idioma);
+  const chip = victoria ? (esRecord ? tx().chipTodoRecord : tx().chipTodo) : esRecord ? tx().chipRecord : causa === "tiempo" ? tx().chipTiempo : tx().chipFin;
   const plano = frase.replace(/<[^>]+>/g, "");
-  anunciar(`${chip}. ${miles(m.puntos)} puntos. ${plano} ${consejo} ${AVISO_SIMULADOS} Enter para jugar otra vez.`);
+  anunciar(tx().finAnuncio(chip, miles(m.puntos), `${plano} ${consejo} ${avisoSimulados(idioma)}`));
   $("#charmyFin").innerHTML = dibujarCharmyGuia(victoria ? "festeja" : estadoDelCierre(m, esRecord), "bombero");
   $("#chipFin").textContent = chip;
-  $("#tituloFin").innerHTML = `${miles(m.puntos)}<small>puntos</small>`;
+  $("#tituloFin").innerHTML = `${miles(m.puntos)}<small>${tx().puntos}</small>`;
   $("#resumenFin").innerHTML = frase;
   $("#mejoresCaja").hidden = mejores.length === 0;
-  $("#mejoresFin").innerHTML = mejores.map((x, i) => `<li${x.t === ahora ? ' class="esta"' : ""}><i>${i + 1}</i><span>${x.t === ahora ? "Esta partida" : cuando(x.t, ahora)}</span><b>${miles(x.p)}</b></li>`).join("");
+  $("#mejoresFin").innerHTML = mejores.map((x, i) => `<li${x.t === ahora ? ' class="esta"' : ""}><i>${i + 1}</i><span>${x.t === ahora ? tx().estaPartida : cuando(x.t, ahora, idioma)}</span><b>${miles(x.p)}</b></li>`).join("");
   $("#consejoFin").textContent = consejo;
-  $("#avisoFin").textContent = AVISO_SIMULADOS;
+  $("#avisoFin").textContent = avisoSimulados(idioma);
   for (const d of dibujos.values()) if (!d.muere) d.muere = { causa: "apagado", desde: tiempoReal + Math.random() * 0.6 };
   for (const u of unidades) if (!u.sale) u.sale = tiempoReal;
   if (aguatero && !aguatero.sale) aguatero.sale = tiempoReal;
@@ -1566,6 +1588,7 @@ function terminar(causa = "") {
   mostrar("#fin");
   $("#otraVez").focus();
 }
+const pintarRecordInicio = () => { $("#recordInicio").textContent = tx().tuRecord(miles(leerRecord(almacen()))); };
 function irAlInicio() {
   estado = "inicio";
   limpiarMundo();
@@ -1574,7 +1597,7 @@ function irAlInicio() {
   $("#hud").hidden = true; $("#abajo").hidden = true; $("#leyenda").hidden = true;
   const record = leerRecord(almacen());
   $("#recordInicio").hidden = record <= 0;
-  $("#recordInicio").textContent = `Tu récord · ${miles(record)} puntos`;
+  pintarRecordInicio();
   mostrar("#inicio");
   medirMargenes();
   $("#jugar").focus();
@@ -1585,19 +1608,18 @@ const tanque = $("#tanque");
 for (let i = 0; i < TANQUE; i++) tanque.appendChild(document.createElement("i"));
 const previo = {};
 const costoBotones = [...herramientaBotones].filter(([h]) => COSTOS[h]);
-const NOMBRE_UNIDAD = { piloto: "Avión", brigada: "Brigada", aguatero: "Aguatero" };
 const ultimoAviso = {};
 /** Una unidad quedó lista: cartel grande que tiembla arriba de la barra y el botón salta. Como mucho una vez cada 9 s por unidad. */
 function avisarListo(h, boton) {
   if (ultimoAviso[h] !== undefined && reloj - ultimoAviso[h] < 9000) return;
   ultimoAviso[h] = reloj;
   const el = $("#listoAviso");
-  el.textContent = `¡${NOMBRE_UNIDAD[h]} ${h === "brigada" ? "lista" : "listo"}! Tecla ${HERRAMIENTAS.indexOf(h) + 1}`;
+  el.textContent = `${tx().unidadLista[h]} ${tx().tecla(HERRAMIENTAS.indexOf(h) + 1)}`;
   reanimar(el, "pum");
   reanimar(boton, "salta");
   boton.addEventListener("animationend", () => boton.classList.remove("salta"), { once: true });
   SONIDO.tocar("combo");
-  reaccionar("explica", `¡Podés usar ${h === "brigada" ? "la brigada" : h === "piloto" ? "el avión" : "el aguatero"}!`, 2000);
+  reaccionar("explica", tx().podesUsar[h], 2000);
 }
 function actualizarMarcador() {
   const m = partida.marcador;
@@ -1612,18 +1634,18 @@ function actualizarMarcador() {
   // La barra del combo: cuánto falta para que se corte la racha.
   const racha = m.combo > 0 && m.ultimoApagadoMs !== null ? clamp(1 - (reloj - m.ultimoApagadoMs) / VENTANA_COMBO_MS, 0, 1) : 0;
   $("#comboBarra").style.transform = `scaleX(${racha.toFixed(3)})`;
-  set("agua", partida.agua, (v) => { [...tanque.children].forEach((c, i) => c.classList.toggle("lleno", i < v)); tanque.classList.toggle("bajo", v <= 3); tanque.setAttribute("aria-label", `Agua ${v} de ${TANQUE}`); $("#aguaNum").textContent = `${v}/${TANQUE}`; });
-  set("tiempo", reglas.reloj ? Math.max(0, Math.ceil(tiempoMs / 1000)) : -1, (v) => { $("#tiempo").textContent = v < 0 ? "Sin reloj" : `${v} s`; $("#tiempoDato").classList.toggle("poco", v >= 0 && v <= 10); });
+  set("agua", partida.agua, (v) => { [...tanque.children].forEach((c, i) => c.classList.toggle("lleno", i < v)); tanque.classList.toggle("bajo", v <= 3); tanque.setAttribute("aria-label", tx().tanque(v, TANQUE)); $("#aguaNum").textContent = `${v}/${TANQUE}`; });
+  set("tiempo", reglas.reloj ? Math.max(0, Math.ceil(tiempoMs / 1000)) : -1, (v) => { $("#tiempo").textContent = v < 0 ? tx().sinReloj : `${v} s`; $("#tiempoDato").classList.toggle("poco", v >= 0 && v <= 10); });
   set("ritmo", reglas.reloj ? Math.round(ritmoReloj * 10) : 10, (v) => {
-    $("#ritmo").textContent = v > 10 ? `corre x${(v / 10).toLocaleString("es-AR")}` : "";
+    $("#ritmo").textContent = v > 10 ? tx().corre((v / 10).toLocaleString(localeDe(idioma))) : "";
     $("#tiempoDato").dataset.ritmo = v >= 20 ? "3" : v >= 15 ? "2" : v > 10 ? "1" : "0";
   });
   const v = ventanas.find((w) => reloj >= w.desdeMs && reloj < w.hastaMs);
   set("pasada", v ? v.n : modo === "explorador" ? -2 : -1, (n) => {
-    $("#pasada").textContent = n === -2 ? "Focos de práctica" : n < 0 ? "Esperando al satélite…" : `Barrida ${n} · ${v.sat}`;
+    $("#pasada").textContent = n === -2 ? tx().focosPractica : n < 0 ? tx().esperandoSatelite : tx().barrida(n, v.sat);
   });
   const avion = Math.max(0, Math.ceil((partida.avionListoMs - reloj) / 1000));
-  set("avion", avion, (s) => { nombreAvion.textContent = s > 0 ? `Avión (${s} s)` : "Avión"; });
+  set("avion", avion, (s) => { nombreAvion.textContent = s > 0 ? tx().avionEspera(s) : tx().avion; });
   // Lo que no se puede pagar queda apagado.
   for (const [h, b] of costoBotones) {
     const alcanza = !reglas.gastaAgua || m.puntos >= COSTOS[h];
@@ -1638,7 +1660,7 @@ function actualizarMarcador() {
   const vp = vientoEnPantalla();
   $("#vientoFlecha").style.transform = `rotate(${Math.atan2(vp.y, vp.x).toFixed(2)}rad)`;
   set("viento", `${rumbo(viento.desdeGrados)}-${Math.round(viento.velocidadMs * 3.6)}`, () => {
-    $("#vientoTxt").textContent = `del ${rumbo(viento.desdeGrados)} · ${Math.round(viento.velocidadMs * 3.6)} km/h`;
+    $("#vientoTxt").textContent = tx().vientoHud(rumbo(viento.desdeGrados), Math.round(viento.velocidadMs * 3.6));
     $("#vientoDato").classList.toggle("fuerte", viento.velocidadMs >= VIENTO_SALTA_DESDE_MS);
   });
 }
@@ -1730,9 +1752,19 @@ async function iniciar() {
   $("#otraVez").addEventListener("click", () => empezar(modo));
   $("#volver").addEventListener("click", irAlInicio);
   const silencio = $("#silencio");
-  const pintarSilencio = () => { silencio.setAttribute("aria-pressed", String(SONIDO.silenciado())); silencio.setAttribute("aria-label", SONIDO.silenciado() ? "Prender el sonido" : "Apagar el sonido"); };
+  const pintarSilencio = () => { silencio.setAttribute("aria-pressed", String(SONIDO.silenciado())); silencio.setAttribute("aria-label", SONIDO.silenciado() ? tx().prenderSonido : tx().apagarSonido); };
   silencio.addEventListener("click", () => { SONIDO.silenciar(!SONIDO.silenciado()); guardarSilencio(almacen(), SONIDO.silenciado()); pintarSilencio(); });
   pintarSilencio();
+  // ES/EN en la pantalla de inicio: cambia los textos en el momento y queda guardado para la próxima.
+  $("#idioma").addEventListener("click", () => {
+    idioma = idioma === "en" ? "es" : "en";
+    guardarIdioma(almacen(), idioma);
+    traducirPagina();
+    pintarSilencio();
+    etiquetaTema();
+    pintarRecordInicio();
+    for (const k of Object.keys(previo)) delete previo[k];
+  });
   const camBoton = (sel, k) => $(sel).addEventListener("click", () => teclaCamara(k));
   camBoton("#camVista", "r"); camBoton("#camIzq", "q"); camBoton("#camDer", "e"); camBoton("#camMas", "+"); camBoton("#camMenos", "-"); camBoton("#camCentro", "0");
   $("#rampa").innerHTML = RAMPA.map((c) => `<span style="background:${c}"></span>`).join("");
@@ -1833,13 +1865,13 @@ function pintarFondo(x, w, h) {
   x.fillStyle = g; x.fillRect(0, 0, w, h);
 }
 
+const etiquetaTema = () => $("#tema").setAttribute("aria-label", temaActual === "claro" ? tx().aTemaOscuro : tx().aTemaClaro);
 function aplicarTema(id) {
   temaActual = id === "claro" ? "claro" : "oscuro";
   T = TEMAS_MAPA[temaActual];
   document.documentElement.dataset.tema = temaActual;
   try { localStorage.setItem("charmy-tema", temaActual); } catch (e) {}
-  const boton = $("#tema");
-  boton.setAttribute("aria-label", temaActual === "claro" ? "Cambiar a tema oscuro" : "Cambiar a tema claro");
+  etiquetaTema();
   if (!app || !terreno) return;
   Object.assign(C, T.C);
   const viejo = texTerreno;
@@ -1878,7 +1910,7 @@ const DEMOS = {
     `<rect x="18" y="26" width="104" height="22" rx="11" class="d-traz" stroke-width="2" opacity=".5"/>` +
     `<rect class="nivel d-agua" x="22" y="30" width="96" height="14" rx="7"/>` +
     `<ellipse class="lago" cx="152" cy="40" rx="18" ry="9" fill="#4fa3c7" opacity=".55"/>` +
-    `<text x="152" y="66" text-anchor="middle" class="d-tinta" font-size="10" font-family="IBM Plex Mono, monospace">lago</text>`),
+    `<text x="152" y="66" text-anchor="middle" class="d-tinta" font-size="10" font-family="IBM Plex Mono, monospace">${tx().lago}</text>`),
   avion: () => svgDemo("demo-avion",
     `<ellipse class="d-suelo" cx="90" cy="62" rx="70" ry="6"/>` +
     [50, 90, 130].map((x, i) => llama(x, 56, 0.8, `style="--i:${i}"`)).join("") +
@@ -1918,21 +1950,21 @@ const DEMOS = {
 };
 
 const PASOS = [
-  { titulo: "¡Hola! Soy <em>Charmy.</em>", texto: "Te muestro cómo se juega. Los focos de esta versión son *simulados*: no son datos reales.", mood: "saluda", outfit: "bombero", demo: "focos" },
-  { objetivo: ".dato.pasada", titulo: "La <em>barrida</em>", texto: "Cada vez que el satélite *barre* el mapa aparecen focos nuevos, en zonas distintas.", mood: "explica", outfit: "cientifica", demo: "pasada" },
-  { objetivo: "#leyenda", titulo: "Los <em>focos</em>", texto: "Cuanto más *roja* es la luz, más fuerte es el foco, más agua pide y más puntos da.", mood: "explica", outfit: "guia", demo: "focos" },
-  { objetivo: '[data-herramienta="bombero"]', herramienta: "bombero", titulo: "1 · <em>Agua</em>", texto: "Tocá un foco para *apagarlo*. Los fuertes piden más de un toque.", mood: "explica", outfit: "bombero", demo: "agua" },
-  { objetivo: ".dato.agua", herramienta: "bombero", titulo: "El <em>tanque</em>", texto: "Cada toque gasta agua. Recargá en una *fuente*: sirve una vez y después el agua aparece *en otro lado*.", mood: "pensando", outfit: "bombero", demo: "tanque" },
-  { objetivo: '[data-herramienta="piloto"]', herramienta: "piloto", titulo: "2 · <em>Avión</em>", texto: "Apaga una *zona entera*. Cuesta *80 puntos* y tarda 20 s en volver.", mood: "festeja", outfit: "piloto", demo: "avion" },
-  { objetivo: '[data-herramienta="cientifica"]', herramienta: "cientifica", titulo: "3 · <em>Verificar</em>", texto: "De los focos con *?*, seis de cada diez son *falsa alarma*. Verificalos: desaparecen sin gastar agua.", mood: "explica", outfit: "cientifica", demo: "verificar" },
-  { objetivo: "#vientoDato", titulo: "El <em>viento</em>", texto: "Cambia de dirección y *empuja el fuego* a las celdas vecinas. Mirá la flecha.", mood: "alerta", outfit: "guia", demo: "viento" },
-  { objetivo: '[data-herramienta="guia"]', herramienta: "guia", titulo: "4 · <em>Cortafuegos</em>", texto: "Ponelo hacia donde sopla el viento. Cuesta *10 puntos* y cada vez que frena al fuego *suma 25*.", mood: "explica", outfit: "guia", demo: "cortafuegos" },
-  { objetivo: '[data-herramienta="brigada"]', herramienta: "brigada", titulo: "5 · <em>Brigada</em>", texto: "Tocá el mapa y un camión va *solo* de foco en foco. Cuesta *50 puntos* y apaga hasta *tres*.", mood: "festeja", outfit: "bombero", demo: "brigada" },
-  { objetivo: '[data-herramienta="aguatero"]', herramienta: "aguatero", titulo: "6 · <em>Aguatero</em>", texto: "Un Charmy bombero te trae *8 de agua* en dos viajes y se va. Cuesta *30 puntos*.", mood: "saluda", outfit: "bombero", demo: "tanque" },
-  { objetivo: "#tiempoDato", titulo: "El <em>tiempo</em>", texto: "Cada foco apagado *suma segundos*. Mientras más fuego hay, más rápido corre el reloj.", mood: "alerta", outfit: "bombero", demo: "tiempo" },
-  { objetivo: "#hud .dato.combo", titulo: "El <em>combo</em>", texto: "Apagá varios seguidos y los puntos se *multiplican*. Si no queda ni un foco, *ganás* y valen doble.", mood: "festeja", outfit: "bombero", demo: "combo" },
-  { objetivo: "#camara", titulo: "La <em>cámara</em>", texto: "*Arrastrá* para moverte, botón *derecho* para girar y la *rueda* para acercar. Acá están también el sonido y el tema.", mood: "explica", outfit: "guia", demo: "camara" },
-  { titulo: "¡Listo para <em>salir!</em>", texto: "Esto es un juego. Si ves fuego de verdad, *llamá* a emergencias.", mood: "saluda", outfit: "bombero", demo: "llamar", final: true },
+  { mood: "saluda", outfit: "bombero", demo: "focos" },
+  { objetivo: ".dato.pasada", mood: "explica", outfit: "cientifica", demo: "pasada" },
+  { objetivo: "#leyenda", mood: "explica", outfit: "guia", demo: "focos" },
+  { objetivo: '[data-herramienta="bombero"]', herramienta: "bombero", mood: "explica", outfit: "bombero", demo: "agua" },
+  { objetivo: ".dato.agua", herramienta: "bombero", mood: "pensando", outfit: "bombero", demo: "tanque" },
+  { objetivo: '[data-herramienta="piloto"]', herramienta: "piloto", mood: "festeja", outfit: "piloto", demo: "avion" },
+  { objetivo: '[data-herramienta="cientifica"]', herramienta: "cientifica", mood: "explica", outfit: "cientifica", demo: "verificar" },
+  { objetivo: "#vientoDato", mood: "alerta", outfit: "guia", demo: "viento" },
+  { objetivo: '[data-herramienta="guia"]', herramienta: "guia", mood: "explica", outfit: "guia", demo: "cortafuegos" },
+  { objetivo: '[data-herramienta="brigada"]', herramienta: "brigada", mood: "festeja", outfit: "bombero", demo: "brigada" },
+  { objetivo: '[data-herramienta="aguatero"]', herramienta: "aguatero", mood: "saluda", outfit: "bombero", demo: "tanque" },
+  { objetivo: "#tiempoDato", mood: "alerta", outfit: "bombero", demo: "tiempo" },
+  { objetivo: "#hud .dato.combo", mood: "festeja", outfit: "bombero", demo: "combo" },
+  { objetivo: "#camara", mood: "explica", outfit: "guia", demo: "camara" },
+  { mood: "saluda", outfit: "bombero", demo: "llamar", final: true },
 ];
 
 var guiaAbierta = false;
@@ -1940,22 +1972,22 @@ var guiaAbierta = false;
 // ---------- Pausa: frena el reloj, los focos, el viento y las unidades ----------
 var enPausa = false;
 function pintarPausa() {
-  $("#pausaSonido").textContent = `Sonido: ${SONIDO.silenciado() ? "no" : "sí"}`;
+  $("#pausaSonido").textContent = tx().sonidoPausa(!SONIDO.silenciado());
   $("#pausaSonido").setAttribute("aria-pressed", String(!SONIDO.silenciado()));
-  $("#pausaTema").textContent = temaActual === "claro" ? "Tema claro" : "Tema oscuro";
+  $("#pausaTema").textContent = temaActual === "claro" ? tx().temaClaro : tx().temaOscuro;
 }
 function pausar() {
   if (estado !== "jugando" || modo === "explorador" || guiaAbierta || enPausa) return;
   cancelarMantener();
   pintarPausa();
   mostrar("#pausa");
-  anunciar("Pausa. El reloj está frenado.");
+  anunciar(tx().pausaAnuncio);
   $("#pausaSeguir").focus();
 }
 function seguir() {
   if (!enPausa) return;
   mostrar(null);
-  anunciar("Seguimos.");
+  anunciar(tx().seguimos);
 }
 function armarPausa() {
   $("#charmyInicio").innerHTML = dibujarCharmyGuia("saluda", "bombero");
@@ -1973,7 +2005,7 @@ let guiaPaso = 0, guiaDesdeInicio = false;
 const VISTA_GUIA = "charmy-brigada-guia-vista";
 
 function dibujarCharmyGuia(mood, outfit) {
-  return charmySvg({ mood, outfit, size: 128, label: `Charmy con traje de ${outfit}` });
+  return charmySvg({ mood, outfit, size: 128, label: tx().charmyTraje(outfit) });
 }
 
 function textoAnimado(texto) {
@@ -2019,22 +2051,22 @@ function colocarGuia() {
 
 function mostrarPaso(n) {
   guiaPaso = clamp(n, 0, PASOS.length - 1);
-  const paso = PASOS[guiaPaso];
+  const paso = PASOS[guiaPaso], texto = tx().pasos[guiaPaso];
   if (paso.herramienta) elegir(paso.herramienta);
   $("#camara").classList.toggle("guiada", paso.objetivo === "#camara");
   const figura = $("#guiaFigura"), globo = $("#guiaGlobo");
   figura.innerHTML = dibujarCharmyGuia(paso.mood, paso.outfit);
   for (const el of [figura, globo]) { el.classList.remove("salta", "entra"); void el.offsetWidth; }
   figura.classList.add("salta"); globo.classList.add("entra");
-  $("#guiaPaso").textContent = `${guiaPaso + 1} de ${PASOS.length}`;
-  $("#guiaTitulo").innerHTML = paso.titulo;
-  $("#guiaTexto").innerHTML = textoAnimado(paso.texto);
+  $("#guiaPaso").textContent = tx().pasoDe(guiaPaso + 1, PASOS.length);
+  $("#guiaTitulo").innerHTML = texto.titulo;
+  $("#guiaTexto").innerHTML = textoAnimado(texto.texto);
   $("#guiaDemo").innerHTML = DEMOS[paso.demo] ? DEMOS[paso.demo]() : "";
   $("#guiaPuntos").innerHTML = PASOS.map((_, i) => `<i class="${i === guiaPaso ? "on" : ""}"></i>`).join("");
   $("#guiaAtras").hidden = guiaPaso === 0;
   $("#guiaExplorar").hidden = !(paso.final && guiaDesdeInicio);
-  $("#guiaSig").textContent = paso.final ? (guiaDesdeInicio ? "Jugar" : "¡A jugar!") : "Siguiente";
-  anunciar(`${$("#guiaTitulo").textContent}. ${paso.texto.replace(/\*/g, "")}`);
+  $("#guiaSig").textContent = paso.final ? (guiaDesdeInicio ? tx().jugar : tx().aJugar) : tx().siguiente;
+  anunciar(`${$("#guiaTitulo").textContent}. ${texto.texto.replace(/\*/g, "")}`);
   requestAnimationFrame(colocarGuia);
   $("#guiaSig").focus({ preventScroll: true });
 }
@@ -2105,5 +2137,5 @@ armarGuiaYTema();
 iniciar().catch((e) => {
   console.error(e);
   const c = document.querySelector("#cargando");
-  if (c) c.textContent = "No se pudo iniciar el juego: este navegador no tiene WebGL disponible.";
+  if (c) c.textContent = tx().sinWebgl;
 });

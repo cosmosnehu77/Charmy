@@ -8,6 +8,7 @@ publica `apps/juego/dist` al entrar cambios en `main` (`deploy-web.yml`).
 ```bash
 pnpm dev --filter @charmy/juego       # http://localhost:5173
 pnpm check --filter @charmy/juego     # tipos, pruebas y compilación
+pnpm --filter @charmy/juego contorno  # regenera src/fondo.json desde data/muestras/regiones.geojson
 ```
 
 ## Reglas
@@ -17,7 +18,12 @@ pnpm check --filter @charmy/juego     # tipos, pruebas y compilación
 - Charmy se dibuja con `charmySvg()` de `@charmy/charmy/core` y se carga como textura. Nunca se copia su SVG.
 - Colores con `paleta`, `interfaz` y las rampas de `@charmy/ui`. Nada de valores sueltos.
 - La lógica (puntaje, combo, carga de datos) va en módulos puros con pruebas de Vitest; Phaser solo dibuja.
-- `src/partida.ts` (puntaje, combo, ritmo del nivel), `src/cierre.ts` (dato real y consejo) y `src/record.ts` (récord en
+- Una escena de Phaser por archivo en `src/escenas/` (`inicio`, `nivel`, `fin`); lo compartido (tamaño del lienzo,
+  textos, botón, fondo) en `src/comun.ts`. `src/main.ts` solo arma el juego.
+- Todo azar del juego sale de `crearAzar(semilla)` (`src/azar.ts`), con una fecha `AAAA-MM-DD` como semilla.
+- `src/grilla.ts` pasa del lienzo a celdas y de vuelta. `src/contorno.ts` simplifica las regiones y proyecta igual
+  que los focos; su resultado, `src/fondo.json`, es generado: no se edita a mano (una prueba lo compara).
+- `src/partida.ts` (puntaje, combo, ritmo del nivel y el estado de la partida con sus focos activos), `src/cierre.ts` (dato real y consejo) y `src/record.ts` (récord en
   el navegador, que sigue leyendo la clave de cuando el juego se llamaba Charmy Kids) son puros y probados.
 - En las escenas, todo tiempo de juego sale del reloj de la escena (`this.time`, `TimerEvent`), nunca de `this.time.now`
   ni de `Date.now()`: los temporizadores se frenan con la pestaña en segundo plano y el resto no.

@@ -5,8 +5,12 @@ import {
   PUNTOS_BASE,
   VENTANA_COMBO_MS,
   apagar,
+  apagarFoco,
   dejarEscapar,
+  encenderFoco,
+  escaparFoco,
   marcadorInicial,
+  nuevaPartida,
   planDeNivel,
 } from "../src/partida";
 
@@ -66,5 +70,31 @@ describe("ritmo del nivel", () => {
     const base = { lat: -40, lon: -70, frp: 1, confidence: "nominal", x: 0, y: 0 };
     const focos = ["04:00", "04:01", "18:00", "18:01"].map((hora_utc) => ({ ...base, hora_utc }));
     expect(planDeNivel(focos, 3000).map((f) => f.apareceMs)).toEqual([0, 1000, 2000, 3000]);
+  });
+});
+
+describe("estado de la partida", () => {
+  const foco = { id: 1, x: 10, y: 20, frp: 2 };
+
+  it("un foco encendido queda activo hasta que se apaga", () => {
+    let p = encenderFoco(nuevaPartida(), foco);
+    expect(p.activos).toEqual([foco]);
+    p = apagarFoco(p, 1, 1000);
+    expect(p.activos).toEqual([]);
+    expect(p.marcador).toMatchObject({ apagados: 1, puntos: PUNTOS_BASE });
+  });
+
+  it("un foco que se escapa deja de estar activo y corta el combo", () => {
+    let p = encenderFoco(encenderFoco(nuevaPartida(), foco), { ...foco, id: 2 });
+    p = apagarFoco(p, 2, 500);
+    p = escaparFoco(p, 1);
+    expect(p.activos).toEqual([]);
+    expect(p.marcador).toMatchObject({ combo: 0, escapados: 1, apagados: 1 });
+  });
+
+  it("apagar o dejar escapar un foco que ya no está activo no cambia nada", () => {
+    const p = apagarFoco(encenderFoco(nuevaPartida(), foco), 1, 500);
+    expect(apagarFoco(p, 1, 600)).toBe(p);
+    expect(escaparFoco(p, 1)).toBe(p);
   });
 });

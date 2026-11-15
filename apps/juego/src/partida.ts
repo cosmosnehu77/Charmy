@@ -51,3 +51,38 @@ export function planDeNivel(focos: FocoEnPantalla[], duracionMs: number): FocoDe
   const ultimo = ordenados.length - 1;
   return ordenados.map((f, i) => ({ ...f, apareceMs: ultimo === 0 ? 0 : (i / ultimo) * duracionMs }));
 }
+
+/** Un foco encendido en la pantalla. */
+export interface FocoActivo {
+  id: number;
+  x: number;
+  y: number;
+  frp: number;
+}
+
+/** Estado de la partida: las escenas lo dibujan y lo cambian solo con estas funciones. */
+export interface Partida {
+  marcador: Marcador;
+  activos: FocoActivo[];
+}
+
+export function nuevaPartida(): Partida {
+  return { marcador: marcadorInicial(), activos: [] };
+}
+
+export function encenderFoco(p: Partida, foco: FocoActivo): Partida {
+  return { ...p, activos: [...p.activos, foco] };
+}
+
+const activo = (p: Partida, id: number) => p.activos.some((f) => f.id === id);
+const sin = (p: Partida, id: number) => p.activos.filter((f) => f.id !== id);
+
+/** Apagar un foco activo. Si ya no estaba (se escapó o ya se apagó), nada cambia. */
+export function apagarFoco(p: Partida, id: number, ahoraMs: number): Partida {
+  return activo(p, id) ? { marcador: apagar(p.marcador, ahoraMs), activos: sin(p, id) } : p;
+}
+
+/** Un foco activo que nadie apagó a tiempo. Si ya no estaba, nada cambia. */
+export function escaparFoco(p: Partida, id: number): Partida {
+  return activo(p, id) ? { marcador: dejarEscapar(p.marcador), activos: sin(p, id) } : p;
+}

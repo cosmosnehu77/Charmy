@@ -153,7 +153,7 @@ def test_un_error_http_dice_el_codigo_y_no_la_clave():
 def test_la_medicion_sigue_con_el_proximo_modelo_si_uno_falla_raro(monkeypatch):
     from worker import medir_noticias as m
 
-    def etiquetar_roto(titulares, provincia, pais, c, modelo):
+    def etiquetar_roto(titulares, provincia, pais, c, modelo, opciones=None):
         if modelo == "roto":
             raise RuntimeError("algo inesperado")
         return ["apoya"] * len(titulares)
@@ -161,3 +161,23 @@ def test_la_medicion_sigue_con_el_proximo_modelo_si_uno_falla_raro(monkeypatch):
     monkeypatch.setattr(m, "etiquetar", etiquetar_roto)
     roto, sano = m.medir("roto", cliente=None), m.medir("sano", cliente=None)
     assert (roto["fallas"], sano["fallas"]) == (3, 0)
+
+
+def test_las_opciones_del_modelo_van_en_el_pedido():
+    pedidos = []
+
+    def manejador(req):
+        pedidos.append(json.loads(req.content))
+        return httpx.Response(200, json=respuesta_grabada('["apoya", "sin_informacion"]'))
+
+    opciones = {"max_tokens": 1500, "chat_template_kwargs": {"enable_thinking": False}}
+    etiquetar(TITULARES, "Chubut", "Argentina", cliente(manejador), modelo="m", opciones=opciones)
+    assert pedidos[0]["max_tokens"] == 1500
+    assert pedidos[0]["chat_template_kwargs"] == {"enable_thinking": False}
+    assert pedidos[0]["temperature"] == 0
+
+
+def test_una_respuesta_sin_texto_dice_por_que_termino():
+    sin_texto = {"choices": [{"message": {"content": None}, "finish_reason": "length"}]}
+    with pytest.raises(NoticiasNoDisponibles, match="length"):
+        etiquetar(TITULARES, "Chubut", "Argentina", cliente(lambda req: httpx.Response(200, json=sin_texto)))

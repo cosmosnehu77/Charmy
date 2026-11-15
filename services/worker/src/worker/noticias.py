@@ -53,9 +53,15 @@ def buscar(provincia: str, pais: str, cliente: httpx.Client) -> list[dict]:
 
 
 def etiquetar(
-    titulares: list[dict], provincia: str, pais: str, cliente: httpx.Client, modelo: str = MODELO
+    titulares: list[dict],
+    provincia: str,
+    pais: str,
+    cliente: httpx.Client,
+    modelo: str = MODELO,
+    opciones: dict | None = None,
 ) -> list[str]:
-    """Una etiqueta por titular, en el mismo orden. `modelo` solo cambia para medir otros (#279)."""
+    """Una etiqueta por titular, en el mismo orden. `modelo` y `opciones` (campos extra del pedido, como
+    apagar el razonamiento) solo cambian para medir otros modelos (#279)."""
     if not titulares:
         return []
     clave = os.environ.get("NVIDIA_API_KEY", "").strip()
@@ -78,14 +84,17 @@ def etiquetar(
                 "temperature": 0,
                 "max_tokens": 200,
                 "messages": [{"role": "user", "content": pedido}],
-            },
+            }
+            | (opciones or {}),
             timeout=ESPERA_MODELO_S,
         )
         respuesta.raise_for_status()
-        texto = respuesta.json()["choices"][0]["message"]["content"]
+        eleccion = respuesta.json()["choices"][0]
+        texto = eleccion["message"]["content"]
         if not isinstance(texto, str):
             # Un modelo que razona puede gastar los tokens pensando y devolver content null (#279).
-            raise NoticiasNoDisponibles("Modelo de lenguaje: respuesta sin texto")
+            motivo = eleccion.get("finish_reason") or "sin motivo"
+            raise NoticiasNoDisponibles(f"Modelo de lenguaje: respuesta sin texto ({motivo})")
         # El modelo a veces envuelve el JSON en un bloque de código.
         etiquetas = json.loads(texto[texto.index("[") : texto.rindex("]") + 1])
     except httpx.HTTPStatusError as error:

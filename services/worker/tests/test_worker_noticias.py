@@ -202,6 +202,34 @@ def test_produccion_usa_nemotron_lightning_sin_razonar():
     assert pedidos[0]["chat_template_kwargs"] == {"enable_thinking": False}
 
 
+def pedido_de(provincia: str = "Chubut", pais: str = "Argentina") -> str:
+    pedidos = []
+
+    def manejador(req):
+        pedidos.append(json.loads(req.content)["messages"][0]["content"])
+        return httpx.Response(200, json=respuesta_grabada('["apoya", "sin_informacion"]'))
+
+    etiquetar(TITULARES, provincia, pais, cliente(manejador))
+    return pedidos[0]
+
+
+def test_el_pedido_solo_apoya_con_fuego_en_vegetacion_o_al_aire_libre():
+    # #391: con titulares reales, casas y autos salían como "apoya" y confirmaban los focos de la provincia.
+    pedido = pedido_de("Salta")
+    assert "vegetación o al aire libre" in pedido
+    for edificio in ("casas", "galpones", "fábricas", "vehículos"):
+        assert edificio in pedido
+    assert "Salta, Argentina" in pedido
+    assert "otra provincia u otro país" in pedido
+
+
+def test_el_pedido_reserva_contradice_para_una_falsa_alarma():
+    # #391: "contradice" salía para noticias sin relación (fútbol, policiales).
+    pedido = pedido_de()
+    assert "falsa alarma" in pedido
+    assert 'Ante la duda, "sin_informacion"' in pedido
+
+
 def test_la_muestra_real_esta_marcada_y_cada_bloque_entra_en_un_pedido():
     from worker import medir_noticias as m
 

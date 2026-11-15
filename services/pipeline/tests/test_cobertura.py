@@ -3,7 +3,7 @@
 from datetime import UTC, date, datetime, timedelta
 
 import polars as pl
-from pipeline.cobertura import entrenamiento_por_mes, informe, por_sensor, ultimo_dia
+from pipeline.cobertura import contra_noaa20, entrenamiento_por_mes, informe, por_sensor, ultimo_dia
 
 
 def focos(*filas: tuple[str, date]) -> pl.DataFrame:
@@ -85,20 +85,39 @@ def entrenamiento(valores: dict[str, int], celdas: int = 10) -> pl.DataFrame:
     )
 
 
-def test_mes_cortado_contra_lo_historico_es_sospechoso_y_mes_que_falta_no_esta():
-    historia = {f"{a}-01": 8 for a in range(2020, 2025)}
-    e = entrenamiento({**historia, "2025-01": 2, "2025-02": 6, "2026-01": 7})
-    t = entrenamiento_por_mes(e, date(2025, 1, 1), date(2026, 1, 1)).sort("mes")
-    fila = {r["mes"]: r for r in t.iter_rows(named=True)}
-    assert fila[date(2025, 1, 1)]["presente"] and fila[date(2025, 1, 1)]["sospechoso"]
-    assert fila[date(2025, 1, 1)]["celdas_con_fuego"] == 2
-    assert fila[date(2025, 1, 1)]["mediana_historica"] == 8
-    # Febrero no tiene historia: no se puede comparar y no se marca.
-    assert fila[date(2025, 2, 1)]["presente"] and not fila[date(2025, 2, 1)]["sospechoso"]
-    assert not fila[date(2026, 1, 1)]["sospechoso"]
-    # Marzo de 2025 no está en la tabla: es un mes incompleto de S-NPP (falta el dato, no es cero).
-    assert not fila[date(2025, 3, 1)]["presente"]
-    assert fila[date(2025, 3, 1)]["celdas_con_fuego"] is None
+def test_mes_que_falta_en_entrenamiento_no_esta_y_no_es_cero():
+    e = entrenamiento({"2025-01": 2, "2025-02": 6})
+    t = entrenamiento_por_mes(e, date(2025, 1, 1), date(2025, 3, 1))
+    assert t["presente"].to_list() == [True, True, False]
+    assert t["celdas_con_fuego"].to_list() == [2, 6, None]
+
+
+def test_snpp_que_ve_mucho_menos_que_noaa20_en_las_mismas_celdas_es_sospechoso():
+    # Enero: los dos ven los 31 días. Febrero: S-NPP ve 20 de 28 días (razón 0,71): sospechoso.
+    # Marzo: S-NPP ve 28 de 31 (razón 0,9): no es sospechoso.
+    # Abril: poco fuego en los dos (un año flojo, no un corte): no es sospechoso.
+    f = focos(
+        *dias("N", date(2025, 1, 1), date(2025, 1, 31)),
+        *dias("N20", date(2025, 1, 1), date(2025, 1, 31)),
+        *dias("N", date(2025, 2, 1), date(2025, 2, 20)),
+        *dias("N20", date(2025, 2, 1), date(2025, 2, 28)),
+        *dias("N", date(2025, 3, 1), date(2025, 3, 28)),
+        *dias("N20", date(2025, 3, 1), date(2025, 3, 31)),
+        *dias("N", date(2025, 4, 1), date(2025, 4, 3)),
+        *dias("N20", date(2025, 4, 1), date(2025, 4, 3)),
+    )
+    r = contra_noaa20(f, ["-45.4_-71.3"], date(2025, 1, 1), date(2025, 5, 1))
+    assert r["snpp"].to_list() == [31, 20, 28, 3, 0]
+    assert r["noaa20"].to_list() == [31, 28, 31, 3, 0]
+    assert r["sospechoso"].to_list() == [False, True, False, False, False]
+    # Sin focos de NOAA-20 no hay con qué comparar: la razón queda nula.
+    assert r["razon"][-1] is None
+
+
+def test_contra_noaa20_solo_cuenta_las_celdas_pedidas():
+    f = focos(*dias("N20", date(2025, 1, 1), date(2025, 1, 31)))
+    r = contra_noaa20(f, ["otra"], date(2025, 1, 1), date(2025, 1, 1))
+    assert r["noaa20"].to_list() == [0]
 
 
 def test_informe_en_markdown_nombra_meses_incompletos_y_ultimo_dia():

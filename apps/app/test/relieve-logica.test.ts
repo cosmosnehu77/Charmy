@@ -13,8 +13,11 @@ import {
   serieDelIndicador,
   tendencia,
   regionDePunto,
+  AGRUPAR_VIVO,
+  AGRUPAR_ZONA,
+  estiloGrupo,
   enNiveles,
-  filtroNiveles,
+  focosVivoVisibles,
   nombresPorZoom,
   ubicarGlobo,
   type RegionResumen,
@@ -223,16 +226,6 @@ describe("filtro por intensidad de En vivo (#251)", () => {
     expect([2, 9.9, 10, 29.9, 30, 80].map((frp) => enNiveles(frp, ["Fuerte"]))).toEqual([false, false, true, true, false, false]);
     expect([2, 15, 40].map((frp) => enNiveles(frp, ["Bajo", "Muy fuerte"]))).toEqual([true, false, true]);
   });
-
-  it("la expresión del mapa usa los mismos cortes", () => {
-    expect(filtroNiveles([])).toBeNull();
-    expect(filtroNiveles(["Fuerte"])).toEqual(["any", ["all", [">=", ["get", "frp"], 10], ["<", ["get", "frp"], 30]]]);
-    expect(filtroNiveles(["Bajo", "Muy fuerte"])).toEqual([
-      "any",
-      ["all", [">=", ["get", "frp"], 0], ["<", ["get", "frp"], 10]],
-      [">=", ["get", "frp"], 30],
-    ]);
-  });
 });
 
 describe("tendencia del ranking (F4-D6)", () => {
@@ -258,5 +251,59 @@ describe("tendencia del ranking (F4-D6)", () => {
     expect(serieDelIndicador(p, "focos")).toEqual([1, 2]);
     expect(serieDelIndicador(p, "frp")).toEqual([3.5, 4]);
     expect(serieDelIndicador(p, "anomalia")).toBeNull();
+  });
+});
+
+describe("agrupado de En vivo (#333)", () => {
+  const h = 3_600_000;
+  const focos = [
+    { k: 1, t: 10 * h, frp: 2 },
+    { k: 2, t: 9 * h, frp: 15 },
+    { k: 3, t: 5 * h, frp: 40 },
+    { k: 4, t: 3 * h, frp: 50 },
+  ];
+
+  it("deja solo la ventana de horas, contada desde el último foco", () => {
+    expect(focosVivoVisibles(focos, 6, []).map((f) => f.k)).toEqual([1, 2, 3]);
+  });
+
+  it("y solo los niveles elegidos", () => {
+    expect(focosVivoVisibles(focos, 24, ["Muy fuerte"]).map((f) => f.k)).toEqual([3, 4]);
+    expect(focosVivoVisibles(focos, 6, ["Bajo", "Fuerte"]).map((f) => f.k)).toEqual([1, 2]);
+  });
+
+  it("sin focos no falla", () => {
+    expect(focosVivoVisibles([], 6, [])).toEqual([]);
+  });
+
+  it("agrupa a menos de 50 px, desde 3 focos y hasta el zoom 8", () => {
+    expect(AGRUPAR_VIVO).toEqual({ clusterRadius: 50, clusterMinPoints: 3, clusterMaxZoom: 8 });
+  });
+});
+
+describe("agrupado de Experto (#343)", () => {
+  it("agrupa a menos de 50 px, desde 3 focos y hasta el zoom 12", () => {
+    expect(AGRUPAR_ZONA).toEqual({ clusterRadius: 50, clusterMinPoints: 3, clusterMaxZoom: 12 });
+  });
+});
+
+describe("aspecto de un grupo de focos (#343)", () => {
+  it("crece con la cantidad", () => {
+    expect([3, 9, 10, 49, 50, 199, 200, 5000].map((n) => estiloGrupo(n, 5).diametro)).toEqual([30, 30, 36, 36, 44, 44, 54, 54]);
+  });
+
+  it("late desde 100 focos", () => {
+    expect(estiloGrupo(99, 5).late).toBe(false);
+    expect(estiloGrupo(100, 5).late).toBe(true);
+  });
+
+  it("toma el color de su foco más intenso", () => {
+    expect(estiloGrupo(12, 80).color).toBe(colorFoco(80));
+    expect(estiloGrupo(12, null).color).toBe(colorFoco(0));
+  });
+
+  it("muestra la cantidad con separador de miles", () => {
+    expect(estiloGrupo(42, 5).texto).toBe("42");
+    expect(estiloGrupo(8567, 5).texto).toBe("8.567");
   });
 });

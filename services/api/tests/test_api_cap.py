@@ -81,3 +81,16 @@ def test_sin_base_responde_503(monkeypatch):
     monkeypatch.delenv("DATABASE_URL", raising=False)
     r = TestClient(app).get("/api/v1/cap/zona-demo.xml")
     assert r.status_code == 503
+
+
+@pytest.mark.parametrize(
+    "zona,nombre", [("impenetrable", "Impenetrable chaqueño"), ("norte-salta", "Norte de Salta")]
+)
+def test_cada_zona_del_bot_tiene_su_feed(cliente, monkeypatch, zona, nombre):
+    # D-39: el feed conoce las mismas zonas que el bot de avisos, y lee solo los avisos de esa zona.
+    pedidas = []
+    monkeypatch.setattr(cap, "_leer_avisos", lambda z: pedidas.append(z) or FILAS[:1])
+    r = cliente.get(f"/api/v1/cap/{zona}.xml")
+    assert r.status_code == 200 and pedidas == [zona]
+    [info] = ET.fromstring(r.content).findall("cap:info", NS)
+    assert info.find("cap:area/cap:areaDesc", NS).text == nombre

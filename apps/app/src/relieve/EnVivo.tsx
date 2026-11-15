@@ -7,7 +7,7 @@ import { ETIQUETAS_EVIDENCIA, TIPOS_EVIDENCIA, veredicto } from "@/vivo/veredict
 import type { FocoReciente } from "./datos";
 import { ComparacionVivo, EstadisticasVivo } from "./ResumenVivo";
 import { useRelieve } from "./estado";
-import { colorFoco, enNiveles, hace, type NivelFoco, nivelFoco, radioFoco, type RegionResumen } from "./logica";
+import { colorFoco, focosVivoVisibles, hace, type NivelFoco, nivelFoco, radioFoco, type RegionResumen } from "./logica";
 
 const num = (v: number, d = 0) => v.toLocaleString("es-AR", { minimumFractionDigits: d, maximumFractionDigits: d });
 const SATELITES: Record<string, string> = { N20: "NOAA-20", N21: "NOAA-21", Terra: "Terra (MODIS)", Aqua: "Aqua (MODIS)" };
@@ -42,7 +42,7 @@ export function PanelEnVivo({ focos, disponible, mensaje, regiones }: Props) {
     cambiar({ focoVivo: null });
   };
   const ultimo = focos.reduce((m, f) => Math.max(m, f.t), 0);
-  const visibles = focos.filter((f) => f.t >= ultimo - horasVivo * 3_600_000 && enNiveles(f.frp, nivelesVivo));
+  const visibles = focosVivoVisibles(focos, horasVivo, nivelesVivo);
   const alternarNivel = (n: NivelFoco) =>
     cambiar({
       nivelesVivo: nivelesVivo.includes(n) ? nivelesVivo.filter((x) => x !== n) : [...nivelesVivo, n],

@@ -16,10 +16,13 @@ import { controlMapa } from "./controlMapa";
 import type { FocoReciente } from "./datos";
 import { indicadorDe, useRelieve } from "./estado";
 import {
+  AGRUPAR_VIVO,
+  AGRUPAR_ZONA,
   alturaDelDia,
   CORTES_FOCO,
   escalaRegion,
-  filtroNiveles,
+  estiloGrupo,
+  focosVivoVisibles,
   maximo,
   nombresPorZoom,
   type RegionResumen,
@@ -51,6 +54,58 @@ const COLOR_FOCO: maplibregl.ExpressionSpecification = [
   CORTES_FOCO[4],
   rampaConteo[6],
 ];
+/** Los grupos de En vivo (#333) y de Experto (#343) llevan `point_count`; los focos sueltos, no. */
+const SUELTO: maplibregl.ExpressionSpecification = ["!", ["has", "point_count"]];
+/** Cada grupo guarda el `frp` de su foco más intenso, así toma el mismo color que tendría ese foco. */
+const FRP_DEL_GRUPO = { frp: ["max", ["coalesce", ["get", "frp"], 0]] } as const;
+
+/** Acerca hasta que el grupo se abre: al menos un nivel, porque los grupos se arman por zoom entero. */
+function abrirGrupo(m: maplibregl.Map, fuente: string, id: number, centro: [number, number]) {
+  void m
+    .getSource<maplibregl.GeoJSONSource>(fuente)
+    ?.getClusterExpansionZoom(id)
+    .then((zoom) => m.easeTo({ center: centro, zoom: Math.max(zoom, m.getZoom() + 1), duration: reducido() ? 0 : 600 }));
+}
+
+/**
+ * Grupos de focos como marcadores HTML (#343): así llevan la tipografía de la marca, un halo translúcido y laten con
+ * CSS. No se despliegan en telaraña: tocarlos solo acerca. Devuelve la función que los pone al día.
+ */
+function marcadoresDeGrupo(m: maplibregl.Map, fuente: string) {
+  const puestos = new Map<number, maplibregl.Marker>();
+  return () => {
+    const vistos = new Set<number>();
+    if (m.getSource(fuente) && m.isSourceLoaded(fuente)) {
+      for (const f of m.querySourceFeatures(fuente, { filter: ["has", "point_count"] })) {
+        const id = Number(f.properties?.cluster_id);
+        if (vistos.has(id)) continue;
+        vistos.add(id);
+        if (puestos.has(id)) continue;
+        const centro = (f.geometry as GeoJSON.Point).coordinates as [number, number];
+        const cantidad = Number(f.properties?.point_count);
+        const { diametro, color, late, texto } = estiloGrupo(cantidad, Number(f.properties?.frp));
+        const el = document.createElement("button");
+        el.type = "button";
+        el.className = late ? "grupo-focos grupo-focos-late" : "grupo-focos";
+        el.style.setProperty("--grupo-color", color);
+        el.style.setProperty("--grupo-d", `${diametro}px`);
+        el.textContent = texto;
+        el.setAttribute("aria-label", `${texto} focos juntos. Tocá para acercar.`);
+        el.addEventListener("click", (e) => {
+          e.stopPropagation();
+          abrirGrupo(m, fuente, id, centro);
+        });
+        puestos.set(id, new maplibregl.Marker({ element: el }).setLngLat(centro).addTo(m));
+      }
+    }
+    for (const [id, marcador] of puestos) {
+      if (!vistos.has(id)) {
+        marcador.remove();
+        puestos.delete(id);
+      }
+    }
+  };
+}
 
 function mezcla(a: string, b: string, t: number): string {
   const x = Number.parseInt(a.slice(1), 16);
@@ -122,6 +177,8 @@ export default function MapaRelieve({ regiones, dias, focos, onHover }: Props) {
   const alturas = useRef(new Map<string, { actual: number; meta: number }>());
   const pausaGiro = useRef(0);
   const regionesPuestas = useRef<RegionResumen[] | null>(null);
+  const vivoPuesto = useRef<unknown[]>([]);
+  const zonaPuesta = useRef<unknown>(null);
 
   const sincronizar = useRef(() => {});
   sincronizar.current = () => {
@@ -170,9 +227,21 @@ export default function MapaRelieve({ regiones, dias, focos, onHover }: Props) {
       verFocos ? agujas(visibles, (region) => (region ? (alturas.current.get(region)?.meta ?? 0) : 0)) : VACIO,
     );
     m.getSource<maplibregl.GeoJSONSource>("puntos")?.setData(verFocos ? puntos(visibles) : VACIO);
-    m.getSource<maplibregl.GeoJSONSource>("vivo")?.setData(vivo ? puntos(fs) : VACIO);
+    // La ventana de horas y los niveles van en los datos y no en las capas: así los grupos cuentan solo lo que se ve.
+    // Se mandan solo si cambian: el puntero vuelve a pintar en cada movimiento y rearmar los grupos cada vez es caro.
+    const claveVivo = vivo ? [fs, e.horasVivo, e.nivelesVivo] : [];
+    if (claveVivo.length !== vivoPuesto.current.length || claveVivo.some((x, i) => x !== vivoPuesto.current[i])) {
+      const enVivo = vivo ? puntos(focosVivoVisibles(fs, e.horasVivo, e.nivelesVivo)) : VACIO;
+      m.getSource<maplibregl.GeoJSONSource>("vivo")?.setData(enVivo);
+      vivoPuesto.current = claveVivo;
+    }
     m.getSource<maplibregl.GeoJSONSource>("zona-area")?.setData(zona ? datosArea(a) : VACIO);
-    m.getSource<maplibregl.GeoJSONSource>("zona-focos")?.setData(zona && fz ? fz : VACIO);
+    // Como En vivo: los focos del área se mandan solo si cambian, para no rearmar los grupos en cada movimiento.
+    const datosZona = zona && fz ? fz : VACIO;
+    if (zonaPuesta.current !== datosZona) {
+      m.getSource<maplibregl.GeoJSONSource>("zona-focos")?.setData(datosZona);
+      zonaPuesta.current = datosZona;
+    }
     const visible = (id: string, si: boolean) => m.setLayoutProperty(id, "visibility", si ? "visible" : "none");
     visible("reg-3d", !apagado);
     visible("reg-agujas", !apagado && !e.plano);
@@ -181,15 +250,10 @@ export default function MapaRelieve({ regiones, dias, focos, onHover }: Props) {
     visible("vivo-pulso", vivo);
     visible("vivo-focos", vivo);
     visible("vivo-sel", vivo);
-    // La ventana se cuenta desde el último foco, así se ve algo aunque el worker esté atrasado.
+    visible("zona-focos", zona);
+    // Laten los focos sueltos de las últimas 6 h, contadas desde el último foco.
     const ultimo = fs.reduce((max, f) => Math.max(max, f.t), 0) || Date.now();
-    const limite = ultimo - e.horasVivo * 3_600_000;
-    // Y solo los niveles de intensidad elegidos en el panel (#251).
-    const niveles = filtroNiveles(e.nivelesVivo);
-    const conNiveles = (f: maplibregl.ExpressionSpecification): maplibregl.ExpressionSpecification =>
-      niveles ? ["all", f, niveles] : f;
-    m.setFilter("vivo-focos", conNiveles([">=", ["get", "t"], limite]));
-    m.setFilter("vivo-pulso", conNiveles([">=", ["get", "t"], Math.max(limite, ultimo - 6 * 3_600_000)]));
+    m.setFilter("vivo-pulso", ["all", SUELTO, [">=", ["get", "t"], ultimo - 6 * 3_600_000]]);
     m.setFilter("vivo-sel", ["==", ["get", "k"], e.focoVivo ?? -1]);
   };
 
@@ -219,9 +283,16 @@ export default function MapaRelieve({ regiones, dias, focos, onHover }: Props) {
       m.addSource("regiones", { type: "geojson", data: VACIO, promoteId: "region" });
       m.addSource("agujas", { type: "geojson", data: VACIO });
       m.addSource("puntos", { type: "geojson", data: VACIO });
-      m.addSource("vivo", { type: "geojson", data: VACIO });
+      // En vivo (#333) y Experto (#343) agrupan los focos cercanos y los separan al acercar.
+      m.addSource("vivo", { type: "geojson", data: VACIO, cluster: true, ...AGRUPAR_VIVO, clusterProperties: FRP_DEL_GRUPO });
       m.addSource("zona-area", { type: "geojson", data: VACIO });
-      m.addSource("zona-focos", { type: "geojson", data: VACIO });
+      m.addSource("zona-focos", {
+        type: "geojson",
+        data: VACIO,
+        cluster: true,
+        ...AGRUPAR_ZONA,
+        clusterProperties: FRP_DEL_GRUPO,
+      });
       m.addLayer(
         { id: "vivo-gris", type: "fill", source: "regiones", paint: { "fill-color": relieve.gris, "fill-opacity": 0.55 } },
         antes,
@@ -289,6 +360,7 @@ export default function MapaRelieve({ regiones, dias, focos, onHover }: Props) {
         id: "vivo-focos",
         type: "circle",
         source: "vivo",
+        filter: SUELTO,
         layout: { "circle-sort-key": ["get", "orden"] },
         paint: {
           "circle-radius": RADIO_FOCO,
@@ -326,6 +398,7 @@ export default function MapaRelieve({ regiones, dias, focos, onHover }: Props) {
         id: "zona-focos",
         type: "circle",
         source: "zona-focos",
+        filter: SUELTO,
         paint: {
           "circle-radius": RADIO_FOCO,
           "circle-color": COLOR_FOCO,
@@ -341,6 +414,8 @@ export default function MapaRelieve({ regiones, dias, focos, onHover }: Props) {
       }
       listo.current = true;
       regionesPuestas.current = null;
+      vivoPuesto.current = [];
+      zonaPuesta.current = null;
       sincronizar.current();
       herramienta.current();
       imagen.current();
@@ -371,6 +446,8 @@ export default function MapaRelieve({ regiones, dias, focos, onHover }: Props) {
     });
     m.on("mouseout", () => props.current.onHover({ id: null, foco: null, x: 0, y: 0 }));
     m.on("click", (e) => {
+      // Tocar un grupo lo atiende su marcador.
+      if ((e.originalEvent.target as Element | null)?.closest?.(".grupo-focos")) return;
       const { estado: est } = props.current;
       if (est.pestana === "zona") {
         // En Experto el mapa es para dibujar; si no se dibuja, tocar un foco muestra sus atributos (RF-MOD-02).
@@ -397,6 +474,21 @@ export default function MapaRelieve({ regiones, dias, focos, onHover }: Props) {
       const f = m.getLayer("reg-3d") ? m.queryRenderedFeatures(e.point, { layers: ["reg-3d"] })[0] : undefined;
       const id = (f?.properties?.region as string | undefined) ?? null;
       if (id || est.seleccion) est.alternarRegion(id ?? est.seleccion);
+    });
+    // Los grupos cambian al cruzar un zoom entero o cuando llegan datos nuevos; no hace falta rehacerlos en cada cuadro.
+    const grupos = [marcadoresDeGrupo(m, "vivo"), marcadoresDeGrupo(m, "zona-focos")];
+    const ponerGrupos = () => {
+      for (const poner of grupos) poner();
+    };
+    let zoomEntero = Math.floor(m.getZoom());
+    m.on("zoom", () => {
+      if (Math.floor(m.getZoom()) === zoomEntero) return;
+      zoomEntero = Math.floor(m.getZoom());
+      ponerGrupos();
+    });
+    m.on("moveend", ponerGrupos);
+    m.on("sourcedata", (e) => {
+      if ((e.sourceId === "vivo" || e.sourceId === "zona-focos") && e.isSourceLoaded) ponerGrupos();
     });
     for (const ev of ["dragstart", "zoomstart", "rotatestart", "pitchstart"] as const) {
       m.on(ev, (e: { originalEvent?: unknown }) => {

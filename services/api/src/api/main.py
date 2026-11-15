@@ -17,7 +17,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
-from api import avisos, calendario, cap, hotspots, prediccion, regiones, vivo
+from api import avisos, calendario, cap, hotspots, prediccion, prediccion_zona, regiones, vivo
 from api.datos import DatosNoDisponibles, copiar, version
 from api.errores import ErrorDeContrato, respuesta
 
@@ -34,6 +34,11 @@ def _copiar_datos() -> None:
         regiones.resumen(120)
     except Exception as error:  # noqa: BLE001 - si falla, lo calcula el primer pedido
         log.warning("No se precalculó el resumen de regiones: %s", type(error).__name__)
+    # La predicción por región también; de paso despierta al servicio de predicción si estaba dormido (#345).
+    try:
+        prediccion_zona.por_region()
+    except Exception as error:  # noqa: BLE001 - si falla, la pide el primer pedido
+        log.warning("No se precalculó la predicción por región: %s", type(error).__name__)
 
 
 @asynccontextmanager
@@ -117,6 +122,7 @@ def health() -> dict[str, str]:
 v1.include_router(hotspots.router)
 v1.include_router(calendario.router)
 v1.include_router(prediccion.router)
+v1.include_router(prediccion_zona.router)
 v1.include_router(vivo.router)
 v1.include_router(regiones.router)
 v1.include_router(avisos.router)

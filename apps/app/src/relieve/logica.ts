@@ -3,7 +3,7 @@
  * el nivel de la ficha y el tamaño de los focos en vivo. Sin React ni MapLibre, para poder probarla.
  */
 import type { components } from "@charmy/contracts-api";
-import type { ExpressionSpecification, StyleSpecification } from "maplibre-gl";
+import type { StyleSpecification } from "maplibre-gl";
 import { rampaAnomalia, rampaConteo, relieve } from "@charmy/ui";
 
 export type Resumen = components["schemas"]["RegionsSummary"];
@@ -138,15 +138,35 @@ export function enNiveles(frp: number | null | undefined, niveles: NivelFoco[]):
   return niveles.length === 0 || niveles.includes(nivelFoco(frp));
 }
 
-/** Lo mismo como filtro de MapLibre sobre la propiedad `frp`; null si entran todos. */
-export function filtroNiveles(niveles: NivelFoco[]): ExpressionSpecification | null {
-  if (niveles.length === 0) return null;
-  const rangos = NIVELES_FOCO.filter((n) => niveles.includes(n.nivel)).map(({ desde, hasta }) =>
-    hasta === null
-      ? [">=", ["get", "frp"], desde]
-      : ["all", [">=", ["get", "frp"], desde], ["<", ["get", "frp"], hasta]],
-  );
-  return ["any", ...rangos] as ExpressionSpecification;
+/** Focos de En vivo que se ven: los de las últimas `horas` (contadas desde el último foco) y de los niveles elegidos. */
+export function focosVivoVisibles<T extends { t: number; frp: number | null | undefined }>(
+  focos: T[],
+  horas: number,
+  niveles: NivelFoco[],
+): T[] {
+  const ultimo = focos.reduce((max, f) => Math.max(max, f.t), 0);
+  return focos.filter((f) => f.t >= ultimo - horas * 3_600_000 && enNiveles(f.frp, niveles));
+}
+
+/**
+ * Agrupado de En vivo (#333): los focos a menos de 50 px en pantalla se juntan en un círculo con la cantidad, desde
+ * 3 focos. Hasta el zoom 8 (provincia); desde el 9 (departamento) se ven todos sueltos.
+ */
+export const AGRUPAR_VIVO = { clusterRadius: 50, clusterMinPoints: 3, clusterMaxZoom: 8 } as const;
+
+/**
+ * Agrupado de Experto (#343): igual que En vivo, pero hasta el zoom 12. El área se ve más cerca que el país y un
+ * período largo junta muchos focos en el mismo lugar; desde el zoom 13 se ven todos sueltos.
+ */
+export const AGRUPAR_ZONA = { clusterRadius: 50, clusterMinPoints: 3, clusterMaxZoom: 12 } as const;
+
+/** Desde cuántos focos un grupo late, para que se vean primero los incendios grandes. */
+export const GRUPO_LATE = 100;
+
+/** Aspecto de un grupo de focos: crece con la cantidad y toma el color de su foco más intenso. */
+export function estiloGrupo(cantidad: number, frpMax: number | null | undefined) {
+  const diametro = cantidad >= 200 ? 54 : cantidad >= 50 ? 44 : cantidad >= 10 ? 36 : 30;
+  return { diametro, color: colorFoco(frpMax), late: cantidad >= GRUPO_LATE, texto: cantidad.toLocaleString("es-AR") };
 }
 
 export function hace(ahora: Date, cuando: string): string {

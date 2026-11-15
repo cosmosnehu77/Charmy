@@ -16,6 +16,7 @@ MODELO_URL = "https://integrate.api.nvidia.com/v1/chat/completions"
 MODELO = "google/gemma-4-31b-it"
 ETIQUETAS = {"apoya", "contradice", "sin_informacion"}
 MAX_TITULARES = 8
+ESPERA_MODELO_S = 20  # con 60 s, un modelo caído alargaba cada vuelta varios minutos (#279)
 
 
 class NoticiasNoDisponibles(Exception):
@@ -51,8 +52,10 @@ def buscar(provincia: str, pais: str, cliente: httpx.Client) -> list[dict]:
     return [t for t in titulares if t["title"]][:MAX_TITULARES]
 
 
-def etiquetar(titulares: list[dict], provincia: str, pais: str, cliente: httpx.Client) -> list[str]:
-    """Una etiqueta por titular, en el mismo orden."""
+def etiquetar(
+    titulares: list[dict], provincia: str, pais: str, cliente: httpx.Client, modelo: str = MODELO
+) -> list[str]:
+    """Una etiqueta por titular, en el mismo orden. `modelo` solo cambia para medir otros (#279)."""
     if not titulares:
         return []
     clave = os.environ.get("NVIDIA_API_KEY", "").strip()
@@ -71,12 +74,12 @@ def etiquetar(titulares: list[dict], provincia: str, pais: str, cliente: httpx.C
             MODELO_URL,
             headers={"Authorization": f"Bearer {clave}"},
             json={
-                "model": MODELO,
+                "model": modelo,
                 "temperature": 0,
                 "max_tokens": 200,
                 "messages": [{"role": "user", "content": pedido}],
             },
-            timeout=60,
+            timeout=ESPERA_MODELO_S,
         )
         respuesta.raise_for_status()
         texto = respuesta.json()["choices"][0]["message"]["content"]

@@ -110,10 +110,5 @@ export const EN: Record<string, string> = {
   "Charmy salió adelante con ayuda. Pasá el cursor para ver a cada persona.": "Charmy got here with help. Hover to see each person.",
   "Ver a todos": "See everyone",
   "Cerrar": "Close",
-  "Nombre Apellido": "Full Name",
-  "Institución o rol": "Institution or role",
-  "Mentoría": "Mentoring",
-  "Datos": "Data",
-  "Diseño": "Design",
-  "Pruebas": "Testing",
+  "El equipo de Charmy": "The Charmy team",
 };

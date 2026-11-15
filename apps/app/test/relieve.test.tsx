@@ -150,6 +150,18 @@ describe("vista Relieve (F4-R1)", () => {
     expect(screen.queryByRole("region", { name: "Ficha de Neuquén" })).not.toBeInTheDocument();
   });
 
+  it("en celular, con la ficha abierta, el aviso de emergencias queda encima y Charmy guía se guarda (#218)", async () => {
+    montar();
+    const u = userEvent.setup();
+    const ranking = await screen.findByRole("region", { name: "Ranking" });
+    await u.click(await within(ranking).findByRole("button", { name: /Neuquén/ }));
+    // jsdom no aplica las media queries: se revisan las clases de celular (max-md:).
+    const ficha = screen.getByRole("region", { name: "Ficha de Neuquén" });
+    const aviso = screen.getAllByText(/no reemplaza a los servicios de emergencia/).find((p) => !ficha.contains(p));
+    expect(aviso?.parentElement).toHaveClass("max-md:z-40");
+    expect(screen.getByRole("button", { name: /Charmy: ¿necesitás ayuda\?/ }).parentElement).toHaveClass("max-md:hidden");
+  });
+
   it("la lupa busca provincias sin importar los acentos", async () => {
     montar();
     const u = userEvent.setup();

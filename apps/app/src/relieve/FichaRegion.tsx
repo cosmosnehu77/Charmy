@@ -50,7 +50,8 @@ export function FichaRegion({ region, regiones }: { region: RegionResumen; regio
           <X aria-hidden="true" className="size-4" />
         </button>
       </header>
-      <div className="flex flex-col gap-4 px-5 pb-5 pt-1">
+      {/* En celular el aviso de emergencias queda encima del final de la hoja: este espacio deja leer lo último. */}
+      <div className="flex flex-col gap-4 px-5 pb-20 pt-1 md:pb-5">
         <span className={`nivel-relieve ${TONOS[nivel.tono]}`}>{nivel.texto}</span>
         <div className="flex items-center gap-3.5">
           <b className="font-titulos text-[56px] font-extrabold leading-[.9] tracking-tight text-relieve-brillo tabular-nums">
@@ -100,7 +101,8 @@ export function FichaRegion({ region, regiones }: { region: RegionResumen; regio
           <p className="mb-3.5 rounded-[14px] rounded-bl-[4px] bg-white/10 px-3 py-2.5 text-[13.5px] leading-snug">{dice}</p>
         </div>
         {ultimo && <CalendarioPlegado region={region.id} />}
-        <p className="rounded-xl bg-white/5 px-3 py-2.5 text-xs leading-snug text-white/75">
+        {/* En celular ya se ve el aviso fijo de abajo; acá se repetía. */}
+        <p className="hidden rounded-xl bg-white/5 px-3 py-2.5 text-xs leading-snug text-white/75 md:block">
           Charmy no reemplaza a los servicios de emergencia. Si ves fuego, llamá al{" "}
           <strong className="text-relieve-brillo">100</strong> en Argentina o al{" "}
           <strong className="text-relieve-brillo">132</strong> en Chile.

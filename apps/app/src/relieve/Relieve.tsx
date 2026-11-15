@@ -184,28 +184,36 @@ export function Relieve() {
         </>
       )}
 
-      {/* z-20: la ayuda de Charmy y el aviso de emergencias quedan por encima del ranking, la leyenda y la línea de tiempo. */}
-      <div className="pointer-events-auto absolute bottom-4 left-4 z-20 flex flex-col items-start gap-2">
-        {!enVivo && <CharmyGuia regionMasFuego={masFuego} />}
-        <div className="flex flex-wrap items-center gap-2">
-          <span className="rounded-full bg-relieve-vidrio/60 px-3 py-1 font-mono text-[10px] uppercase tracking-[.16em] text-white/55 ring-1 ring-white/10">
-            Argentina y Chile · {regiones.length || 39} regiones
-          </span>
-          <button
-            type="button"
-            onClick={() => irAConsulta("consulta")}
-            className="rounded-full bg-relieve-vidrio/60 px-3 py-1 text-xs text-white/80 ring-1 ring-white/10 hover:text-white"
-          >
-            Consulta por área y fechas
-          </button>
-          <a href={URL_LANDING} className="rounded-full px-2 py-1 text-xs text-white/60 underline-offset-2 hover:text-white hover:underline">
-            Qué es Charmy
-          </a>
-          <a href={URL_JUEGO} className="rounded-full px-2 py-1 text-xs text-white/60 underline-offset-2 hover:text-white hover:underline">
-            Charmy Brigada
-          </a>
+      {/* z-20: la ayuda de Charmy y el aviso de emergencias quedan por encima del ranking, la leyenda y la línea de tiempo.
+          En celular la ficha sale como hoja desde abajo: Charmy y los enlaces se guardan y el aviso queda encima (#218). */}
+      <div
+        className={`pointer-events-auto absolute bottom-4 left-4 z-20 flex flex-col items-start gap-2 ${region ? "max-md:right-4 max-md:bottom-3 max-md:z-40" : ""}`}
+      >
+        <div className={`flex flex-col items-start gap-2 ${region ? "max-md:hidden" : ""}`}>
+          {!enVivo && <CharmyGuia regionMasFuego={masFuego} />}
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="rounded-full bg-relieve-vidrio/60 px-3 py-1 font-mono text-[10px] uppercase tracking-[.16em] text-white/55 ring-1 ring-white/10">
+              Argentina y Chile · {regiones.length || 39} regiones
+            </span>
+            <button
+              type="button"
+              onClick={() => irAConsulta("consulta")}
+              className="rounded-full bg-relieve-vidrio/60 px-3 py-1 text-xs text-white/80 ring-1 ring-white/10 hover:text-white"
+            >
+              Consulta por área y fechas
+            </button>
+            <a href={URL_LANDING} className="rounded-full px-2 py-1 text-xs text-white/60 underline-offset-2 hover:text-white hover:underline">
+              Qué es Charmy
+            </a>
+            <a href={URL_JUEGO} className="rounded-full px-2 py-1 text-xs text-white/60 underline-offset-2 hover:text-white hover:underline">
+              Charmy Brigada
+            </a>
+          </div>
         </div>
-        <p className="rounded-full bg-relieve-vidrio/60 px-3 py-1 text-[11px] text-white/70 ring-1 ring-white/10">
+        {/* Sobre la ficha, en celular, el aviso va con fondo sólido para que no se mezcle con su texto. */}
+        <p
+          className={`rounded-full bg-relieve-vidrio/60 px-3 py-1 text-[11px] text-white/70 ring-1 ring-white/10 ${region ? "max-md:rounded-xl max-md:bg-relieve-panel max-md:shadow-lg" : ""}`}
+        >
           Charmy no reemplaza a los servicios de emergencia. Si ves fuego, llamá al{" "}
           <strong className="text-relieve-brillo">100</strong> en Argentina o al{" "}
           <strong className="text-relieve-brillo">132</strong> en Chile.

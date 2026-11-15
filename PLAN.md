@@ -419,6 +419,7 @@ Si falta tiempo en el carril B, el orden es: fuentes fijas, tiempo, imagen y, po
 | #297 | F4-D3 | Toggle e indicador para dibujar el área en Tu zona, y estadísticas del calendario y de los focos del área, calculadas en el navegador con los datos que ya llegan, sin cambiar el contrato | `@daniace` | `apps/app/` | F2-D1, F2-D2 | RF-MAP-02, RF-CAL-03 | hecho |
 | #306 | F4-D4 | Estadísticas en el panel En vivo: comparación con la ventana anterior, regiones con más focos y focos por veredicto, calculadas en el navegador con lo que ya trae `/live`, sin cambiar el contrato | `@daniace` | `apps/app/` | F4-D2 | RF-VIV-01, RF-VIV-02 | hecho |
 | #309 | F4-D5 | Estadísticas en la ficha de provincia: puesto en el ranking, el año contra los anteriores hasta el mismo mes y la temporada, con el calendario de la región que ya da la API, sin cambiar el contrato | `@daniace` | `apps/app/` | F4-D3 | RF-CAL-02, RF-CAL-03 | hecho |
+| #311 | F4-D6 | Tendencia de los últimos días en el ranking: minigráfica por día y flecha con texto (en alza, en baja, estable), sin contar hoy, con `by_day` y `frp_by_day` de `/regions/summary`, sin cambiar el contrato | `@daniace` | `apps/app/` | F4-R1 | RF-MAP-01, RNF-04 | hecho |
 | #60 | F4-E1 | Pulido de la landing; enlaces entre las tres piezas | `@daniace` (D-34) | `apps/landing/` | fase 3 | RF-LAN-04, RNF-12 | pendiente |
 | #61 | F4-E2 | Pulido del juego | `@daniace` (D-34) | `apps/juego/` | F3-E1 | RNF-12 | pendiente |
 | #183 | F4-E3 | El juego pasa a llamarse Charmy Brigada en todas las piezas; requisitos y tareas de D-35 | `@dimidio6` | `apps/juego/`, y el nombre en `apps/app/`, `apps/landing/`, `packages/charmy/`, `docs/` | — | RF-KID-01, RNF-12 | en revisión |
@@ -509,7 +510,7 @@ Qué tareas cubren cada requisito. Si un requisito de `REQUISITOS.md` no aparece
 | RF-ARM-05 | F3-B1, F3-C3 | 3 |
 | RF-CAL-01, 02, 03, 05 | F2-B2, F2-C2, F2-D2; F4-D3 y F4-D5 (estadísticas) | 2, 4 |
 | RF-CAL-04 | sin tarea (deseable) | hoja de ruta |
-| RF-MAP-01, 02, 04, 05 | F2-C1, F2-D1; F4-D3 (toggle de dibujo) | 2, 4 |
+| RF-MAP-01, 02, 04, 05 | F2-C1, F2-D1; F4-D3 (toggle de dibujo), F4-D6 (tendencia) | 2, 4 |
 | RF-MAP-03, 07 | F3-D1, F3-D2 | 3 |
 | RF-MAP-06 | F0-D1, F1-D2 | 1 |
 | RF-MAP-08 | F0-B1 (cobertura); vista global sin tarea | 2 / hoja de ruta |
@@ -544,7 +545,7 @@ Qué tareas cubren cada requisito. Si un requisito de `REQUISITOS.md` no aparece
 | RF-CTX-06 | F4-B1 | 4 |
 | RNF-01, 08 | F0-A1, F1-A1, F1-A2, F4-A1 | 4 |
 | RNF-02 | F2-A1, F2-A2, F4-C1 | 4 |
-| RNF-03, 04 | F1-D2, F2-D2, F4-D1 | 4 |
+| RNF-03, 04 | F1-D2, F2-D2, F4-D1, F4-D6 | 4 |
 | RNF-05 | F3-C2 | 3 |
 | RNF-06 | F0-A3, F0-A5, F4-A1, F4-A2, D-13 | 4 |
 | RNF-07, 11 | F0-F1, F3-F1, F4-A1, F4-B1, F4-F1 | 4 |
@@ -623,7 +624,7 @@ La fase 5 no cubre requisitos nuevos: refuerza RNF-02 y RNF-10 sobre lo ya entre
 | 2026-11-15 | Versión 2.3, con `REQUISITOS.md` 1.6. El juego pasa a la maqueta 3D de Sudamérica en PixiJS con focos simulados (D-36, reemplaza a D-11). Tarea nueva F4-E12 (#238). Cambian la tabla de tecnologías, la de componentes, la trazabilidad de RF-KID y la hoja de ruta. | encabezado, 1, 3, 5, 6, 8 | `@cosmosnehu77` |
 | 2026-11-15 | Versión 2.3.2. Tarea nueva F4-D2 (#260): filtro por satélite en los focos en vivo, ya fusionada en #261. | encabezado, 5, 6 | `@daniace` |
 | 2026-11-15 | Versión 2.3.3. TimesFM 3.0 pasa a ser el candidato de la predicción en lugar de la 2.5, autorizada por el líder porque Charmy es gratuito y sin fines de lucro (actualiza D-31, R-E2 #253). La compuerta D-10 no cambia. | 1.1, 3 | `@dimidio6` |
-| 2026-11-15 | Versión 2.3.4. Tareas nuevas F4-D3 (#297): toggle e indicador para dibujar el área en Tu zona y estadísticas del calendario y de los focos, ya fusionada en #298; y F4-A2 (#300): `.gitignore` de la raíz completo, ya fusionada en #301; y F4-D4 (#306): estadísticas en el panel En vivo, en #307; y F4-D5 (#309): estadísticas en la ficha de provincia, en #310. | encabezado, 5, 6 | `@daniace` |
+| 2026-11-15 | Versión 2.3.4. Tareas nuevas F4-D3 (#297): toggle e indicador para dibujar el área en Tu zona y estadísticas del calendario y de los focos, ya fusionada en #298; y F4-A2 (#300): `.gitignore` de la raíz completo, ya fusionada en #301; y F4-D4 (#306): estadísticas en el panel En vivo, en #307; y F4-D5 (#309): estadísticas en la ficha de provincia, en #310; y F4-D6 (#311): tendencia en el ranking, en #315. | encabezado, 5, 6 | `@daniace` |
 
 ## 10. Registro de cierres
 

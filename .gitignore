@@ -1,21 +1,48 @@
+# El repo es público: nada de secretos ni de datos grandes (CLAUDE.md).
+# Cada carpeta puede sumar su propio .gitignore; acá va lo que vale para todo el monorepo.
+
+# Secretos y configuración local
 .env
 .env.*
 !.env.example
+*.pem
+*.key
+
+# Estado local de las herramientas del equipo
 .board/
 
-# Node y Turborepo
+# Agentes y automatización del navegador
+.claude/worktrees/
+.claude/settings.local.json
+.playwright-mcp/
+playwright-report/
+test-results/
+
+# Node, Vite, Astro y Turborepo
 node_modules/
 dist/
 .turbo/
 .astro/
+.vite/
+.cache/
+.wrangler/
 *.tsbuildinfo
+.eslintcache
 
 # Python
 .venv/
 __pycache__/
-*.pyc
+*.py[cod]
+*.egg-info/
 .pytest_cache/
 .ruff_cache/
+.mypy_cache/
+.coverage
+.coverage.*
+htmlcov/
+
+# Pruebas
+coverage/
 
 # Datos: en el repo solo van las muestras chicas
 data/*
@@ -23,6 +50,14 @@ data/*
 *.parquet
 !data/muestras/*.parquet
 
-# Varios
+# Registros
+*.log
+logs/
+
+# Editores y sistema operativo
+.idea/
+.vscode/
+*.swp
+*~
 .DS_Store
-coverage/
+Thumbs.db

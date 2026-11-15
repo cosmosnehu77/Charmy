@@ -13,6 +13,17 @@ import {
   marcadorInicial,
   nuevaPartida,
   verificarFoco,
+  AGUA_SIN_VERIFICAR,
+  MAX_CORTAFUEGOS,
+  RADIO_AVION,
+  RECARGA_AVION_MS,
+  TANQUE,
+  elegirHerramienta,
+  lanzarAvion,
+  ponerCortafuegos,
+  recargar,
+  tocarFoco,
+  type Partida,
 } from "../src/partida";
 import type { FocoEnPantalla } from "../src/datos";
 
@@ -102,26 +113,24 @@ describe("confianza del satélite", () => {
   const apagarUno = (extra: Partial<FocoEnPantalla>, verificar = false) => {
     let p = encenderFoco(nuevaPartida(), focoActivo(1, dato(extra)));
     if (verificar) p = verificarFoco(p, 1);
-    return golpearFoco(p, 1, 1000).marcador;
+    return golpearFoco(p, 1, 1000);
   };
 
-  it("un foco de confianza baja apagado sin verificar descuenta", () => {
-    expect(apagarUno({ confidence: "low" })).toMatchObject({ puntos: PUNTOS_BASE - PENALIDAD, sinVerificar: 1 });
+  it("un foco de confianza baja apagado sin verificar gasta agua de más", () => {
+    const p = apagarUno({ confidence: "low" });
+    expect(p.agua).toBe(TANQUE - 1 - AGUA_SIN_VERIFICAR);
+    expect(p.marcador).toMatchObject({ puntos: PUNTOS_BASE, sinVerificar: 1 });
   });
 
-  it("verificado no descuenta", () => {
-    expect(apagarUno({ confidence: "low" }, true)).toMatchObject({ puntos: PUNTOS_BASE, sinVerificar: 0 });
+  it("verificado no gasta de más", () => {
+    const p = apagarUno({ confidence: "low" }, true);
+    expect(p.agua).toBe(TANQUE - 1);
+    expect(p.marcador.sinVerificar).toBe(0);
   });
 
-  it("nominal y high no descuentan", () => {
-    expect(apagarUno({ confidence: "nominal" }).puntos).toBe(PUNTOS_BASE);
-    expect(apagarUno({ confidence: "high" }).puntos).toBe(PUNTOS_BASE);
-  });
-
-  it("los puntos nunca bajan de cero", () => {
-    let p = encenderFoco(nuevaPartida(), focoActivo(1, dato({ frp: 15, confidence: "low" })));
-    p = golpearFoco(p, 1, 100);
-    expect(p.marcador.puntos).toBe(0);
+  it("nominal y high no gastan de más", () => {
+    expect(apagarUno({ confidence: "nominal" }).agua).toBe(TANQUE - 1);
+    expect(apagarUno({ confidence: "high" }).agua).toBe(TANQUE - 1);
   });
 });
 
@@ -143,6 +152,13 @@ describe("fuentes fijas", () => {
     p = escaparFoco(p, 1);
     expect(p.activos).toEqual([]);
     expect(p.marcador).toEqual(marcadorInicial());
+    expect(p.agua).toBe(TANQUE);
+  });
+
+  it("los puntos nunca bajan de cero", () => {
+    let p = encenderFoco(nuevaPartida(), focoActivo(1, dato({ fuente_fija: true })));
+    p = golpearFoco(p, 1, 100);
+    expect(p.marcador.puntos).toBe(0);
   });
 
   it("sin el campo, ningún foco es fuente fija", () => {
@@ -163,5 +179,93 @@ describe("focos propagados", () => {
       verificado: false,
       fuenteFija: false,
     });
+  });
+});
+
+describe("agua", () => {
+  it("cada toque gasta una carga del tanque", () => {
+    let p = encenderFoco(nuevaPartida(), focoActivo(1, dato({ frp: 15 })));
+    expect(p.agua).toBe(TANQUE);
+    p = golpearFoco(p, 1, 100);
+    p = golpearFoco(p, 1, 200);
+    expect(p.agua).toBe(TANQUE - 2);
+  });
+
+  it("con el tanque vacío, tocar no apaga ni gasta", () => {
+    const p: Partida = { ...encenderFoco(nuevaPartida(), focoActivo(1, dato())), agua: 0 };
+    expect(golpearFoco(p, 1, 100)).toBe(p);
+  });
+
+  it("con agua para un toque pero no para el extra de un foco dudoso, apaga y deja el tanque en cero", () => {
+    let p: Partida = { ...encenderFoco(nuevaPartida(), focoActivo(1, dato({ confidence: "low" }))), agua: 1 };
+    p = golpearFoco(p, 1, 100);
+    expect(p.agua).toBe(0);
+    expect(p.marcador.apagados).toBe(1);
+  });
+
+  it("un lago llena el tanque", () => {
+    expect(recargar({ ...nuevaPartida(), agua: 2 }).agua).toBe(TANQUE);
+  });
+
+  it("un foco que se escapa hace perder una carga, pero nunca deja el tanque por debajo de la mitad", () => {
+    const mitad = Math.ceil(TANQUE / 2);
+    let p = encenderFoco(encenderFoco(nuevaPartida(), focoActivo(1, dato())), focoActivo(2, dato()));
+    p = escaparFoco(p, 1);
+    expect(p.agua).toBe(TANQUE - 1);
+    p = escaparFoco({ ...p, agua: mitad }, 2);
+    expect(p.agua).toBe(mitad);
+    const seco = escaparFoco({ ...encenderFoco(nuevaPartida(), focoActivo(3, dato())), agua: 1 }, 3);
+    expect(seco.agua).toBe(1);
+  });
+});
+
+describe("herramientas", () => {
+  const conFocos = (...focos: Partial<FocoEnPantalla>[]) =>
+    focos.reduce((p, f, i) => encenderFoco(p, focoActivo(i + 1, dato(f))), nuevaPartida());
+
+  it("bombero: tocar un foco lo apaga con agua", () => {
+    const p = tocarFoco(conFocos({}), 1, 100);
+    expect(p.activos).toEqual([]);
+    expect(p.agua).toBe(TANQUE - 1);
+  });
+
+  it("científica: tocar un foco dudoso lo verifica sin gastar agua", () => {
+    const p = tocarFoco(elegirHerramienta(conFocos({ confidence: "low" }), "cientifica"), 1, 100);
+    expect(p.activos[0]!.verificado).toBe(true);
+    expect(p.agua).toBe(TANQUE);
+  });
+
+  it("piloto: el avión apaga los focos de la zona, no los de afuera ni las fuentes fijas, sin gastar agua", () => {
+    let p = conFocos({ x: 100, y: 100 }, { x: 100 + RADIO_AVION - 1, y: 100 }, { x: 100 + RADIO_AVION + 5, y: 100 }, { x: 100, y: 110, fuente_fija: true });
+    p = lanzarAvion(elegirHerramienta(p, "piloto"), 100, 100, 1000);
+    expect(p.activos.map((f) => f.id)).toEqual([3, 4]);
+    expect(p.marcador.apagados).toBe(2);
+    expect(p.agua).toBe(TANQUE);
+  });
+
+  it("piloto: tocar un foco lanza el avión sobre él", () => {
+    const p = tocarFoco(elegirHerramienta(conFocos({ x: 50, y: 50 }, { x: 60, y: 50 }), "piloto"), 1, 1000);
+    expect(p.activos).toEqual([]);
+  });
+
+  it("el avión respeta su tiempo de recarga", () => {
+    let p = elegirHerramienta(conFocos({ x: 10, y: 10 }, { x: 500, y: 500 }), "piloto");
+    p = lanzarAvion(p, 10, 10, 1000);
+    const antes = encenderFoco(p, focoActivo(9, dato({ x: 300, y: 300 })));
+    expect(lanzarAvion(antes, 300, 300, 1000 + RECARGA_AVION_MS - 1)).toBe(antes);
+    expect(lanzarAvion(antes, 300, 300, 1000 + RECARGA_AVION_MS).activos.map((f) => f.id)).toEqual([2]);
+  });
+
+  it("guía: pone cortafuegos, como mucho MAX_CORTAFUEGOS (se va el más viejo)", () => {
+    let p = elegirHerramienta(nuevaPartida(), "guia");
+    for (let i = 0; i <= MAX_CORTAFUEGOS; i++) p = ponerCortafuegos(p, { col: i, fila: 0 });
+    expect(p.cortafuegos).toHaveLength(MAX_CORTAFUEGOS);
+    expect(p.cortafuegos[0]).toEqual({ col: 1, fila: 0 });
+    expect(ponerCortafuegos(p, { col: 2, fila: 0 })).toBe(p);
+  });
+
+  it("guía y piloto no golpean al tocar un foco: la escena usa el toque como un toque en el mapa", () => {
+    const p = elegirHerramienta(conFocos({}), "guia");
+    expect(tocarFoco(p, 1, 100)).toBe(p);
   });
 });

@@ -38,10 +38,18 @@ export function pesosDeVecinos(g: Grilla, celda: Celda, viento: Viento | null): 
 
 /**
  * Las celdas que enciende un foco que se escapa: hasta CELDAS_POR_ESCAPE vecinas libres, elegidas con el azar de la
- * partida y sesgadas por el viento, sin pasar de TOPE_ENCENDIDAS entre todas las encendidas.
+ * partida y sesgadas por el viento, sin pasar de TOPE_ENCENDIDAS entre todas las encendidas. Los cortafuegos no se
+ * encienden ni cuentan para el tope.
  */
-export function propagar(g: Grilla, celda: Celda, encendidas: Celda[], azar: Azar, viento: Viento | null): Celda[] {
-  const ocupada = new Set(encendidas.map((c) => `${c.col},${c.fila}`));
+export function propagar(
+  g: Grilla,
+  celda: Celda,
+  encendidas: Celda[],
+  azar: Azar,
+  viento: Viento | null,
+  cortafuegos: Celda[] = [],
+): Celda[] {
+  const ocupada = new Set([...encendidas, ...cortafuegos].map((c) => `${c.col},${c.fila}`));
   let libres = pesosDeVecinos(g, celda, viento).filter((v) => !ocupada.has(`${v.col},${v.fila}`));
   const cuantas = Math.min(CELDAS_POR_ESCAPE, TOPE_ENCENDIDAS - encendidas.length, libres.length);
   const nuevas: Celda[] = [];

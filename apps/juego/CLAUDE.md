@@ -27,9 +27,12 @@ pnpm --filter @charmy/juego contorno  # regenera src/fondo.json desde data/muest
   satélite por hora de detección (de noche la franja baja, de día sube).
 - `src/propagacion.ts`: un foco que se escapa enciende celdas vecinas de la grilla, con el azar de la partida y
   sesgadas por el viento, hasta un tope. Hasta F4-C2 no hay viento (`VIENTO = null` en el nivel).
-- `src/partida.ts` (puntaje, combo, penalidades y el estado de la partida con sus focos activos: toques que faltan,
-  confianza, verificación y fuente fija), `src/cierre.ts` (dato real y consejo) y `src/record.ts` (récord en
+- `src/partida.ts` (puntaje, combo, penalidades y el estado de la partida: focos activos, tanque de agua, herramienta
+  elegida, avión y cortafuegos), `src/ritmo.ts` (estado de Charmy y curva de dificultad) y `src/lagos.ts` (lagos
+  donde se recarga, con posición aproximada), `src/cierre.ts` (dato real y consejo) y `src/record.ts` (récord en
   el navegador, que sigue leyendo la clave de cuando el juego se llamaba Charmy Kids) son puros y probados.
+- Las herramientas (una por vestuario de Charmy) se eligen en una barra de HTML (`#herramientas`, `src/barra.ts`),
+  para el dedo, el teclado (1 a 4) y el lector de pantalla. Charmy en el nivel lleva el vestuario de la herramienta.
 - El sonido sale de `SONIDO` (`src/sonido.ts`, Web Audio, sin archivos). El silencio es un botón de HTML en el pie
   y se recuerda en el navegador.
 - En las escenas, todo tiempo de juego sale del reloj de la escena (`this.time`, `TimerEvent`), nunca de `this.time.now`

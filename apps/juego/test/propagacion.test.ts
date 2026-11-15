@@ -86,3 +86,22 @@ describe("propagación de un foco que se escapa", () => {
     expect(propagar(grilla, centro, encendidas, azar, null)).toEqual([]);
   });
 });
+
+describe("cortafuegos", () => {
+  it("un cortafuegos frena la propagación hacia su celda", () => {
+    const todas = [-1, 0, 1].flatMap((df) => [-1, 0, 1].map((dc) => ({ col: centro.col + dc, fila: centro.fila + df })));
+    const cortafuegos = todas.filter((c) => !(c.col === centro.col && c.fila === centro.fila));
+    expect(propagar(grilla, centro, [], crearAzar("x"), DEL_OESTE, cortafuegos)).toEqual([]);
+    const algunos = cortafuegos.slice(0, 7);
+    for (let i = 0; i < 20; i++) {
+      for (const c of propagar(grilla, centro, [], crearAzar(`s${i}`), null, algunos)) {
+        expect(algunos).not.toContainEqual(c);
+      }
+    }
+  });
+
+  it("los cortafuegos no cuentan para el tope de encendidas", () => {
+    const lejos = Array.from({ length: TOPE_ENCENDIDAS }, (_, i) => ({ col: i, fila: 0 }));
+    expect(propagar(grilla, centro, [], crearAzar("x"), null, lejos).length).toBeGreaterThan(0);
+  });
+});

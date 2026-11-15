@@ -114,6 +114,11 @@ describe("focos en vivo (RF-VIV-01, RF-VIV-02)", () => {
     expect(await within(detalle).findByText("Dos pasadas de VIIRS con el foco en la misma celda")).toBeInTheDocument();
     expect(within(detalle).getByRole("link", { name: /Titular de ejemplo/ })).toHaveAttribute("href", "https://example.org/n");
     expect(within(detalle).getByText(/no reemplaza a los servicios de emergencia/i)).toBeInTheDocument();
+    const enlaceMapa = within(detalle).getByRole("link", { name: /ver ubicación en google maps/i });
+    expect(enlaceMapa).toHaveAttribute("href", "https://www.google.com/maps?q=-42.118,-71.287");
+    expect(enlaceMapa.querySelector("svg")).toBeInTheDocument();
+    const preview = within(detalle).getByTitle("Previsualización de la ubicación en Google Maps");
+    expect(preview).toHaveAttribute("src", "https://maps.google.com/maps?q=-42.118,-71.287&z=13&output=embed");
     const pedido = fetchSimulado.mock.calls.map(([x]) => String(x)).find((x) => x.includes("/evidence"));
     expect(pedido).toContain(encodeURIComponent("N20-2026-11-14T04:40:00Z--42.11800--71.28700"));
   });

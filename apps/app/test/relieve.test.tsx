@@ -3,6 +3,7 @@ import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import App from "@/App";
 import { useApp } from "@/estado/app";
+import { urlGoogleMaps, urlGoogleMapsEmbed } from "@/lib/enlaces";
 import { useRelieve } from "@/relieve/estado";
 
 // jsdom no tiene WebGL: el mapa de Relieve se revisa en el navegador.
@@ -171,7 +172,9 @@ describe("vista Relieve (F4-R1)", () => {
     expect(useRelieve.getState().seleccion).toBe("CL-AR");
   });
 
-  it("En vivo muestra los focos recientes y la ficha de cada uno", async () => {
+  it("En vivo muestra los focos recientes y la ficha de cada uno con su ubicación y previsualización en Google Maps (#219)", async () => {
+    expect(urlGoogleMaps(-39, -70)).toBe("https://www.google.com/maps?q=-39,-70");
+    expect(urlGoogleMapsEmbed(-39, -70)).toBe("https://maps.google.com/maps?q=-39,-70&z=13&output=embed");
     montar();
     const u = userEvent.setup();
     await u.click(screen.getByRole("tab", { name: "En vivo" }));
@@ -180,7 +183,16 @@ describe("vista Relieve (F4-R1)", () => {
     await u.click(within(panel).getByRole("button", { name: /Neuquén.*42,5 MW/ }));
     const ficha = screen.getByRole("region", { name: "Ficha del foco" });
     expect(within(ficha).getByText("NOAA-20")).toBeInTheDocument();
+    expect(within(ficha).getByText("VIIRS")).toBeInTheDocument();
+    expect(within(ficha).getByText("alta")).toBeInTheDocument();
+    expect(within(ficha).getByText("De noche")).toBeInTheDocument();
     expect(within(ficha).getByText("Muy fuerte", { exact: false })).toBeInTheDocument();
+    expect(within(ficha).getByText(/-39,000, -70,000/)).toBeInTheDocument();
+    const enlaceMapa = within(ficha).getByRole("link", { name: /ver ubicación en google maps/i });
+    expect(enlaceMapa).toHaveAttribute("href", "https://www.google.com/maps?q=-39,-70");
+    expect(enlaceMapa.querySelector("svg")).toBeInTheDocument();
+    const preview = within(ficha).getByTitle("Previsualización de la ubicación en Google Maps");
+    expect(preview).toHaveAttribute("src", "https://maps.google.com/maps?q=-39,-70&z=13&output=embed");
   });
 
   it("si la API falla, lo dice y el resto de la vista sigue", async () => {

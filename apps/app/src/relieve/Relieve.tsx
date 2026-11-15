@@ -181,6 +181,7 @@ export function Relieve() {
               <LineaTiempo region={region} dias={dias} />
             </>
           )}
+          {focoElegido && <FichaFoco foco={focoElegido} regiones={regiones} />}
         </>
       )}
 

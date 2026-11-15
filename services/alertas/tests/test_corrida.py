@@ -4,6 +4,7 @@ import asyncio
 import logging
 from datetime import UTC, datetime
 
+import pytest
 from alertas.botones import botones
 from alertas.corrida import Toque, con_estado, corrida, procesar_toques
 from alertas.modelos import Foco
@@ -148,3 +149,20 @@ def test_sin_focos_la_linea_de_resumen_sale_igual(caplog):
         "corrida: zonas 1 · botones 0 · focos en vivo 0 · reportes 0 · nuevos en las zonas 0"
         " · avisos mandados 0 · envíos fallidos 0 · actualizaciones 0"
     ]
+
+
+def test_si_un_aviso_no_se_pudo_mandar_la_corrida_deja_el_resumen_y_termina_con_error(caplog):
+    # #349: un grupo mal configurado no tiene que pasar inadvertido; el aviso se reintenta en la próxima.
+    foco = Foco(id="f1", tipo="foco_satelital", lat=-41.95, lon=-71.53,
+                cuando=datetime(2026, 11, 14, 4, 55, tzinfo=UTC), detalle="muestra",
+                veredicto="confirmado", confianza="high")
+
+    class TelegramQueFalla(TelegramFalso):
+        async def enviar(self, chat_id, texto, teclado, responder_a=None):
+            raise RuntimeError("Bad Request: chat not found")
+
+    with caplog.at_level(logging.INFO, logger="alertas"):
+        with pytest.raises(RuntimeError, match="1 aviso"):
+            asyncio.run(corrida(ApiFalsa(focos=[foco]), TelegramQueFalla(), [(ZONA_DEMO, CHAT)]))
+    assert any("envíos fallidos 1" in m for m in caplog.messages)
+    assert any("zona-demo" in m and "chat not found" in m for m in caplog.messages)

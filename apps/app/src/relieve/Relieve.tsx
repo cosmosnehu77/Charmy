@@ -321,8 +321,9 @@ export function Relieve() {
         </>
       )}
 
-      {/* Los controles van en todas las pestañas: En vivo y Experto también se ven en 3D. */}
-      <div data-guia="controles" className="pointer-events-auto absolute right-4 top-1/2 z-20 flex -translate-y-1/2 flex-col gap-2">
+      {/* Los controles van en todas las pestañas: En vivo y Experto también se ven en 3D. En escritorio, arriba para no
+          tapar la leyenda de abajo a la derecha (#402); en celular no hay leyenda. */}
+      <div data-guia="controles" className="pointer-events-auto absolute right-4 top-1/2 z-20 flex -translate-y-1/2 flex-col gap-2 md:top-[72px] md:translate-y-0 md:gap-1.5">
           <BotonRedondo etiqueta={t("Acercar", "Zoom in")} onClick={() => controlMapa.zoom(0.75)}>
             <Plus aria-hidden="true" className="size-4" />
           </BotonRedondo>

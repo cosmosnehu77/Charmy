@@ -282,8 +282,8 @@ export function Relieve() {
                     )
                   : info?.disponible
                   ? t(
-                      `${info.ayuda} Cuanto más alta y más oscura la región, ${indicador === "anomalia" ? "más se aleja de lo normal" : "más fuego"}.`,
-                      `${info.ayuda} The taller and darker the region, ${indicador === "anomalia" ? "the further from normal" : "the more fire"}.`,
+                      `${info.ayuda} Cuanto más alta y más oscura la región, ${indicador === "anomalia" ? "más se aleja de lo normal" : "más fuego"}.${indicador === "focos" ? " El color compara las provincias entre sí, no con lo normal: eso está en la ficha de cada una y en Anomalía." : ""}`,
+                      `${info.ayuda} The taller and darker the region, ${indicador === "anomalia" ? "the further from normal" : "the more fire"}.${indicador === "focos" ? " Color compares provinces with each other, not with normal: that is in each province's card and in Anomaly." : ""}`,
                     )
                   : t(`${info?.ayuda} El resto del mapa sigue andando.`, `${info?.ayuda} The rest of the map keeps working.`)}
               </p>

@@ -1,3 +1,8 @@
+import { paleta } from "@charmy/ui";
+
+/** Color de los lagos: el token de agua, azul frente a los naranjas del fuego (#202). */
+export const COLOR_LAGO = paleta.agua;
+
 /** Lagos donde Charmy recarga el tanque. Posición aproximada del centro de cada lago, en grados. */
 export interface Lago {
   nombre: string;

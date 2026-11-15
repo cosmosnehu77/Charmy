@@ -14,10 +14,10 @@ método, la validación y sus límites están en [`docs/metodologia/`](docs/meto
 
 | Pieza | Dirección |
 |---|---|
-| Landing | <https://charmy-landing.pages.dev> |
-| Aplicación (mapa, calendario, modo experto) | <https://charmy-app.pages.dev> |
-| Juego | <https://charmy-juego.pages.dev> |
-| API (`/api/v1`, contrato en [`openapi.yaml`](packages/contracts/api/openapi.yaml)) | <https://charmy-j36m.onrender.com/api/v1/health> |
+| Landing | <https://charmy.earth> |
+| Aplicación (mapa, calendario, modo experto) | <https://app.charmy.earth> |
+| Juego | <https://juego.charmy.earth> |
+| API (`/api/v1`, contrato en [`openapi.yaml`](packages/contracts/api/openapi.yaml)) | <https://api.charmy.earth/api/v1/health> |
 
 La API corre en un plan gratuito que se duerme: el primer pedido puede tardar cerca de un minuto.
 

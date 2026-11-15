@@ -165,3 +165,30 @@ export function regionDePunto(regiones: RegionResumen[], lon: number, lat: numbe
   }
   return null;
 }
+
+type Caja = Pick<DOMRect, "left" | "top" | "right" | "bottom" | "width" | "height">;
+
+/**
+ * Dónde va el globo de Charmy guía (arriba a la izquierda del grupo). Al costado del elemento si entra; si al costado
+ * tendría que subirse más arriba de la pantalla (la píldora, la lupa), va justo debajo y centrado en el elemento.
+ */
+export function ubicarGlobo(
+  rect: Caja | null,
+  { W, H, ancho, alto }: { W: number; H: number; ancho: number; alto: number },
+): { x: number; y: number; izquierda: boolean } {
+  const margen = 12;
+  const sep = 16;
+  if (!rect) return { x: (W - ancho) / 2, y: (H - alto) / 2, izquierda: false };
+  const ajustar = (x: number, y: number, izquierda: boolean) => ({
+    x: Math.min(Math.max(margen, x), W - ancho - margen),
+    y: Math.min(Math.max(margen, y), H - alto - margen),
+    izquierda,
+  });
+  const centroY = rect.top + rect.height / 2 - alto / 2;
+  if (centroY >= margen) {
+    if (rect.right + sep + ancho <= W) return ajustar(rect.right + sep, centroY, false);
+    if (rect.left - sep - ancho >= 0) return ajustar(rect.left - sep - ancho, centroY, true);
+  }
+  const x = rect.left + rect.width / 2 - ancho / 2;
+  return ajustar(x, rect.bottom + sep + alto <= H ? rect.bottom + sep : rect.top - alto - sep, false);
+}

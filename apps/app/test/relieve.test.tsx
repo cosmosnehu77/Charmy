@@ -177,7 +177,6 @@ describe("vista Relieve (F4-R1)", () => {
       "Focos",
       "Intensidad",
       "Anomalía",
-      "Riesgo",
       "Predicción",
       "Experto",
       "En vivo",
@@ -848,7 +847,6 @@ describe("Charmy guía cada pestaña", () => {
   it.each([
     ["Intensidad", ["Intensidad, paso a paso", "Las que más energía liberan", "Cómo leer el mapa", "Intensidad en la ficha", "Día por día", "¡Listo!"]],
     ["Anomalía", ["Anomalía, paso a paso", "Las más fuera de lo normal", "Cómo leer el mapa", "Comparado con lo normal", "¡Listo!"]],
-    ["Riesgo", ["Riesgo, todavía no", "Mientras tanto", "¡Listo!"]],
     ["Predicción", ["Predicción, paso a paso", "Dónde se espera más fuego", "Cómo leer el mapa", "Los próximos meses", "¿Y tu zona?", "¡Listo!"]],
   ])("en %s, Charmy explica qué muestra la pestaña y cómo usarla", async (pestana, pasos) => {
     montar();
@@ -936,7 +934,6 @@ describe("idioma EN/ES y tema claro/oscuro", () => {
       "Hotspots",
       "Intensity",
       "Anomaly",
-      "Risk",
       "Forecast",
       "Expert",
       "Live",

@@ -53,12 +53,11 @@ function region(id: string, hotspots: number | null, frp: number | null, percent
 const REGIONES = [region("A", 300, 1200, 80), region("B", 0, 0), region("C", 12, 40), region("D", 75, 300, 20)];
 
 describe("valor de cada indicador", () => {
-  it("focos, intensidad y anomalía salen de la región; riesgo no tiene dato, y predicción solo si llegó", () => {
+  it("focos, intensidad y anomalía salen de la región, y predicción solo si llegó", () => {
     const a = REGIONES[0]!.properties;
     expect(valorIndicador(a, "focos")).toBe(300);
     expect(valorIndicador(a, "frp")).toBe(1200);
     expect(valorIndicador(a, "anomalia")).toBe(80);
-    expect(valorIndicador(a, "riesgo")).toBeNull();
     expect(valorIndicador(a, "prediccion")).toBeNull();
     expect(valorIndicador(REGIONES[1]!.properties, "anomalia")).toBeNull();
   });

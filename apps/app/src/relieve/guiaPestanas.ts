@@ -197,27 +197,6 @@ const PASOS_ANOMALIA: Paso[] = [
   LISTO_MAPA,
 ];
 
-const PASOS_RIESGO: Paso[] = [
-  paso({
-    mood: "pensando",
-    titulo: ["Riesgo, todavía no", "Risk, not yet"],
-    texto: [
-      "Esta pestaña va a mostrar el riesgo de incendio por provincia según el tiempo. Todavía no está disponible.",
-      "This tab will show fire risk by province based on the weather. It isn’t available yet.",
-    ],
-  }),
-  paso({
-    guia: "indicadores",
-    mood: "explica",
-    titulo: ["Mientras tanto", "Meanwhile"],
-    texto: [
-      "Elegí Focos, Intensidad, Anomalía o Predicción para mirar el fuego. El resto del mapa sigue andando.",
-      "Choose Hotspots, Intensity, Anomaly, or Forecast to explore fire. The rest of the map keeps working.",
-    ],
-  }),
-  LISTO_MAPA,
-];
-
 const PASOS_PREDICCION: Paso[] = [
   paso({
     mood: "saluda",
@@ -360,7 +339,6 @@ export const PASOS_VIVO: Paso[] = [
 export function pasosDe(pestana: Exclude<Pestana, "zona" | "vivo">): Paso[] {
   if (pestana === "frp") return PASOS_INTENSIDAD;
   if (pestana === "anomalia") return PASOS_ANOMALIA;
-  if (pestana === "riesgo") return PASOS_RIESGO;
   if (pestana === "prediccion") return PASOS_PREDICCION;
   return PASOS_FOCOS;
 }

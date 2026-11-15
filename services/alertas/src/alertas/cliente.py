@@ -6,7 +6,7 @@ from datetime import datetime
 import httpx
 
 from alertas.modelos import Alerta, Anterior, Foco, Tipo, Viento
-from alertas.zona import Zona
+from alertas.zona import Rectangulo, bbox_param
 
 log = logging.getLogger(__name__)
 
@@ -53,10 +53,10 @@ class ClienteCharmy:
             log.warning("viento no disponible: %s", e)
             return None
 
-    async def focos_en_vivo(self, zona: Zona) -> list[Foco]:
-        """Focos de /live en la zona. Las fuentes fijas (industrias, volcanes) no se avisan."""
+    async def focos_en_vivo(self, area: Rectangulo) -> list[Foco]:
+        """Focos de /live en el área. Las fuentes fijas (industrias, volcanes) no se avisan."""
         try:
-            r = await self._http.get("/live", params={"bbox": zona.bbox_param()})
+            r = await self._http.get("/live", params={"bbox": bbox_param(area)})
             r.raise_for_status()
             features = r.json()["features"]
         except (httpx.HTTPError, KeyError, TypeError, ValueError) as e:
@@ -71,9 +71,9 @@ class ClienteCharmy:
                 log.warning("foco de /live ilegible (%s): %s", f.get("id") if isinstance(f, dict) else f, e)
         return focos
 
-    async def reportes(self, zona: Zona) -> list[Foco]:
+    async def reportes(self, area: Rectangulo) -> list[Foco]:
         try:
-            r = await self._http.get("/reports", params={"bbox": zona.bbox_param()}, headers=self._auth)
+            r = await self._http.get("/reports", params={"bbox": bbox_param(area)}, headers=self._auth)
             r.raise_for_status()
             return [_foco_de_reporte(x) for x in r.json()]
         except (httpx.HTTPError, KeyError, TypeError, ValueError) as e:

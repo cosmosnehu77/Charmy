@@ -15,7 +15,7 @@ type FeatureResumen = Resumen["features"][number];
 export type PropsRegion = FeatureResumen["properties"] & { prediccion?: MesPrediccion[] };
 export type RegionResumen = Omit<FeatureResumen, "properties"> & { properties: PropsRegion };
 
-export type Indicador = "focos" | "frp" | "anomalia" | "riesgo" | "prediccion";
+export type Indicador = "focos" | "frp" | "anomalia" | "prediccion";
 
 export const INDICADORES: { id: Indicador; nombre: string; unidad: string; ayuda: string; disponible: boolean }[] = [
   {
@@ -57,20 +57,6 @@ export const INDICADORES: { id: Indicador; nombre: string; unidad: string; ayuda
       return t("Último mes contra su historia; 50 es lo típico.", "Last month vs. history; 50 is typical.");
     },
     disponible: true,
-  },
-  {
-    id: "riesgo",
-    get nombre() {
-      return t("Riesgo", "Risk");
-    },
-    unidad: "",
-    get ayuda() {
-      return t(
-        "El riesgo de incendio por región todavía no está disponible.",
-        "Fire risk by region is not available yet.",
-      );
-    },
-    disponible: false,
   },
   {
     id: "prediccion",

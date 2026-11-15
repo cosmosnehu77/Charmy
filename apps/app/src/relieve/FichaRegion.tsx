@@ -38,8 +38,9 @@ export function FichaRegion({
   const cambiar = useRelieve((s) => s.cambiar);
   const p = region.properties;
   const posicion = rankingRegiones(regiones, "focos", 39).findIndex((r) => r.id === region.id);
-  const nivel = nivelRegion(p.hotspots ?? null, posicion);
   const ultimo = p.last_month;
+  // Como el mapa en Focos (#373): el número grande y el nivel son del último mes cerrado.
+  const nivel = nivelRegion(ultimo?.value ?? null, posicion);
   const dice = ultimo
     ? t(
         `En ${nombreMes(ultimo.month)} hubo ${num(ultimo.value, 1)} días-celda con fuego acá. Está ${nivelPercentil(ultimo.percentile ?? 50)}.`,
@@ -102,12 +103,12 @@ export function FichaRegion({
             <span className={`nivel-relieve ${TONOS[nivel.tono]}`}>{nivel.texto}</span>
             <div className="flex items-center gap-3.5">
               <b className="font-titulos text-[56px] font-extrabold leading-[.9] tracking-tight text-relieve-brillo tabular-nums">
-                {p.hotspots === null || p.hotspots === undefined ? "—" : num(p.hotspots)}
+                {ultimo ? num(ultimo.value, 1) : "—"}
               </b>
               <span className="text-sm leading-snug text-white/75">
-                {p.hotspots === 1 ? t("foco de calor", "thermal hotspot") : t("focos de calor", "thermal hotspots")}
+                {t("días-celda con fuego", "fire cell-days")}
                 <br />
-                {t("en los últimos días", "in recent days")}
+                {ultimo ? t(`en ${mes}`, `in ${mes}`) : t("sin historial", "no history")}
               </span>
             </div>
             <dl className="m-0 flex flex-col">
@@ -151,7 +152,7 @@ export function FichaRegion({
                 <PrediccionMeses meses={p.prediccion} texto={textoPrediccion} />
               </div>
             )}
-            <NumerosRegion region={region.id} posicion={posicion} total={regiones.length} conHistorial={ultimo != null} />
+            <NumerosRegion region={region.id} posicion={posicion} total={regiones.length} mes={mes} conHistorial={ultimo != null} />
             <div className="flex items-end gap-2">
               <Charmy size={64} mood="explica" outfit="cientifica" decorative className="shrink-0" />
               <p className="mb-3.5 rounded-[14px] rounded-bl-[4px] bg-white/10 px-3 py-2.5 text-[13.5px] leading-snug">{dice}</p>

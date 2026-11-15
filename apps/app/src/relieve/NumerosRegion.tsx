@@ -24,11 +24,14 @@ export function NumerosRegion({
   region,
   posicion,
   total,
+  mes,
   conHistorial,
 }: {
   region: string;
-  /** Lugar en el ranking por focos, desde 0; -1 si no tiene focos. */
+  /** Lugar en el ranking por focos del último mes, desde 0; -1 si no tiene focos. */
   posicion: number;
+  /** Nombre del último mes cerrado, el del ranking. */
+  mes: string;
   total: number;
   conHistorial: boolean;
 }) {
@@ -42,7 +45,7 @@ export function NumerosRegion({
     {
       nombre: t("Puesto por focos", "Rank by hotspots"),
       valor: posicion >= 0 ? t(`${posicion + 1}.º de ${total}`, `#${posicion + 1} of ${total}`) : t("Sin focos", "No hotspots"),
-      detalle: posicion >= 0 ? t("en los últimos días", "in recent days") : undefined,
+      detalle: posicion >= 0 ? t(`en ${mes}`, `in ${mes}`) : undefined,
     },
   ];
   if (anio) {

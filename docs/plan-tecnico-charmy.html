@@ -168,7 +168,7 @@ footer{padding-block:28px;color:var(--muted);font-size:.85rem;border-top:1px sol
     <li><a href="#prediccion">Predicción</a></li>
     <li><a href="#verificacion">Verificación de focos</a></li>
     <li><a href="#alertas">Alertas a entidades</a></li>
-    <li><a href="#kids">Charmy Kids</a></li>
+    <li><a href="#brigada">Charmy Brigada</a></li>
     <li><a href="#equipo">Equipo y 48 h</a></li>
     <li><a href="#agentes">Agentes y skills</a></li>
     <li><a href="#novedad">Qué nos distingue</a></li>
@@ -211,7 +211,7 @@ footer{padding-block:28px;color:var(--muted);font-size:.85rem;border-top:1px sol
       <tr><td class="k">Relevancia</td><td>Responder al enunciado: armonización MODIS/VIIRS, calendario de quema, área elegida por el usuario, comparación con la mediana histórica, descarga de analíticas y CSV.</td><td>Pipeline de armonización, calendario, mapa con dibujo de área</td></tr>
       <tr><td class="k">Validez</td><td>Que la armonización se pueda verificar: métricas del período de solape (2012–2026), datos reales de FIRMS y supuestos explícitos.</td><td>Panel “¿Qué tan buena es la armonización?” en modo experto</td></tr>
       <tr><td class="k">Impacto</td><td>Uso real por brigadas, Defensa Civil e investigadores. Que funcione en el campo con poca conectividad.</td><td>Modo 2D liviano, alertas por zona, feed CAP</td></tr>
-      <tr><td class="k">Creatividad</td><td>Lo que no hacen otros equipos: Charmy como guía, verificación con evidencia, juego educativo con focos reales.</td><td>Charmy, verificación, Charmy Kids</td></tr>
+      <tr><td class="k">Creatividad</td><td>Lo que no hacen otros equipos: Charmy como guía, verificación con evidencia, juego educativo con focos reales.</td><td>Charmy, verificación, Charmy Brigada</td></tr>
       <tr><td class="k">Presentación</td><td>Video o slides claros, landing atractiva, repo prolijo con README.</td><td>Landing, video, README del monorepo</td></tr>
     </tbody>
   </table></div>
@@ -232,7 +232,7 @@ footer{padding-block:28px;color:var(--muted);font-size:.85rem;border-top:1px sol
       <tr><td class="k">Focos en vivo NOAA‑20/21</td><td><span class="pill p-should">importante</span></td><td>Últimas 48 h con caché, consumidos desde el worker y no desde el navegador.</td></tr>
       <tr><td class="k">Verificación de focos</td><td><span class="pill p-should">importante</span></td><td>Señales satelitales y de fuente fija primero; noticias y LLM como capa extra.</td></tr>
       <tr><td class="k">Alertas a entidades</td><td><span class="pill p-should">importante</span></td><td>Bot de Telegram y feed CAP para una entidad de demo; reporte anónimo.</td></tr>
-      <tr><td class="k">Charmy Kids</td><td><span class="pill p-should">importante</span></td><td>Un nivel 2D de 3 minutos con focos de un día real, puntaje y combo.</td></tr>
+      <tr><td class="k">Charmy Brigada</td><td><span class="pill p-should">importante</span></td><td>Un nivel 2D de 3 minutos con focos de un día real, puntaje y combo.</td></tr>
       <tr><td class="k">Predicción a 1–3 meses</td><td><span class="pill p-could">deseable</span></td><td>Se muestra solo si le gana a la climatología en el test temporal.</td></tr>
       <tr><td class="k">Cuentas de usuario general</td><td><span class="pill p-could">deseable</span></td><td>No hace falta para el MVP. Solo las entidades tienen cuenta.</td></tr>
       <tr><td class="k">Juego 3D voxel</td><td><span class="pill p-could">deseable</span></td><td>Fuera de las 48 h. Queda en la hoja de ruta.</td></tr>
@@ -454,9 +454,9 @@ footer{padding-block:28px;color:var(--muted);font-size:.85rem;border-top:1px sol
   <p class="note">Para la demo alcanza con una entidad de prueba (por ejemplo “Bomberos Voluntarios Demo”), un grupo de Telegram y el XML CAP generado. En el pitch, digan que buscan alianzas con el Servicio Provincial de Manejo del Fuego de Chubut y con bomberos voluntarios. Muestren siempre el aviso de que Charmy no reemplaza al 100 ni al 911.</p>
 </section>
 
-<section id="kids">
+<section id="brigada">
   <div class="eyebrow">Educación</div>
-  <h2>Charmy Kids</h2>
+  <h2>Charmy Brigada</h2>
   <p>Juego 2D en pixel art con Phaser 4: rondas de 3 minutos, fáciles de entender y que dan ganas de jugar otra vez. Lo que lo distingue es que <b>los focos salen de un día real de FIRMS</b> sobre un mapa estilizado de la Patagonia.</p>
   <ul class="clean">
     <li><b>Bucle:</b> aparecen focos en sus posiciones reales y se propagan con el viento. Charmy bombero los apaga con la manguera y tiene que recargar agua en lagos.</li>

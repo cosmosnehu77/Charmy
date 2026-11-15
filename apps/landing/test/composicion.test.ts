@@ -16,3 +16,11 @@ describe("sección El problema centrada en el mapa", () => {
     expect(css).toMatch(/#problema \.tarjeta\{margin-left:max\(0px,calc\(50vw - [^}]*var\(--medio-mapa\)/);
   });
 });
+
+describe("scroll suave", () => {
+  it("usa Lenis solo sin movimiento reducido, con sus estilos", () => {
+    expect(guion).toMatch(/import Lenis from "lenis";/);
+    expect(guion).toMatch(/import "lenis\/dist\/lenis\.css";/);
+    expect(guion).toMatch(/if \(!reducir\) new Lenis\(/);
+  });
+});

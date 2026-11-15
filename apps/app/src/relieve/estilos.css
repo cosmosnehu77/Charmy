@@ -388,6 +388,8 @@
   display: block;
   margin-bottom: 2px;
 }
+/* Además del mouse y el foco, se muestra sola unas veces al entrar (F4-D10). */
+.guia-boton[data-invita="true"] .guia-pregunta,
 .guia-boton:hover .guia-pregunta,
 .guia-boton:focus-visible .guia-pregunta {
   opacity: 1;

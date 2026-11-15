@@ -37,7 +37,7 @@ export function LineaTiempo({ region, dias }: { region: RegionResumen; dias: str
       role="group"
       aria-label={`Focos por día en ${region.properties.name}`}
       data-guia="linea"
-      className="linea-relieve vidrio-relieve pointer-events-auto absolute left-1/2 top-[76px] z-20 flex w-max max-w-[calc(100%-24px)] -translate-x-1/2 items-center gap-4 rounded-full py-[9px] pl-[9px] pr-[22px] md:bottom-4 md:top-auto"
+      className="linea-relieve vidrio-relieve pointer-events-auto absolute left-1/2 top-[76px] z-20 flex w-max max-w-[calc(100%-24px)] -translate-x-1/2 items-center gap-4 rounded-full py-[9px] pl-[9px] pr-[22px] md:bottom-[84px] md:top-auto"
     >
       <button
         type="button"

@@ -86,24 +86,29 @@ export function Relieve() {
         </>
       ) : (
         <>
-          <section data-guia="ranking" aria-label="Ranking" className="pointer-events-auto absolute left-4 top-[76px] z-10 hidden w-[250px] md:block">
-            <div className="mb-2 flex items-baseline justify-between text-[11px] uppercase tracking-[.14em] text-white/45">
+          {/* Sobre vidrio: al acercar el mapa quedan regiones de color debajo y el texto blanco se perdía (#214). */}
+          <section
+            data-guia="ranking"
+            aria-label="Ranking"
+            className="vidrio-relieve pointer-events-auto absolute left-4 top-[76px] z-10 hidden w-[250px] rounded-2xl px-2 pb-2 pt-3 md:block"
+          >
+            <div className="mb-2 flex items-baseline justify-between px-2 text-[11px] uppercase tracking-[.14em] text-white/45">
               <span>Ranking · {info?.nombre.toLowerCase()}</span>
               <span className="normal-case tracking-normal">{info?.unidad}</span>
             </div>
             {!info?.disponible ? (
-              <p className="text-sm text-white/50">{info?.ayuda}</p>
+              <p className="px-2 text-sm text-white/50">{info?.ayuda}</p>
             ) : ranking.length === 0 ? (
-              <p className="text-sm text-white/50">{resumen.isPending ? "Cargando…" : "Sin datos de este indicador ahora."}</p>
+              <p className="px-2 text-sm text-white/50">{resumen.isPending ? "Cargando…" : "Sin datos de este indicador ahora."}</p>
             ) : (
-              <ol className="m-0 flex list-none flex-col gap-1 p-0">
+              <ol className="m-0 flex list-none flex-col p-0">
                 {ranking.map((r, i) => (
                   <li key={r.id}>
                     <button
                       type="button"
                       aria-pressed={estado.seleccion === r.id}
                       onClick={() => estado.alternarRegion(r.id)}
-                      className="grid w-full grid-cols-[18px_1fr_auto] items-center gap-2 rounded-lg py-1 text-left text-sm hover:bg-white/5"
+                      className="grid w-full grid-cols-[18px_1fr_auto] items-center gap-2 rounded-lg px-2 py-1.5 text-left text-sm hover:bg-white/10"
                     >
                       <span className="text-xs tabular-nums text-white/35">{i + 1}</span>
                       <span className="flex min-w-0 flex-col gap-1">
@@ -179,7 +184,8 @@ export function Relieve() {
         </>
       )}
 
-      <div className="pointer-events-auto absolute bottom-4 left-4 z-10 flex flex-col items-start gap-2">
+      {/* z-20: la ayuda de Charmy y el aviso de emergencias quedan por encima del ranking, la leyenda y la línea de tiempo. */}
+      <div className="pointer-events-auto absolute bottom-4 left-4 z-20 flex flex-col items-start gap-2">
         {!enVivo && <CharmyGuia regionMasFuego={masFuego} />}
         <div className="flex flex-wrap items-center gap-2">
           <span className="rounded-full bg-relieve-vidrio/60 px-3 py-1 font-mono text-[10px] uppercase tracking-[.16em] text-white/55 ring-1 ring-white/10">

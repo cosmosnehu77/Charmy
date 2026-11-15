@@ -118,6 +118,13 @@ describe("vista Relieve (F4-R1)", () => {
     expect(screen.getByText(/no reemplaza a los servicios de emergencia/)).toBeInTheDocument();
   });
 
+  it("el ranking va sobre vidrio, así se lee aunque el mapa acercado ponga regiones de color debajo (#214)", async () => {
+    montar();
+    const ranking = await screen.findByRole("region", { name: "Ranking" });
+    expect(await within(ranking).findByText("Neuquén")).toBeInTheDocument();
+    expect(ranking).toHaveClass("vidrio-relieve");
+  });
+
   it("Charmy en la píldora lleva a la landing", () => {
     montar();
     expect(screen.getByRole("link", { name: "Charmy: ir a la página de inicio" })).toHaveAttribute(

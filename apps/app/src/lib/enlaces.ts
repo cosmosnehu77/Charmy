@@ -1,6 +1,5 @@
-/** Las otras dos piezas de Charmy en producción (Cloudflare Pages, deploy-web.yml). */
+/** La landing de Charmy en producción (Cloudflare Pages, deploy-web.yml). */
 export const URL_LANDING = "https://charmy-landing.pages.dev";
-export const URL_JUEGO = "https://charmy-juego.pages.dev";
 
 /** Enlace directo y previsualización embebida de una coordenada en Google Maps. */
 export function urlGoogleMaps(lat: number, lon: number): string {

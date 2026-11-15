@@ -8,6 +8,7 @@ import type { TerraDraw } from "terra-draw";
 import { bboxDeArea } from "@/consulta/consulta";
 import { useFocos } from "@/consulta/useFocos";
 import { useContexto } from "@/contexto/estado";
+import { useApp } from "@/estado/app";
 import { useConsulta } from "@/estado/consulta";
 import { datosArea, ponerImagen } from "@/mapa/capas";
 import { crearDibujo } from "@/mapa/dibujo";
@@ -348,7 +349,12 @@ export default function MapaRelieve({ regiones, dias, focos, onHover }: Props) {
 
     // Región bajo el puntero y toque para elegirla (tocar la elegida la deselecciona).
     m.on("mousemove", (e) => {
-      if (props.current.estado.pestana === "zona") return;
+      if (props.current.estado.pestana === "zona") {
+        const experto = useApp.getState().modo === "experto" && !useConsulta.getState().dibujando;
+        const f = experto && m.getLayer("zona-focos") ? m.queryRenderedFeatures(e.point, { layers: ["zona-focos"] })[0] : undefined;
+        m.getCanvas().style.cursor = f ? "pointer" : "";
+        return;
+      }
       const vivo = props.current.estado.pestana === "vivo";
       const capa = vivo ? "vivo-focos" : "reg-3d";
       const f = m.getLayer(capa) ? m.queryRenderedFeatures(e.point, { layers: [capa] })[0] : undefined;
@@ -363,7 +369,15 @@ export default function MapaRelieve({ regiones, dias, focos, onHover }: Props) {
     m.on("mouseout", () => props.current.onHover({ id: null, foco: null, x: 0, y: 0 }));
     m.on("click", (e) => {
       const { estado: est } = props.current;
-      if (est.pestana === "zona") return; // en Tu zona el mapa es para dibujar
+      if (est.pestana === "zona") {
+        // En Tu zona el mapa es para dibujar; en el modo experto, tocar un foco muestra sus atributos (RF-MOD-02).
+        if (useConsulta.getState().dibujando || useApp.getState().modo !== "experto") return;
+        const f = m.getLayer("zona-focos") ? m.queryRenderedFeatures(e.point, { layers: ["zona-focos"] })[0] : undefined;
+        est.cambiar({
+          focoZona: f ? { lon: e.lngLat.lng, lat: e.lngLat.lat, propiedades: f.properties as Record<string, unknown> } : null,
+        });
+        return;
+      }
       if (est.pestana === "vivo") {
         const f = m.getLayer("vivo-focos") ? m.queryRenderedFeatures(e.point, { layers: ["vivo-focos"] }) : [];
         // Entre focos encimados gana el más chico, que es el que queda arriba.

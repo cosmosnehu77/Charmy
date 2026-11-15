@@ -1,7 +1,8 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { act, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { PanelConsulta } from "@/consulta/PanelConsulta";
+import { Area, Fechas, Filtros, Resultado } from "@/consulta/PanelConsulta";
+import { useFocos } from "@/consulta/useFocos";
 import { useApp } from "@/estado/app";
 import { estadoInicialConsulta, useConsulta } from "@/estado/consulta";
 
@@ -26,11 +27,31 @@ const respuesta = {
 
 const fetchSimulado = vi.fn<typeof fetch>();
 
+/** Las piezas de la consulta, como las arma Tu zona en Relieve (#276), sin el calendario ni el contexto. */
+function PanelDePrueba() {
+  const { focos, errorFechas, consulta, hayArea } = useFocos();
+  return (
+    <>
+      <Area />
+      <Fechas error={errorFechas} />
+      <Filtros />
+      <Resultado
+        focos={focos?.features.length ?? null}
+        cargando={consulta.isFetching}
+        fallo={consulta.isError}
+        hayArea={hayArea && !errorFechas}
+        total={consulta.data?.truncated ? (consulta.data.total ?? null) : null}
+        mes={null}
+      />
+    </>
+  );
+}
+
 function montar() {
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return render(
     <QueryClientProvider client={qc}>
-      <PanelConsulta />
+      <PanelDePrueba />
     </QueryClientProvider>,
   );
 }

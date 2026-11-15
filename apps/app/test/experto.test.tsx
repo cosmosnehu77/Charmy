@@ -10,7 +10,9 @@ import { atributosFoco } from "@/experto/atributos";
 import { calendarioCsv, calendarioSvg } from "@/experto/archivos";
 import { filtrarPorMes, mesesDelPeriodo } from "@/experto/meses";
 
-vi.mock("@/mapa/Mapa", () => ({ default: () => <div data-testid="mapa" /> }));
+vi.mock("@/relieve/MapaRelieve", () => ({ default: () => <div data-testid="mapa" /> }));
+// Tu zona no necesita las regiones ni los focos en vivo de Relieve.
+vi.mock("@/relieve/datos", () => ({ useDatosRelieve: () => ({ resumen: {}, vivo: {}, regiones: [], focos: [] }) }));
 
 // Muestras con la forma de los contratos (valores inventados).
 const metricas = {
@@ -73,7 +75,7 @@ beforeEach(() => {
   });
   vi.stubGlobal("fetch", fetchSimulado);
   useConsulta.setState({ ...estadoInicialConsulta("2026-11-14"), desde: "2025-01-01", hasta: "2025-03-31", area });
-  useApp.setState({ modo: "experto", perfilMapa: "2d", recorridoVisto: true });
+  useApp.setState({ modo: "experto" });
 });
 afterEach(() => {
   vi.useRealTimers();

@@ -1,5 +1,5 @@
 import "@testing-library/jest-dom/vitest";
-import { useApp } from "@/estado/app";
+import { useRelieve } from "@/relieve/estado";
 
-// Las pruebas de antes de F4-R1 son de la consulta por área; las de Relieve eligen su vista.
-beforeEach(() => useApp.setState({ vista: "consulta" }));
+// Las pruebas de la consulta por área arrancan en Tu zona (#276); las de Relieve eligen su pestaña.
+beforeEach(() => useRelieve.setState({ pestana: "zona", focoZona: null }));

@@ -25,12 +25,14 @@ interface EstadoRelieve {
   ranking: boolean;
   /** Recorrido de Charmy guía en curso: mientras dura, el ranking no se esconde. */
   guia: boolean;
+  /** Foco de Tu zona tocado en el modo experto: su lugar y sus atributos originales (RF-MOD-02). */
+  focoZona: { lon: number; lat: number; propiedades: Record<string, unknown> } | null;
   elegirPestana: (p: Pestana) => void;
   /** Elegir de nuevo la región elegida la deselecciona. */
   alternarRegion: (id: string | null) => void;
   usarLinea: (cambio: Partial<EstadoRelieve["linea"]>) => void;
   cambiar: (
-    cambio: Partial<Pick<EstadoRelieve, "plano" | "giro" | "horasVivo" | "focoVivo" | "nivelesVivo" | "ranking" | "guia">>,
+    cambio: Partial<Pick<EstadoRelieve, "plano" | "giro" | "horasVivo" | "focoVivo" | "nivelesVivo" | "ranking" | "guia" | "focoZona">>,
   ) => void;
 }
 
@@ -47,11 +49,12 @@ export const useRelieve = create<EstadoRelieve>()((set) => ({
   nivelesVivo: [],
   ranking: true,
   guia: false,
+  focoZona: null,
   elegirPestana: (pestana) =>
     set((s) =>
       pestana === "vivo" || pestana === "zona"
-        ? { pestana, seleccion: null, linea: LINEA_LIBRE, focoVivo: pestana === "zona" ? null : s.focoVivo }
-        : { pestana, focoVivo: s.focoVivo },
+        ? { pestana, seleccion: null, linea: LINEA_LIBRE, focoVivo: pestana === "zona" ? null : s.focoVivo, focoZona: null }
+        : { pestana, focoVivo: s.focoVivo, focoZona: null },
     ),
   alternarRegion: (id) =>
     set((s) => ({ seleccion: id !== null && id === s.seleccion ? null : id, focoVivo: null, linea: LINEA_LIBRE })),

@@ -6,8 +6,6 @@ import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { bboxDeArea } from "@/consulta/consulta";
 import { useConsulta } from "@/estado/consulta";
 import { pedir, urlApi } from "@/lib/api";
-import { useFocosVivo } from "@/vivo/consultas";
-import { useVivo } from "@/vivo/estado";
 import { direccionViento, textoRiesgo, urlImagen } from "./contexto";
 import { type EstiloImagen, useContexto } from "./estado";
 
@@ -28,16 +26,9 @@ const entero = new Intl.NumberFormat("es-AR", { maximumFractionDigits: 0 });
 const viento = (p: PuntoTiempo) =>
   `${entero.format(p.wind_speed_ms * 3.6)} km/h del ${direccionViento(p.wind_dir_deg)}`;
 
-/** El lugar del contexto: el foco reciente elegido o, si no hay, el centro del área (RF-CTX-01). */
+/** El lugar del contexto: el centro del área de Tu zona (RF-CTX-01). */
 function usePunto(): { lat: number; lon: number; cual: string } | null {
   const area = useConsulta((s) => s.area);
-  const seleccionado = useVivo((s) => s.seleccionado);
-  const vivo = useFocosVivo();
-  const foco = seleccionado ? vivo.data?.features.find((f) => f.id === seleccionado) : undefined;
-  if (foco) {
-    const [lon, lat] = foco.geometry.coordinates;
-    if (lat !== undefined && lon !== undefined) return { lat, lon, cual: "Foco reciente elegido" };
-  }
   if (!area) return null;
   const [o, s, e, n] = bboxDeArea(area);
   return { lat: (s + n) / 2, lon: (o + e) / 2, cual: "Centro del área" };

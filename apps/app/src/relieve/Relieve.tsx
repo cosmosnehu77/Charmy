@@ -1,9 +1,7 @@
 import { rampaAnomalia, rampaConteo } from "@charmy/ui";
 import { ChevronRight, Compass, Minus, Plus, RotateCw } from "lucide-react";
 import { lazy, Suspense, useEffect, useMemo, useState } from "react";
-import { useApp } from "@/estado/app";
 import { useConsulta } from "@/estado/consulta";
-import { URL_JUEGO, URL_LANDING } from "@/lib/enlaces";
 import { useVivo } from "@/vivo/estado";
 import { CharmyGuia } from "./CharmyGuia";
 import { controlMapa } from "./controlMapa";
@@ -27,7 +25,6 @@ const num = (v: number, d = 0) => v.toLocaleString("es-AR", { minimumFractionDig
 export function Relieve() {
   const { resumen, vivo, regiones, focos } = useDatosRelieve();
   const estado = useRelieve();
-  const irAConsulta = useApp((s) => s.cambiarVista);
   const [sobre, setSobre] = useState<{ id: string | null; foco: number | null; x: number; y: number }>({
     id: null,
     foco: null,
@@ -242,32 +239,16 @@ export function Relieve() {
       )}
 
       {/* z-20: la ayuda de Charmy y el aviso de emergencias quedan por encima del ranking, la leyenda y la línea de tiempo.
-          En celular la ficha sale como hoja desde abajo: Charmy y los enlaces se guardan y el aviso queda encima (#218).
+          En celular la ficha sale como hoja desde abajo: Charmy se guarda y el aviso queda encima (#218).
           En Tu zona el panel ocupa la izquierda: queda solo el aviso, debajo del panel. */}
       <div
         className={`pointer-events-auto absolute bottom-4 left-4 z-20 flex flex-col items-start gap-2 ${region || zona ? "max-md:right-4 max-md:bottom-3 max-md:z-40" : ""} ${zona ? "md:max-w-[340px]" : ""}`}
       >
-        <div className={`flex flex-col items-start gap-2 ${zona ? "hidden" : region ? "max-md:hidden" : ""}`}>
-          {!enVivo && <CharmyGuia regionMasFuego={masFuego} />}
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="rounded-full bg-relieve-vidrio/60 px-3 py-1 font-mono text-[10px] uppercase tracking-[.16em] text-white/55 ring-1 ring-white/10">
-              Argentina y Chile · {regiones.length || 39} regiones
-            </span>
-            <button
-              type="button"
-              onClick={() => irAConsulta("consulta")}
-              className="rounded-full bg-relieve-vidrio/60 px-3 py-1 text-xs text-white/80 ring-1 ring-white/10 hover:text-white"
-            >
-              Consulta por área y fechas
-            </button>
-            <a href={URL_LANDING} className="rounded-full px-2 py-1 text-xs text-white/60 underline-offset-2 hover:text-white hover:underline">
-              Qué es Charmy
-            </a>
-            <a href={URL_JUEGO} className="rounded-full px-2 py-1 text-xs text-white/60 underline-offset-2 hover:text-white hover:underline">
-              Charmy Brigada
-            </a>
+        {!enVivo && !zona && (
+          <div className={region ? "max-md:hidden" : ""}>
+            <CharmyGuia regionMasFuego={masFuego} />
           </div>
-        </div>
+        )}
         {/* Sobre la ficha, en celular, el aviso va con fondo sólido para que no se mezcle con su texto. */}
         <p
           className={`rounded-full bg-relieve-vidrio/60 px-3 py-1 text-[11px] text-white/70 ring-1 ring-white/10 ${region || zona ? "max-md:rounded-xl max-md:bg-relieve-panel max-md:shadow-lg" : ""} ${zona ? "md:rounded-xl" : ""}`}

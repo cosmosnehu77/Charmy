@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { act, render, screen, within } from "@testing-library/react";
+import { act, fireEvent, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import App from "@/App";
 import { useApp } from "@/estado/app";
@@ -95,7 +95,16 @@ beforeEach(() => {
   });
   vi.stubGlobal("fetch", fetchSimulado);
   useApp.setState({ vista: "relieve" });
-  useRelieve.setState({ pestana: "focos", seleccion: null, linea: { activa: false, dia: 0, play: false }, plano: false, focoVivo: null });
+  useRelieve.setState({
+    pestana: "focos",
+    seleccion: null,
+    linea: { activa: false, dia: 0, play: false },
+    plano: false,
+    focoVivo: null,
+    nivelesVivo: [],
+    ranking: true,
+    guia: false,
+  });
 });
 afterEach(() => {
   vi.unstubAllEnvs();
@@ -193,6 +202,52 @@ describe("vista Relieve (F4-R1)", () => {
     useRelieve.setState({ seleccion: "AR-Q", focoVivo: 0 });
     useRelieve.getState().alternarRegion(null);
     expect(useRelieve.getState()).toMatchObject({ seleccion: null, focoVivo: null });
+  });
+
+  it("el ranking se esconde a los segundos y vuelve al acercar el cursor (#251)", async () => {
+    // Tiempo simulado desde el arranque (el temporizador se arma al montar); avanza solo para que las esperas anden.
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    try {
+      montar();
+      const ranking = await screen.findByRole("region", { name: "Ranking" });
+      expect(await within(ranking).findByText("Neuquén")).toBeInTheDocument();
+      act(() => vi.advanceTimersByTime(7000));
+      expect(useRelieve.getState().ranking).toBe(false);
+      expect(screen.queryByRole("region", { name: "Ranking" })).not.toBeInTheDocument();
+      fireEvent.mouseEnter(screen.getByRole("button", { name: "Mostrar el ranking" }));
+      expect(useRelieve.getState().ranking).toBe(true);
+      // Con el cursor encima no se esconde.
+      fireEvent.mouseEnter(screen.getByRole("region", { name: "Ranking" }));
+      act(() => vi.advanceTimersByTime(10000));
+      expect(useRelieve.getState().ranking).toBe(true);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("en En vivo, tocar un nivel de intensidad deja solo esos focos (#251)", async () => {
+    vivo.features.push({
+      type: "Feature",
+      id: "N21-chico",
+      geometry: { type: "Point", coordinates: [-70.2, -39.1] },
+      properties: { acq_datetime: "2026-11-14T06:00:00Z", satellite: "N21", instrument: "VIIRS", confidence: "nominal", frp: 3.5, daynight: "N" },
+    });
+    try {
+      montar();
+      const u = userEvent.setup();
+      await u.click(screen.getByRole("tab", { name: "En vivo" }));
+      const panel = await screen.findByRole("complementary", { name: "Resumen en vivo" });
+      expect(await within(panel).findByText("2")).toBeInTheDocument();
+      const muyFuerte = within(panel).getByRole("button", { name: /Muy fuerte/ });
+      await u.click(muyFuerte);
+      expect(muyFuerte).toHaveAttribute("aria-pressed", "true");
+      expect(within(panel).getByText("1")).toBeInTheDocument();
+      expect(within(panel).queryByRole("button", { name: /3,5 MW/ })).not.toBeInTheDocument();
+      await u.click(muyFuerte);
+      expect(within(panel).getByText("2")).toBeInTheDocument();
+    } finally {
+      vivo.features.pop();
+    }
   });
 
   it("la lupa busca provincias sin importar los acentos", async () => {

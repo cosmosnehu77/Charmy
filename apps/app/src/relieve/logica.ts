@@ -3,7 +3,7 @@
  * el nivel de la ficha y el tamaño de los focos en vivo. Sin React ni MapLibre, para poder probarla.
  */
 import type { components } from "@charmy/contracts-api";
-import type { StyleSpecification } from "maplibre-gl";
+import type { ExpressionSpecification, StyleSpecification } from "maplibre-gl";
 import { rampaAnomalia, rampaConteo, relieve } from "@charmy/ui";
 
 export type Resumen = components["schemas"]["RegionsSummary"];
@@ -119,9 +119,34 @@ export function colorFoco(frp: number | null | undefined): string {
   return rampaConteo[clase] as string;
 }
 
-export function nivelFoco(frp: number | null | undefined): "Bajo" | "Fuerte" | "Muy fuerte" {
+export type NivelFoco = "Bajo" | "Fuerte" | "Muy fuerte";
+
+/** Niveles de intensidad de un foco (MW): desde (incluido) y hasta (sin incluir). */
+export const NIVELES_FOCO: { nivel: NivelFoco; desde: number; hasta: number | null }[] = [
+  { nivel: "Bajo", desde: 0, hasta: 10 },
+  { nivel: "Fuerte", desde: 10, hasta: 30 },
+  { nivel: "Muy fuerte", desde: 30, hasta: null },
+];
+
+export function nivelFoco(frp: number | null | undefined): NivelFoco {
   const v = frp ?? 0;
   return v >= 30 ? "Muy fuerte" : v >= 10 ? "Fuerte" : "Bajo";
+}
+
+/** ¿El foco entra en los niveles elegidos en En vivo? Sin ninguno elegido entran todos. */
+export function enNiveles(frp: number | null | undefined, niveles: NivelFoco[]): boolean {
+  return niveles.length === 0 || niveles.includes(nivelFoco(frp));
+}
+
+/** Lo mismo como filtro de MapLibre sobre la propiedad `frp`; null si entran todos. */
+export function filtroNiveles(niveles: NivelFoco[]): ExpressionSpecification | null {
+  if (niveles.length === 0) return null;
+  const rangos = NIVELES_FOCO.filter((n) => niveles.includes(n.nivel)).map(({ desde, hasta }) =>
+    hasta === null
+      ? [">=", ["get", "frp"], desde]
+      : ["all", [">=", ["get", "frp"], desde], ["<", ["get", "frp"], hasta]],
+  );
+  return ["any", ...rangos] as ExpressionSpecification;
 }
 
 export function hace(ahora: Date, cuando: string): string {

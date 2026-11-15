@@ -1,6 +1,6 @@
 import { rampaAnomalia, rampaConteo } from "@charmy/ui";
-import { Compass, Minus, Plus, RotateCw } from "lucide-react";
-import { lazy, Suspense, useState } from "react";
+import { ChevronRight, Compass, Minus, Plus, RotateCw } from "lucide-react";
+import { lazy, Suspense, useEffect, useState } from "react";
 import { useApp } from "@/estado/app";
 import { URL_JUEGO, URL_LANDING } from "@/lib/enlaces";
 import { CharmyGuia } from "./CharmyGuia";
@@ -16,6 +16,8 @@ import "./estilos.css";
 
 // MapLibre pesa: el mapa se carga aparte para que el resto aparezca enseguida (RNF-03).
 const MapaRelieve = lazy(() => import("./MapaRelieve"));
+/** Segundos que el ranking queda abierto sin el cursor encima antes de esconderse (#251). */
+const RANKING_ABIERTO_MS = 6000;
 const num = (v: number, d = 0) => v.toLocaleString("es-AR", { minimumFractionDigits: d, maximumFractionDigits: d });
 
 /** Vista Relieve (F4-R1): el país en relieve por provincia, con paneles de vidrio flotando sobre el mapa. */
@@ -40,6 +42,19 @@ export function Relieve() {
   const focoElegido = estado.focoVivo !== null ? focos.find((f) => f.k === estado.focoVivo) : undefined;
   const regionSobre = regiones.find((r) => r.id === sobre.id);
   const focoSobre = sobre.foco !== null ? focos.find((f) => f.k === sobre.foco) : undefined;
+  const [sobreRanking, setSobreRanking] = useState(false);
+  const { ranking: rankingAbierto, guia, cambiar } = estado;
+
+  // Al cambiar de indicador el ranking se vuelve a abrir, para ver el nuevo orden.
+  useEffect(() => {
+    cambiar({ ranking: true });
+  }, [indicador, cambiar]);
+  // Se esconde solo, salvo con el cursor encima o durante el recorrido de Charmy.
+  useEffect(() => {
+    if (!rankingAbierto || sobreRanking || guia) return;
+    const t = setTimeout(() => cambiar({ ranking: false }), RANKING_ABIERTO_MS);
+    return () => clearTimeout(t);
+  }, [rankingAbierto, sobreRanking, guia, cambiar]);
 
   return (
     <div className="relieve relative h-full min-h-[560px] overflow-hidden bg-relieve-fondo text-white">
@@ -86,45 +101,63 @@ export function Relieve() {
         </>
       ) : (
         <>
+          {!rankingAbierto && (
+            // Escondido queda una pestaña en el borde: acercar el cursor (o tocarla) lo vuelve a abrir.
+            <button
+              type="button"
+              aria-label="Mostrar el ranking"
+              onMouseEnter={() => cambiar({ ranking: true })}
+              onClick={() => cambiar({ ranking: true })}
+              className="pointer-events-auto absolute left-0 top-[68px] z-10 hidden h-[120px] w-10 items-center md:flex"
+            >
+              <span className="vidrio-relieve flex h-16 w-6 items-center justify-center rounded-r-xl text-white/70">
+                <ChevronRight aria-hidden="true" className="size-4" />
+              </span>
+            </button>
+          )}
           {/* Sobre vidrio: al acercar el mapa quedan regiones de color debajo y el texto blanco se perdía (#214). */}
-          <section
-            data-guia="ranking"
-            aria-label="Ranking"
-            className="vidrio-relieve pointer-events-auto absolute left-4 top-[76px] z-10 hidden w-[250px] rounded-2xl px-2 pb-2 pt-3 md:block"
-          >
-            <div className="mb-2 flex items-baseline justify-between px-2 text-[11px] uppercase tracking-[.14em] text-white/45">
-              <span>Ranking · {info?.nombre.toLowerCase()}</span>
-              <span className="normal-case tracking-normal">{info?.unidad}</span>
-            </div>
-            {!info?.disponible ? (
-              <p className="px-2 text-sm text-white/50">{info?.ayuda}</p>
-            ) : ranking.length === 0 ? (
-              <p className="px-2 text-sm text-white/50">{resumen.isPending ? "Cargando…" : "Sin datos de este indicador ahora."}</p>
-            ) : (
-              <ol className="m-0 flex list-none flex-col p-0">
-                {ranking.map((r, i) => (
-                  <li key={r.id}>
-                    <button
-                      type="button"
-                      aria-pressed={estado.seleccion === r.id}
-                      onClick={() => estado.alternarRegion(r.id)}
-                      className="grid w-full grid-cols-[18px_1fr_auto] items-center gap-2 rounded-lg px-2 py-1.5 text-left text-sm hover:bg-white/10"
-                    >
-                      <span className="text-xs tabular-nums text-white/35">{i + 1}</span>
-                      <span className="flex min-w-0 flex-col gap-1">
-                        <span className="truncate text-white/90">{r.nombre}</span>
-                        <span
-                          className="h-1.5 rounded-full"
-                          style={{ width: `${Math.max(4, (r.valor / (ranking[0]?.valor ?? 1)) * 100)}%`, background: r.color }}
-                        />
-                      </span>
-                      <span className="w-14 text-right tabular-nums text-white/80">{num(r.valor)}</span>
-                    </button>
-                  </li>
-                ))}
-              </ol>
-            )}
-          </section>
+          {rankingAbierto && (
+            <section
+              data-guia="ranking"
+              aria-label="Ranking"
+              onMouseEnter={() => setSobreRanking(true)}
+              onMouseLeave={() => setSobreRanking(false)}
+              className="ranking-relieve vidrio-relieve pointer-events-auto absolute left-4 top-[76px] z-10 hidden w-[250px] rounded-2xl px-2 pb-2 pt-3 md:block"
+            >
+              <div className="mb-2 flex items-baseline justify-between px-2 text-[11px] uppercase tracking-[.14em] text-white/45">
+                <span>Ranking · {info?.nombre.toLowerCase()}</span>
+                <span className="normal-case tracking-normal">{info?.unidad}</span>
+              </div>
+              {!info?.disponible ? (
+                <p className="px-2 text-sm text-white/50">{info?.ayuda}</p>
+              ) : ranking.length === 0 ? (
+                <p className="px-2 text-sm text-white/50">{resumen.isPending ? "Cargando…" : "Sin datos de este indicador ahora."}</p>
+              ) : (
+                <ol className="m-0 flex list-none flex-col p-0">
+                  {ranking.map((r, i) => (
+                    <li key={r.id}>
+                      <button
+                        type="button"
+                        aria-pressed={estado.seleccion === r.id}
+                        onClick={() => estado.alternarRegion(r.id)}
+                        className="grid w-full grid-cols-[18px_1fr_auto] items-center gap-2 rounded-lg px-2 py-1.5 text-left text-sm hover:bg-white/10"
+                      >
+                        <span className="text-xs tabular-nums text-white/35">{i + 1}</span>
+                        <span className="flex min-w-0 flex-col gap-1">
+                          <span className="truncate text-white/90">{r.nombre}</span>
+                          <span
+                            className="h-1.5 rounded-full"
+                            style={{ width: `${Math.max(4, (r.valor / (ranking[0]?.valor ?? 1)) * 100)}%`, background: r.color }}
+                          />
+                        </span>
+                        <span className="w-14 text-right tabular-nums text-white/80">{num(r.valor)}</span>
+                      </button>
+                    </li>
+                  ))}
+                </ol>
+              )}
+            </section>
+          )}
 
           <div data-guia="controles" className="pointer-events-auto absolute right-4 top-1/2 z-20 flex -translate-y-1/2 flex-col gap-2">
             <BotonRedondo etiqueta="Acercar" onClick={() => controlMapa.zoom(0.75)}>
@@ -152,7 +185,8 @@ export function Relieve() {
           </div>
 
           {!region && (
-            <div data-guia="leyenda" className="vidrio-relieve absolute bottom-4 right-4 z-10 hidden max-w-[300px] rounded-xl p-3 text-xs md:block">
+            // Más arriba que el borde: abajo a la derecha queda el botón de atribución del mapa (#251).
+            <div data-guia="leyenda" className="vidrio-relieve absolute bottom-11 right-4 z-10 hidden max-w-[300px] rounded-xl p-3 text-xs md:block">
               <div className="mb-1 font-titulos font-semibold">Cómo leer el mapa</div>
               <p className="mb-2 text-white/60">
                 {info?.disponible

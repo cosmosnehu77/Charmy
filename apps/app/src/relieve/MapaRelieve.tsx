@@ -8,7 +8,16 @@ import { LIMITES_MVP, nombresEnEspanol } from "@/mapa/perfiles";
 import { controlMapa } from "./controlMapa";
 import type { FocoReciente } from "./datos";
 import { useRelieve } from "./estado";
-import { alturaDelDia, CORTES_FOCO, escalaRegion, maximo, nombresPorZoom, type RegionResumen, valorIndicador } from "./logica";
+import {
+  alturaDelDia,
+  CORTES_FOCO,
+  escalaRegion,
+  filtroNiveles,
+  maximo,
+  nombresPorZoom,
+  type RegionResumen,
+  valorIndicador,
+} from "./logica";
 
 maplibregl.setWorkerUrl(urlWorker);
 
@@ -131,6 +140,8 @@ export default function MapaRelieve({ regiones, dias, focos, onHover }: Props) {
       alturas.current.set(r.id, a);
       m.setFeatureState({ source: "regiones", id: r.id }, { c: tono, h: a.actual });
     }
+    // Con una provincia elegida, las regiones van opacas: las rutas y límites del mapa base no se mezclan (#251).
+    m.setPaintProperty("reg-3d", "fill-extrusion-opacity", e.seleccion ? 1 : 0.92);
     // Focos: en el relieve, con el indicador Focos o con una región elegida; con la línea, solo ese día.
     const dia = props.current.dias[e.linea.dia];
     const visibles = fs.filter((f) => {
@@ -155,8 +166,12 @@ export default function MapaRelieve({ regiones, dias, focos, onHover }: Props) {
     // La ventana se cuenta desde el último foco, así se ve algo aunque el worker esté atrasado.
     const ultimo = fs.reduce((max, f) => Math.max(max, f.t), 0) || Date.now();
     const limite = ultimo - e.horasVivo * 3_600_000;
-    m.setFilter("vivo-focos", [">=", ["get", "t"], limite]);
-    m.setFilter("vivo-pulso", [">=", ["get", "t"], Math.max(limite, ultimo - 6 * 3_600_000)]);
+    // Y solo los niveles de intensidad elegidos en el panel (#251).
+    const niveles = filtroNiveles(e.nivelesVivo);
+    const conNiveles = (f: maplibregl.ExpressionSpecification): maplibregl.ExpressionSpecification =>
+      niveles ? ["all", f, niveles] : f;
+    m.setFilter("vivo-focos", conNiveles([">=", ["get", "t"], limite]));
+    m.setFilter("vivo-pulso", conNiveles([">=", ["get", "t"], Math.max(limite, ultimo - 6 * 3_600_000)]));
     m.setFilter("vivo-sel", ["==", ["get", "k"], e.focoVivo ?? -1]);
   };
 
@@ -177,7 +192,12 @@ export default function MapaRelieve({ regiones, dias, focos, onHover }: Props) {
     // y que aparezcan de a poco al acercar.
     m.setStyle(ESTILO_OSCURO, { transformStyle: (_anterior, siguiente) => nombresPorZoom(nombresEnEspanol(siguiente)) });
     m.on("style.load", () => {
-      const antes = m.getStyle().layers.find((l) => l.type === "symbol")?.id;
+      // Las regiones van encima de todas las líneas y rellenos del mapa base (rutas, vías, límites) y debajo solo de
+      // los nombres de lugares. Antes iban antes del primer nombre (`water_name`), que está antes que las rutas:
+      // las rutas y los límites se dibujaban sobre la provincia elegida (#251).
+      const capas = m.getStyle().layers;
+      const ultimaBase = capas.length - 1 - [...capas].reverse().findIndex((l) => l.type !== "symbol");
+      const antes = capas[ultimaBase + 1]?.id;
       m.addSource("regiones", { type: "geojson", data: VACIO, promoteId: "region" });
       m.addSource("agujas", { type: "geojson", data: VACIO });
       m.addSource("puntos", { type: "geojson", data: VACIO });

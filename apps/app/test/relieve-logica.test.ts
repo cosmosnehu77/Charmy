@@ -11,6 +11,8 @@ import {
   radioFoco,
   rankingRegiones,
   regionDePunto,
+  enNiveles,
+  filtroNiveles,
   nombresPorZoom,
   ubicarGlobo,
   type RegionResumen,
@@ -210,5 +212,23 @@ describe("nombres del mapa según el zoom (#236)", () => {
 
   it("las capas que no son de lugares no cambian", () => {
     expect(nombresPorZoom(estilo).layers.find((c) => c.id === "water_name")).toEqual(estilo.layers[6]);
+  });
+});
+
+describe("filtro por intensidad de En vivo (#251)", () => {
+  it("sin niveles elegidos entran todos; con niveles, solo los de esos niveles", () => {
+    expect([2, 15, 40].map((frp) => enNiveles(frp, []))).toEqual([true, true, true]);
+    expect([2, 9.9, 10, 29.9, 30, 80].map((frp) => enNiveles(frp, ["Fuerte"]))).toEqual([false, false, true, true, false, false]);
+    expect([2, 15, 40].map((frp) => enNiveles(frp, ["Bajo", "Muy fuerte"]))).toEqual([true, false, true]);
+  });
+
+  it("la expresión del mapa usa los mismos cortes", () => {
+    expect(filtroNiveles([])).toBeNull();
+    expect(filtroNiveles(["Fuerte"])).toEqual(["any", ["all", [">=", ["get", "frp"], 10], ["<", ["get", "frp"], 30]]]);
+    expect(filtroNiveles(["Bajo", "Muy fuerte"])).toEqual([
+      "any",
+      ["all", [">=", ["get", "frp"], 0], ["<", ["get", "frp"], 10]],
+      [">=", ["get", "frp"], 30],
+    ]);
   });
 });

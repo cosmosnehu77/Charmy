@@ -2,7 +2,7 @@ import { MapPin, X } from "lucide-react";
 import { urlGoogleMaps, urlGoogleMapsEmbed } from "@/lib/enlaces";
 import type { FocoReciente } from "./datos";
 import { useRelieve } from "./estado";
-import { colorFoco, hace, nivelFoco, radioFoco, type RegionResumen } from "./logica";
+import { colorFoco, enNiveles, hace, type NivelFoco, nivelFoco, radioFoco, type RegionResumen } from "./logica";
 
 const num = (v: number, d = 0) => v.toLocaleString("es-AR", { minimumFractionDigits: d, maximumFractionDigits: d });
 const SATELITES: Record<string, string> = { N20: "NOAA-20", N21: "NOAA-21", Terra: "Terra (MODIS)", Aqua: "Aqua (MODIS)" };
@@ -17,9 +17,14 @@ interface Props {
 
 /** Panel de En vivo: cuántos focos hay, la ventana de tiempo, la leyenda de tamaños y los más intensos. */
 export function PanelEnVivo({ focos, disponible, mensaje, regiones }: Props) {
-  const { horasVivo, cambiar } = useRelieve();
+  const { horasVivo, nivelesVivo, cambiar } = useRelieve();
   const ultimo = focos.reduce((m, f) => Math.max(m, f.t), 0);
-  const visibles = focos.filter((f) => f.t >= ultimo - horasVivo * 3_600_000);
+  const visibles = focos.filter((f) => f.t >= ultimo - horasVivo * 3_600_000 && enNiveles(f.frp, nivelesVivo));
+  const alternarNivel = (n: NivelFoco) =>
+    cambiar({
+      nivelesVivo: nivelesVivo.includes(n) ? nivelesVivo.filter((x) => x !== n) : [...nivelesVivo, n],
+      focoVivo: null,
+    });
   const nombre = (id: string | null) => regiones.find((r) => r.id === id)?.properties.name ?? "Fuera de las regiones";
   const masIntensos = [...visibles].sort((a, b) => b.frp - a.frp).slice(0, 5);
   const fecha = ultimo ? new Date(ultimo).toISOString() : "";
@@ -65,22 +70,37 @@ export function PanelEnVivo({ focos, disponible, mensaje, regiones }: Props) {
           </div>
           <div className="mt-3.5 border-t border-white/10 pt-3">
             <h3 className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-white/50">Tamaño = intensidad</h3>
-            <div className="flex items-end justify-between gap-2">
-              {[
-                [3, "Bajo", "< 10 MW"],
-                [15, "Fuerte", "10–30 MW"],
-                [60, "Muy fuerte", "≥ 30 MW"],
-              ].map(([v, n, r]) => (
-                <div key={n} className="flex flex-col items-center gap-1.5 text-center text-[11.5px] text-white/70">
-                  <span
-                    className="block rounded-full"
-                    style={{ width: radioFoco(Number(v)) * 2, height: radioFoco(Number(v)) * 2, background: colorFoco(Number(v)) }}
-                  />
-                  {n}
-                  <br />
-                  {r}
-                </div>
-              ))}
+            {/* Cada nivel filtra: se ven solo los niveles elegidos; sin ninguno, todos (#251). */}
+            <div role="group" aria-label="Filtrar por intensidad" className="flex items-end justify-between gap-1">
+              {(
+                [
+                  [3, "Bajo", "< 10 MW"],
+                  [15, "Fuerte", "10–30 MW"],
+                  [60, "Muy fuerte", "≥ 30 MW"],
+                ] as const
+              ).map(([v, n, r]) => {
+                const elegido = nivelesVivo.includes(n);
+                const apagado = nivelesVivo.length > 0 && !elegido;
+                return (
+                  <button
+                    key={n}
+                    type="button"
+                    aria-pressed={elegido}
+                    onClick={() => alternarNivel(n)}
+                    className={`flex flex-1 flex-col items-center gap-1.5 rounded-xl px-1 py-1.5 text-center text-[11.5px] transition ${
+                      elegido ? "bg-white/15 text-white ring-1 ring-relieve-brillo/60" : "text-white/70 hover:bg-white/10"
+                    } ${apagado ? "opacity-45" : ""}`}
+                  >
+                    <span
+                      className="block rounded-full"
+                      style={{ width: radioFoco(v) * 2, height: radioFoco(v) * 2, background: colorFoco(v) }}
+                    />
+                    {n}
+                    <br />
+                    {r}
+                  </button>
+                );
+              })}
             </div>
           </div>
           {masIntensos.length > 0 && (

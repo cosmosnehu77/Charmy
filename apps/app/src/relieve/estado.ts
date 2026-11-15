@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import type { Indicador } from "./logica";
+import type { Indicador, NivelFoco } from "./logica";
 
 /** Pestaña de la píldora: un indicador del relieve o la vista de focos en vivo. */
 export type Pestana = Indicador | "vivo";
@@ -16,11 +16,19 @@ interface EstadoRelieve {
   horasVivo: 6 | 24 | 48;
   /** Foco elegido en En vivo (índice en la lista de /live). */
   focoVivo: number | null;
+  /** Niveles de intensidad que se ven en En vivo; vacío, todos. */
+  nivelesVivo: NivelFoco[];
+  /** Ranking abierto: se esconde solo a los segundos y vuelve al acercar el cursor. */
+  ranking: boolean;
+  /** Recorrido de Charmy guía en curso: mientras dura, el ranking no se esconde. */
+  guia: boolean;
   elegirPestana: (p: Pestana) => void;
   /** Elegir de nuevo la región elegida la deselecciona. */
   alternarRegion: (id: string | null) => void;
   usarLinea: (cambio: Partial<EstadoRelieve["linea"]>) => void;
-  cambiar: (cambio: Partial<Pick<EstadoRelieve, "plano" | "giro" | "horasVivo" | "focoVivo">>) => void;
+  cambiar: (
+    cambio: Partial<Pick<EstadoRelieve, "plano" | "giro" | "horasVivo" | "focoVivo" | "nivelesVivo" | "ranking" | "guia">>,
+  ) => void;
 }
 
 const LINEA_LIBRE = { activa: false, dia: 0, play: false };
@@ -33,6 +41,9 @@ export const useRelieve = create<EstadoRelieve>()((set) => ({
   giro: true,
   horasVivo: 48,
   focoVivo: null,
+  nivelesVivo: [],
+  ranking: true,
+  guia: false,
   elegirPestana: (pestana) =>
     set((s) => (pestana === "vivo" ? { pestana, seleccion: null, linea: LINEA_LIBRE } : { pestana, focoVivo: s.focoVivo })),
   alternarRegion: (id) =>

@@ -95,6 +95,7 @@ export function CharmyGuia({ regionMasFuego }: { regionMasFuego: string | null }
   const terminar = useCallback(() => {
     cerrarRegionDeGuia();
     setAbierto(false);
+    useRelieve.getState().cambiar({ guia: false });
     botonRef.current?.focus();
   }, [cerrarRegionDeGuia]);
 
@@ -130,6 +131,8 @@ export function CharmyGuia({ regionMasFuego }: { regionMasFuego: string | null }
 
   const abrir = () => {
     elegidaPorGuia.current = false;
+    // Durante el recorrido el ranking queda abierto: uno de los pasos lo señala (#251).
+    useRelieve.getState().cambiar({ guia: true, ranking: true });
     setAbierto(true);
     ir(0, 1);
   };

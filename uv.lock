@@ -1522,10 +1522,12 @@ name = "prediccion"
 version = "0.1.0"
 source = { editable = "services/prediccion" }
 dependencies = [
+    { name = "fastapi" },
     { name = "lightgbm" },
     { name = "numpy" },
     { name = "pipeline" },
     { name = "polars" },
+    { name = "uvicorn" },
 ]
 
 [package.optional-dependencies]
@@ -1533,15 +1535,25 @@ timesfm = [
     { name = "timesfm", extra = ["torch"] },
 ]
 
+[package.dev-dependencies]
+dev = [
+    { name = "httpx" },
+]
+
 [package.metadata]
 requires-dist = [
+    { name = "fastapi", specifier = ">=0.162.7" },
     { name = "lightgbm", specifier = ">=4.7.0" },
     { name = "numpy", specifier = ">=2.5.4" },
     { name = "pipeline", editable = "services/pipeline" },
     { name = "polars", specifier = ">=2.1.0" },
     { name = "timesfm", extras = ["torch"], marker = "extra == 'timesfm'", specifier = "==3.0.2" },
+    { name = "uvicorn", specifier = ">=0.54.0" },
 ]
 provides-extras = ["timesfm"]
+
+[package.metadata.requires-dev]
+dev = [{ name = "httpx", specifier = ">=0.28.1" }]
 
 [[package]]
 name = "propcache"

@@ -1,0 +1,6 @@
+# Contexto de la imagen: services/prediccion. Solo entran servir.txt, pyproject.toml y src/.
+*
+!servir.txt
+!pyproject.toml
+!src
+**/__pycache__

@@ -133,7 +133,8 @@ Las mejoras son del backtest completo: todas las celdas, emisiones de 2025-01 a 
 
 **TimesFM 2.5** (D-31) se probó contra LightGBM con la misma partición (F3-E3, PR #194) y no se publica. Su mejora en
 el MAE (+32 % a +34 %) es efecto de la métrica: devuelve casi la mediana, que en la mayoría de las celdas es cero, y
-decir siempre cero mejora todavía más. Queda LightGBM.
+decir siempre cero mejora todavía más. **TimesFM 3.0** (D-31, #253) tampoco se publica: se midió con las
+métricas de abajo y queda por debajo de la climatología (ver «TimesFM 3.0 con las mismas métricas»). Queda LightGBM.
 
 ### Por qué el MAE solo no alcanza (R-B1)
 
@@ -178,6 +179,22 @@ En desvío, LightGBM supera a las tres referencias en los tres plazos. En el 10 
 climatología (58 % contra 52 % a un mes). Su recall es parecido al de la climatología, pero con más precisión. En MAE
 pierde contra «siempre cero» y contra la persistencia, que es justamente el sesgo de esa métrica. Esta medición **no
 cambia lo publicado**: la compuerta sigue siendo la de D-10 hasta que se revise (R-A1).
+
+**TimesFM 3.0 con las mismas métricas (#223).** Se midió sobre una muestra de 3.000 celdas (semilla 0), con las
+mismas emisiones (2025-01 a 2026-09) y la misma partición que LightGBM. Por eso los números de LightGBM difieren un
+poco de los de la tabla de arriba, que usa todas las celdas.
+
+| Plazo | Desvío de Poisson: LightGBM | TimesFM 3.0 | Climatología |
+|---|---|---|---|
+| 1 mes | 0,81 | 2,04 | 1,27 |
+| 2 meses | 0,87 | 2,20 | 1,26 |
+| 3 meses | 0,93 | 2,50 | 1,28 |
+
+En desvío, TimesFM 3.0 es entre 61 % y 95 % peor que la climatología, y LightGBM entre 27 % y 36 % mejor. A un mes,
+LightGBM detecta el 51 % de las celdas quemadas y TimesFM 3.0 el 27 %; en su 10 % de mayor riesgo aciertan el 60 % y
+el 56 %. En MAE contra la climatología la 3.0 mejora +34,3 / +36,4 / +34,3 %, casi lo mismo que «siempre cero»
+(+33,5 / +38,7 / +36,0 %): predice exactamente cero en el 64 % de las celdas. Con la compuerta actual pasaría solo a
+un mes, por 0,9 puntos, y con desvío de Poisson no pasa en ningún plazo. No se publica.
 
 **Ventana de prueba (R-B2).** S-NPP publicó focos hasta el 2/11/2026. En la ventana de prueba solo julio de 2026
 quedó incompleto: S-NPP vio focos en 25 de 31 días, y por eso no entra en la tabla. A marzo, abril, junio y agosto

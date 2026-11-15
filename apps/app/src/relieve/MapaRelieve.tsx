@@ -4,7 +4,7 @@ import urlWorker from "maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url";
 import bbox from "@turf/bbox";
 import { interfaz, paleta, rampaConteo, relieve } from "@charmy/ui";
 import { useEffect, useRef } from "react";
-import { LIMITES_MVP } from "@/mapa/perfiles";
+import { LIMITES_MVP, nombresEnEspanol } from "@/mapa/perfiles";
 import { controlMapa } from "./controlMapa";
 import type { FocoReciente } from "./datos";
 import { useRelieve } from "./estado";
@@ -165,7 +165,6 @@ export default function MapaRelieve({ regiones, dias, focos, onHover }: Props) {
     if (!contenedor.current) return;
     const m = new maplibregl.Map({
       container: contenedor.current,
-      style: ESTILO_OSCURO,
       bounds: LIMITES_MVP,
       fitBoundsOptions: { padding: 40 },
       pitch: 55,
@@ -174,6 +173,8 @@ export default function MapaRelieve({ regiones, dias, focos, onHover }: Props) {
       attributionControl: { compact: true },
     });
     mapa.current = m;
+    // El estilo se pone después del constructor porque solo `setStyle` acepta `transformStyle`: nombres en español.
+    m.setStyle(ESTILO_OSCURO, { transformStyle: (_anterior, siguiente) => nombresEnEspanol(siguiente) });
     m.on("style.load", () => {
       const antes = m.getStyle().layers.find((l) => l.type === "symbol")?.id;
       m.addSource("regiones", { type: "geojson", data: VACIO, promoteId: "region" });

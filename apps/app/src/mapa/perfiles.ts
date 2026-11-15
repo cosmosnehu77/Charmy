@@ -4,7 +4,7 @@
  * - 3D: estilo con más detalle, relieve Terrarium y sombreado.
  * Todo carga sin clave (probado en F0-D1, #9).
  */
-import type { StyleSpecification } from "maplibre-gl";
+import type { ExpressionSpecification, StyleSpecification } from "maplibre-gl";
 import { paleta } from "@charmy/ui";
 import type { PerfilMapa } from "@/estado/app";
 
@@ -47,11 +47,36 @@ const fuenteDem = {
 };
 
 /**
+ * Etiqueta de lugares en español: `name:es` de OpenStreetMap o el nombre local. Las Malvinas se nombran siempre así,
+ * aunque a la tesela le falte `name:es`.
+ */
+export const NOMBRE_ES: ExpressionSpecification = [
+  "match",
+  ["get", "name"],
+  "Falkland Islands",
+  "Islas Malvinas",
+  ["coalesce", ["get", "name:es"], ["get", "name"]],
+];
+
+/** Los estilos de OpenFreeMap etiquetan en inglés (`name_en`): se pasan a español. Las rutas (`ref`) no se tocan. */
+export function nombresEnEspanol(estilo: StyleSpecification): StyleSpecification {
+  return {
+    ...estilo,
+    layers: estilo.layers.map((c) =>
+      c.type === "symbol" && JSON.stringify(c.layout?.["text-field"] ?? "").includes('"name_en"')
+        ? { ...c, layout: { ...c.layout, "text-field": NOMBRE_ES } }
+        : c,
+    ),
+  };
+}
+
+/**
  * Ajusta el estilo base al perfil. Se usa como `transformStyle` de `map.setStyle`, que es también
  * donde las capas propias (focos, área) se van a volver a agregar al cambiar de perfil.
  */
 export function transformarEstilo(perfil: PerfilMapa) {
-  return (_anterior: StyleSpecification | undefined, siguiente: StyleSpecification): StyleSpecification => {
+  return (_anterior: StyleSpecification | undefined, base: StyleSpecification): StyleSpecification => {
+    const siguiente = nombresEnEspanol(base);
     if (!perfiles[perfil].relieve) {
       const { terrain: _t, sky: _s, ...resto } = siguiente;
       return resto;

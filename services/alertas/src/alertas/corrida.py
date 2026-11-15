@@ -73,6 +73,7 @@ async def corrida(api: Api, tg: Telegram, zona: Zona, chat_id: int) -> None:
     guardados = await procesar_toques(api, tg)
     r = await avisar(api, tg.enviar, zona, chat_id, set())
     log.info(
-        "corrida: botones %d · focos en vivo %d · reportes %d · nuevos en la zona %d · avisos mandados %d",
-        guardados, r.focos, r.reportes, r.nuevos, r.mandados,
+        "corrida: botones %d · focos en vivo %d · reportes %d · nuevos en la zona %d · avisos mandados %d"
+        " · envíos fallidos %d",
+        guardados, r.focos, r.reportes, r.nuevos, r.mandados, r.fallidos,
     )

@@ -1,6 +1,9 @@
 """Telegram con aiogram para una corrida: sin polling continuo, pide los toques pendientes y los confirma."""
 
+import asyncio
+
 from aiogram import Bot
+from aiogram.exceptions import TelegramRetryAfter
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup, Message
 
 from alertas.botones import Teclado
@@ -12,11 +15,23 @@ def _teclado(teclado: Teclado) -> InlineKeyboardMarkup:
     return InlineKeyboardMarkup(inline_keyboard=[fila])
 
 
+ESPERA_MAXIMA_429_S = 30  # la corrida tiene tope de 10 minutos: no se espera más que esto por un 429
+
+
 class TelegramAiogram:
-    def __init__(self, bot: Bot):
+    def __init__(self, bot: Bot, dormir=asyncio.sleep):
         self._bot = bot
+        self._dormir = dormir
 
     async def enviar(self, chat_id: int, texto: str, teclado: Teclado) -> None:
+        """Si Telegram pide esperar (429), espera y reintenta una vez. Cualquier otro error sube."""
+        try:
+            await self._mandar(chat_id, texto, teclado)
+        except TelegramRetryAfter as e:
+            await self._dormir(min(e.retry_after, ESPERA_MAXIMA_429_S))
+            await self._mandar(chat_id, texto, teclado)
+
+    async def _mandar(self, chat_id: int, texto: str, teclado: Teclado) -> None:
         await self._bot.send_message(chat_id, texto, reply_markup=_teclado(teclado),
                                      disable_web_page_preview=True)
 

@@ -129,6 +129,7 @@ def test_la_corrida_deja_una_linea_de_resumen_en_el_registro(caplog):
 
     assert caplog.messages == [
         "corrida: botones 1 · focos en vivo 1 · reportes 0 · nuevos en la zona 1 · avisos mandados 1"
+        " · envíos fallidos 0"
     ]
 
 
@@ -139,4 +140,5 @@ def test_sin_focos_la_linea_de_resumen_sale_igual(caplog):
 
     assert caplog.messages == [
         "corrida: botones 0 · focos en vivo 0 · reportes 0 · nuevos en la zona 0 · avisos mandados 0"
+        " · envíos fallidos 0"
     ]

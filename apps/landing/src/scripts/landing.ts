@@ -226,7 +226,7 @@ const SPRITES = RAMPA.map((c) => {
 type Llave = { x: number; y: number; z: number; p: number; b: number; cx: number; cy: number };
 const LLAVES: Llave[] = [
   { x: -64.5, y: -38, z: 1.15, p: 50, b: -6, cx: 0.5, cy: 0.9 },
-  { x: -63.5, y: -35.5, z: 1.02, p: 0, b: 0, cx: 0.6, cy: 0.5 },
+  { x: -63.5, y: -35.5, z: 1.02, p: 0, b: 0, cx: 0.5, cy: 0.5 },
   { x: -64, y: -33.5, z: 1.45, p: 58, b: -24, cx: 0.58, cy: 0.58 },
   { x: -68.6, y: -44.3, z: 2.9, p: 44, b: -12, cx: 0.6, cy: 0.52 },
   { x: -63.5, y: -35.5, z: 0.95, p: 0, b: 0, cx: 0.65, cy: 0.5 },

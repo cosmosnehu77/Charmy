@@ -762,3 +762,25 @@ describe("Charmy guía Experto (F4-D9)", () => {
     vi.restoreAllMocks();
   });
 });
+
+describe("Charmy invita a la guía (F4-D10)", () => {
+  it("el globo «¿Necesitás ayuda?» se ve 5 s, se oculta 15 s, tres veces, y después no vuelve", async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    try {
+      montar();
+      const boton = screen.getByRole("button", { name: /Charmy: ¿necesitás ayuda\?/ });
+      const visible = () => boton.getAttribute("data-invita");
+      const avanzar = (ms: number) => act(() => vi.advanceTimersByTime(ms));
+      for (let vez = 1; vez <= 3; vez++) {
+        expect(visible()).toBe("true");
+        avanzar(5000);
+        expect(visible()).toBe("false");
+        if (vez < 3) avanzar(15000);
+      }
+      avanzar(60000);
+      expect(visible()).toBe("false");
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+});

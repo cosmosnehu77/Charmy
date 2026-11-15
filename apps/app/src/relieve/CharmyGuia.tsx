@@ -80,6 +80,9 @@ const PASOS_MAPA: Paso[] = [
   },
 ];
 
+/** El globo «¿Necesitás ayuda?» se muestra solo unas veces al entrar, para que se note la guía (F4-D10). */
+const INVITACION = { visibleMs: 5000, pausaMs: 15000, veces: 3 };
+
 const reducido = () => globalThis.matchMedia?.("(prefers-reduced-motion: reduce)").matches ?? false;
 
 export function CharmyGuia({
@@ -105,6 +108,24 @@ export function CharmyGuia({
   const botonRef = useRef<HTMLButtonElement>(null);
   const globo = useRef<HTMLDivElement>(null);
   const [posicion, setPosicion] = useState({ x: 0, y: 0, izquierda: false });
+  const [invita, setInvita] = useState(boton === "figura");
+
+  // Visible unos segundos, oculto un rato, unas pocas veces; después solo con el mouse o el foco (F4-D10).
+  useEffect(() => {
+    if (boton !== "figura") return;
+    let vez = 0;
+    let reloj: ReturnType<typeof setTimeout>;
+    const mostrar = () => {
+      setInvita(true);
+      reloj = setTimeout(() => {
+        setInvita(false);
+        vez += 1;
+        if (vez < INVITACION.veces) reloj = setTimeout(mostrar, INVITACION.pausaMs);
+      }, INVITACION.visibleMs);
+    };
+    mostrar();
+    return () => clearTimeout(reloj);
+  }, [boton]);
 
   const cerrarRegionDeGuia = useCallback(() => {
     if (elegidaPorGuia.current) {
@@ -184,7 +205,15 @@ export function CharmyGuia({
   return (
     <>
       {boton === "figura" ? (
-        <button ref={botonRef} type="button" className="guia-boton" hidden={abierto} onClick={abrir} aria-label={etiqueta}>
+        <button
+          ref={botonRef}
+          type="button"
+          className="guia-boton"
+          data-invita={invita}
+          hidden={abierto}
+          onClick={abrir}
+          aria-label={etiqueta}
+        >
           <span className="guia-figura">
             <Charmy size={84} mood="saluda" outfit={outfit} decorative />
           </span>

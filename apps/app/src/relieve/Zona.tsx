@@ -15,8 +15,11 @@ import { urlGoogleMaps, urlGoogleMapsEmbed } from "@/lib/enlaces";
 import { useVivo } from "@/vivo/estado";
 import { FormReporte } from "@/vivo/FormReporte";
 import { CharmyGuia } from "./CharmyGuia";
+import { usePrediccionZona } from "./consultas";
 import { useRelieve } from "./estado";
 import { PASOS_EXPERTO } from "./guiaExperto";
+import { textoProbabilidad } from "./logica";
+import { PrediccionMeses } from "./PrediccionMeses";
 
 const ANCHO = "(min-width: 768px)";
 
@@ -125,9 +128,14 @@ export function Zona() {
             }
             lugar={
               hayArea ? (
-                <Seguro nombre="El contexto del lugar">
-                  <PanelContexto />
-                </Seguro>
+                <>
+                  <Seguro nombre="El contexto del lugar">
+                    <PanelContexto />
+                  </Seguro>
+                  <Seguro nombre="La predicción del área">
+                    <PrediccionArea />
+                  </Seguro>
+                </>
               ) : (
                 <p className="text-xs text-tinta-suave">Elegí un área para ver cómo está el lugar ahora.</p>
               )
@@ -257,6 +265,23 @@ function FichaAtributos() {
           className="mt-3 block h-28 w-full rounded-xl border-0"
         />
       </div>
+    </section>
+  );
+}
+
+/** Predicción del área dibujada (F4-D12): en un área chica, la probabilidad dice más que las celdas. */
+function PrediccionArea() {
+  const area = useConsulta((s) => s.area);
+  const { data, isPending, isError } = usePrediccionZona(area);
+  let contenido: React.ReactNode;
+  if (isPending) contenido = <p className="text-xs text-white/55">Cargando la predicción…</p>;
+  else if (isError || !data) contenido = <p className="text-xs text-white/55">La predicción no está disponible ahora. Probá en un rato.</p>;
+  else if (data.zone.no_history)
+    contenido = <p className="text-xs text-white/55">En esta área no hubo focos en la historia: el modelo no espera fuego.</p>;
+  else contenido = <PrediccionMeses meses={data.months} texto={textoProbabilidad} />;
+  return (
+    <section aria-label="Predicción del área" className="border-t border-white/10 pt-3">
+      {contenido}
     </section>
   );
 }

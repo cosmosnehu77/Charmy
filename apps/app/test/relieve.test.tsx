@@ -84,8 +84,33 @@ const focosZona = {
   ],
 };
 
+// Muestra de /regions/forecast (valores inventados): solo Neuquén, con tres de los seis meses.
+const mesPrediccion = (month: string, horizon: number, expected: number, usual: number) => ({
+  month,
+  horizon,
+  kind: horizon <= 2 ? "forecast" : "usual_adjusted",
+  probability: 0.9,
+  usual_probability: 0.8,
+  expected_cells: expected,
+  usual_cells: usual,
+  level: "muy alta",
+  skill_vs_climatology: 0.12,
+});
+const prediccion = {
+  model: "charmy-eventos-v1",
+  emission: "2026-10",
+  regions: [
+    {
+      region: "AR-Q",
+      zone: { cells: 540, no_history: false },
+      months: [mesPrediccion("2026-11", 1, 12.4, 6), mesPrediccion("2026-12", 2, 3, 3.1), mesPrediccion("2027-01", 3, 1, 4)],
+    },
+  ],
+};
+
 const fetchSimulado = vi.fn<typeof fetch>();
 let resumenFalla = false;
+let prediccionFalla = false;
 let calendarioFalla = false;
 
 function montar() {
@@ -100,10 +125,15 @@ function montar() {
 beforeEach(() => {
   vi.stubEnv("VITE_API_URL", "http://api.prueba/api/v1");
   resumenFalla = false;
+  prediccionFalla = false;
   calendarioFalla = false;
   fetchSimulado.mockReset();
   fetchSimulado.mockImplementation(async (url) => {
     const u = String(url);
+    if (u.includes("/regions/forecast"))
+      return prediccionFalla
+        ? new Response(JSON.stringify({ code: "fuente_no_disponible", message: "No disponible" }), { status: 503 })
+        : new Response(JSON.stringify(prediccion));
     if (u.includes("/regions/summary"))
       return resumenFalla
         ? new Response(JSON.stringify({ code: "datos_no_disponibles", message: "No disponible" }), { status: 503 })
@@ -498,6 +528,35 @@ describe("vista Relieve (F4-R1)", () => {
     expect(enlaceMapa.querySelector("svg")).toBeInTheDocument();
     const preview = within(ficha).getByTitle("Previsualización de la ubicación en Google Maps");
     expect(preview).toHaveAttribute("src", "https://maps.google.com/maps?q=-39,-70&z=13&output=embed");
+  });
+
+  it("Predicción ordena las provincias por celdas esperadas y la ficha muestra los próximos meses (F4-D12)", async () => {
+    montar();
+    const usuario = userEvent.setup();
+    await usuario.click(screen.getByRole("tab", { name: "Predicción" }));
+    const ranking = await screen.findByRole("region", { name: "Ranking" });
+    const fila = await within(ranking).findByRole("button", { name: /Neuquén/ });
+    expect(fila).toHaveTextContent("12");
+    // La Araucanía no tiene predicción: no entra al ranking.
+    expect(within(ranking).queryByText("La Araucanía")).not.toBeInTheDocument();
+    await usuario.click(fila);
+    const ficha = await screen.findByRole("region", { name: "Ficha de Neuquén" });
+    expect(within(ficha).getByText("Noviembre 2026")).toBeInTheDocument();
+    expect(within(ficha).getByText("Se esperan 12,4 celdas con fuego, más que las 6 habituales.")).toBeInTheDocument();
+    expect(within(ficha).getAllByText("Pronóstico")).toHaveLength(2);
+    expect(within(ficha).getByText("Lo habitual, ajustado")).toBeInTheDocument();
+    expect(within(ficha).getByText(/Es una estimación del modelo/)).toBeInTheDocument();
+  });
+
+  it("si la predicción no responde, solo esa pestaña lo dice (F4-D12)", async () => {
+    prediccionFalla = true;
+    montar();
+    const usuario = userEvent.setup();
+    await usuario.click(screen.getByRole("tab", { name: "Predicción" }));
+    const ranking = await screen.findByRole("region", { name: "Ranking" });
+    expect(await within(ranking).findByText(/La predicción no está disponible ahora/)).toBeInTheDocument();
+    await usuario.click(screen.getByRole("tab", { name: "Focos" }));
+    expect(await within(ranking).findByText("Neuquén")).toBeInTheDocument();
   });
 
   it("si la API falla, lo dice y el resto de la vista sigue", async () => {

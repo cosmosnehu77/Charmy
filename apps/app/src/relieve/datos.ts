@@ -1,6 +1,6 @@
 import { useMemo } from "react";
-import { useFocosRecientes, useResumen } from "./consultas";
-import { regionDePunto, type RegionResumen } from "./logica";
+import { useFocosRecientes, usePrediccionRegiones, useResumen } from "./consultas";
+import { conPrediccion, regionDePunto, type RegionResumen } from "./logica";
 
 export interface FocoReciente {
   k: number;
@@ -26,7 +26,11 @@ export interface FocoReciente {
 export function useDatosRelieve() {
   const resumen = useResumen();
   const vivo = useFocosRecientes();
-  const regiones: RegionResumen[] = useMemo(() => resumen.data?.features ?? [], [resumen.data]);
+  const prediccion = usePrediccionRegiones();
+  const regiones: RegionResumen[] = useMemo(
+    () => conPrediccion(resumen.data?.features ?? [], prediccion.data),
+    [resumen.data, prediccion.data],
+  );
   const focos: FocoReciente[] = useMemo(() => {
     const features = vivo.data?.features ?? [];
     return features.map((f, k) => {
@@ -51,5 +55,5 @@ export function useDatosRelieve() {
       };
     });
   }, [vivo.data, regiones]);
-  return { resumen, vivo, regiones, focos };
+  return { resumen, vivo, prediccion, regiones, focos };
 }

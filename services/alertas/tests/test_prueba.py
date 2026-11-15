@@ -17,7 +17,7 @@ def test_el_mensaje_de_prueba_dice_que_es_prueba_y_tiene_el_formato_real():
     assert "Foco de calor satelital en tu zona (Comarca Andina)" in texto
     assert "veredicto: probable · 2 detecciones en la celda" in texto
     assert "Si hay peligro, llamá al 100." in texto  # RF-ALE-06
-    assert "15/11/2026 16:00 UTC" in texto
+    assert "15/11/2026 13:00 (hora de Argentina)" in texto
 
 
 def test_la_prueba_manda_un_solo_mensaje_sin_botones():

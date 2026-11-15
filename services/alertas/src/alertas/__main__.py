@@ -16,8 +16,8 @@ from alertas.corrida import corrida
 from alertas.telegram import TelegramAiogram
 from alertas.zona import ZONA_DEMO
 
-# La API gratis de Render se duerme y tarda en despertar.
-TIEMPO_ESPERA_S = 60
+# La API gratis de Render se duerme y tarda en despertar, y /live tarda unos 58 s cuando renueva su caché.
+TIEMPO_ESPERA_S = 120
 
 
 async def main() -> None:

@@ -19,7 +19,7 @@ export function Encabezado() {
           Qué es Charmy
         </a>
         <a className="text-tinta-suave underline-offset-2 hover:text-tinta hover:underline" href={URL_JUEGO}>
-          Charmy Kids
+          Charmy Brigada
         </a>
       </nav>
       <div className="ml-auto flex flex-wrap items-center gap-2">

@@ -54,13 +54,13 @@ Un valor inválido vuelve al de por defecto: la página nunca se rompe por Charm
 | `saluda` | Primera visita a la landing o a la app. |
 | `explica` | Recorrido guiado y ayudas del modo novato. |
 | `alerta` | Foco nuevo en la zona o mes por encima de lo normal. |
-| `festeja` | Logros en Charmy Kids y reportes confirmados. |
+| `festeja` | Logros en Charmy Brigada y reportes confirmados. |
 | `pensando` | Mientras se cargan o procesan datos. |
 
 | Vestuario | Dónde |
 |---|---|
 | `base` | Landing, presentación y redes. |
-| `bombero` | Avisos a entidades y protagonista de Charmy Kids. |
+| `bombero` | Avisos a entidades y protagonista de Charmy Brigada. |
 | `piloto` | Poder especial del avión hidrante en el juego. |
 | `cientifica` | Modo experto, validación y descargas. |
 | `guia` | Modo novato y recorrido de cuatro pasos. |

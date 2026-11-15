@@ -6,6 +6,7 @@ import { CONSEJOS, cierreDePartida, fechaLarga } from "./cierre";
 import { cargarDia, type DiaJuego } from "./datos";
 import { apagar, dejarEscapar, marcadorInicial, planDeNivel, type Marcador } from "./partida";
 import { dimensiones } from "./pantalla";
+import { guardarRecord, leerRecord, type Almacen } from "./record";
 import "./pagina.css";
 
 const { ancho: ANCHO, alto: ALTO } = dimensiones(window.innerWidth, window.innerHeight);
@@ -19,25 +20,17 @@ const VIDA_FOCO_MS = 4_000;
 const MARGEN = 20;
 /** Lugar para el marcador, que ocupa dos líneas. */
 const ARRIBA = 60;
-const CLAVE_RECORD = "charmy-kids-record";
 
 const DIA = dia as DiaJuego;
 const color = (hex: string) => Phaser.Display.Color.HexStringToColor(hex).color;
 const TEXTO = { fontFamily: "monospace", color: interfaz.tinta } as const;
 
-function leerRecord(): number {
+/** Acceder a localStorage puede fallar (modo privado o almacenamiento bloqueado): sin él, un almacén vacío. */
+function almacen(): Almacen {
   try {
-    return Number(localStorage.getItem(CLAVE_RECORD)) || 0;
+    return window.localStorage;
   } catch {
-    return 0;
-  }
-}
-
-function guardarRecord(puntos: number) {
-  try {
-    localStorage.setItem(CLAVE_RECORD, String(puntos));
-  } catch {
-    // Sin almacenamiento el récord dura solo esta visita.
+    return { getItem: () => null, setItem: () => {} };
   }
 }
 
@@ -61,7 +54,7 @@ class Inicio extends Phaser.Scene {
   create() {
     this.add.image(ANCHO / 2, Y(210), "charmy");
     this.add
-      .text(ANCHO / 2, Y(320), "Charmy Kids", { ...TEXTO, fontSize: "40px", color: paleta.acento })
+      .text(ANCHO / 2, Y(320), "Charmy Brigada", { ...TEXTO, fontSize: "40px", color: paleta.acento })
       .setOrigin(0.5);
     this.add
       .text(ANCHO / 2, Y(395), `Estos son los focos de calor que vieron los satélites el ${fechaLarga(DIA.fecha)}.\nTocalos para apagarlos. Si apagás seguido, sumás combo.`, {
@@ -70,7 +63,7 @@ class Inicio extends Phaser.Scene {
         fontSize: "18px",
       })
       .setOrigin(0.5);
-    const record = leerRecord();
+    const record = leerRecord(almacen());
     if (record > 0) {
       this.add.text(ANCHO / 2, Y(455), `Tu récord: ${record}`, { ...TEXTO, fontSize: "18px" }).setOrigin(0.5);
     }
@@ -145,9 +138,9 @@ class Fin extends Phaser.Scene {
   }
 
   create(m: Marcador) {
-    const record = leerRecord();
+    const record = leerRecord(almacen());
     const esRecord = m.puntos > record;
-    if (esRecord) guardarRecord(m.puntos);
+    if (esRecord) guardarRecord(almacen(), m.puntos);
     const { dato, consejo } = cierreDePartida(DIA, Math.floor(Math.random() * CONSEJOS.length));
 
     this.add.image(ANCHO / 2, Y(120), "charmy-festeja");

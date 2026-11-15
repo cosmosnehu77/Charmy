@@ -64,6 +64,6 @@ describe("enlaces entre las tres piezas (F4-E1)", () => {
   it("el encabezado enlaza a la landing y al juego en producción", () => {
     montar();
     expect(screen.getByRole("link", { name: "Qué es Charmy" })).toHaveAttribute("href", "https://charmy-landing.pages.dev");
-    expect(screen.getByRole("link", { name: "Charmy Kids" })).toHaveAttribute("href", "https://charmy-juego.pages.dev");
+    expect(screen.getByRole("link", { name: "Charmy Brigada" })).toHaveAttribute("href", "https://charmy-juego.pages.dev");
   });
 });

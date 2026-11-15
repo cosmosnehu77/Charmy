@@ -1,8 +1,10 @@
 """#303: aviso de prueba para ver el formato real en el grupo. Telegram simulado: nunca la red."""
 
 import asyncio
+import logging
 from datetime import UTC, datetime
 
+import pytest
 from alertas.prueba import mensaje_de_prueba, prueba
 from alertas.telegram import TelegramAiogram
 from alertas.zona import ZONA_DEMO, ZONAS
@@ -46,3 +48,20 @@ def test_sin_botones_telegram_no_recibe_teclado():
 
     asyncio.run(TelegramAiogram(BotFalso()).enviar(1, "hola", []))
     assert pedidos[0]["reply_markup"] is None
+
+
+def test_si_un_grupo_falla_la_prueba_sigue_con_los_demas_y_dice_cual(caplog):
+    enviados = []
+
+    class TelegramFalso:
+        async def enviar(self, chat_id, texto, teclado, responder_a=None):
+            if chat_id == -1:
+                raise RuntimeError("Bad Request: chat not found")
+            enviados.append(chat_id)
+
+    norte = ZONAS[2]
+    with caplog.at_level(logging.WARNING, logger="alertas.prueba"):
+        with pytest.raises(RuntimeError, match="1 de 2"):
+            asyncio.run(prueba(TelegramFalso(), [(ZONA_DEMO, -1), (norte, -100456)], AHORA))
+    assert enviados == [-100456]
+    assert "zona-demo" in caplog.text and "chat not found" in caplog.text

@@ -7,6 +7,7 @@ No llama a la API ni registra nada: sirve para ver cómo llega un aviso a Telegr
 El foco es de muestra (valores inventados).
 """
 
+import logging
 from collections.abc import Sequence
 from datetime import datetime
 from typing import Protocol
@@ -14,6 +15,8 @@ from typing import Protocol
 from alertas.mensaje import armar_mensaje
 from alertas.modelos import Foco
 from alertas.zona import Zona
+
+log = logging.getLogger(__name__)
 
 MARCA = "PRUEBA del bot de avisos: no es un incendio real. No hace falta hacer nada."
 
@@ -35,6 +38,15 @@ def mensaje_de_prueba(zona: Zona, ahora: datetime) -> str:
 
 
 async def prueba(tg: Telegram, destinos: Sequence[tuple[Zona, int]], ahora: datetime) -> None:
-    """Un aviso de prueba por grupo, con el nombre de su zona. Sin botones: no toca ningún estado."""
+    """Un aviso de prueba por grupo, con el nombre de su zona. Sin botones: no toca ningún estado.
+    Un grupo que falla no frena a los demás (#332); al final, si alguno falló, la corrida termina con
+    error."""
+    fallidos = 0
     for zona, chat_id in destinos:
-        await tg.enviar(chat_id, mensaje_de_prueba(zona, ahora), [])
+        try:
+            await tg.enviar(chat_id, mensaje_de_prueba(zona, ahora), [])
+        except Exception as e:
+            log.warning("no se pudo mandar la prueba al grupo de %s: %s", zona.id, e)
+            fallidos += 1
+    if fallidos:
+        raise RuntimeError(f"la prueba falló en {fallidos} de {len(destinos)} grupos")

@@ -110,6 +110,7 @@ def comparar(
     mejora_vigente: dict[int, float],
     al_avanzar: Callable[[date], None] | None = None,
     celdas: list[str] | None = None,
+    nombre: str = MODELO,
 ) -> Resultado:
     """`m`: días con fuego por celda y mes. `mejora_vigente`: la de LightGBM en la misma prueba.
 
@@ -156,7 +157,7 @@ def comparar(
         p10=pl.min_horizontal("q10", "pred").round(2),
         p90=pl.max_horizontal("q90", "pred").round(2),
         skill_vs_climatology=pl.col("horizonte").replace_strict(mejora, return_dtype=pl.Float64),
-        model=pl.lit(MODELO),
+        model=pl.lit(nombre),
     )
     return Resultado(
         prediccion.cast(ESQUEMAS["prediccion"]).sort("cell_id", "horizon"),

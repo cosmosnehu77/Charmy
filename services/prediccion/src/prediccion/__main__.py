@@ -44,6 +44,7 @@ def main(argv: list[str] | None = None) -> int:
     p = argparse.ArgumentParser(description="TimesFM 2.5 contra LightGBM con la compuerta D-10")
     p.add_argument("--entrenamiento", type=Path, required=True, help="entrenamiento.parquet (F3-B5)")
     p.add_argument("--out", type=Path, required=True)
+    p.add_argument("--modelo", choices=["3.0", "2.5"], default="3.0", help="Versión de TimesFM")
     p.add_argument(
         "--celdas-prueba",
         type=int,
@@ -61,14 +62,21 @@ def main(argv: list[str] | None = None) -> int:
         print(f"prueba sobre {len(celdas)} celdas al azar (semilla 0)")
     vigente = mejora_lightgbm(m, celdas)
     print("LightGBM, mejora sobre la climatología:", vigente)
+    if args.modelo == "3.0":
+        from prediccion import timesfm3
+
+        modelo, nombre = timesfm3.cargar(), "timesfm-3.0"
+    else:
+        modelo, nombre = cargar_timesfm(), "timesfm-2.5"
     r = comparar(
         m,
-        cargar_timesfm(),
+        modelo,
+        nombre=nombre,
         mejora_vigente=vigente,
         al_avanzar=lambda e: print("emisión", e, flush=True),
         celdas=celdas,
     )
-    print("TimesFM 2.5, mejora sobre la climatología:", r.mejora)
+    print(f"{nombre}, mejora sobre la climatología:", r.mejora)
     for nombre, ref in r.referencias.items():
         print(f"Referencia «{nombre}», mejora sobre la climatología:", ref)
 

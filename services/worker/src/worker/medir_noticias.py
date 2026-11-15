@@ -17,12 +17,18 @@ import httpx
 
 from worker.noticias import MODELO, NoticiasNoDisponibles, etiquetar
 
+SIN_RAZONAR = {"chat_template_kwargs": {"enable_thinking": False}}
+
+# (nombre en la tabla, modelo, opciones extra del pedido).
 CANDIDATOS = [
-    MODELO,
-    "google/gemma-3-12b-it",
-    "nvidia/nemotron-3.5-lightning-30b-a3b",
-    "nv-mistralai/mistral-nemo-12b-instruct",
-    "deepseek-ai/deepseek-v4.1-flash",
+    (MODELO, MODELO, {}),
+    ("nemotron-3.5-lightning", "nvidia/nemotron-3.5-lightning-30b-a3b", {}),
+    ("nemotron-3.5-lightning sin razonar", "nvidia/nemotron-3.5-lightning-30b-a3b", SIN_RAZONAR),
+    ("nemotron-3.5-lightning 1500 tokens", "nvidia/nemotron-3.5-lightning-30b-a3b", {"max_tokens": 1500}),
+    ("nemotron-3.5-bolt sin razonar", "nvidia/nemotron-3.5-bolt-e4b", SIN_RAZONAR),
+    ("gpt-oss-20b", "openai/gpt-oss-20b", {"max_tokens": 1500}),
+    ("glm-5.3-flash", "z-ai/glm-5.3-flash", {}),
+    ("minimax-m3.1-flash", "minimaxai/minimax-m3.1-flash", {"max_tokens": 1500}),
 ]
 
 # (provincia, país, [(titular, etiqueta esperada)]) — muestra inventada.
@@ -64,16 +70,19 @@ def aciertos(esperadas: list[str], obtenidas: list[str]) -> int:
     return sum(e == o for e, o in zip(esperadas, obtenidas, strict=True))
 
 
-def medir(modelo: str, cliente: httpx.Client) -> dict:
+def medir(
+    modelo: str, cliente: httpx.Client, opciones: dict | None = None, nombre: str | None = None
+) -> dict:
     total = sum(len(t) for _, _, t in MUESTRA)
-    resultado = {"modelo": modelo, "aciertos": 0, "total": total, "fallas": 0, "segundos": []}
+    resultado = {"modelo": nombre or modelo, "aciertos": 0, "total": total, "fallas": 0, "segundos": []}
     for provincia, pais, filas in MUESTRA:
         titulares = [{"title": t} for t, _ in filas]
         inicio = time.monotonic()
         try:
-            obtenidas = etiquetar(titulares, provincia, pais, cliente, modelo=modelo)
-        except NoticiasNoDisponibles as error:
-            print(f"{modelo} / {provincia}: {error}", file=sys.stderr)
+            obtenidas = etiquetar(titulares, provincia, pais, cliente, modelo=modelo, opciones=opciones)
+        except Exception as error:  # medir: un modelo que falla raro no corta la medición de los demás
+            motivo = error if isinstance(error, NoticiasNoDisponibles) else type(error).__name__
+            print(f"{nombre or modelo} / {provincia}: {motivo}", file=sys.stderr)
             resultado["fallas"] += 1
             continue
         finally:
@@ -96,7 +105,7 @@ def tabla(resultados: list[dict]) -> str:
 
 def main() -> int:
     with httpx.Client() as cliente:
-        resultados = [medir(m, cliente) for m in CANDIDATOS]
+        resultados = [medir(m, cliente, opciones, nombre) for nombre, m, opciones in CANDIDATOS]
     print(tabla(resultados))
     return 0
 

@@ -134,3 +134,50 @@ def test_la_medicion_cuenta_aciertos_fallas_y_tiempos_sin_red():
     apoyan = sum(e == "apoya" for _, _, filas in m.MUESTRA[:2] for _, e in filas)
     assert (r["aciertos"], r["fallas"], len(r["segundos"])) == (apoyan, 1, 3)
     assert "| `modelo/prueba` |" in m.tabla([r])
+
+
+def test_una_respuesta_sin_texto_deja_las_noticias_no_disponibles():
+    # Un modelo que razona puede gastar los tokens pensando y devolver content null: no puede tirar la vuelta.
+    sin_texto = {"choices": [{"message": {"role": "assistant", "content": None}}]}
+    with pytest.raises(NoticiasNoDisponibles, match="sin texto"):
+        etiquetar(TITULARES, "Chubut", "Argentina", cliente(lambda req: httpx.Response(200, json=sin_texto)))
+
+
+def test_un_error_http_dice_el_codigo_y_no_la_clave():
+    with pytest.raises(NoticiasNoDisponibles) as error:
+        etiquetar(TITULARES, "Chubut", "Argentina", cliente(lambda req: httpx.Response(404)))
+    assert "404" in str(error.value)
+    assert "clave-de-prueba" not in str(error.value)
+
+
+def test_la_medicion_sigue_con_el_proximo_modelo_si_uno_falla_raro(monkeypatch):
+    from worker import medir_noticias as m
+
+    def etiquetar_roto(titulares, provincia, pais, c, modelo, opciones=None):
+        if modelo == "roto":
+            raise RuntimeError("algo inesperado")
+        return ["apoya"] * len(titulares)
+
+    monkeypatch.setattr(m, "etiquetar", etiquetar_roto)
+    roto, sano = m.medir("roto", cliente=None), m.medir("sano", cliente=None)
+    assert (roto["fallas"], sano["fallas"]) == (3, 0)
+
+
+def test_las_opciones_del_modelo_van_en_el_pedido():
+    pedidos = []
+
+    def manejador(req):
+        pedidos.append(json.loads(req.content))
+        return httpx.Response(200, json=respuesta_grabada('["apoya", "sin_informacion"]'))
+
+    opciones = {"max_tokens": 1500, "chat_template_kwargs": {"enable_thinking": False}}
+    etiquetar(TITULARES, "Chubut", "Argentina", cliente(manejador), modelo="m", opciones=opciones)
+    assert pedidos[0]["max_tokens"] == 1500
+    assert pedidos[0]["chat_template_kwargs"] == {"enable_thinking": False}
+    assert pedidos[0]["temperature"] == 0
+
+
+def test_una_respuesta_sin_texto_dice_por_que_termino():
+    sin_texto = {"choices": [{"message": {"content": None}, "finish_reason": "length"}]}
+    with pytest.raises(NoticiasNoDisponibles, match="length"):
+        etiquetar(TITULARES, "Chubut", "Argentina", cliente(lambda req: httpx.Response(200, json=sin_texto)))

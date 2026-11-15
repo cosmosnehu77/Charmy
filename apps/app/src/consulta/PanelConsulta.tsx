@@ -25,7 +25,7 @@ function Campo({ label, children }: { label: string; children: (id: string) => R
   );
 }
 
-function Area() {
+export function Area() {
   const { area, dibujando, cambiar } = useConsulta();
   const [lat, setLat] = useState("");
   const [lon, setLon] = useState("");
@@ -109,7 +109,7 @@ function Area() {
   );
 }
 
-function Fechas({ error }: { error: string | null }) {
+export function Fechas({ error }: { error: string | null }) {
   const { desde, hasta, hoy, cambiar } = useConsulta();
   return (
     <section aria-labelledby="titulo-fechas" className="flex flex-col gap-3">
@@ -137,7 +137,7 @@ function Fechas({ error }: { error: string | null }) {
   );
 }
 
-function Filtros() {
+export function Filtros() {
   const { fuente, confianzaMin, frpMin, momento, cambiar } = useConsulta();
   return (
     <section aria-labelledby="titulo-filtros" className="flex flex-col gap-3">
@@ -192,7 +192,7 @@ function Filtros() {
 
 const enteros = new Intl.NumberFormat("es-AR");
 
-function Resultado({
+export function Resultado({
   focos,
   cargando,
   fallo,

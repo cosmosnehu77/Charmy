@@ -2,10 +2,9 @@ import "maplibre-gl/dist/maplibre-gl.css";
 import * as maplibregl from "maplibre-gl";
 // MapLibre v6 pide la URL de su worker cuando se usa con un empaquetador (guía de instalación, Vite).
 import urlWorker from "maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url";
-import { TerraDraw, TerraDrawPolygonMode, TerraDrawRectangleMode } from "terra-draw";
-import { TerraDrawMapLibreGLAdapter } from "terra-draw-maplibre-gl-adapter";
+import type { TerraDraw } from "terra-draw";
 import { useEffect, useRef, useState } from "react";
-import { bboxDeArea, type Poligono } from "@/consulta/consulta";
+import { bboxDeArea } from "@/consulta/consulta";
 import { useFocos } from "@/consulta/useFocos";
 import { useApp } from "@/estado/app";
 import { useConsulta } from "@/estado/consulta";
@@ -15,6 +14,7 @@ import { useFocosVivo } from "@/vivo/consultas";
 import { useVivo } from "@/vivo/estado";
 import { useContexto } from "@/contexto/estado";
 import { agregarCapas, datosArea, ponerImagen } from "./capas";
+import { crearDibujo } from "./dibujo";
 import { esFallaDelEstilo, LIMITES_MVP, perfiles, transformarEstilo } from "./perfiles";
 
 maplibregl.setWorkerUrl(urlWorker);
@@ -30,24 +30,6 @@ const locale = {
   "FullscreenControl.Enter": "Pantalla completa",
   "FullscreenControl.Exit": "Salir de pantalla completa",
 };
-
-/** Terra Draw dibuja sus propias capas: se crea de nuevo después de cada cambio de estilo. */
-function crearDibujo(m: maplibregl.Map) {
-  const dibujo = new TerraDraw({
-    adapter: new TerraDrawMapLibreGLAdapter({ map: m }),
-    modes: [new TerraDrawRectangleMode(), new TerraDrawPolygonMode()],
-  });
-  dibujo.start();
-  dibujo.on("finish", (id, contexto) => {
-    if (contexto.action !== "draw") return;
-    const figura = dibujo.getSnapshot().find((f) => f.id === id);
-    dibujo.clear();
-    if (figura?.geometry.type === "Polygon") {
-      useConsulta.getState().cambiar({ area: figura.geometry as Poligono, dibujando: null });
-    }
-  });
-  return dibujo;
-}
 
 export default function Mapa() {
   const contenedor = useRef<HTMLDivElement>(null);

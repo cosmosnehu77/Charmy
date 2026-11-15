@@ -425,6 +425,7 @@ Si falta tiempo en el carril B, el orden es: fuentes fijas, tiempo, imagen y, po
 | #311 | F4-D6 | Tendencia de los últimos días en el ranking: minigráfica por día y flecha con texto (en alza, en baja, estable), sin contar hoy, con `by_day` y `frp_by_day` de `/regions/summary`, sin cambiar el contrato | `@daniace` | `apps/app/` | F4-R1 | RF-MAP-01, RNF-04 | hecho |
 | #314 | F4-D7 | Tu zona pasa a llamarse Experto y se retira el modo novato (queda solo lo experto); con la herramienta de dibujo encendida, el cursor del mapa es una cruz | `@daniace` | `apps/app/` | F4-D3 | RF-MOD-01, RF-MOD-02, RF-MOD-03 | hecho |
 | #323 | F4-D8 | Organización de Experto: en la barra, Experto anteúltima y sin ícono y En vivo última; el panel va por pasos (dónde, cuándo y filtros plegados), con una franja de resultado y reproducción, pestañas Resumen / Lugar / Validación y Reportar en el encabezado; las descargas del calendario en un menú | `@daniace` | `apps/app/` | F4-D7 | RF-MOD-02, RNF-04 | hecho |
+| #329 | F4-D9 | Charmy guía el panel de Experto: botón Guía en el encabezado que abre el recorrido de Charmy (vestuario científica) por cada parte del panel y sus parámetros, como el de la vista común | `@daniace` | `apps/app/` | F4-D8 | RF-CHA-05, RF-MOD-02, RNF-04 | hecho |
 | #60 | F4-E1 | Pulido de la landing; enlaces entre las tres piezas | `@daniace` (D-34) | `apps/landing/` | fase 3 | RF-LAN-04, RNF-12 | pendiente |
 | #61 | F4-E2 | Pulido del juego | `@daniace` (D-34) | `apps/juego/` | F3-E1 | RNF-12 | pendiente |
 | #183 | F4-E3 | El juego pasa a llamarse Charmy Brigada en todas las piezas; requisitos y tareas de D-35 | `@dimidio6` | `apps/juego/`, y el nombre en `apps/app/`, `apps/landing/`, `packages/charmy/`, `docs/` | — | RF-KID-01, RNF-12 | en revisión |
@@ -524,7 +525,7 @@ Qué tareas cubren cada requisito. Si un requisito de `REQUISITOS.md` no aparece
 | RF-MOD-01, 02, 03 | F3-D1, F3-D2; F4-D7 (retira el modo novato), F4-D8 (organización de Experto) | 3, 4 |
 | RF-CHA-01, 04 | F0-E1, F1-E1, F1-E2, F1-E4 | 1 |
 | RF-CHA-02, 03, 06 | F2-E1, F3-E2 | 2 (mínimo) / 3 |
-| RF-CHA-05 | F3-D1 | 3 |
+| RF-CHA-05 | F3-D1; F4-D9 (guía de Experto) | 3, 4 |
 | RF-CHA-07 | F2-F1 | 2 |
 | RF-LAN-01 a 04 | F1-F1, F2-E2, F4-E1 | 2 |
 | RF-VIV-01 a 04 | F3-C1, F3-C3, F3-D3, F4-D2, F4-D4 | 3, 4 |
@@ -550,7 +551,7 @@ Qué tareas cubren cada requisito. Si un requisito de `REQUISITOS.md` no aparece
 | RF-CTX-06 | F4-B1 | 4 |
 | RNF-01, 08 | F0-A1, F1-A1, F1-A2, F4-A1 | 4 |
 | RNF-02 | F2-A1, F2-A2, F4-C1 | 4 |
-| RNF-03, 04 | F1-D2, F2-D2, F4-D1, F4-D6, F4-D8 | 4 |
+| RNF-03, 04 | F1-D2, F2-D2, F4-D1, F4-D6, F4-D8, F4-D9 | 4 |
 | RNF-05 | F3-C2 | 3 |
 | RNF-06 | F0-A3, F0-A5, F4-A1, F4-A2, D-13 | 4 |
 | RNF-07, 11 | F0-F1, F3-F1, F4-A1, F4-B1, F4-F1 | 4 |
@@ -634,7 +635,7 @@ La fase 5 no cubre requisitos nuevos: refuerza RNF-02 y RNF-10 sobre lo ya entre
 | 2026-11-15 | Versión 2.3.5, con `REQUISITOS.md` 1.7. Tarea nueva F4-D7 (#314): Tu zona pasa a llamarse Experto, se retira el modo novato (RF-MOD-01 y RF-MOD-03 quedan fuera) y el cursor es una cruz al dibujar el área, ya fusionada en #316. | encabezado, 5, 6 | `@daniace` |
 | 2026-11-15 | Versión 2.3.6. La decisión de que `services/alertas/` vuelve a `@dimidio6` pasa de D-36 a D-38: el número D-36 ya era del juego en 3D. Solo cambia el número, no la decisión. | 3 y `AGENTS.md` §6 | `@daniace` (líder interino) |
 | 2026-11-15 | Versión 2.3.7, con `REQUISITOS.md` 1.8. Decisión D-39 (pendiente de aprobación del líder): un solo bot de avisos para varias zonas, cada una un punto con radio y con su grupo de Telegram. Tarea nueva F4-A3 (#324). | 3, 5 | `@dimidio6` |
-| 2026-11-15 | Versión 2.3.8. Tarea nueva F4-D8 (#323): organización de Experto (orden de la barra, panel por pasos y pestañas, descargas en un menú), ya fusionada en #327. | encabezado, 5, 6 | `@daniace` |
+| 2026-11-15 | Versión 2.3.8. Tarea nueva F4-D8 (#323): organización de Experto (orden de la barra, panel por pasos y pestañas, descargas en un menú), ya fusionada en #327; y F4-D9 (#329): Charmy guía el panel de Experto, en #330. | encabezado, 5, 6 | `@daniace` |
 
 ## 10. Registro de cierres
 

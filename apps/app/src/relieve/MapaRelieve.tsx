@@ -25,6 +25,7 @@ import {
   CORTES_FOCO,
   escalaRegion,
   estiloGrupo,
+  focosPorRegion,
   focosVivoVisibles,
   maximo,
   nombresPorZoom,
@@ -40,6 +41,12 @@ export const ESTILO_CLARO = "https://tiles.openfreemap.org/styles/positron";
 const VACIO = { type: "FeatureCollection" as const, features: [] };
 /** Metros de alto de una región con altura 1 (la de más fuego). */
 const ALTO_MAX = 380_000;
+const ALTURA: maplibregl.ExpressionSpecification = ["coalesce", ["feature-state", "h"], 3000];
+/**
+ * En vivo (#373) el relieve va más bajo y se aplana al acercar: los puntos y los grupos se dibujan sobre el suelo,
+ * y así quedan sobre su provincia en vez de flotar lejos de la tapa.
+ */
+const ALTURA_VIVO: maplibregl.ExpressionSpecification = ["interpolate", ["linear"], ["zoom"], 5, ["*", 0.7, ALTURA], 8, 0];
 const reducido = () => globalThis.matchMedia?.("(prefers-reduced-motion: reduce)").matches ?? false;
 
 const RADIO_FOCO: maplibregl.ExpressionSpecification = ["+", 3, ["*", 1.6, ["sqrt", ["max", 0, ["get", "frp"]]]]];
@@ -193,16 +200,19 @@ export default function MapaRelieve({ regiones, dias, focos, onHover }: Props) {
     const { regiones: rs, focos: fs, estado: e, area: a, focosZona: fz } = props.current;
     const vivo = e.pestana === "vivo";
     const zona = e.pestana === "zona";
-    // En En vivo y en Tu zona las regiones quedan grises y planas: lo que importa son los puntos.
-    const apagado = vivo || zona;
+    // En Tu zona las regiones quedan grises y planas: lo que importa es el área.
+    const apagado = zona;
     const indicador = indicadorDe(e.pestana);
-    const max = maximo(rs, indicador);
+    // En vivo (#373) las regiones suben por los focos que se ven, con la ventana y los niveles elegidos.
+    const conteoVivo = vivo ? focosPorRegion(fs, e.horasVivo, e.nivelesVivo) : null;
+    const valorDe = (r: RegionResumen) => (conteoVivo ? (conteoVivo.get(r.id) ?? 0) : valorIndicador(r.properties, indicador));
+    const max = conteoVivo ? Math.max(0, ...conteoVivo.values()) : maximo(rs, indicador);
     if (regionesPuestas.current !== rs) {
       m.getSource<maplibregl.GeoJSONSource>("regiones")?.setData({ type: "FeatureCollection", features: rs as never });
       regionesPuestas.current = rs;
     }
     for (const r of rs) {
-      const { color, altura } = escalaRegion(valorIndicador(r.properties, indicador), max, indicador);
+      const { color, altura } = escalaRegion(valorDe(r), max, indicador);
       let meta = altura;
       let tono = color;
       if (e.seleccion && r.id !== e.seleccion) {
@@ -210,7 +220,7 @@ export default function MapaRelieve({ regiones, dias, focos, onHover }: Props) {
         tono = relieve.apagada;
       } else if (e.seleccion === r.id) {
         tono = mezcla(color, paleta.hocico, 0.3);
-        if (e.linea.activa && r.properties.by_day) meta = alturaDelDia(altura, r.properties.by_day, e.linea.dia);
+        if (e.linea.activa && indicador !== "focos" && r.properties.by_day) meta = alturaDelDia(altura, r.properties.by_day, e.linea.dia);
       }
       const metros = e.plano ? 1500 : 3000 + meta * ALTO_MAX;
       const a = alturas.current.get(r.id) ?? { actual: 3000, meta: 3000 };
@@ -223,14 +233,15 @@ export default function MapaRelieve({ regiones, dias, focos, onHover }: Props) {
     const opacidadReg = e.seleccion ? 1 : 0.92;
     m.setPaintProperty("reg-2d", "fill-opacity", opacidadReg);
     m.setPaintProperty("reg-3d", "fill-extrusion-opacity", opacidadReg);
-    // Focos: en el relieve, con el indicador Focos o con una región elegida; con la línea, solo ese día.
+    m.setPaintProperty("reg-3d", "fill-extrusion-height", vivo ? ALTURA_VIVO : ALTURA);
+    // Focos de los últimos días sobre el relieve: con una región elegida y fuera de Focos, que es un mes (#373).
     const dia = props.current.dias[e.linea.dia];
     const visibles = fs.filter((f) => {
       if (e.seleccion && f.region !== e.seleccion) return false;
       if (e.linea.activa && f.dia !== dia) return false;
       return true;
     });
-    const verFocos = !apagado && (indicador === "focos" || e.seleccion !== null);
+    const verFocos = !apagado && !vivo && indicador !== "focos" && e.seleccion !== null;
     m.getSource<maplibregl.GeoJSONSource>("agujas")?.setData(
       verFocos ? agujas(visibles, (region) => (region ? (alturas.current.get(region)?.meta ?? 0) : 0)) : VACIO,
     );
@@ -256,8 +267,8 @@ export default function MapaRelieve({ regiones, dias, focos, onHover }: Props) {
     visible("reg-3d", capasReg.reg3d);
     visible("reg-borde-halo", capasReg.regBorde);
     visible("reg-borde", capasReg.regBorde);
-    visible("reg-agujas", !apagado && !e.plano);
-    visible("reg-puntos", !apagado && e.plano);
+    visible("reg-agujas", verFocos && !e.plano);
+    visible("reg-puntos", verFocos && e.plano);
     visible("vivo-gris", capasReg.vivoGris);
     visible("vivo-pulso", vivo);
     visible("vivo-focos", vivo);
@@ -360,7 +371,7 @@ export default function MapaRelieve({ regiones, dias, focos, onHover }: Props) {
           source: "regiones",
           paint: {
             "fill-extrusion-color": ["coalesce", ["feature-state", "c"], relieve.sinDato],
-            "fill-extrusion-height": ["coalesce", ["feature-state", "h"], 3000],
+            "fill-extrusion-height": ALTURA,
             "fill-extrusion-base": 0,
             "fill-extrusion-opacity": 0.92,
             "fill-extrusion-vertical-gradient": true,
@@ -650,7 +661,7 @@ export default function MapaRelieve({ regiones, dias, focos, onHover }: Props) {
     m.fitBounds(caja, {
       padding,
       maxZoom: zona && area ? 11 : 6.5,
-      pitch: estado.plano || estado.pestana === "vivo" || zona ? 0 : region ? 58 : 55,
+      pitch: estado.plano || zona ? 0 : region ? 58 : 55,
       bearing: zona ? 0 : m.getBearing(),
       duration: reducido() ? 0 : 1200,
     });

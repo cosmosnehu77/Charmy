@@ -83,9 +83,15 @@ def etiquetar(
         )
         respuesta.raise_for_status()
         texto = respuesta.json()["choices"][0]["message"]["content"]
+        if not isinstance(texto, str):
+            # Un modelo que razona puede gastar los tokens pensando y devolver content null (#279).
+            raise NoticiasNoDisponibles("Modelo de lenguaje: respuesta sin texto")
         # El modelo a veces envuelve el JSON en un bloque de código.
         etiquetas = json.loads(texto[texto.index("[") : texto.rindex("]") + 1])
-    except (httpx.HTTPError, ValueError, KeyError, IndexError) as error:
+    except httpx.HTTPStatusError as error:
+        # Solo el código: la URL y los encabezados no se imprimen.
+        raise NoticiasNoDisponibles(f"Modelo de lenguaje: HTTP {error.response.status_code}") from None
+    except (httpx.HTTPError, ValueError, KeyError, IndexError, TypeError) as error:
         raise NoticiasNoDisponibles(f"Modelo de lenguaje: {type(error).__name__}") from None
     if len(etiquetas) != len(titulares) or not set(etiquetas) <= ETIQUETAS:
         raise NoticiasNoDisponibles("Modelo de lenguaje: respuesta con otra forma")

@@ -1,4 +1,4 @@
-import { charmySvg } from "@charmy/charmy/core";
+import { charmySvg, type Mood, type Outfit } from "@charmy/charmy/core";
 import { interfaz } from "@charmy/ui";
 import Phaser from "phaser";
 import dia from "../../../data/muestras/dia-juego.json";
@@ -32,8 +32,12 @@ export function almacen(): Almacen {
 /** Sonido del juego. El contexto de audio se crea con el primer sonido, después de que el jugador tocó algo. */
 export const SONIDO = crearSonido(() => new AudioContext(), leerSilencio(almacen()));
 
-export function cargarCharmy(escena: Phaser.Scene, clave: string, mood: "idle" | "festeja") {
-  const svg = charmySvg({ mood, outfit: "bombero", size: 128 });
+/** Clave de la textura de Charmy con un vestuario y un estado. */
+export const claveCharmy = (outfit: Outfit, mood: Mood) => `charmy-${outfit}-${mood}`;
+
+export function cargarCharmy(escena: Phaser.Scene, outfit: Outfit, mood: Mood) {
+  const clave = claveCharmy(outfit, mood);
+  const svg = charmySvg({ mood, outfit, size: 128 });
   // El cargador de Phaser solo acepta data URI en base64; el SVG puede traer caracteres no ASCII.
   const base64 = btoa(Array.from(new TextEncoder().encode(svg), (b) => String.fromCharCode(b)).join(""));
   escena.load.svg(clave, `data:image/svg+xml;base64,${base64}`, { width: 128, height: 128 });

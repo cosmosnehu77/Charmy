@@ -1,7 +1,8 @@
 import { interfaz, paleta } from "@charmy/ui";
 import Phaser from "phaser";
 import { CONSEJOS, cierreDePartida } from "../cierre";
-import { ANCHO, DIA, LINEAS, SONIDO, TEXTO, Y, almacen, boton } from "../comun";
+import { ANCHO, DIA, LINEAS, SONIDO, TEXTO, Y, almacen, boton, claveCharmy } from "../comun";
+import { estadoDelCierre } from "../ritmo";
 import type { Marcador } from "../partida";
 import { guardarRecord, leerRecord } from "../record";
 
@@ -21,7 +22,7 @@ export class Fin extends Phaser.Scene {
       m.fijasTocadas,
     );
 
-    this.add.image(ANCHO / 2, Y(120), "charmy-festeja");
+    this.add.image(ANCHO / 2, Y(120), claveCharmy("bombero", estadoDelCierre(m, esRecord)));
     this.add
       .text(ANCHO / 2, Y(210), esRecord ? `¡Nuevo récord: ${m.puntos} puntos!` : `Hiciste ${m.puntos} puntos`, {
         ...TEXTO,

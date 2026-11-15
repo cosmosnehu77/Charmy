@@ -1,6 +1,6 @@
 import { paleta, rampaConteo } from "@charmy/ui";
 import Phaser from "phaser";
-import { ALTO, ANCHO, DIA, TEXTO, color, dibujarFondo } from "../comun";
+import { ALTO, ANCHO, DIA, SONIDO, TEXTO, color, dibujarFondo } from "../comun";
 import { cargarDia } from "../datos";
 import { apagarFoco, encenderFoco, escaparFoco, nuevaPartida, planDeNivel, type FocoActivo, type Partida } from "../partida";
 
@@ -59,12 +59,14 @@ export class Nivel extends Phaser.Scene {
     const escape = this.time.delayedCall(VIDA_FOCO_MS, () => {
       borrar();
       this.partida = escaparFoco(this.partida, foco.id);
+      SONIDO.tocar("escape");
     });
     cuadro.once("pointerdown", () => {
       escape.remove();
       borrar();
       this.partida = apagarFoco(this.partida, foco.id, this.reloj.getElapsed());
       const { combo } = this.partida.marcador;
+      SONIDO.tocar(combo > 1 ? "combo" : "apagar");
       if (combo > 1) {
         const aviso = this.add
           .text(x, y - 12, `x${combo}`, { ...TEXTO, fontSize: "14px", color: paleta.acento })

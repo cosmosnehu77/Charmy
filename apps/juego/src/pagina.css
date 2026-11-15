@@ -36,6 +36,16 @@ body {
   color: var(--color-acento);
   font-weight: 600;
 }
+.silencio {
+  font: inherit;
+  font-weight: 600;
+  color: var(--color-acento);
+  background: none;
+  border: 1px solid currentColor;
+  border-radius: 4px;
+  padding: 0 8px;
+  cursor: pointer;
+}
 .pie p {
   margin: 0;
 }

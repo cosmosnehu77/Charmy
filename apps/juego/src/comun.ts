@@ -7,6 +7,7 @@ import type { Area, DiaJuego } from "./datos";
 import fondo from "./fondo.json";
 import { dimensiones } from "./pantalla";
 import type { Almacen } from "./record";
+import { crearSonido, leerSilencio } from "./sonido";
 
 export const { ancho: ANCHO, alto: ALTO } = dimensiones(window.innerWidth, window.innerHeight);
 /** Las posiciones verticales se pensaron para 600 de alto: se escalan al alto real del lienzo. */
@@ -27,6 +28,9 @@ export function almacen(): Almacen {
     return { getItem: () => null, setItem: () => {} };
   }
 }
+
+/** Sonido del juego. El contexto de audio se crea con el primer sonido, después de que el jugador tocó algo. */
+export const SONIDO = crearSonido(() => new AudioContext(), leerSilencio(almacen()));
 
 export function cargarCharmy(escena: Phaser.Scene, clave: string, mood: "idle" | "festeja") {
   const svg = charmySvg({ mood, outfit: "bombero", size: 128 });

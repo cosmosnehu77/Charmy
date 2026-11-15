@@ -1,7 +1,7 @@
 import { interfaz, paleta } from "@charmy/ui";
 import Phaser from "phaser";
 import { CONSEJOS, cierreDePartida } from "../cierre";
-import { ANCHO, DIA, LINEAS, TEXTO, Y, almacen, boton } from "../comun";
+import { ANCHO, DIA, LINEAS, SONIDO, TEXTO, Y, almacen, boton } from "../comun";
 import type { Marcador } from "../partida";
 import { guardarRecord, leerRecord } from "../record";
 
@@ -14,6 +14,7 @@ export class Fin extends Phaser.Scene {
     const record = leerRecord(almacen());
     const esRecord = m.puntos > record;
     if (esRecord) guardarRecord(almacen(), m.puntos);
+    SONIDO.tocar("fin");
     const { dato, consejo } = cierreDePartida(DIA, Math.floor(Math.random() * CONSEJOS.length));
 
     this.add.image(ANCHO / 2, Y(120), "charmy-festeja");

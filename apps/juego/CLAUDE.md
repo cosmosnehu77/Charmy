@@ -25,5 +25,7 @@ pnpm --filter @charmy/juego contorno  # regenera src/fondo.json desde data/muest
   que los focos; su resultado, `src/fondo.json`, es generado: no se edita a mano (una prueba lo compara).
 - `src/partida.ts` (puntaje, combo, ritmo del nivel y el estado de la partida con sus focos activos), `src/cierre.ts` (dato real y consejo) y `src/record.ts` (récord en
   el navegador, que sigue leyendo la clave de cuando el juego se llamaba Charmy Kids) son puros y probados.
+- El sonido sale de `SONIDO` (`src/sonido.ts`, Web Audio, sin archivos). El silencio es un botón de HTML en el pie
+  y se recuerda en el navegador.
 - En las escenas, todo tiempo de juego sale del reloj de la escena (`this.time`, `TimerEvent`), nunca de `this.time.now`
   ni de `Date.now()`: los temporizadores se frenan con la pestaña en segundo plano y el resto no.

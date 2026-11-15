@@ -35,6 +35,9 @@ Docs interactivas en `http://localhost:8000/api/v1/docs`.
 - `GET /reports`, `POST /alerts` y `PATCH /alerts/{id}` piden `CHARMY_SERVICE_TOKEN` (Bearer); `POST /reports`
   es público. Los reportes no guardan IP ni datos personales (RNF-05). Las tablas llevan RLS activado.
 - `services/contexto` (carril B) se monta como router; no se edita desde este carril.
+- `/forecast/zone` y `/regions/forecast` (F4-C4) llaman al servicio `charmy-prediccion` (services/prediccion, en
+  Render) con `PREDICCION_URL` y `PREDICCION_TOKEN` (Bearer). Respuestas guardadas 12 h; si el servicio no responde
+  en 20 s (plan gratis, se duerme) o falta la configuración, 503 `fuente_no_disponible`.
 - La imagen se construye desde la **raíz del repo** con `-f services/api/Dockerfile`, porque monta
   `services/contexto`. Lo que entra está en `services/api/Dockerfile.dockerignore`.
 - Pruebas: `uv run pytest services/api` desde la raíz (usan `data/muestras/`, sin red ni base).

@@ -25,7 +25,7 @@ info:
     | `demasiados_reportes` | 429 | Más de 5 reportes en 10 minutos desde la misma conexión |
     | `error_interno` | 500 | Un error inesperado del servidor; el detalle queda en su registro |
     | `datos_no_disponibles` | 503 | No se pueden leer los datos o la base no responde |
-    | `fuente_no_disponible` | 503 | Meteomatics o Copernicus no responden y no hay copia (`/weather`, `/imagery`) |
+    | `fuente_no_disponible` | 503 | Meteomatics o Copernicus no responden y no hay copia (`/weather`, `/imagery`), o el servicio de predicción no responde a tiempo (`/forecast/zone`, `/regions/forecast`) |
     | `sin_prediccion` | 404 | `/forecast`: ese plazo no superó a la climatología o no hay predicción publicada |
     | `sin_imagen` | 404 | No hay una imagen lo bastante despejada en los últimos 30 días (`/imagery/latest`) |
 servers:
@@ -220,6 +220,87 @@ paths:
               schema: { $ref: '#/components/schemas/Error' }
               example: { code: sin_prediccion, message: 'Para ese plazo el modelo no supera a lo habitual, así que no mostramos predicción.' }
         '503': { $ref: '#/components/responses/DatosNoDisponibles' }
+  /forecast/zone:
+    post:
+      operationId: postForecastZone
+      tags: [historico]
+      summary: Probabilidad de fuego en una zona para los próximos seis meses (modelo binario, D-40)
+      description: |
+        Lo calcula el servicio de predicción (`services/prediccion`, modelo `charmy-eventos-v1`); la API lo llama
+        con su token y guarda la respuesta doce horas. El cuerpo trae **una sola** forma de zona: `bbox`
+        (oeste, sur, este, norte), `geometry` (Polygon o MultiPolygon GeoJSON) o `region` (código de `regiones`).
+        Evento: al menos un foco VIIRS de confianza alta, o fuego en 2 o más días del mes, en una celda de 0,1°.
+        Los plazos 1 y 2 son pronóstico (`kind: forecast`); del 3 al 6 la compuerta D-10 no pasó todos los años,
+        así que van como lo habitual ajustado (`kind: usual_adjusted`).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              description: Exactamente una de las tres propiedades
+              properties:
+                bbox: { type: array, items: { type: number }, minItems: 4, maxItems: 4 }
+                geometry: { type: object, description: Polygon o MultiPolygon GeoJSON (hasta 5.000 vértices) }
+                region: { type: string, example: AR-U }
+            example: { bbox: [-71.9, -42.3, -71.2, -41.7] }
+      responses:
+        '200':
+          description: Predicción de la zona
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ZoneForecast' }
+              examples:
+                muestra:
+                  summary: Muestra provisoria (dos de los seis meses, valores inventados)
+                  value:
+                    model: charmy-eventos-v1
+                    emission: '2026-10'
+                    zone: { cells: 30, no_history: false }
+                    months:
+                      - { month: '2026-11', horizon: 1, kind: forecast, probability: 0.08, usual_probability: 0.08, expected_cells: 0.16, usual_cells: 0.14, level: muy baja, skill_vs_climatology: 0.13 }
+                      - { month: '2027-01', horizon: 3, kind: usual_adjusted, probability: 0.31, usual_probability: 0.28, expected_cells: 0.7, usual_cells: 0.6, level: media, skill_vs_climatology: 0.09 }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '503':
+          description: El servicio de predicción no responde a tiempo (puede estar dormido) o no está configurado
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+              example: { code: fuente_no_disponible, message: La predicción no está disponible ahora. Probá más tarde. }
+  /regions/forecast:
+    get:
+      operationId: getRegionsForecast
+      tags: [historico]
+      summary: Predicción de las 39 regiones para los próximos seis meses (pestaña Predicción de Relieve)
+      description: |
+        Lo mismo que `/forecast/zone` para cada región de `regiones`, en una sola respuesta guardada doce horas.
+        Para una región entera conviene mostrar `expected_cells` contra `usual_cells`: la probabilidad de al menos
+        un evento da cerca de 1 en casi todas. Si alguna región no se puede calcular, responde 503.
+      responses:
+        '200':
+          description: Predicción por región
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/RegionsForecast' }
+              examples:
+                muestra:
+                  summary: Muestra provisoria (una región, valores inventados)
+                  value:
+                    model: charmy-eventos-v1
+                    emission: '2026-10'
+                    regions:
+                      - region: AR-U
+                        zone: { cells: 540, no_history: false }
+                        months:
+                        - { month: '2026-11', horizon: 1, kind: forecast, probability: 0.08, usual_probability: 0.08, expected_cells: 0.16, usual_cells: 0.14, level: muy baja, skill_vs_climatology: 0.13 }
+                        - { month: '2027-01', horizon: 3, kind: usual_adjusted, probability: 0.31, usual_probability: 0.28, expected_cells: 0.7, usual_cells: 0.6, level: media, skill_vs_climatology: 0.09 }
+        '503':
+          description: El servicio de predicción no responde a tiempo (puede estar dormido) o no está configurado
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+              example: { code: fuente_no_disponible, message: La predicción no está disponible ahora. Probá más tarde. }
   /regions/summary:
     get:
       operationId: getRegionsSummary
@@ -939,6 +1020,48 @@ components:
       properties:
         code: { type: string, description: Ver el catálogo de códigos en la descripción del contrato, example: bbox_invalido }
         message: { type: string, example: 'El área debe tener el formato oeste,sur,este,norte.' }
+    ForecastMonth:
+      type: object
+      required: [month, horizon, kind, probability, usual_probability, expected_cells, usual_cells, level, skill_vs_climatology]
+      properties:
+        month: { type: string, example: '2026-11' }
+        horizon: { type: integer, minimum: 1, maximum: 6 }
+        kind: { type: string, enum: [forecast, usual_adjusted], description: 'forecast en los plazos 1 y 2; usual_adjusted del 3 al 6' }
+        probability: { type: number, description: 'Probabilidad de al menos un evento en la zona ese mes (0 a 1)' }
+        usual_probability: { type: number, description: Lo mismo según la historia de ese mes del año }
+        expected_cells: { type: number, description: 'Celdas de 0,1° de la zona que tendrían evento' }
+        usual_cells: { type: number, description: Lo mismo según la historia de ese mes del año }
+        level: { type: string, enum: [muy baja, baja, media, alta, muy alta], description: 'Según probability: < 10, 30, 60 y 85 %' }
+        skill_vs_climatology: { type: number, description: Mejora del Brier frente a la climatología en ese plazo (D-10) }
+    ForecastZoneInfo:
+      type: object
+      required: [cells, no_history]
+      properties:
+        cells: { type: integer, description: Celdas con historia de focos dentro de la zona }
+        no_history: { type: boolean, description: 'true si no hay ninguna: la probabilidad es 0' }
+    ZoneForecast:
+      type: object
+      required: [model, emission, zone, months]
+      properties:
+        model: { type: string, example: charmy-eventos-v1 }
+        emission: { type: string, description: Último mes con datos con que se emitió la predicción, example: '2026-10' }
+        zone: { $ref: '#/components/schemas/ForecastZoneInfo' }
+        months: { type: array, items: { $ref: '#/components/schemas/ForecastMonth' } }
+    RegionsForecast:
+      type: object
+      required: [model, emission, regions]
+      properties:
+        model: { type: string }
+        emission: { type: string }
+        regions:
+          type: array
+          items:
+            type: object
+            required: [region, zone, months]
+            properties:
+              region: { type: string }
+              zone: { $ref: '#/components/schemas/ForecastZoneInfo' }
+              months: { type: array, items: { $ref: '#/components/schemas/ForecastMonth' } }
     RegionsSummary:
       type: object
       required: [type, hours, days, live, features]

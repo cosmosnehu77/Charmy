@@ -7,6 +7,7 @@ pasa a falso por eso.
 
 import json
 import math
+import time
 from collections import defaultdict
 from datetime import datetime, timedelta
 
@@ -22,7 +23,10 @@ NOMBRES = {"N20": "NOAA-20", "N21": "NOAA-21"}
 RADIO_REPORTES_KM = 10
 VENTANA_REPORTES = timedelta(hours=48)
 FRESCURA_NOTICIAS = timedelta(hours=2)
-MAX_PROVINCIAS = 8  # provincias con más focos que buscan noticias en cada vuelta (cuida el cupo del modelo)
+# Tope de tiempo para pedir noticias en una vuelta. Todas las provincias con focos buscan, de la de más
+# focos a la de menos; las que no entran siguen con lo que tenían y buscan en la vuelta siguiente (#279).
+# Con la caché de 2 horas, el modelo recibe como mucho un pedido por provincia cada 2 horas.
+PRESUPUESTO_NOTICIAS_S = 150
 ESTADOS = {"visto": "visto", "en_camino": "en camino", "controlado": "controlado", "falso": "falso"}
 APOYO_REPORTE = {"sin_verificar": 0.5, "visto": 0.7, "en_camino": 1.0, "controlado": 1.0, "falso": 0.0}
 
@@ -134,37 +138,42 @@ def _existe(con: psycopg.Connection, tabla: str) -> bool:
     return con.execute("SELECT to_regclass(%s) IS NOT NULL", [tabla]).fetchone()[0]
 
 
-def _noticias(con, ahora, por_provincia: dict, cliente) -> dict[str, list[dict] | None]:
-    """Noticias etiquetadas por región, con caché de 2 horas. Solo las provincias con más focos buscan."""
+def _noticias(con, ahora, por_provincia: dict, cliente, reloj=time.monotonic) -> dict[str, list[dict] | None]:
+    """Noticias etiquetadas por región, con caché de 2 horas y un tope de tiempo por vuelta."""
     guardadas = {
         region: (consultado, items)
         for region, consultado, items in con.execute("SELECT region, fetched_at, items FROM noticias_vivo")
     }
     resultado: dict[str, list[dict] | None] = {}
-    elegidas = sorted(por_provincia, key=lambda r: -por_provincia[r]["focos"])[:MAX_PROVINCIAS]
+    vencidas = []
     for region in por_provincia:
         if region in guardadas and ahora - guardadas[region][0] < FRESCURA_NOTICIAS:
             resultado[region] = guardadas[region][1]
-        elif region in elegidas:
-            nombre, pais = por_provincia[region]["nombre"], por_provincia[region]["pais"]
-            try:
-                titulares = buscar(nombre, pais, cliente)
-                etiquetas = etiquetar(titulares, nombre, pais, cliente)
-            except NoticiasNoDisponibles as error:
-                print(f"noticias de {region}: {error}", flush=True)
-                resultado[region] = guardadas.get(region, (None, None))[1]
-                continue
-            items = [t | {"label": e} for t, e in zip(titulares, etiquetas, strict=True)]
-            con.execute(
-                """
-                INSERT INTO noticias_vivo (region, fetched_at, items) VALUES (%s, %s, %s)
-                ON CONFLICT (region) DO UPDATE SET fetched_at = excluded.fetched_at, items = excluded.items
-                """,
-                [region, ahora, json.dumps(items)],
-            )
-            resultado[region] = items
         else:
             resultado[region] = guardadas.get(region, (None, None))[1]
+            vencidas.append(region)
+    inicio = reloj()
+    vencidas.sort(key=lambda r: -por_provincia[r]["focos"])
+    for i, region in enumerate(vencidas):
+        if reloj() - inicio >= PRESUPUESTO_NOTICIAS_S:
+            print(f"noticias: {len(vencidas) - i} provincias quedan para la próxima vuelta", flush=True)
+            break
+        nombre, pais = por_provincia[region]["nombre"], por_provincia[region]["pais"]
+        try:
+            titulares = buscar(nombre, pais, cliente)
+            etiquetas = etiquetar(titulares, nombre, pais, cliente)
+        except NoticiasNoDisponibles as error:
+            print(f"noticias de {region}: {error}", flush=True)
+            continue
+        items = [t | {"label": e} for t, e in zip(titulares, etiquetas, strict=True)]
+        con.execute(
+            """
+            INSERT INTO noticias_vivo (region, fetched_at, items) VALUES (%s, %s, %s)
+            ON CONFLICT (region) DO UPDATE SET fetched_at = excluded.fetched_at, items = excluded.items
+            """,
+            [region, ahora, json.dumps(items)],
+        )
+        resultado[region] = items
     return resultado
 
 

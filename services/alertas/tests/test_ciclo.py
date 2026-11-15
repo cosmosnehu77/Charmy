@@ -5,7 +5,7 @@ from datetime import UTC, datetime
 
 from alertas.botones import botones
 from alertas.ciclo import avisar
-from alertas.modelos import Foco, Viento
+from alertas.modelos import Alerta, Anterior, Foco, Viento
 from alertas.zona import ZONA_DEMO
 
 CHAT = -100123
@@ -19,13 +19,15 @@ def foco(id_: str, lat: float = -41.95, lon: float = -71.53, tipo="foco_satelita
 
 
 class ApiFalsa:
-    def __init__(self, focos, reportes, viento=None, ya_existentes=()):
+    def __init__(self, focos, reportes, viento=None, ya_existentes=(), extras=None):
         self._focos, self._reportes, self._viento = focos, reportes, viento
         self._ya = set(ya_existentes)  # ya registrados y enviados
-        self.creadas, self.marcadas = [], []
+        self.extras = extras or {}  # ref_id -> campos de Alerta que devuelve la API (#321)
+        self.creadas, self.marcadas, self.marcas = [], [], []
 
-    async def marcar_enviada(self, alert_id):
+    async def marcar_enviada(self, alert_id, veredicto=None, message_id=None):
         self.marcadas.append(alert_id)
+        self.marcas.append((alert_id, veredicto, message_id))
         self._ya.add(alert_id.removeprefix("a-"))
         return True
 
@@ -38,20 +40,22 @@ class ApiFalsa:
     async def viento(self, lat, lon):
         return self._viento
 
-    async def crear_alerta(self, zone_id, kind, ref_id):
+    async def crear_alerta(self, zone_id, kind, ref_id, celda=None):
         self.creadas.append((zone_id, kind, ref_id))
-        return f"a-{ref_id}", ref_id not in self._ya
+        return Alerta(id=f"a-{ref_id}", pendiente=ref_id not in self._ya, **self.extras.get(ref_id, {}))
 
 
 class TelegramFalso:
     def __init__(self, fallan=()):
-        self.enviados = []
+        self.enviados, self.respuestas = [], []
         self.fallan = set(fallan)  # ids de focos cuyo aviso falla al enviarse
 
-    async def __call__(self, chat_id, texto, teclado):
+    async def __call__(self, chat_id, texto, teclado, responder_a=None):
         if any(f"a-{i}" in str(teclado) for i in self.fallan):
             raise RuntimeError("Telegram no responde")
         self.enviados.append((chat_id, texto, teclado))
+        self.respuestas.append(responder_a)
+        return 900 + len(self.enviados)  # id del mensaje en Telegram
 
 
 def test_avisa_focos_y_reportes_de_la_zona_con_botones():
@@ -125,3 +129,44 @@ def test_un_envio_fallido_no_se_marca_y_sale_en_la_corrida_siguiente():
     asyncio.run(avisar(api, tg, ZONA_DEMO, CHAT, set()))
     assert [e[2] for e in tg.enviados] == [botones("a-f1")]
     assert api.marcadas == ["a-f1"]
+
+
+def test_un_aviso_se_marca_con_su_veredicto_y_el_id_del_mensaje():
+    api = ApiFalsa([foco("f1")], [])
+    asyncio.run(avisar(api, TelegramFalso(), ZONA_DEMO, CHAT, set()))
+    assert api.marcas == [("a-f1", "confirmado", 901)]
+
+
+def test_un_foco_que_paso_a_confirmado_manda_una_actualizacion_como_respuesta():
+    # #321: el aviso salió como probable (mensaje 77) y ahora la celda está confirmada.
+    api = ApiFalsa([foco("f1")], [], ya_existentes={"f1"},
+                   extras={"f1": {"veredicto_enviado": "probable", "message_id": 77}})
+    tg = TelegramFalso()
+    resumen = asyncio.run(avisar(api, tg, ZONA_DEMO, CHAT, set()))
+
+    assert len(tg.enviados) == 1 and tg.respuestas == [77]
+    texto = tg.enviados[0][1]
+    assert "ahora está confirmado" in texto and "llamá al 100" in texto
+    assert tg.enviados[0][2] == []  # sin botones: los del aviso original siguen valiendo
+    assert api.marcas == [("a-f1", "confirmado", None)]
+    assert (resumen.mandados, resumen.actualizados) == (0, 1)
+
+
+def test_la_actualizacion_a_confirmado_sale_una_sola_vez():
+    api = ApiFalsa([foco("f1")], [], ya_existentes={"f1"},
+                   extras={"f1": {"veredicto_enviado": "confirmado", "message_id": 77}})
+    tg = TelegramFalso()
+    asyncio.run(avisar(api, tg, ZONA_DEMO, CHAT, set()))
+    assert tg.enviados == []
+
+
+def test_un_incendio_que_sigue_activo_responde_al_aviso_anterior():
+    # #321: la celda ya se avisó (mensaje 55, el 13/11 a las 09:00 hora de Argentina).
+    anterior = Anterior(id="a-viejo", sent_at=datetime(2026, 11, 13, 12, 0, tzinfo=UTC), message_id=55)
+    api = ApiFalsa([foco("f1")], [], extras={"f1": {"anterior": anterior}})
+    tg = TelegramFalso()
+    asyncio.run(avisar(api, tg, ZONA_DEMO, CHAT, set()))
+
+    assert tg.respuestas == [55]
+    assert tg.enviados[0][1].startswith("Sigue activo el incendio que te avisamos el 13/11/2026 09:00")
+    assert tg.enviados[0][2] == botones("a-f1")  # el aviso nuevo trae sus botones

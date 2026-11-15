@@ -24,7 +24,7 @@ def test_la_prueba_manda_un_solo_mensaje_sin_botones():
     enviados = []
 
     class TelegramFalso:
-        async def enviar(self, chat_id, texto, teclado):
+        async def enviar(self, chat_id, texto, teclado, responder_a=None):
             enviados.append((chat_id, teclado))
 
     asyncio.run(prueba(TelegramFalso(), ZONA_DEMO, -100123, AHORA))
@@ -37,6 +37,11 @@ def test_sin_botones_telegram_no_recibe_teclado():
     class BotFalso:
         async def send_message(self, chat_id, texto, **opciones):
             pedidos.append(opciones)
+
+            class Mensaje:
+                message_id = 1
+
+            return Mensaje()
 
     asyncio.run(TelegramAiogram(BotFalso()).enviar(1, "hola", []))
     assert pedidos[0]["reply_markup"] is None

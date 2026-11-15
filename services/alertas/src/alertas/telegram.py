@@ -4,7 +4,7 @@ import asyncio
 
 from aiogram import Bot
 from aiogram.exceptions import TelegramRetryAfter
-from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup, Message
+from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup, Message, ReplyParameters
 
 from alertas.botones import Teclado
 from alertas.corrida import Toque
@@ -25,17 +25,22 @@ class TelegramAiogram:
         self._bot = bot
         self._dormir = dormir
 
-    async def enviar(self, chat_id: int, texto: str, teclado: Teclado) -> None:
-        """Si Telegram pide esperar (429), espera y reintenta una vez. Cualquier otro error sube."""
+    async def enviar(self, chat_id: int, texto: str, teclado: Teclado, responder_a: int | None = None) -> int:
+        """Manda el mensaje y devuelve su id. `responder_a`: lo manda como respuesta a ese mensaje (#321); si
+        ya no existe, sale igual. Si Telegram pide esperar (429), espera y reintenta una vez."""
         try:
-            await self._mandar(chat_id, texto, teclado)
+            return await self._mandar(chat_id, texto, teclado, responder_a)
         except TelegramRetryAfter as e:
             await self._dormir(min(e.retry_after, ESPERA_MAXIMA_429_S))
-            await self._mandar(chat_id, texto, teclado)
+            return await self._mandar(chat_id, texto, teclado, responder_a)
 
-    async def _mandar(self, chat_id: int, texto: str, teclado: Teclado) -> None:
-        await self._bot.send_message(chat_id, texto, reply_markup=_teclado(teclado),
-                                     disable_web_page_preview=True)
+    async def _mandar(self, chat_id: int, texto: str, teclado: Teclado, responder_a: int | None) -> int:
+        respuesta = (
+            ReplyParameters(message_id=responder_a, allow_sending_without_reply=True) if responder_a else None
+        )
+        mensaje = await self._bot.send_message(chat_id, texto, reply_markup=_teclado(teclado),
+                                               reply_parameters=respuesta, disable_web_page_preview=True)
+        return mensaje.message_id
 
     async def toques_pendientes(self) -> list[Toque]:
         updates = await self._bot.get_updates(timeout=0, allowed_updates=["callback_query"])

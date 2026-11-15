@@ -166,3 +166,13 @@ def test_si_un_aviso_no_se_pudo_mandar_la_corrida_deja_el_resumen_y_termina_con_
             asyncio.run(corrida(ApiFalsa(focos=[foco]), TelegramQueFalla(), [(ZONA_DEMO, CHAT)]))
     assert any("envíos fallidos 1" in m for m in caplog.messages)
     assert any("zona-demo" in m and "chat not found" in m for m in caplog.messages)
+
+
+def test_con_el_webhook_activo_la_corrida_no_lee_los_toques(caplog):
+    # D-41: con el webhook, Telegram ya no entrega los toques por getUpdates; los guarda la API al instante.
+    tg = TelegramFalso([toque(5, botones("a-1")[0][1])])
+    api = ApiFalsa()
+    with caplog.at_level(logging.INFO, logger="alertas.corrida"):
+        asyncio.run(corrida(api, tg, [(ZONA_DEMO, CHAT)], leer_toques=False))
+    assert "toques" not in tg.orden and api.parches == []
+    assert "botones 0" in caplog.messages[0]

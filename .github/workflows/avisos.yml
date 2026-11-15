@@ -8,6 +8,8 @@
 # A mano, con la opción "prueba", manda a cada grupo un aviso de prueba (sin botones ni API, #303).
 # Si una corrida falla y la anterior había salido bien, abre el issue "Bot de avisos caído" asignado a quien
 # atiende el bot (variable RESPONSABLE_AVISOS, por defecto dimidio6); cuando vuelve a andar, lo cierra.
+# Con el secreto TELEGRAM_WEBHOOK_SECRET, los botones van por el webhook a la API (D-41) y la corrida no los lee.
+# A mano, con la opción "webhook", registra el webhook en Telegram (una vez, después de cargar el secreto).
 name: Avisos
 
 on:
@@ -18,6 +20,10 @@ on:
     inputs:
       prueba:
         description: Mandar un aviso de prueba al grupo (sin botones, no toca la API)
+        type: boolean
+        default: false
+      webhook:
+        description: Registrar el webhook de Telegram para los botones (D-41); no manda avisos
         type: boolean
         default: false
 
@@ -56,10 +62,13 @@ jobs:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
           TELEGRAM_ZONAS: ${{ secrets.TELEGRAM_ZONAS }}
+          TELEGRAM_WEBHOOK_SECRET: ${{ secrets.TELEGRAM_WEBHOOK_SECRET }}
           CHARMY_SERVICE_TOKEN: ${{ secrets.CHARMY_SERVICE_TOKEN }}
           CHARMY_API_URL: ${{ vars.CHARMY_API_URL || 'https://charmy-j36m.onrender.com' }}
         # Los tokens no se imprimen; si apareciera uno, GitHub tapa los secretos en el registro.
-        run: uv run --package alertas python -m alertas ${{ inputs.prueba && '--prueba' || '' }}
+        run: >-
+          uv run --package alertas python -m alertas
+          ${{ inputs.prueba && '--prueba' || '' }} ${{ inputs.webhook && '--webhook' || '' }}
       - name: Avisar si el bot empieza a fallar
         # Una vez por caída: si el issue ya está abierto, no se suma nada.
         if: failure() && !inputs.prueba

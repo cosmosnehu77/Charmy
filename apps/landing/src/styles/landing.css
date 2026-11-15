@@ -67,6 +67,11 @@ main{position:relative;z-index:5}
 .paso:not(.portada){display:grid}
 .paso-in{max-width:1240px;width:100%;margin:0 auto;padding:25vh 0 40vh}
 .tarjeta{position:sticky;top:50vh;translate:0 -50%;width:min(470px,100%);display:flex;flex-direction:column;gap:18px}
+/* Paso 1 centrado en el mapa: el mapa en el medio (cx 0,5), el texto a su izquierda y el año a su derecha.
+   --medio-mapa es medio ancho del mapa en ese paso; escala con el alto de la pantalla, como el mapa. */
+:root{--medio-mapa:19vh;--hueco-mapa:72px}
+#problema .paso-in{max-width:none;margin:0}
+#problema .tarjeta{margin-left:max(0px,calc(50vw - max(24px,env(safe-area-inset-left,0px)) - var(--medio-mapa) - var(--hueco-mapa) - 32px - min(470px,100%)))}
 .tarjeta::before{content:"";position:absolute;inset:-80px -60px -80px -280px;z-index:-1;background:radial-gradient(closest-side,color-mix(in srgb,var(--l-fondo) 92%,transparent),color-mix(in srgb,var(--l-fondo) 70%,transparent) 58%,color-mix(in srgb,var(--l-fondo) 0%,transparent));pointer-events:none}
 .eti-paso{align-self:flex-start;display:inline-flex;align-items:center;gap:12px;margin-bottom:8px;font:500 12px/1 var(--fuente-mono);letter-spacing:.06em;color:var(--l-tenue);text-transform:uppercase}
 .eti-paso b{flex:none;display:inline-grid;place-items:center;width:26px;height:26px;line-height:1;border-radius:50%;background:var(--l-ambar);color:var(--l-sobre-ambar);font-weight:600;letter-spacing:0;box-shadow:0 0 0 4px color-mix(in srgb,var(--l-ambar) 22%,transparent)}
@@ -98,8 +103,8 @@ main{position:relative;z-index:5}
 @keyframes goteo{0%{transform:scaleY(0);transform-origin:top}45%{transform:scaleY(1);transform-origin:top}55%{transform:scaleY(1);transform-origin:bottom}100%{transform:scaleY(0);transform-origin:bottom}}
 
 /* HUD del año */
-.hud-anio{position:fixed;right:max(80px,4vw,env(safe-area-inset-right,0px));top:50%;transform:translateY(-50%);z-index:4;text-align:center;pointer-events:none;opacity:0;transition:opacity .25s}
-.hud-anio b{display:block;font:800 clamp(96px,14vw,200px)/.85 var(--fuente-titulos);letter-spacing:.01em;color:var(--l-titulo);font-variant-numeric:tabular-nums}
+.hud-anio{position:fixed;left:calc(50vw + var(--medio-mapa) + var(--hueco-mapa));top:50%;transform:translateY(-50%);z-index:4;text-align:center;pointer-events:none;opacity:0;transition:opacity .25s}
+.hud-anio b{display:block;font:800 min(14vw,200px,calc((50vw - var(--medio-mapa) - var(--hueco-mapa) - 32px) / 2.6))/.85 var(--fuente-titulos);letter-spacing:.01em;color:var(--l-titulo);font-variant-numeric:tabular-nums}
 .hud-anio span{display:inline-block;margin-top:14px;font:500 12px/1 var(--fuente-mono);letter-spacing:.12em;text-transform:uppercase;padding:7px 10px;border-radius:4px;background:var(--l-elevado);color:var(--l-texto)}
 .hud-anio span.viirs{background:var(--l-ambar);color:var(--l-sobre-ambar)}
 
@@ -246,7 +251,8 @@ main{position:relative;z-index:5}
   .tarjeta h2{font-size:32px}
   .tarjeta::before{inset:-40px -16px -40px -16px}
   .grafico{display:none}
-  .hud-anio{top:20vh;transform:none;right:20px}
+  .hud-anio{top:20vh;transform:none;right:20px;left:auto}
+  #problema .tarjeta{margin-left:0}
   .hud-anio b{font-size:84px}
   .modos,.kids,.nos-grilla{grid-template-columns:minmax(0,1fr)}
   .mod-img{height:88px;padding:14px 16px}

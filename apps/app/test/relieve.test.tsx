@@ -3,8 +3,10 @@ import { act, fireEvent, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import App from "@/App";
 import { useApp } from "@/estado/app";
+import { estadoInicialConsulta, useConsulta } from "@/estado/consulta";
 import { urlGoogleMaps, urlGoogleMapsEmbed } from "@/lib/enlaces";
 import { useRelieve } from "@/relieve/estado";
+import { useVivo } from "@/vivo/estado";
 
 // jsdom no tiene WebGL: el mapa de Relieve se revisa en el navegador.
 vi.mock("@/relieve/MapaRelieve", () => ({ default: () => <div data-testid="mapa-relieve" /> }));
@@ -61,7 +63,24 @@ const vivo = {
       type: "Feature",
       id: "N20-2026-11-14T05:12:00Z--39.00000--70.00000",
       geometry: { type: "Point", coordinates: [-70, -39] },
-      properties: { acq_datetime: "2026-11-14T05:12:00Z", satellite: "N20", instrument: "VIIRS", confidence: "high", frp: 42.5, daynight: "N" },
+      properties: { acq_datetime: "2026-11-14T05:12:00Z", satellite: "N20", instrument: "VIIRS", confidence: "high", frp: 42.5, daynight: "N", verdict: "probable" },
+    },
+  ],
+};
+const evidencia = {
+  verdict: "probable",
+  score: 0.64,
+  signals: { satellite: 0.8, fixed_source: 0, news: 0.5, reports: 0 },
+  evidence: [{ kind: "noticia", title: "Titular de ejemplo sobre un incendio", url: "https://example.org/n", label: "apoya" }],
+};
+const focosZona = {
+  type: "FeatureCollection",
+  truncated: false,
+  features: [
+    {
+      type: "Feature",
+      geometry: { type: "Point", coordinates: [-71.3, -42.9] },
+      properties: { acq_datetime: "2025-01-10T15:00:00Z", source: "viirs", confidence: "high", frp: 12, daynight: "D" },
     },
   ],
 };
@@ -88,13 +107,18 @@ beforeEach(() => {
       return resumenFalla
         ? new Response(JSON.stringify({ code: "datos_no_disponibles", message: "No disponible" }), { status: 503 })
         : new Response(JSON.stringify(resumen));
+    if (u.includes("/evidence")) return new Response(JSON.stringify(evidencia));
+    if (u.includes("/hotspots")) return new Response(JSON.stringify(focosZona));
+    if (u.includes("/weather") || u.includes("/imagery")) return new Response("{}", { status: 503 });
     if (u.includes("/live")) return new Response(JSON.stringify(vivo));
     if (u.includes("/calendar"))
       return new Response(JSON.stringify({ unit: "u", baseline: "b", region: "AR-Q", provisional: false, cells: [{ year: 2025, month: 1, value: 3, median: 2, anomaly: 1, percentile: 60 }] }));
     return new Response(JSON.stringify({ status: "ok" }));
   });
   vi.stubGlobal("fetch", fetchSimulado);
-  useApp.setState({ vista: "relieve" });
+  useApp.setState({ modo: "novato" });
+  useConsulta.setState(estadoInicialConsulta("2026-11-14"));
+  useVivo.setState({ satelites: ["N20", "N21"] });
   useRelieve.setState({
     pestana: "focos",
     seleccion: null,
@@ -122,6 +146,7 @@ describe("vista Relieve (F4-R1)", () => {
       "Riesgo",
       "Predicción",
       "En vivo",
+      "Tu zona",
     ]);
     const ranking = await screen.findByRole("region", { name: "Ranking" });
     expect(await within(ranking).findByText("Neuquén")).toBeInTheDocument();
@@ -230,7 +255,7 @@ describe("vista Relieve (F4-R1)", () => {
       type: "Feature",
       id: "N21-chico",
       geometry: { type: "Point", coordinates: [-70.2, -39.1] },
-      properties: { acq_datetime: "2026-11-14T06:00:00Z", satellite: "N21", instrument: "VIIRS", confidence: "nominal", frp: 3.5, daynight: "N" },
+      properties: { acq_datetime: "2026-11-14T06:00:00Z", satellite: "N21", instrument: "VIIRS", confidence: "nominal", frp: 3.5, daynight: "N", verdict: "sin_confirmar" },
     });
     try {
       montar();
@@ -245,6 +270,34 @@ describe("vista Relieve (F4-R1)", () => {
       expect(within(panel).queryByRole("button", { name: /3,5 MW/ })).not.toBeInTheDocument();
       await u.click(muyFuerte);
       expect(within(panel).getByText("2")).toBeInTheDocument();
+    } finally {
+      vivo.features.pop();
+    }
+  });
+
+  it("en En vivo, destildar un satélite deja solo los focos del otro y cierra la ficha de un foco suyo (#271)", async () => {
+    vivo.features.push({
+      type: "Feature",
+      id: "N21-sat",
+      geometry: { type: "Point", coordinates: [-70.2, -39.1] },
+      properties: { acq_datetime: "2026-11-14T06:00:00Z", satellite: "N21", instrument: "VIIRS", confidence: "nominal", frp: 3.5, daynight: "N", verdict: "sin_confirmar" },
+    });
+    try {
+      montar();
+      const u = userEvent.setup();
+      await u.click(screen.getByRole("tab", { name: "En vivo" }));
+      const panel = await screen.findByRole("complementary", { name: "Resumen en vivo" });
+      expect(await within(panel).findByText("2")).toBeInTheDocument();
+      await u.click(within(panel).getByRole("button", { name: /3,5 MW/ }));
+      expect(screen.getByRole("region", { name: "Ficha del foco" })).toBeInTheDocument();
+      expect(within(panel).getByRole("checkbox", { name: "NOAA-20" })).toBeChecked();
+      await u.click(within(panel).getByRole("checkbox", { name: "NOAA-21" }));
+      expect(useVivo.getState().satelites).toEqual(["N20"]);
+      expect(within(panel).getByText("1")).toBeInTheDocument();
+      expect(within(panel).queryByRole("button", { name: /3,5 MW/ })).not.toBeInTheDocument();
+      expect(screen.queryByRole("region", { name: "Ficha del foco" })).not.toBeInTheDocument();
+      await u.click(within(panel).getByRole("checkbox", { name: "NOAA-20" }));
+      expect(within(panel).getByText(/Elegí al menos un satélite/)).toBeInTheDocument();
     } finally {
       vivo.features.pop();
     }
@@ -289,12 +342,117 @@ describe("vista Relieve (F4-R1)", () => {
     expect(screen.getByRole("tablist", { name: "Indicador" })).toBeInTheDocument();
   });
 
-  it("se puede ir a la consulta por área y volver", async () => {
+  it("abajo a la izquierda quedan solo Charmy y el aviso: no hay enlaces a otras vistas (#276)", async () => {
+    montar();
+    await screen.findByRole("region", { name: "Ranking" });
+    expect(screen.getByRole("button", { name: /Charmy: ¿necesitás ayuda\?/ })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Consulta por área y fechas" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "Charmy Brigada" })).not.toBeInTheDocument();
+    expect(screen.queryByText(/regiones$/)).not.toBeInTheDocument();
+  });
+
+  it("si los datos en vivo están atrasados, En vivo lo dice (RF-VIV-01)", async () => {
+    resumen.live = { ...resumen.live, stale: true, message: "Los focos en vivo están atrasados: el último dato es de hace 3 horas." } as never;
+    try {
+      montar();
+      await userEvent.setup().click(screen.getByRole("tab", { name: "En vivo" }));
+      const panel = await screen.findByRole("complementary", { name: "Resumen en vivo" });
+      expect(await within(panel).findByText(/están atrasados/)).toBeInTheDocument();
+    } finally {
+      resumen.live = { available: true, fetched_at: "2026-11-14T11:30:00Z", stale: false };
+    }
+  });
+
+  it("la ficha del foco en vivo dice su veredicto y por qué (RF-VIV-02)", async () => {
     montar();
     const u = userEvent.setup();
-    await u.click(screen.getByRole("button", { name: "Consulta por área y fechas" }));
-    expect(useApp.getState().vista).toBe("consulta");
-    await u.click(screen.getByRole("button", { name: "Mapa por provincia" }));
-    expect(useApp.getState().vista).toBe("relieve");
+    await u.click(screen.getByRole("tab", { name: "En vivo" }));
+    const panel = await screen.findByRole("complementary", { name: "Resumen en vivo" });
+    await u.click(await within(panel).findByRole("button", { name: /Neuquén.*42,5 MW/ }));
+    const ficha = screen.getByRole("region", { name: "Ficha del foco" });
+    expect(within(ficha).getByText("Probable")).toBeInTheDocument();
+    expect(await within(ficha).findByRole("link", { name: "Titular de ejemplo sobre un incendio" })).toHaveAttribute(
+      "href",
+      "https://example.org/n",
+    );
+    const pedido = fetchSimulado.mock.calls.map(([x]) => String(x)).find((x) => x.includes("/evidence"));
+    expect(pedido).toContain(encodeURIComponent("N20-2026-11-14T05:12:00Z--39.00000--70.00000"));
+  });
+});
+
+describe("tu zona en Relieve (#262)", () => {
+  it("elegir Tu zona abre su panel con las herramientas de dibujo y esconde el ranking", async () => {
+    montar();
+    const u = userEvent.setup();
+    await u.click(screen.getByRole("tab", { name: "Tu zona" }));
+    const panel = screen.getByRole("complementary", { name: "Tu zona" });
+    expect(screen.queryByRole("region", { name: "Ranking" })).not.toBeInTheDocument();
+    await u.click(within(panel).getByRole("button", { name: "Dibujar rectángulo" }));
+    expect(useConsulta.getState().dibujando).toBe("rectangle");
+    expect(within(panel).getByText(/dos esquinas opuestas/)).toBeInTheDocument();
+    expect(within(panel).getByLabelText("Desde")).toHaveValue("2022-01-01");
+    // Los filtros técnicos, solo en el modo experto (RF-MOD-01).
+    expect(within(panel).queryByLabelText("Serie")).not.toBeInTheDocument();
+    expect(screen.getByText(/no reemplaza a los servicios de emergencia/)).toBeInTheDocument();
+  });
+
+  it("con un punto y un radio: focos, calendario con CSV, contexto y reporte; borrar el área los saca", async () => {
+    montar();
+    const u = userEvent.setup();
+    await u.click(screen.getByRole("tab", { name: "Tu zona" }));
+    const panel = screen.getByRole("complementary", { name: "Tu zona" });
+    await u.type(within(panel).getByLabelText("Latitud"), "-42,9");
+    await u.type(within(panel).getByLabelText("Longitud"), "-71,3");
+    await u.click(within(panel).getByRole("button", { name: "Usar este punto" }));
+    expect(useConsulta.getState().area?.type).toBe("Polygon");
+    expect(await within(panel).findByText("1 foco en el área y el período.")).toBeInTheDocument();
+    const calendario = await screen.findByRole("region", { name: "Calendario de quema" });
+    expect(within(calendario).getByRole("link", { name: /Descargar CSV/ })).toHaveAttribute(
+      "href",
+      expect.stringContaining("http://api.prueba/api/v1/"),
+    );
+    expect(within(panel).getByRole("region", { name: "Contexto del lugar" })).toBeInTheDocument();
+    expect(within(panel).getByRole("button", { name: "Reportar un foco" })).toBeInTheDocument();
+    await u.click(within(panel).getByRole("button", { name: "Borrar área" }));
+    expect(useConsulta.getState().area).toBeNull();
+    expect(screen.queryByRole("region", { name: "Calendario de quema" })).not.toBeInTheDocument();
+  });
+
+  it("salir de Tu zona apaga la herramienta de dibujo", async () => {
+    montar();
+    const u = userEvent.setup();
+    await u.click(screen.getByRole("tab", { name: "Tu zona" }));
+    await u.click(screen.getByRole("button", { name: "Dibujar polígono" }));
+    await u.click(screen.getByRole("tab", { name: "Focos" }));
+    expect(useConsulta.getState().dibujando).toBeNull();
+  });
+
+  it("en experto suma filtros, reproducción y validación, y un foco tocado muestra sus atributos (RF-MOD-02, #276)", async () => {
+    useApp.setState({ modo: "experto" });
+    useConsulta.setState({ area: { type: "Polygon", coordinates: [[[-72, -43], [-71, -43], [-71, -42], [-72, -42], [-72, -43]]] } });
+    useRelieve.setState({
+      pestana: "zona",
+      focoZona: {
+        lon: -71.3,
+        lat: -42.9,
+        propiedades: { acq_datetime: "2025-01-10T15:00:00Z", satellite: "N20", instrument: "VIIRS", confidence: "high", frp: 12, daynight: "D" },
+      },
+    });
+    try {
+      montar();
+      const panel = screen.getByRole("complementary", { name: "Tu zona" });
+      expect(within(panel).getByLabelText("Serie")).toBeInTheDocument();
+      expect(await within(panel).findByRole("group", { name: "Reproducir por mes" })).toBeInTheDocument();
+      expect(within(panel).getByRole("region", { name: "Validación de la armonización" })).toBeInTheDocument();
+      const ficha = screen.getByRole("region", { name: "Atributos del foco" });
+      expect(within(ficha).getByText("NOAA-20 (VIIRS)")).toBeInTheDocument();
+      expect(within(ficha).getByText("12 MW")).toBeInTheDocument();
+      await userEvent.setup().click(within(panel).getByRole("radio", { name: "Novato" }));
+      expect(within(panel).queryByLabelText("Serie")).not.toBeInTheDocument();
+      expect(screen.queryByRole("region", { name: "Atributos del foco" })).not.toBeInTheDocument();
+      expect(useConsulta.getState().area).not.toBeNull();
+    } finally {
+      useApp.setState({ modo: "novato" });
+    }
   });
 });

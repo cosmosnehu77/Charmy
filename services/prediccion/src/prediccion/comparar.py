@@ -1,7 +1,10 @@
-"""TimesFM 2.5 contra LightGBM con la compuerta D-10 (F3-E3, D-31).
+"""TimesFM contra LightGBM con la compuerta D-10 (F3-E3, D-31, R-E2).
+
+El candidato es TimesFM 3.0 (D-31 actualizado el 15/11); la 2.5 queda para comparar. Las dos tienen la misma
+interfaz (`Pronosticador`).
 
 Usa la misma tabla (`entrenamiento`, celda × mes de S-NPP sin fuentes fijas) y la misma partición temporal
-que `pipeline.prediccion` (LightGBM): se prueba en las emisiones de los últimos años, con contextos que
+que `prediccion.modelo` (LightGBM): se prueba en las emisiones de los últimos años, con contextos que
 terminan en el mes de emisión. TimesFM es preentrenado (zero-shot): no se entrena, solo se le da la historia
 de cada celda.
 
@@ -12,19 +15,20 @@ referencias triviales (decir siempre 0 y repetir el mes de emisión) en la misma
 from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import date
-from pathlib import Path
 from typing import Protocol
 
 import numpy as np
 import polars as pl
 from pipeline.esquema import ESQUEMAS
-from pipeline.prediccion import HORIZONTES, MIN_MEJORA, _ajustar, _predecir, filas, particion
 
-MODELO = "timesfm-2.5"
+from prediccion.modelo import HORIZONTES, MIN_MEJORA, ajustar, filas, particion, predecir
+
+MODELO = "timesfm-3.0"
 
 
 class Pronosticador(Protocol):
-    """La interfaz de `timesfm.TimesFM_2p5_200M_torch` que se usa: mediana y cuantiles [media, q10..q90]."""
+    """La interfaz que se usa: mediana y cuantiles [media, q10..q90] (la de TimesFM 2.5; la 3.0 va con
+    `timesfm3.Adaptador3`)."""
 
     def forecast(self, horizon: int, inputs: list[np.ndarray]) -> tuple[np.ndarray, np.ndarray]: ...
 
@@ -38,16 +42,6 @@ class Resultado:
     # Referencias triviales en la misma prueba: «cero» (siempre 0) y «persistencia» (repetir el mes de
     # emisión). Con MAE y conteos casi siempre en cero, decir 0 ya le gana a la climatología.
     referencias: dict[str, dict[int, float]]
-
-
-def leer_entrenamiento(ruta: Path) -> pl.DataFrame:
-    """La tabla publicada `entrenamiento` (cell_id, month 'AAAA-MM', fire_days) como (cell_id, mes, dias)."""
-    t = pl.read_parquet(ruta)
-    return t.select(
-        "cell_id",
-        mes=pl.col("month").str.to_date("%Y-%m"),
-        dias=pl.col("fire_days").cast(pl.Float64),
-    ).sort("cell_id", "mes")
 
 
 def _pronosticar(modelo: Pronosticador, m: pl.DataFrame, emision: date) -> pl.DataFrame:
@@ -95,12 +89,12 @@ def _mejora(p: pl.DataFrame, columna: str) -> dict[int, float]:
 
 
 def mejora_lightgbm(m: pl.DataFrame, celdas: list[str] | None = None) -> dict[int, float]:
-    """La mejora de LightGBM (el modelo de pipeline.prediccion, entrenado con todas las celdas) medida en la
+    """La mejora de LightGBM (el modelo de prediccion.modelo, entrenado con todas las celdas) medida en la
     prueba temporal, opcionalmente solo sobre `celdas`: así se compara con TimesFM en la misma prueba."""
     entreno, prueba = particion(filas(m))
     if celdas is not None:
         prueba = prueba.filter(pl.col("cell_id").is_in(celdas))
-    prueba = prueba.with_columns(pred=_predecir(_ajustar(entreno, "poisson"), prueba))
+    prueba = prueba.with_columns(pred=predecir(ajustar(entreno, "poisson"), prueba))
     return _mejora(prueba, "pred")
 
 

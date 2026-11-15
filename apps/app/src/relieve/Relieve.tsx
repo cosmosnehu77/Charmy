@@ -1,17 +1,18 @@
 import { rampaAnomalia, rampaConteo } from "@charmy/ui";
 import { ChevronRight, Compass, Minus, Plus, RotateCw } from "lucide-react";
-import { lazy, Suspense, useEffect, useState } from "react";
-import { useApp } from "@/estado/app";
-import { URL_JUEGO, URL_LANDING } from "@/lib/enlaces";
+import { lazy, Suspense, useEffect, useMemo, useState } from "react";
+import { useConsulta } from "@/estado/consulta";
+import { useVivo } from "@/vivo/estado";
 import { CharmyGuia } from "./CharmyGuia";
 import { controlMapa } from "./controlMapa";
 import { useDatosRelieve } from "./datos";
 import { FichaFoco, PanelEnVivo } from "./EnVivo";
-import { useRelieve } from "./estado";
+import { indicadorDe, useRelieve } from "./estado";
 import { FichaRegion } from "./FichaRegion";
 import { LineaTiempo } from "./LineaTiempo";
 import { INDICADORES, rankingRegiones, valorIndicador } from "./logica";
 import { Pildora } from "./Pildora";
+import { Zona } from "./Zona";
 import "./estilos.css";
 
 // MapLibre pesa: el mapa se carga aparte para que el resto aparezca enseguida (RNF-03).
@@ -24,7 +25,6 @@ const num = (v: number, d = 0) => v.toLocaleString("es-AR", { minimumFractionDig
 export function Relieve() {
   const { resumen, vivo, regiones, focos } = useDatosRelieve();
   const estado = useRelieve();
-  const irAConsulta = useApp((s) => s.cambiarVista);
   const [sobre, setSobre] = useState<{ id: string | null; foco: number | null; x: number; y: number }>({
     id: null,
     foco: null,
@@ -32,19 +32,28 @@ export function Relieve() {
     y: 0,
   });
   const enVivo = estado.pestana === "vivo";
-  const indicador = estado.pestana === "vivo" ? "focos" : estado.pestana;
+  const zona = estado.pestana === "zona";
+  const indicador = indicadorDe(estado.pestana);
   const info = INDICADORES.find((i) => i.id === indicador);
   const region = regiones.find((r) => r.id === estado.seleccion) ?? null;
   const dias = resumen.data?.days ?? [];
   const ranking = rankingRegiones(regiones, indicador, 5);
   const masFuego = rankingRegiones(regiones, "focos", 1)[0]?.id ?? null;
   const live = resumen.data?.live;
-  const focoElegido = estado.focoVivo !== null ? focos.find((f) => f.k === estado.focoVivo) : undefined;
+  // En En vivo, solo los focos de los satélites elegidos: en el panel, en el mapa y en la ficha (#271).
+  const satelites = useVivo((s) => s.satelites);
+  const focosVivo = useMemo(() => focos.filter((f) => satelites.includes(f.satelite)), [focos, satelites]);
+  const focoElegido =
+    estado.focoVivo !== null ? (enVivo ? focosVivo : focos).find((f) => f.k === estado.focoVivo) : undefined;
   const regionSobre = regiones.find((r) => r.id === sobre.id);
   const focoSobre = sobre.foco !== null ? focos.find((f) => f.k === sobre.foco) : undefined;
   const [sobreRanking, setSobreRanking] = useState(false);
   const { ranking: rankingAbierto, guia, cambiar } = estado;
 
+  // Fuera de Tu zona no queda una herramienta de dibujo activa en el mapa.
+  useEffect(() => {
+    if (!zona) useConsulta.getState().cambiar({ dibujando: null });
+  }, [zona]);
   // Al cambiar de indicador el ranking se vuelve a abrir, para ver el nuevo orden.
   useEffect(() => {
     cambiar({ ranking: true });
@@ -60,7 +69,7 @@ export function Relieve() {
     <div className="relieve relative h-full min-h-[560px] overflow-hidden bg-relieve-fondo text-white">
       <div aria-hidden="true" className="relieve-brillo-fondo pointer-events-none absolute inset-0" />
       <Suspense fallback={<p className="absolute inset-0 grid place-items-center text-sm text-white/60">Cargando el mapa…</p>}>
-        <MapaRelieve regiones={regiones} dias={dias} focos={focos} onHover={setSobre} />
+        <MapaRelieve regiones={regiones} dias={dias} focos={enVivo ? focosVivo : focos} onHover={setSobre} />
       </Suspense>
 
       {(regionSobre || focoSobre) && (
@@ -92,13 +101,15 @@ export function Relieve() {
       {enVivo ? (
         <>
           <PanelEnVivo
-            focos={focos}
+            focos={focosVivo}
             regiones={regiones}
             disponible={!vivo.isError && live?.available !== false}
             mensaje={live?.message}
           />
           {focoElegido && <FichaFoco foco={focoElegido} regiones={regiones} />}
         </>
+      ) : zona ? (
+        <Zona />
       ) : (
         <>
           {!rankingAbierto && (
@@ -159,31 +170,6 @@ export function Relieve() {
             </section>
           )}
 
-          <div data-guia="controles" className="pointer-events-auto absolute right-4 top-1/2 z-20 flex -translate-y-1/2 flex-col gap-2">
-            <BotonRedondo etiqueta="Acercar" onClick={() => controlMapa.zoom(0.75)}>
-              <Plus aria-hidden="true" className="size-4" />
-            </BotonRedondo>
-            <BotonRedondo etiqueta="Alejar" onClick={() => controlMapa.zoom(1.33)}>
-              <Minus aria-hidden="true" className="size-4" />
-            </BotonRedondo>
-            <BotonRedondo etiqueta="Mirar al norte" onClick={() => controlMapa.norte()}>
-              <Compass aria-hidden="true" className="size-4 text-relieve-brillo" />
-            </BotonRedondo>
-            <BotonRedondo
-              etiqueta={estado.plano ? "Ver en 3D" : "Ver en 2D, más liviano"}
-              onClick={() => estado.cambiar({ plano: !estado.plano })}
-            >
-              <span className="text-[10px] font-bold">{estado.plano ? "3D" : "2D"}</span>
-            </BotonRedondo>
-            <BotonRedondo
-              etiqueta={estado.giro ? "Detener el giro" : "Girar el mapa"}
-              activo={estado.giro}
-              onClick={() => estado.cambiar({ giro: !estado.giro })}
-            >
-              <RotateCw aria-hidden="true" className="size-4" />
-            </BotonRedondo>
-          </div>
-
           {!region && (
             // Más arriba que el borde: abajo a la derecha queda el botón de atribución del mapa (#251).
             <div data-guia="leyenda" className="vidrio-relieve absolute bottom-11 right-4 z-10 hidden max-w-[300px] rounded-xl p-3 text-xs md:block">
@@ -220,35 +206,52 @@ export function Relieve() {
         </>
       )}
 
-      {/* z-20: la ayuda de Charmy y el aviso de emergencias quedan por encima del ranking, la leyenda y la línea de tiempo.
-          En celular la ficha sale como hoja desde abajo: Charmy y los enlaces se guardan y el aviso queda encima (#218). */}
-      <div
-        className={`pointer-events-auto absolute bottom-4 left-4 z-20 flex flex-col items-start gap-2 ${region ? "max-md:right-4 max-md:bottom-3 max-md:z-40" : ""}`}
-      >
-        <div className={`flex flex-col items-start gap-2 ${region ? "max-md:hidden" : ""}`}>
-          {!enVivo && <CharmyGuia regionMasFuego={masFuego} />}
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="rounded-full bg-relieve-vidrio/60 px-3 py-1 font-mono text-[10px] uppercase tracking-[.16em] text-white/55 ring-1 ring-white/10">
-              Argentina y Chile · {regiones.length || 39} regiones
-            </span>
-            <button
-              type="button"
-              onClick={() => irAConsulta("consulta")}
-              className="rounded-full bg-relieve-vidrio/60 px-3 py-1 text-xs text-white/80 ring-1 ring-white/10 hover:text-white"
-            >
-              Consulta por área y fechas
-            </button>
-            <a href={URL_LANDING} className="rounded-full px-2 py-1 text-xs text-white/60 underline-offset-2 hover:text-white hover:underline">
-              Qué es Charmy
-            </a>
-            <a href={URL_JUEGO} className="rounded-full px-2 py-1 text-xs text-white/60 underline-offset-2 hover:text-white hover:underline">
-              Charmy Brigada
-            </a>
-          </div>
+      {!enVivo && (
+        <div data-guia="controles" className="pointer-events-auto absolute right-4 top-1/2 z-20 flex -translate-y-1/2 flex-col gap-2">
+          <BotonRedondo etiqueta="Acercar" onClick={() => controlMapa.zoom(0.75)}>
+            <Plus aria-hidden="true" className="size-4" />
+          </BotonRedondo>
+          <BotonRedondo etiqueta="Alejar" onClick={() => controlMapa.zoom(1.33)}>
+            <Minus aria-hidden="true" className="size-4" />
+          </BotonRedondo>
+          <BotonRedondo etiqueta="Mirar al norte" onClick={() => controlMapa.norte()}>
+            <Compass aria-hidden="true" className="size-4 text-relieve-brillo" />
+          </BotonRedondo>
+          {/* Tu zona va siempre en plano, para dibujar sobre el mapa sin inclinación. */}
+          {!zona && (
+            <>
+              <BotonRedondo
+                etiqueta={estado.plano ? "Ver en 3D" : "Ver en 2D, más liviano"}
+                onClick={() => estado.cambiar({ plano: !estado.plano })}
+              >
+                <span className="text-[10px] font-bold">{estado.plano ? "3D" : "2D"}</span>
+              </BotonRedondo>
+              <BotonRedondo
+                etiqueta={estado.giro ? "Detener el giro" : "Girar el mapa"}
+                activo={estado.giro}
+                onClick={() => estado.cambiar({ giro: !estado.giro })}
+              >
+                <RotateCw aria-hidden="true" className="size-4" />
+              </BotonRedondo>
+            </>
+          )}
         </div>
+      )}
+
+      {/* z-20: la ayuda de Charmy y el aviso de emergencias quedan por encima del ranking, la leyenda y la línea de tiempo.
+          En celular la ficha sale como hoja desde abajo: Charmy se guarda y el aviso queda encima (#218).
+          En Tu zona el panel ocupa la izquierda: queda solo el aviso, debajo del panel. */}
+      <div
+        className={`pointer-events-auto absolute bottom-4 left-4 z-20 flex flex-col items-start gap-2 ${region || zona ? "max-md:right-4 max-md:bottom-3 max-md:z-40" : ""} ${zona ? "md:max-w-[340px]" : ""}`}
+      >
+        {!enVivo && !zona && (
+          <div className={region ? "max-md:hidden" : ""}>
+            <CharmyGuia regionMasFuego={masFuego} />
+          </div>
+        )}
         {/* Sobre la ficha, en celular, el aviso va con fondo sólido para que no se mezcle con su texto. */}
         <p
-          className={`rounded-full bg-relieve-vidrio/60 px-3 py-1 text-[11px] text-white/70 ring-1 ring-white/10 ${region ? "max-md:rounded-xl max-md:bg-relieve-panel max-md:shadow-lg" : ""}`}
+          className={`rounded-full bg-relieve-vidrio/60 px-3 py-1 text-[11px] text-white/70 ring-1 ring-white/10 ${region || zona ? "max-md:rounded-xl max-md:bg-relieve-panel max-md:shadow-lg" : ""} ${zona ? "md:rounded-xl" : ""}`}
         >
           Charmy no reemplaza a los servicios de emergencia. Si ves fuego, llamá al{" "}
           <strong className="text-relieve-brillo">100</strong> en Argentina o al{" "}

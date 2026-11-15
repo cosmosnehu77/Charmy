@@ -9,7 +9,9 @@ import { rutaCsv } from "@/consulta/consulta";
 import { useApp } from "@/estado/app";
 import { estadoInicialConsulta, useConsulta } from "@/estado/consulta";
 
-vi.mock("@/mapa/Mapa", () => ({ default: () => <div data-testid="mapa" /> }));
+vi.mock("@/relieve/MapaRelieve", () => ({ default: () => <div data-testid="mapa" /> }));
+// Tu zona no necesita las regiones ni los focos en vivo de Relieve.
+vi.mock("@/relieve/datos", () => ({ useDatosRelieve: () => ({ resumen: {}, vivo: {}, regiones: [], focos: [] }) }));
 
 // Muestra provisoria con la forma del contrato (valores inventados).
 const calendario = {
@@ -64,7 +66,7 @@ beforeEach(() => {
   vi.stubGlobal("fetch", fetchSimulado);
   useConsulta.setState({ ...estadoInicialConsulta("2026-11-14"), desde: "2025-01-01", area });
   // Estas pruebas miran el calendario técnico (modo experto); el de novato está en novato.test.tsx.
-  useApp.setState({ modo: "experto", perfilMapa: "2d" });
+  useApp.setState({ modo: "experto" });
 });
 afterEach(() => {
   vi.unstubAllEnvs();

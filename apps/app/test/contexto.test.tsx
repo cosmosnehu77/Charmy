@@ -7,7 +7,9 @@ import { useApp } from "@/estado/app";
 import { estadoInicialConsulta, useConsulta } from "@/estado/consulta";
 import { useVivo } from "@/vivo/estado";
 
-vi.mock("@/mapa/Mapa", () => ({ default: () => <div data-testid="mapa" /> }));
+vi.mock("@/relieve/MapaRelieve", () => ({ default: () => <div data-testid="mapa" /> }));
+// Tu zona no necesita las regiones ni los focos en vivo de Relieve.
+vi.mock("@/relieve/datos", () => ({ useDatosRelieve: () => ({ resumen: {}, vivo: {}, regiones: [], focos: [] }) }));
 
 // Muestras con la forma del contrato (valores inventados).
 const tiempo = {
@@ -68,8 +70,8 @@ beforeEach(() => {
   });
   vi.stubGlobal("fetch", fetchSimulado);
   useConsulta.setState({ ...estadoInicialConsulta("2026-11-14"), area });
-  useApp.setState({ modo: "novato", perfilMapa: "2d", recorridoVisto: true });
-  useVivo.setState({ visible: false, seleccionado: null, reportando: false });
+  useApp.setState({ modo: "novato" });
+  useVivo.setState({ reportando: false });
 });
 afterEach(() => {
   vi.unstubAllEnvs();

@@ -609,3 +609,30 @@
     transform: none;
   }
 }
+
+/* Tu zona (#262): las piezas de la consulta, pensadas para fondo claro, sobre vidrio oscuro. Se redefinen los roles
+   de interfaz de @charmy/ui solo dentro de estos paneles. */
+.tema-relieve {
+  --color-fondo: color-mix(in srgb, white 6%, transparent);
+  --color-superficie: color-mix(in srgb, white 6%, transparent);
+  --color-superficie-2: color-mix(in srgb, white 9%, transparent);
+  --color-tinta: var(--color-oscuro-tinta);
+  --color-tinta-suave: var(--color-oscuro-tinta-suave);
+  --color-borde: color-mix(in srgb, white 14%, transparent);
+  --color-borde-suave: color-mix(in srgb, white 10%, transparent);
+  --color-borde-control: color-mix(in srgb, white 22%, transparent);
+  --color-acento: var(--color-oscuro-acento);
+  --color-foco: var(--color-oscuro-acento);
+  --color-peligro: var(--relieve-brillo);
+  --color-aviso-texto: var(--relieve-brillo);
+  --color-aviso-borde: color-mix(in srgb, var(--relieve-brillo) 45%, transparent);
+  color: var(--color-tinta);
+  color-scheme: dark;
+}
+.tema-relieve option {
+  background: var(--relieve-panel);
+}
+/* La opción elegida va en tinta sobre fondo claro: con la superficie traslúcida, su texto no se leía. */
+.tema-relieve [data-state="on"] {
+  color: var(--relieve-panel);
+}

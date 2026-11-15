@@ -4,10 +4,18 @@ import urlWorker from "maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url";
 import bbox from "@turf/bbox";
 import { interfaz, paleta, rampaConteo, relieve } from "@charmy/ui";
 import { useEffect, useRef } from "react";
+import type { TerraDraw } from "terra-draw";
+import { bboxDeArea } from "@/consulta/consulta";
+import { useFocos } from "@/consulta/useFocos";
+import { useContexto } from "@/contexto/estado";
+import { useApp } from "@/estado/app";
+import { useConsulta } from "@/estado/consulta";
+import { datosArea, ponerImagen } from "@/mapa/capas";
+import { crearDibujo } from "@/mapa/dibujo";
 import { LIMITES_MVP, nombresEnEspanol } from "@/mapa/perfiles";
 import { controlMapa } from "./controlMapa";
 import type { FocoReciente } from "./datos";
-import { useRelieve } from "./estado";
+import { indicadorDe, useRelieve } from "./estado";
 import {
   alturaDelDia,
   CORTES_FOCO,
@@ -103,8 +111,14 @@ export default function MapaRelieve({ regiones, dias, focos, onHover }: Props) {
   const mapa = useRef<maplibregl.Map | null>(null);
   const listo = useRef(false);
   const estado = useRelieve();
-  const props = useRef({ regiones, dias, focos, onHover, estado });
-  props.current = { regiones, dias, focos, onHover, estado };
+  // Tu zona (#262): el área, sus focos, la herramienta de dibujo y la imagen satelital del contexto.
+  const area = useConsulta((s) => s.area);
+  const dibujando = useConsulta((s) => s.dibujando);
+  const { focos: focosZona } = useFocos();
+  const capaImagen = useContexto((s) => s.capa);
+  const dibujo = useRef<TerraDraw | null>(null);
+  const props = useRef({ regiones, dias, focos, onHover, estado, area, focosZona });
+  props.current = { regiones, dias, focos, onHover, estado, area, focosZona };
   // Altura actual (animada) y destino de cada región, en metros.
   const alturas = useRef(new Map<string, { actual: number; meta: number }>());
   const pausaGiro = useRef(0);
@@ -114,9 +128,12 @@ export default function MapaRelieve({ regiones, dias, focos, onHover }: Props) {
   sincronizar.current = () => {
     const m = mapa.current;
     if (!m || !listo.current) return;
-    const { regiones: rs, focos: fs, estado: e } = props.current;
+    const { regiones: rs, focos: fs, estado: e, area: a, focosZona: fz } = props.current;
     const vivo = e.pestana === "vivo";
-    const indicador = e.pestana === "vivo" ? "focos" : e.pestana;
+    const zona = e.pestana === "zona";
+    // En En vivo y en Tu zona las regiones quedan grises y planas: lo que importa son los puntos.
+    const apagado = vivo || zona;
+    const indicador = indicadorDe(e.pestana);
     const max = maximo(rs, indicador);
     if (regionesPuestas.current !== rs) {
       m.getSource<maplibregl.GeoJSONSource>("regiones")?.setData({ type: "FeatureCollection", features: rs as never });
@@ -149,17 +166,19 @@ export default function MapaRelieve({ regiones, dias, focos, onHover }: Props) {
       if (e.linea.activa && f.dia !== dia) return false;
       return true;
     });
-    const verFocos = !vivo && (indicador === "focos" || e.seleccion !== null);
+    const verFocos = !apagado && (indicador === "focos" || e.seleccion !== null);
     m.getSource<maplibregl.GeoJSONSource>("agujas")?.setData(
       verFocos ? agujas(visibles, (region) => (region ? (alturas.current.get(region)?.meta ?? 0) : 0)) : VACIO,
     );
     m.getSource<maplibregl.GeoJSONSource>("puntos")?.setData(verFocos ? puntos(visibles) : VACIO);
     m.getSource<maplibregl.GeoJSONSource>("vivo")?.setData(vivo ? puntos(fs) : VACIO);
+    m.getSource<maplibregl.GeoJSONSource>("zona-area")?.setData(zona ? datosArea(a) : VACIO);
+    m.getSource<maplibregl.GeoJSONSource>("zona-focos")?.setData(zona && fz ? fz : VACIO);
     const visible = (id: string, si: boolean) => m.setLayoutProperty(id, "visibility", si ? "visible" : "none");
-    visible("reg-3d", !vivo);
-    visible("reg-agujas", !vivo && !e.plano);
-    visible("reg-puntos", !vivo && e.plano);
-    visible("vivo-gris", vivo);
+    visible("reg-3d", !apagado);
+    visible("reg-agujas", !apagado && !e.plano);
+    visible("reg-puntos", !apagado && e.plano);
+    visible("vivo-gris", apagado);
     visible("vivo-pulso", vivo);
     visible("vivo-focos", vivo);
     visible("vivo-sel", vivo);
@@ -202,6 +221,8 @@ export default function MapaRelieve({ regiones, dias, focos, onHover }: Props) {
       m.addSource("agujas", { type: "geojson", data: VACIO });
       m.addSource("puntos", { type: "geojson", data: VACIO });
       m.addSource("vivo", { type: "geojson", data: VACIO });
+      m.addSource("zona-area", { type: "geojson", data: VACIO });
+      m.addSource("zona-focos", { type: "geojson", data: VACIO });
       m.addLayer(
         { id: "vivo-gris", type: "fill", source: "regiones", paint: { "fill-color": relieve.gris, "fill-opacity": 0.55 } },
         antes,
@@ -290,6 +311,31 @@ export default function MapaRelieve({ regiones, dias, focos, onHover }: Props) {
           "circle-stroke-width": 2,
         },
       });
+      m.addLayer({
+        id: "zona-relleno",
+        type: "fill",
+        source: "zona-area",
+        paint: { "fill-color": relieve.brillo, "fill-opacity": 0.1 },
+      });
+      m.addLayer({
+        id: "zona-borde",
+        type: "line",
+        source: "zona-area",
+        paint: { "line-color": relieve.brillo, "line-width": 2 },
+      });
+      m.addLayer({
+        id: "zona-focos",
+        type: "circle",
+        source: "zona-focos",
+        paint: {
+          "circle-radius": RADIO_FOCO,
+          "circle-color": COLOR_FOCO,
+          "circle-opacity": 0.88,
+          "circle-stroke-color": relieve.vidrio,
+          "circle-stroke-width": 1,
+        },
+      });
+      dibujo.current = crearDibujo(m);
       // En celular la atribución arranca plegada (ⓘ), como queda después de arrastrar el mapa: desplegada tapa los avisos.
       if ((contenedor.current?.clientWidth ?? 1000) < 768) {
         contenedor.current?.querySelector(".maplibregl-compact-show")?.classList.remove("maplibregl-compact-show");
@@ -297,10 +343,18 @@ export default function MapaRelieve({ regiones, dias, focos, onHover }: Props) {
       listo.current = true;
       regionesPuestas.current = null;
       sincronizar.current();
+      herramienta.current();
+      imagen.current();
     });
 
     // Región bajo el puntero y toque para elegirla (tocar la elegida la deselecciona).
     m.on("mousemove", (e) => {
+      if (props.current.estado.pestana === "zona") {
+        const experto = useApp.getState().modo === "experto" && !useConsulta.getState().dibujando;
+        const f = experto && m.getLayer("zona-focos") ? m.queryRenderedFeatures(e.point, { layers: ["zona-focos"] })[0] : undefined;
+        m.getCanvas().style.cursor = f ? "pointer" : "";
+        return;
+      }
       const vivo = props.current.estado.pestana === "vivo";
       const capa = vivo ? "vivo-focos" : "reg-3d";
       const f = m.getLayer(capa) ? m.queryRenderedFeatures(e.point, { layers: [capa] })[0] : undefined;
@@ -315,6 +369,15 @@ export default function MapaRelieve({ regiones, dias, focos, onHover }: Props) {
     m.on("mouseout", () => props.current.onHover({ id: null, foco: null, x: 0, y: 0 }));
     m.on("click", (e) => {
       const { estado: est } = props.current;
+      if (est.pestana === "zona") {
+        // En Tu zona el mapa es para dibujar; en el modo experto, tocar un foco muestra sus atributos (RF-MOD-02).
+        if (useConsulta.getState().dibujando || useApp.getState().modo !== "experto") return;
+        const f = m.getLayer("zona-focos") ? m.queryRenderedFeatures(e.point, { layers: ["zona-focos"] })[0] : undefined;
+        est.cambiar({
+          focoZona: f ? { lon: e.lngLat.lng, lat: e.lngLat.lat, propiedades: f.properties as Record<string, unknown> } : null,
+        });
+        return;
+      }
       if (est.pestana === "vivo") {
         const f = m.getLayer("vivo-focos") ? m.queryRenderedFeatures(e.point, { layers: ["vivo-focos"] }) : [];
         // Entre focos encimados gana el más chico, que es el que queda arriba.
@@ -361,7 +424,7 @@ export default function MapaRelieve({ regiones, dias, focos, onHover }: Props) {
         }
       }
       const e = props.current.estado;
-      if (e.giro && !e.plano && e.pestana !== "vivo" && !e.seleccion && !reducido() && Date.now() > pausaGiro.current && !m.isMoving()) {
+      if (e.giro && !e.plano && e.pestana !== "vivo" && e.pestana !== "zona" && !e.seleccion && !reducido() && Date.now() > pausaGiro.current && !m.isMoving()) {
         m.setBearing(m.getBearing() + 0.04);
       }
       // Los focos de En vivo de las últimas 6 h laten: un anillo que crece y se apaga.
@@ -380,6 +443,8 @@ export default function MapaRelieve({ regiones, dias, focos, onHover }: Props) {
       controlMapa.zoom = () => {};
       controlMapa.norte = () => {};
       listo.current = false;
+      dibujo.current?.stop();
+      dibujo.current = null;
       m.remove();
       mapa.current = null;
     };
@@ -394,7 +459,7 @@ export default function MapaRelieve({ regiones, dias, focos, onHover }: Props) {
   useEffect(() => {
     const m = mapa.current;
     if (!m) return;
-    const plano = estado.plano || estado.pestana === "vivo";
+    const plano = estado.plano || estado.pestana === "vivo" || estado.pestana === "zona";
     m.easeTo({ pitch: plano ? 0 : 55, bearing: plano ? 0 : m.getBearing(), duration: reducido() ? 0 : 800 });
     if (plano) {
       m.dragRotate.disable();
@@ -405,23 +470,58 @@ export default function MapaRelieve({ regiones, dias, focos, onHover }: Props) {
     }
   }, [estado.plano, estado.pestana]);
 
-  // Volar a la región elegida, o volver al país entero.
+  // Volar a la región elegida o al área de Tu zona, o volver al país entero.
   useEffect(() => {
     const m = mapa.current;
     if (!m) return;
     const ancho = (contenedor.current?.clientWidth ?? 1000) >= 768;
+    const alto = contenedor.current?.clientHeight ?? 800;
+    const zona = estado.pestana === "zona";
     const region = props.current.regiones.find((r) => r.id === estado.seleccion);
-    const caja = region ? (bbox(region as never) as [number, number, number, number]) : LIMITES_MVP;
-    m.fitBounds(caja, {
-      padding: ancho
+    const caja = region
+      ? (bbox(region as never) as [number, number, number, number])
+      : zona && area
+        ? bboxDeArea(area)
+        : LIMITES_MVP;
+    // En Tu zona el panel ocupa la izquierda y, con un área, el calendario la parte de abajo (en celular, la hoja).
+    const padding = zona
+      ? ancho
+        ? { top: 90, bottom: area ? Math.round(alto * 0.46) + 30 : 60, left: 380, right: 90 }
+        : { top: 80, bottom: Math.round(alto * 0.62) + 20, left: 20, right: 20 }
+      : ancho
         ? { top: 90, bottom: 80, left: region ? 60 : 300, right: region ? 460 : 80 }
-        : { top: 80, bottom: region ? 300 : 40, left: 20, right: 20 },
-      maxZoom: 6.5,
-      pitch: estado.plano || estado.pestana === "vivo" ? 0 : region ? 58 : 55,
-      bearing: m.getBearing(),
+        : { top: 80, bottom: region ? 300 : 40, left: 20, right: 20 };
+    m.fitBounds(caja, {
+      padding,
+      maxZoom: zona && area ? 11 : 6.5,
+      pitch: estado.plano || estado.pestana === "vivo" || zona ? 0 : region ? 58 : 55,
+      bearing: zona ? 0 : m.getBearing(),
       duration: reducido() ? 0 : 1200,
     });
-  }, [estado.seleccion, estado.plano, estado.pestana]);
+  }, [estado.seleccion, estado.plano, estado.pestana, area]);
+
+  // Herramienta de dibujo: solo en Tu zona.
+  const herramienta = useRef(() => {});
+  herramienta.current = () => {
+    const m = mapa.current;
+    const d = dibujo.current;
+    if (!m || !d?.enabled) return;
+    const zona = estado.pestana === "zona";
+    d.setMode(zona && dibujando ? dibujando : "static");
+    // El doble clic que cierra el polígono también acercaba el mapa y lo sacaba del encuadre del área.
+    if (zona) m.doubleClickZoom.disable();
+    else m.doubleClickZoom.enable();
+  };
+  useEffect(() => herramienta.current(), [dibujando, estado.pestana]);
+
+  // Imagen satelital del contexto como capa, solo en Tu zona.
+  const imagen = useRef(() => {});
+  imagen.current = () => {
+    const m = mapa.current;
+    if (!m || !listo.current) return;
+    ponerImagen(m, estado.pestana === "zona" ? capaImagen : null);
+  };
+  useEffect(() => imagen.current(), [capaImagen, estado.pestana]);
 
   // MapLibre le pone `position: relative` a su contenedor: si fuera el mismo div absoluto, se queda sin alto.
   return (

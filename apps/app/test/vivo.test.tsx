@@ -7,7 +7,9 @@ import { estadoInicialConsulta, useConsulta } from "@/estado/consulta";
 import { useVivo } from "@/vivo/estado";
 import { filtrarPorSatelite } from "@/vivo/satelites";
 
-vi.mock("@/mapa/Mapa", () => ({ default: () => <div data-testid="mapa" /> }));
+vi.mock("@/relieve/MapaRelieve", () => ({ default: () => <div data-testid="mapa" /> }));
+// Tu zona no necesita las regiones ni los focos en vivo de Relieve.
+vi.mock("@/relieve/datos", () => ({ useDatosRelieve: () => ({ resumen: {}, vivo: {}, regiones: [], focos: [] }) }));
 
 // Muestras con la forma del contrato (valores inventados).
 const vivo = {
@@ -91,45 +93,12 @@ beforeEach(() => {
   });
   vi.stubGlobal("fetch", fetchSimulado);
   useConsulta.setState({ ...estadoInicialConsulta("2026-11-14") });
-  useApp.setState({ modo: "novato", perfilMapa: "2d", recorridoVisto: true });
-  useVivo.setState({ visible: false, seleccionado: null, reportando: false, satelites: ["N20", "N21"] });
+  useApp.setState({ modo: "novato" });
+  useVivo.setState({ reportando: false, satelites: ["N20", "N21"] });
 });
 afterEach(() => {
   vi.unstubAllEnvs();
   vi.unstubAllGlobals();
-});
-
-describe("focos en vivo (RF-VIV-01, RF-VIV-02)", () => {
-  it("cada foco reciente muestra su veredicto y, al elegirlo, su evidencia", async () => {
-    montar();
-    const u = userEvent.setup();
-    await u.click(screen.getByRole("checkbox", { name: /focos de las últimas 48 horas/i }));
-    const lista = await screen.findByRole("list", { name: "Focos recientes" });
-    const items = within(lista).getAllByRole("listitem");
-    expect(items).toHaveLength(2);
-    // Ordenados del más nuevo al más viejo, con el veredicto en texto.
-    expect(items[0]).toHaveTextContent(/Probable fuente fija/);
-    expect(items[1]).toHaveTextContent(/Probable/);
-    await u.click(within(items[1] as HTMLElement).getByRole("button"));
-    const detalle = await screen.findByRole("region", { name: "Foco reciente" });
-    expect(await within(detalle).findByText("Dos pasadas de VIIRS con el foco en la misma celda")).toBeInTheDocument();
-    expect(within(detalle).getByRole("link", { name: /Titular de ejemplo/ })).toHaveAttribute("href", "https://example.org/n");
-    expect(within(detalle).getByText(/no reemplaza a los servicios de emergencia/i)).toBeInTheDocument();
-    const enlaceMapa = within(detalle).getByRole("link", { name: /ver ubicación en google maps/i });
-    expect(enlaceMapa).toHaveAttribute("href", "https://www.google.com/maps?q=-42.118,-71.287");
-    expect(enlaceMapa.querySelector("svg")).toBeInTheDocument();
-    const preview = within(detalle).getByTitle("Previsualización de la ubicación en Google Maps");
-    expect(preview).toHaveAttribute("src", "https://maps.google.com/maps?q=-42.118,-71.287&z=13&output=embed");
-    const pedido = fetchSimulado.mock.calls.map(([x]) => String(x)).find((x) => x.includes("/evidence"));
-    expect(pedido).toContain(encodeURIComponent("N20-2026-11-14T04:40:00Z--42.11800--71.28700"));
-  });
-
-  it("si los datos están viejos, lo avisa", async () => {
-    vivoViejo = true;
-    montar();
-    await userEvent.setup().click(screen.getByRole("checkbox", { name: /focos de las últimas 48 horas/i }));
-    expect(await screen.findByText("Los focos son de la consulta de las 05:30.")).toBeInTheDocument();
-  });
 });
 
 describe("filtro por satélite de los focos en vivo", () => {
@@ -140,29 +109,6 @@ describe("filtro por satélite de los focos en vivo", () => {
     expect(ids([])).toEqual([]);
   });
 
-  it("al destildar NOAA-21, la lista muestra solo los focos de NOAA-20", async () => {
-    montar();
-    const u = userEvent.setup();
-    await u.click(screen.getByRole("checkbox", { name: /focos de las últimas 48 horas/i }));
-    const lista = await screen.findByRole("list", { name: "Focos recientes" });
-    expect(screen.getByRole("checkbox", { name: "NOAA-20" })).toBeChecked();
-    await u.click(screen.getByRole("checkbox", { name: "NOAA-21" }));
-    const items = within(lista).getAllByRole("listitem");
-    expect(items).toHaveLength(1);
-    expect(items[0]).toHaveTextContent(/Probable/);
-    expect(items[0]).not.toHaveTextContent(/fuente fija/);
-    expect(screen.getByText(/^1 foco de VIIRS/)).toHaveTextContent("(NOAA-20)");
-  });
-
-  it("sin ningún satélite elegido, lo dice", async () => {
-    montar();
-    const u = userEvent.setup();
-    await u.click(screen.getByRole("checkbox", { name: /focos de las últimas 48 horas/i }));
-    await screen.findByRole("list", { name: "Focos recientes" });
-    await u.click(screen.getByRole("checkbox", { name: "NOAA-20" }));
-    await u.click(screen.getByRole("checkbox", { name: "NOAA-21" }));
-    expect(screen.getByText(/Elegí al menos un satélite/)).toBeInTheDocument();
-  });
 });
 
 describe("reporte ciudadano (RF-ALE-01, RF-ALE-06)", () => {
@@ -210,49 +156,3 @@ describe("reporte ciudadano (RF-ALE-01, RF-ALE-06)", () => {
   });
 });
 
-describe("lista de focos recientes con muchos focos", () => {
-  const muchos = (n: number, lat: number, lon: number) =>
-    Array.from({ length: n }, (_, i) => ({
-      type: "Feature",
-      id: `N20-${String(i).padStart(4, "0")}`,
-      geometry: { type: "Point", coordinates: [lon, lat] },
-      properties: {
-        acq_datetime: `2026-11-14T${String(i % 24).padStart(2, "0")}:00:00Z`,
-        satellite: "N20",
-        instrument: "VIIRS",
-        confidence: "nominal",
-        frp: 5,
-        daynight: "D",
-        verdict: "probable",
-      },
-    }));
-  const conVivo = (features: unknown[]) =>
-    fetchSimulado.mockImplementation(async (url) => {
-      const u = String(url);
-      if (u.includes("/live")) return new Response(JSON.stringify({ ...vivo, features }));
-      if (u.includes("/health")) return new Response(JSON.stringify({ status: "ok" }));
-      return new Response(JSON.stringify({ type: "FeatureCollection", features: [] }));
-    });
-
-  it("muestra como máximo los 50 más nuevos y dice cuántos hay", async () => {
-    conVivo(muchos(120, -30, -65));
-    montar();
-    await userEvent.setup().click(screen.getByRole("checkbox", { name: /focos de las últimas 48 horas/i }));
-    const lista = await screen.findByRole("list", { name: "Focos recientes" });
-    expect(within(lista).getAllByRole("listitem")).toHaveLength(50);
-    expect(screen.getByText(/120 focos de VIIRS/)).toBeInTheDocument();
-    expect(screen.getByText(/mostramos los 50 más nuevos/i)).toBeInTheDocument();
-  });
-
-  it("con un área elegida, la lista muestra solo los focos de esa área", async () => {
-    conVivo([...muchos(3, -42.5, -71.3), ...muchos(10, -30, -65)]);
-    useConsulta.setState({
-      area: { type: "Polygon", coordinates: [[[-71.6, -42.2], [-71.0, -42.2], [-71.0, -42.8], [-71.6, -42.8], [-71.6, -42.2]]] },
-    });
-    montar();
-    await userEvent.setup().click(screen.getByRole("checkbox", { name: /focos de las últimas 48 horas/i }));
-    const lista = await screen.findByRole("list", { name: "Focos recientes" });
-    expect(within(lista).getAllByRole("listitem")).toHaveLength(3);
-    expect(screen.getByText(/3 focos de VIIRS en el área/)).toBeInTheDocument();
-  });
-});

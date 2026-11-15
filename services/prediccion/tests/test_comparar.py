@@ -7,8 +7,8 @@ from datetime import date
 import numpy as np
 import polars as pl
 from pipeline.esquema import ESQUEMAS
-from pipeline.prediccion import entrenar_y_validar, filas, particion
-from prediccion.comparar import MODELO, comparar, leer_entrenamiento, mejora_lightgbm
+from prediccion.comparar import MODELO, comparar, mejora_lightgbm
+from prediccion.modelo import entrenar_y_validar, filas, particion
 
 
 def mensual(tendencia: float, celdas: int = 12, semilla: int = 5) -> pl.DataFrame:
@@ -84,7 +84,7 @@ def test_validacion_temporal_sin_fuga_y_con_los_mismos_anios_que_lightgbm():
     m = mensual(0.5, celdas=3)
     modelo = Persistencia()
     r = comparar(m, modelo, mejora_vigente={1: 0.0, 2: 0.0, 3: 0.0})
-    # Mismas emisiones de prueba que la partición de pipeline.prediccion (LightGBM).
+    # Mismas emisiones de prueba que la partición de prediccion.modelo (LightGBM).
     _, prueba = particion(filas(m))
     assert r.emisiones == sorted(set(prueba["emision"].to_list()))
     # Cada contexto termina en su mes de emisión: nunca ve el mes que predice.
@@ -93,17 +93,6 @@ def test_validacion_temporal_sin_fuga_y_con_los_mismos_anios_que_lightgbm():
         meses_hasta = m.filter(pl.col("mes") <= emision)["mes"].n_unique()
         assert len(modelo.contextos[i * 3]) == meses_hasta
     assert len(modelo.contextos) >= porcelda * 3
-
-
-def test_lee_la_tabla_de_entrenamiento_publicada(tmp_path):
-    ruta = tmp_path / "entrenamiento.parquet"
-    pl.DataFrame(
-        {"cell_id": ["-41.9_-71.5"] * 2, "month": ["2012-02", "2012-03"], "fire_days": [3, 0]},
-        schema={"cell_id": pl.String, "month": pl.String, "fire_days": pl.Int16},
-    ).write_parquet(ruta)
-    m = leer_entrenamiento(ruta)
-    assert m.schema == {"cell_id": pl.String, "mes": pl.Date, "dias": pl.Float64}
-    assert m["mes"].to_list() == [date(2012, 2, 1), date(2012, 3, 1)]
 
 
 def test_con_muestra_de_celdas_solo_evalua_esas_y_emite_para_todas():
@@ -129,7 +118,7 @@ def test_con_muestra_de_celdas_solo_evalua_esas_y_emite_para_todas():
 def test_lightgbm_se_mide_con_la_misma_prueba():
     m = mensual(1.0, celdas=6)
     todas = sorted(set(m["cell_id"].to_list()))
-    # Con todas las celdas coincide con la mejora que publica pipeline.prediccion.
+    # Con todas las celdas coincide con la mejora que publica prediccion.modelo.
     assert mejora_lightgbm(m) == entrenar_y_validar(m).mejora
     # Con una muestra, devuelve los tres horizontes medidos solo sobre esas celdas.
     parcial = mejora_lightgbm(m, celdas=todas[:3])

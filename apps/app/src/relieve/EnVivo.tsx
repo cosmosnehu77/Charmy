@@ -1,5 +1,9 @@
 import { MapPin, X } from "lucide-react";
 import { urlGoogleMaps, urlGoogleMapsEmbed } from "@/lib/enlaces";
+import { useEvidencia } from "@/vivo/consultas";
+import { useVivo } from "@/vivo/estado";
+import { SATELITES_VIVO } from "@/vivo/satelites";
+import { ETIQUETAS_EVIDENCIA, TIPOS_EVIDENCIA, veredicto } from "@/vivo/veredictos";
 import type { FocoReciente } from "./datos";
 import { useRelieve } from "./estado";
 import { colorFoco, enNiveles, hace, type NivelFoco, nivelFoco, radioFoco, type RegionResumen } from "./logica";
@@ -15,9 +19,17 @@ interface Props {
   mensaje?: string;
 }
 
-/** Panel de En vivo: cuántos focos hay, la ventana de tiempo, la leyenda de tamaños y los más intensos. */
+/**
+ * Panel de En vivo: cuántos focos hay, la ventana de tiempo, los satélites, la leyenda de tamaños y los más intensos.
+ * `focos` llega ya filtrado por satélite.
+ */
 export function PanelEnVivo({ focos, disponible, mensaje, regiones }: Props) {
   const { horasVivo, nivelesVivo, cambiar } = useRelieve();
+  const { satelites, cambiar: cambiarVivo } = useVivo();
+  const alternarSatelite = (codigo: string, si: boolean) => {
+    cambiarVivo({ satelites: si ? [...satelites, codigo] : satelites.filter((c) => c !== codigo) });
+    cambiar({ focoVivo: null });
+  };
   const ultimo = focos.reduce((m, f) => Math.max(m, f.t), 0);
   const visibles = focos.filter((f) => f.t >= ultimo - horasVivo * 3_600_000 && enNiveles(f.frp, nivelesVivo));
   const alternarNivel = (n: NivelFoco) =>
@@ -68,6 +80,31 @@ export function PanelEnVivo({ focos, disponible, mensaje, regiones }: Props) {
               </button>
             ))}
           </div>
+          {/* Como el filtro por satélite de FIRMS (#261): solo los que publican en vivo (D-13). */}
+          <div role="group" aria-label="Satélites" className="mt-2 flex gap-1.5">
+            {SATELITES_VIVO.map((s) => {
+              const elegido = satelites.includes(s.codigo);
+              return (
+                <label
+                  key={s.codigo}
+                  className={`flex flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-full px-2 py-1.5 text-xs font-semibold ring-1 transition ${
+                    elegido ? "bg-white/15 text-white ring-relieve-brillo/60" : "text-white/60 ring-white/10 hover:bg-white/10"
+                  }`}
+                >
+                  <input
+                    type="checkbox"
+                    className="size-3.5 accent-relieve-brillo"
+                    checked={elegido}
+                    onChange={(e) => alternarSatelite(s.codigo, e.target.checked)}
+                  />
+                  {s.nombre}
+                </label>
+              );
+            })}
+          </div>
+          {satelites.length === 0 && (
+            <p className="mt-2 text-xs text-relieve-brillo">Elegí al menos un satélite para ver los focos.</p>
+          )}
           <div className="mt-3.5 border-t border-white/10 pt-3">
             <h3 className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-white/50">Tamaño = intensidad</h3>
             {/* Cada nivel filtra: se ven solo los niveles elegidos; sin ninguno, todos (#251). */}
@@ -174,6 +211,7 @@ export function DetalleFoco({ foco, avisoEnCelular = true }: { foco: FocoRecient
         </b>
         <span className="text-[13px] text-white/70">MW · {nivelFoco(foco.frp)}</span>
       </div>
+      <Veredicto foco={foco} />
       <dl className="mt-3 grid grid-cols-[auto_1fr] gap-x-3.5 gap-y-2 text-[13.5px]">
         <dt className="text-white/55">Detectado</dt>
         <dd className="m-0 text-right font-semibold tabular-nums">
@@ -227,5 +265,49 @@ export function DetalleFoco({ foco, avisoEnCelular = true }: { foco: FocoRecient
         <strong className="text-relieve-brillo">132</strong> en Chile.
       </p>
     </>
+  );
+}
+
+/**
+ * Veredicto del foco y la evidencia que lo sostiene (RF-VIV-02). El veredicto sale de varias señales, nunca de la IA
+ * sola (D-09). Si la evidencia no llega, se dice y el resto de la ficha sigue.
+ */
+function Veredicto({ foco }: { foco: FocoReciente }) {
+  const evidencia = useEvidencia(foco.id);
+  const v = veredicto(evidencia.data?.verdict ?? foco.veredicto);
+  return (
+    <section aria-label="Veredicto" className="mt-3 rounded-xl bg-white/5 px-3 py-2.5 text-[13px]">
+      <p className="flex items-center gap-2">
+        <i aria-hidden="true" className="size-2.5 rounded-full" style={{ background: v.color }} />
+        <strong>{v.texto}</strong>
+      </p>
+      <p className="mt-1 text-xs leading-snug text-white/60">
+        El veredicto combina satélite, fuentes fijas, noticias y reportes. La IA solo ayuda a leer noticias: que no haya
+        noticias no vuelve falso un foco.
+      </p>
+      {evidencia.isPending && <p className="mt-2 text-xs text-white/55">Buscando la evidencia…</p>}
+      {evidencia.isError && <p className="mt-2 text-xs text-white/70">La evidencia de este foco no está disponible ahora.</p>}
+      {evidencia.isSuccess &&
+        (evidencia.data.evidence.length === 0 ? (
+          <p className="mt-2 text-xs text-white/55">Todavía no hay evidencia además del satélite.</p>
+        ) : (
+          <ul className="mt-2 flex flex-col gap-1.5">
+            {evidencia.data.evidence.map((e) => (
+              <li key={`${e.kind}-${e.title}`} className="flex flex-col">
+                <span className="text-[11px] text-white/50">
+                  {TIPOS_EVIDENCIA[e.kind] ?? e.kind} · {ETIQUETAS_EVIDENCIA[e.label] ?? e.label}
+                </span>
+                {e.url ? (
+                  <a href={e.url} target="_blank" rel="noopener noreferrer" className="text-relieve-brillo underline underline-offset-2">
+                    {e.title}
+                  </a>
+                ) : (
+                  <span>{e.title}</span>
+                )}
+              </li>
+            ))}
+          </ul>
+        ))}
+    </section>
   );
 }

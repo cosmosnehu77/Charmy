@@ -17,6 +17,8 @@ export interface FocoReciente {
   instrumento: string;
   confianza: string;
   momento: string;
+  /** Veredicto de la verificación (D-09); falta en un foco recién llegado. */
+  veredicto?: string;
   region: string | null;
 }
 
@@ -44,6 +46,7 @@ export function useDatosRelieve() {
         instrumento: p.instrument,
         confianza: p.confidence,
         momento: p.daynight ?? "",
+        veredicto: p.verdict,
         region: regiones.length ? regionDePunto(regiones, lon, lat) : null,
       };
     });

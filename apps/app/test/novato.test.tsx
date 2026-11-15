@@ -7,7 +7,9 @@ import { useApp } from "@/estado/app";
 import { estadoInicialConsulta, useConsulta } from "@/estado/consulta";
 import { conclusionDelArea } from "@/novato/conclusion";
 
-vi.mock("@/mapa/Mapa", () => ({ default: () => <div data-testid="mapa" /> }));
+vi.mock("@/relieve/MapaRelieve", () => ({ default: () => <div data-testid="mapa" /> }));
+// Tu zona no necesita las regiones ni los focos en vivo de Relieve.
+vi.mock("@/relieve/datos", () => ({ useDatosRelieve: () => ({ resumen: {}, vivo: {}, regiones: [], focos: [] }) }));
 
 // Muestras con la forma de los contratos (valores inventados).
 const calendario = {
@@ -55,50 +57,11 @@ beforeEach(() => {
   });
   vi.stubGlobal("fetch", fetchSimulado);
   useConsulta.setState({ ...estadoInicialConsulta("2026-11-14") });
-  useApp.setState({ modo: "novato", perfilMapa: "2d", recorridoVisto: true });
+  useApp.setState({ modo: "novato" });
 });
 afterEach(() => {
   vi.unstubAllEnvs();
   vi.unstubAllGlobals();
-});
-
-describe("recorrido de Charmy (RF-CHA-05)", () => {
-  it("aparece la primera vez en modo novato, avanza, retrocede y se puede saltar", async () => {
-    useApp.setState({ recorridoVisto: false });
-    montar();
-    const u = userEvent.setup();
-    const recorrido = await screen.findByRole("region", { name: "Recorrido de Charmy" });
-    expect(within(recorrido).getByText(/Paso 1 de/)).toBeInTheDocument();
-    expect(within(recorrido).getByRole("button", { name: "Atrás" })).toBeDisabled();
-    await u.click(within(recorrido).getByRole("button", { name: "Siguiente" }));
-    expect(within(recorrido).getByText(/Paso 2 de/)).toBeInTheDocument();
-    await u.click(within(recorrido).getByRole("button", { name: "Atrás" }));
-    expect(within(recorrido).getByText(/Paso 1 de/)).toBeInTheDocument();
-    await u.click(within(recorrido).getByRole("button", { name: "Saltar" }));
-    expect(screen.queryByRole("region", { name: "Recorrido de Charmy" })).not.toBeInTheDocument();
-    expect(useApp.getState().recorridoVisto).toBe(true);
-  });
-
-  it("al llegar al último paso, «Terminar» lo cierra", async () => {
-    useApp.setState({ recorridoVisto: false });
-    montar();
-    const u = userEvent.setup();
-    const recorrido = await screen.findByRole("region", { name: "Recorrido de Charmy" });
-    while (within(recorrido).queryByRole("button", { name: "Siguiente" })) {
-      await u.click(within(recorrido).getByRole("button", { name: "Siguiente" }));
-    }
-    await u.click(within(recorrido).getByRole("button", { name: "Terminar" }));
-    expect(screen.queryByRole("region", { name: "Recorrido de Charmy" })).not.toBeInTheDocument();
-  });
-
-  it("no aparece en modo experto y se puede volver a ver desde el encabezado", async () => {
-    useApp.setState({ modo: "experto", recorridoVisto: false });
-    montar();
-    expect(screen.queryByRole("region", { name: "Recorrido de Charmy" })).not.toBeInTheDocument();
-    useApp.setState({ modo: "novato", recorridoVisto: true });
-    await userEvent.setup().click(await screen.findByRole("button", { name: "Ver el recorrido" }));
-    expect(await screen.findByRole("region", { name: "Recorrido de Charmy" })).toBeInTheDocument();
-  });
 });
 
 describe("búsqueda por localidad (RF-MAP-03)", () => {

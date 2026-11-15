@@ -58,7 +58,7 @@ Los logins de esta tabla coinciden con `.github/board-allowlist`. El detalle de 
 | Área | Dueño (login de GitHub) | Carpetas |
 |---|---|---|
 | A · Plataforma | `@cosmosnehu77` (líder; interino `@daniace`, D-28) | archivos de raíz, `.github/workflows/`, `infra/`, `README.md` y las rutas protegidas |
-| A · Avisos (fase 3, D-28; permanente desde D-36) | `@dimidio6` | `services/alertas/` |
+| A · Avisos (fase 3, D-28; permanente desde D-38) | `@dimidio6` | `services/alertas/` |
 | B · Datos | `@leonelcnr` | `services/pipeline/`, `services/contexto/`, `data/muestras/`, `packages/contracts/datos/`, `docs/metodologia/` |
 | C · Backend | `@BrunoAguinaga0` | `services/api/`, `services/worker/`, `packages/contracts/api/` |
 | D · App | `@daniace` | `apps/app/`, `packages/ui/` |

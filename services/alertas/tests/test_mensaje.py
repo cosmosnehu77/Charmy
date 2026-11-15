@@ -21,7 +21,7 @@ def test_el_mensaje_trae_ubicacion_viento_enlace_y_aviso_de_emergencias():
 
     assert "Comarca Andina" in texto
     assert "-41.95000, -71.53000" in texto
-    assert "14/11/2026 04:55 UTC" in texto
+    assert "Cuándo: 14/11/2026 01:55 (hora de Argentina)" in texto
     assert "VIIRS NOAA-20" in texto
     assert "Viento: 30 km/h del oeste" in texto
     assert "https://www.openstreetmap.org/?mlat=-41.95000&mlon=-71.53000" in texto
@@ -56,3 +56,13 @@ def test_punto_cardinal_dice_de_donde_viene_el_viento():
     assert punto_cardinal(44) == "noreste"
     assert punto_cardinal(270) == "oeste"
     assert punto_cardinal(350) == "norte"
+
+
+def test_en_una_zona_de_chile_la_hora_es_la_de_chile_con_horario_de_verano():
+    from dataclasses import replace
+
+    zona_chile = replace(ZONA_DEMO, pais="CL", nombre="Araucanía")
+    texto = armar_mensaje(replace(FOCO, cuando=datetime(2026, 11, 14, 4, 55, tzinfo=UTC)), zona_chile, None)
+    assert "Cuándo: 14/11/2026 01:55 (hora de Chile)" in texto  # noviembre: horario de verano, UTC−3
+    texto = armar_mensaje(replace(FOCO, cuando=datetime(2026, 7, 14, 4, 55, tzinfo=UTC)), zona_chile, None)
+    assert "Cuándo: 14/07/2026 00:55 (hora de Chile)" in texto  # julio: UTC−4

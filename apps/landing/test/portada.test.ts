@@ -71,3 +71,17 @@ describe("landing", () => {
     }
   });
 });
+
+describe("ícono de Charmy", () => {
+  it("la navbar muestra la cabeza de Charmy en una insignia decorativa, antes del nombre", () => {
+    const marca = doc.querySelector(".nav .marca");
+    const svg = marca?.querySelector(".insignia > svg.charmy");
+    expect(svg?.getAttribute("aria-hidden")).toBe("true");
+    expect(svg?.getAttribute("viewBox")).toBe("50 4 140 140"); // recorte de la cabeza
+    expect(marca?.textContent?.trim()).toBe("Charmy");
+  });
+
+  it("el head enlaza el favicon en SVG", () => {
+    expect(doc.querySelector('link[rel="icon"]')?.getAttribute("href")).toBe("/favicon.svg");
+  });
+});

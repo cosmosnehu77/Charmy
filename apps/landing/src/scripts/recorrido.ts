@@ -23,3 +23,6 @@ export function progresoPaso(i: number, f: number): number {
 
 /** Milisegundos que Charmy deja su globo a la vista: lo que lleva leerlo, con un mínimo de 5 s. */
 export const tiempoLectura = (texto: string): number => Math.max(5000, texto.trim().split(/\s+/).length * 380 + 2200);
+
+/** La barra se oculta al bajar y vuelve al subir; cerca del principio siempre se ve. */
+export const ocultarBarra = (y: number, anterior: number): boolean => y > 80 && y >= anterior;

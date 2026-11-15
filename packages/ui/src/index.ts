@@ -33,6 +33,35 @@ export const interfaz = {
   avisoTexto: "#9a3412",
 } as const;
 
+/** Mapa de la landing ("sala de mapas"), tema oscuro: negro cálido, musgo y ámbar. */
+export const mapaNoche = {
+  fondo: "#0b0d0a",
+  panel: "#131611",
+  elevado: "#1a1e17",
+  linea: "#283023",
+  lineaSuave: "#1d221a",
+  musgo: "#2a3916",
+  texto: "#a9b0a1",
+  tenue: "#868d80",
+  tinta: "#f2f0e8",
+  acento: "#dc8c46",
+  acentoTexto: "#dc8c46",
+} as const;
+
+/** Mapa de la landing, tema claro: papel cálido. */
+export const mapaDia = {
+  fondo: "#ecebe4",
+  panel: "#f8f7f2",
+  elevado: "#e3e2da",
+  linea: "#cfcec4",
+  lineaSuave: "#dddcd3",
+  texto: "#3b4036",
+  tenue: "#5a5f53",
+  tinta: "#12140f",
+  acento: "#dc8c46",
+  acentoTexto: "#9c4f14",
+} as const;
+
 /** YlOrRd de 7 clases, de menos a más focos. */
 export const rampaConteo = [
   "#ffffb2",

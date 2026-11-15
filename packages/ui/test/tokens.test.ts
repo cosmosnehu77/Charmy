@@ -5,6 +5,8 @@ import {
   colorSinDato,
   contraste,
   interfaz,
+  mapaDia,
+  mapaNoche,
   paleta,
   rampaAnomalia,
   relieve,
@@ -83,5 +85,26 @@ describe("agua (lagos del juego)", () => {
   it("se distingue del fondo cielo y de los tonos de fuego", () => {
     expect(contraste(paleta.agua, paleta.cielo)).toBeGreaterThanOrEqual(3);
     expect(paleta.agua).not.toBe(paleta.cielo);
+  });
+});
+
+describe("paleta de mapa de la landing (sala de mapas)", () => {
+  const casos = [
+    ["noche", mapaNoche],
+    ["dia", mapaDia],
+  ] as const;
+  it.each(casos)("tokens.css e index.ts dicen lo mismo: %s", (tema, valores) => {
+    for (const [clave, color] of Object.entries(valores)) {
+      const nombre = clave.replace(/[A-Z]/g, (l) => `-${l.toLowerCase()}`);
+      expect(variable(`mapa-${tema}-${nombre}`), clave).toBe(color);
+    }
+  });
+  it.each(casos)("texto legible (AA 4,5:1): %s", (_t, c) => {
+    for (const fondo of [c.fondo, c.panel, c.elevado]) {
+      expect(contraste(c.tinta, fondo)).toBeGreaterThanOrEqual(4.5);
+      expect(contraste(c.texto, fondo)).toBeGreaterThanOrEqual(4.5);
+      expect(contraste(c.tenue, fondo)).toBeGreaterThanOrEqual(4.5);
+      expect(contraste(c.acentoTexto, fondo)).toBeGreaterThanOrEqual(4.5);
+    }
   });
 });

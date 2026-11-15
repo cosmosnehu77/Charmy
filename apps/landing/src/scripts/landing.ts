@@ -2,7 +2,7 @@
 // Los colores salen de los tokens de @charmy/ui (se leen del CSS), nunca de valores sueltos.
 import regionesJson from "../data/regiones.json";
 import { EN } from "./en";
-import { progresoPaso, suave, tiempoLectura, tramo } from "./recorrido";
+import { ocultarBarra, progresoPaso, suave, tiempoLectura, tramo } from "./recorrido";
 
 type Region = { k: string; n: string; r: number[][]; bb?: number[][] };
 const REGIONES = regionesJson as Region[];
@@ -531,3 +531,11 @@ btnIdioma.addEventListener("click", () => aplicarIdioma(idioma === "en" ? "es" :
 aplicarIdioma(leer("charmy-idioma") ?? "es");
 aplicarTema(raiz.dataset.tema ?? "claro");
 requestAnimationFrame(dibujar);
+
+/* ---------- Barra que se oculta al bajar; vuelve al subir, con hover o con foco (CSS) ---------- */
+const barra = document.querySelector<HTMLElement>(".nav")!;
+let yAnterior = scrollY;
+addEventListener("scroll", () => {
+  barra.classList.toggle("oculta", ocultarBarra(scrollY, yAnterior));
+  yAnterior = scrollY;
+}, { passive: true });

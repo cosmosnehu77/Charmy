@@ -141,7 +141,7 @@ const NUCLEOS: Nucleo[] = [
   { x: -71.3, y: -33.1, s: 0.35, w: 0.18, m: [0, 1, 11] }, { x: -71.3, y: -41.4, s: 0.7, w: 0.22, m: [0, 1, 2] }, { x: -68, y: -39, s: 0.9, w: 0.15, m: [0, 1, 11] },
   { x: -67.7, y: -45.8, s: 0.35, w: 0.22, m: [0, 1, 11], pico: { a: 2019, m: [0, 1], f: 4 } }, { x: -71.4, y: -42.2, s: 0.4, w: 0.3, m: [0, 1, 2], pico: { a: 2025, m: [0, 1], f: 4 } },
 ];
-type Foco = { x: number; y: number; a: number; m: number; i: number; modis: boolean; f: number; jx: number; jy: number; dl: number };
+type Foco = { x: number; y: number; a: number; m: number; i: number; modis: boolean; f: number; jx: number; jy: number; dl: number; e: number };
 const FOCOS: Foco[] = [];
 for (let a = 2001; a <= 2025; a++) {
   const fa = 0.75 + 0.5 * azar();
@@ -155,7 +155,7 @@ for (let a = 2001; a <= 2025; a++) {
         let x = 0, y = 0, t = 0;
         do { x = n.x + ((gauss() * n.s) / COSL) * 0.8; y = n.y + gauss() * n.s; t++; } while (!region(x, y) && t < 8);
         if (t >= 8) continue;
-        FOCOS.push({ x, y, a, m, i: Math.min(TOPE, Math.floor(Math.pow(azar(), 1.6) * RAMPA.length)), modis: azar() < 0.3, f: azar() * 6.28, jx: (azar() - 0.5) * 0.84, jy: (azar() - 0.5) * 0.84, dl: azar() * 0.25 });
+        FOCOS.push({ x, y, a, m, i: Math.min(TOPE, Math.floor(Math.pow(azar(), 1.6) * RAMPA.length)), modis: azar() < 0.3, f: azar() * 6.28, jx: (azar() - 0.5) * 0.84, jy: (azar() - 0.5) * 0.84, dl: azar() * 0.25, e: elev(x, y) });
       }
     }
   });
@@ -167,7 +167,7 @@ FOCOS.forEach((p) => { const k = p.a * 12 + p.m; CUENTA[k] = (CUENTA[k] || 0) + 
 const MAXC = Math.max(...Object.values(CUENTA));
 const CELDAS: Record<string, number> = {};
 FOCOS.forEach((p) => { const k = Math.round(p.x) + "," + Math.round(p.y); CELDAS[k] = (CELDAS[k] || 0) + 1; });
-const COLUMNAS = Object.entries(CELDAS).map(([k, c]) => { const [x, y] = k.split(",").map(Number); return { x, y, c }; });
+const COLUMNAS = Object.entries(CELDAS).map(([k, c]) => { const [x, y] = k.split(",").map(Number); return { x, y, c, e: elev(x, y) }; });
 const MAXCOL = Math.max(...COLUMNAS.map((c) => c.c));
 const VIVOS = [[-71.9, -35.6], [-72.3, -36.9], [-70.6, -38.9], [-69.9, -37.6], [-64.4, -31.2], [-64.9, -31.9], [-71.4, -40.6], [-63.9, -30.6], [-72.6, -37.6], [-68.6, -38.2]];
 
@@ -207,10 +207,11 @@ const FUENTE_MONO = leerToken("--fuente-mono");
 
 const SPRITES = RAMPA.map((c) => {
   const s = document.createElement("canvas");
-  s.width = s.height = 64;
-  const g = s.getContext("2d")!, gr = g.createRadialGradient(32, 32, 0, 32, 32, 32);
+  // 32 px alcanza: los focos se dibujan de pocos píxeles, y achicar una imagen grande en cada cuadro es lo más caro del lienzo.
+  s.width = s.height = 32;
+  const g = s.getContext("2d")!, gr = g.createRadialGradient(16, 16, 0, 16, 16, 16);
   gr.addColorStop(0, RAMPA[0]); gr.addColorStop(0.12, c); gr.addColorStop(0.38, c + "66"); gr.addColorStop(1, c + "00");
-  g.fillStyle = gr; g.fillRect(0, 0, 64, 64);
+  g.fillStyle = gr; g.fillRect(0, 0, 32, 32);
   return s;
 });
 
@@ -268,13 +269,18 @@ const contorno = (c: Camara, anillos: number[][]) => {
 };
 
 let pVista = 0, previo = 0, anioMostrado = 0;
+// Calidad adaptable: si el equipo tarda en dibujar, se dibuja 1 de cada `salto` focos, un poco más opacos.
+let salto = 1, costo = 0;
 const t0 = performance.now();
 const hud = $("hud"), hudAnio = $("hud-anio"), hudSensor = $("hud-sensor");
 
 function dibujar(ahora: number) {
+  const pObjetivo = progreso();
+  // Quieto, solo se mueven parpadeos lentos: alcanza con unos 30 cuadros por segundo.
+  if (Math.abs(pObjetivo - pVista) < 0.002 && ahora - previo < 30) { seguir(); return; }
   const dt = Math.min(64, ahora - (previo || ahora));
   previo = ahora;
-  const pObjetivo = progreso();
+  const inicio = performance.now();
   pVista = reducir ? pObjetivo : pVista + (pObjetivo - pVista) * (1 - Math.exp(-dt * 0.006));
   const p = pVista, tiempo = ahora - t0, c = camara(p, tiempo);
   const wAnio = tramo(p, 1), wCol = tramo(p, 2), wZona = tramo(p, 3), wCal = suave(3.5, 4, p) * (1 - suave(4.5, 5, p)), wVivo = tramo(p, 5), wFin = suave(5.5, 6, p);
@@ -363,7 +369,7 @@ function dibujar(ahora: number) {
     const orden = COLUMNAS.map((q) => { proy(c, q.x, q.y, 0); return [q, OUT[1]] as const; }).sort((u, v) => u[1] - v[1]);
     ctx.globalCompositeOperation = CT.mezclaOp;
     for (const [q] of orden) {
-      const r = Math.sqrt(q.c / MAXCOL), h = r * 3.6 * c.k * wCol * c.sp, e = elev(q.x, q.y) * relieve;
+      const r = Math.sqrt(q.c / MAXCOL), h = r * 3.6 * c.k * wCol * c.sp, e = q.e * relieve;
       if (!proy(c, q.x, q.y, e)) continue;
       const x0 = OUT[0], y0 = OUT[1], f = OUT[2];
       proy(c, q.x, q.y, e + h);
@@ -381,8 +387,10 @@ function dibujar(ahora: number) {
   const anio = 2001 + 24 * Math.min(1, Math.max(0, (p - 1) / 0.46));
   const escala = Math.min(1.5, Math.sqrt(c.k / c.z0));
   ctx.globalCompositeOperation = CT.mezclaOp;
-  for (const q of FOCOS) {
-    let a = (reducir ? 0.4 : 0.26 + 0.2 * Math.sin(tiempo * 0.0016 + q.f)) * (1 - 0.45 * tramo(p, 0));
+  const realce = Math.sqrt(salto);
+  for (let n = 0; n < FOCOS.length; n += salto) {
+    const q = FOCOS[n];
+    let a = realce * (reducir ? 0.4 : 0.26 + 0.2 * Math.sin(tiempo * 0.0016 + q.f)) * (1 - 0.45 * tramo(p, 0));
     if (wAnio > 0) {
       let b = 0;
       const d = anio - q.a;
@@ -393,7 +401,7 @@ function dibujar(ahora: number) {
     a *= 1 - 0.88 * wCol;
     if (wZona > 0 && Math.abs(q.x + 58.3) > 2.2) a *= 1 - 0.8 * wZona;
     a *= (1 - 0.85 * wVivo) * (1 - 0.9 * wFin);
-    if (!proy(c, q.x, q.y, elev(q.x, q.y) * relieve)) continue;
+    if (!proy(c, q.x, q.y, q.e * relieve)) continue;
     let x = OUT[0], y = OUT[1], f = OUT[2];
     if (wCal > 0) {
       const tt = suave(q.dl, q.dl + 0.75, wCal), gx = G.x0 + (q.m + 0.5 + q.jx) * G.cw, gy = G.y0 + (q.a - 2001 + 0.5 + q.jy * 0.8) * G.ch;
@@ -433,9 +441,25 @@ function dibujar(ahora: number) {
     hudSensor.textContent = ai < 2012 ? "MODIS" : "MODIS + VIIRS";
     hudSensor.className = ai < 2012 ? "" : "viirs";
   }
+  costo = costo * 0.9 + (performance.now() - inicio) * 0.1;
+  if (costo > 20 && salto < 3) { salto++; costo = 0; }
   guia(p);
-  requestAnimationFrame(dibujar);
+  seguir();
 }
+
+// El lienzo es fijo: cuando el fondo opaco de .resto (llega a pleno a los 40vh) cubre la pantalla, no se ve y no se dibuja.
+const resto = document.querySelector<HTMLElement>(".resto")!;
+const tapado = () => resto.getBoundingClientRect().top + 0.4 * innerHeight <= 0;
+let dibujando = true;
+function seguir() {
+  if (tapado()) dibujando = false;
+  else requestAnimationFrame(dibujar);
+}
+addEventListener("scroll", () => {
+  if (dibujando || tapado()) return;
+  dibujando = true; previo = 0;
+  requestAnimationFrame(dibujar);
+}, { passive: true });
 
 /* ---------- Charmy guía: entra en cada paso, queda el tiempo de leer y se va ---------- */
 const GUION = {

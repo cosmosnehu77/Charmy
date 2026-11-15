@@ -1,312 +1,337 @@
 ---
-import { charmyHtml } from "@charmy/charmy/core";
+import { charmySvg } from "@charmy/charmy/core";
+import iconos from "../data/iconos.json";
 import "../styles/global.css";
+import "../styles/landing.css";
 
-// Textos PROVISORIOS hasta tener los de F1-F1 (#28, carril F).
 // Dominios por defecto de Cloudflare Pages (deploy-web.yml: proyectos charmy-app y charmy-juego).
 const URL_APP = "https://charmy-app.pages.dev";
 const URL_JUEGO = "https://charmy-juego.pages.dev";
 const URL_METODO = "https://github.com/cosmosnehu77/Charmy/blob/main/docs/metodologia/README.md";
 
-const charmy = charmyHtml({
-  mood: "saluda",
-  outfit: "base",
-  size: 200,
-  label: "Charmy, la vizcacha de fuego, saluda",
-  say: "¡Hola! Soy Charmy. Te muestro cuándo y dónde se quema el sur.",
-});
+// Charmy guía: un dibujo por paso del recorrido, siempre desde el componente (nunca un SVG copiado).
+const guion = [
+  { mood: "saluda", outfit: "base" },
+  { mood: "pensando", outfit: "guia" },
+  { mood: "explica", outfit: "guia" },
+  { mood: "explica", outfit: "guia" },
+  { mood: "explica", outfit: "guia" },
+  { mood: "alerta", outfit: "guia" },
+  { mood: "saluda", outfit: "bombero" },
+] as const;
+const figurasGuia = guion.map((g) => charmySvg({ ...g, size: 160, decorative: true }));
+const charmyBrigada = charmySvg({ mood: "saluda", outfit: "bombero", size: 340, decorative: true });
 
-const funcionalidades = [
-  {
-    titulo: "Una sola serie desde 2001",
-    texto: "Juntamos los focos de MODIS y VIIRS en una medida común, así el cambio de satélite no parece un cambio del fuego.",
-  },
-  {
-    titulo: "Calendario de quema",
-    texto: "Elegís un área y ves, mes por mes y año por año, cuánto fuego hubo y si este mes está por encima de lo normal.",
-  },
-  {
-    titulo: "Mapa en 2D y 3D",
-    texto: "Dibujás tu zona sobre el mapa o escribís latitud y longitud. Los focos se ven sobre el relieve.",
-  },
-  {
-    titulo: "Modo novato y modo experto",
-    texto: "Una conclusión clara con ayuda de Charmy, o todos los datos, filtros, métricas de validación y descargas en CSV.",
-  },
-  {
-    titulo: "Focos de las últimas horas",
-    texto: "Los focos recientes de NOAA-20 y NOAA-21, con el tiempo y la imagen satelital del lugar.",
-  },
-  {
-    titulo: "Charmy Brigada",
-    texto: "Un juego para chicas y chicos: Charmy bombero apaga los focos de un día real y deja un consejo de prevención.",
-  },
-];
+const flecha = `<svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true"><path d="M4 2.5l5 4.5-5 4.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
 
 const equipo = [
-  { nombre: "Nehuén", rol: "Plataforma y avisos", login: "cosmosnehu77" },
-  { nombre: "Leonel", rol: "Datos y armonización", login: "leonelcnr" },
-  { nombre: "Bruno", rol: "Backend", login: "BrunoAguinaga0" },
-  { nombre: "Daniel", rol: "App, mapa y calendario", login: "daniace" },
-  { nombre: "dimidio6", rol: "Landing y juego", login: "dimidio6" },
+  { nombre: "Nehuén", login: "cosmosnehu77" },
+  { nombre: "Leonel", login: "leonelcnr" },
+  { nombre: "Bruno", login: "BrunoAguinaga0" },
+  { nombre: "Daniel", login: "daniace" },
+  { nombre: "Angelo", login: "dimidio6" },
 ];
 
-const creditos = [
-  {
-    nombre: "NASA FIRMS",
-    url: "https://firms.modaps.eosdis.nasa.gov/",
-    texto: "Focos de calor de MODIS y VIIRS (S-NPP, NOAA-20 y NOAA-21).",
-  },
-  {
-    nombre: "Copernicus Data Space Ecosystem",
-    url: "https://dataspace.copernicus.eu/",
-    texto: "Imágenes de Sentinel-2 (contiene datos modificados de Copernicus Sentinel).",
-  },
-  {
-    nombre: "Meteomatics",
-    url: "https://www.meteomatics.com/",
-    texto: "Viento, temperatura, humedad e índices de riesgo de incendio.",
-  },
+// Logos de Simple Icons (CC0), en el color de cada marca: son logos, no colores del tema.
+const herramientas = [
+  { nombre: "Python", icono: "python", color: "#3776AB" },
+  { nombre: "Polars", icono: "polars", color: "#CD792C" },
+  { nombre: "DuckDB", icono: "duckdb", color: "#1B1B1B" },
+  { nombre: "PostgreSQL", icono: "postgresql", color: "#4169E1" },
+  { nombre: "Docker", icono: "docker", color: "#2496ED" },
+  { nombre: "React", icono: "react", color: "#087EA4" },
+  { nombre: "TypeScript", icono: "typescript", color: "#3178C6" },
+  { nombre: "MapLibre", icono: "maplibre", color: "#396CB2" },
+  { nombre: "Astro", icono: "astro", color: "#BC52EE" },
+  { nombre: "Telegram", icono: "telegram", color: "#26A5E4" },
+] as const;
+
+const instituciones = [
+  { logo: "/logos/nasa.svg", alt: "NASA", alto: 86 },
+  { logo: "/logos/invap.png", alt: "INVAP", alto: 44 },
+  { logo: "/logos/cc.png", alt: "Comodoro Conocimiento, agencia de desarrollo económico", alto: 96 },
 ];
+// El carrusel repite la tira para girar sin cortes; la copia queda oculta a lectores de pantalla.
+const tira = [...instituciones, ...instituciones];
 ---
 
 <!doctype html>
-<html lang="es">
+<html lang="es" data-tema="claro">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Charmy · Calendario de quema</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>Charmy · Cuando nuestro sur está en peligro</title>
     <meta
       name="description"
       content="Focos de calor de MODIS y VIIRS armonizados desde 2001, como calendario de quema sobre un mapa."
     />
+    <script is:inline>
+      // Tema guardado o el del sistema, antes de pintar, para que no parpadee.
+      try {
+        const t = localStorage.getItem("charmy-tema");
+        document.documentElement.dataset.tema =
+          t === "oscuro" || t === "claro" ? t : matchMedia("(prefers-color-scheme: dark)").matches ? "oscuro" : "claro";
+      } catch (e) {}
+      document.documentElement.classList.add("js");
+    </script>
   </head>
   <body>
-    <header class="portada">
-      <div class="portada-texto">
-        <h1>Charmy</h1>
-        <p class="bajada">
-          Más de veinte años de focos de calor vistos desde el espacio, en un solo calendario de quema.
-        </p>
-        <nav class="accesos" aria-label="Accesos">
-          <a class="boton boton-principal" href={URL_APP}>Abrir la app</a>
-          <a class="boton" href={URL_JUEGO}>Jugar a Charmy Brigada</a>
-        </nav>
-      </div>
-      <div class="portada-charmy" data-animar="charmy">
-        <Fragment set:html={charmy} />
+    <canvas id="mapa" aria-hidden="true"></canvas>
+    <div class="velo"></div>
+
+    <header class="nav">
+      <div class="nav-in">
+        <a class="marca" href={URL_APP}>Charmy</a>
+        <div class="nav-acc">
+          <button type="button" class="nav-btn" id="btn-tema" aria-label="Cambiar a tema oscuro">
+            <svg class="i-sol" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4.2"></circle><path d="M12 2.5v2.2M12 19.3v2.2M4.6 4.6l1.6 1.6M17.8 17.8l1.6 1.6M2.5 12h2.2M19.3 12h2.2M4.6 19.4l1.6-1.6M17.8 6.2l1.6-1.6"></path></svg>
+            <svg class="i-luna" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"></path></svg>
+          </button>
+          <button type="button" class="nav-btn idioma" id="btn-idioma" aria-label="Switch to English">
+            <span data-l="es" class="on">ES</span><span data-l="en">EN</span>
+          </button>
+        </div>
       </div>
     </header>
 
+    <div class="hud-anio" id="hud" aria-hidden="true"><b id="hud-anio">2001</b><span id="hud-sensor">MODIS</span></div>
+
+    <aside class="guia portada-g" id="guia" aria-live="polite">
+      <div class="globo" id="guia-globo">¡Hola! Soy Charmy. Te muestro cuándo y dónde se quema el sur.</div>
+      <div class="figura" id="guia-figura"></div>
+    </aside>
+    {figurasGuia.map((svg, i) => <template id={`charmy-${i}`} set:html={svg} />)}
+
     <main>
-      <section id="problema" aria-labelledby="titulo-problema" class="seccion" data-animar="seccion">
-        <h2 id="titulo-problema">El problema</h2>
-        <p>
-          Desde 2000 el satélite MODIS registra los focos de calor del planeta. Desde 2012 lo hace también VIIRS, que
-          ve focos más chicos y por eso cuenta muchos más. Si se ponen una al lado de la otra, parece que el fuego creció
-          justo cuando cambió el satélite.
-        </p>
-        <p>
-          Charmy convierte las dos series a una misma medida. Así podés saber, para cualquier zona, cuándo se quema
-          normalmente y si lo que pasa hoy es normal o excepcional.
-        </p>
+      <section class="paso portada" id="portada" data-paso="0" aria-labelledby="titulo">
+        <h1 id="titulo">Cuando nuestro sur está en <em>peligro.</em></h1>
+        <p class="bajada">Más de veinte años de focos de calor vistos desde el espacio, en un solo mapa.</p>
+        <div class="acciones">
+          <a class="boton" href={URL_APP}>Abrir la app <Fragment set:html={flecha} /></a>
+          <a class="enlace" href={URL_JUEGO}>Jugar a Charmy Brigada</a>
+        </div>
+        <div class="desliza" aria-hidden="true"><i></i>Bajá para recorrer el mapa</div>
       </section>
 
-      <section id="funcionalidades" aria-labelledby="titulo-funcionalidades" class="seccion" data-animar="seccion">
-        <h2 id="titulo-funcionalidades">Qué hace Charmy</h2>
-        <ul class="tarjetas">
-          {
-            funcionalidades.map((f) => (
-              <li class="tarjeta" data-animar="tarjeta">
-                <h3>{f.titulo}</h3>
-                <p>{f.texto}</p>
-              </li>
-            ))
-          }
-        </ul>
+      <section class="paso" id="problema" data-paso="1" aria-labelledby="titulo-problema">
+        <div class="paso-in">
+          <article class="tarjeta">
+            <span class="eti-paso"><b>1</b>de 5 · <u>El problema</u></span>
+            <h2 id="titulo-problema">Cambió el satélite, <em>no el fuego.</em></h2>
+            <p>En 2012 llegó VIIRS, que ve focos más chicos y por eso cuenta más.</p>
+            <div class="grafico" id="grafico"></div>
+            <div class="ley" aria-hidden="true"><span class="con"><i></i>armonizada</span><span><i></i>sin armonizar</span></div>
+          </article>
+        </div>
       </section>
 
-      <section id="equipo" aria-labelledby="titulo-equipo" class="seccion" data-animar="seccion">
-        <h2 id="titulo-equipo">El equipo</h2>
-        <ul class="tarjetas equipo">
-          {
-            equipo.map((p) => (
-              <li class="tarjeta" data-animar="tarjeta">
-                <h3>{p.nombre}</h3>
-                <p>{p.rol}</p>
-                <a href={`https://github.com/${p.login}`}>@{p.login}</a>
-              </li>
-            ))
-          }
-        </ul>
+      <section class="paso" id="armonizacion" data-paso="2" aria-labelledby="titulo-armonizacion">
+        <div class="paso-in">
+          <article class="tarjeta">
+            <span class="eti-paso"><b>2</b>de 5 · <u>La armonización</u></span>
+            <h2 id="titulo-armonizacion">Dos satélites, <em>una sola medida.</em></h2>
+            <p>Charmy pone las dos series en la misma escala, por región y por mes.</p>
+            <dl class="cifras">
+              <div><dt>MODIS ↔ S-NPP</dt><dd>0,90</dd></div>
+              <div><dt>NOAA-20 ↔ S-NPP</dt><dd>0,94</dd></div>
+              <div><dt>Celda</dt><dd>11<small>km</small></dd></div>
+            </dl>
+            <p class="pie-cifras">r² mensual entre satélites · unidad: día-celda</p>
+            <a class="enlace" href={URL_METODO}>Leer el documento del método</a>
+          </article>
+        </div>
       </section>
 
-      <section id="creditos" aria-labelledby="titulo-creditos" class="seccion" data-animar="seccion">
-        <h2 id="titulo-creditos">Créditos de los datos</h2>
-        <ul class="creditos">
-          {
-            creditos.map((c) => (
-              <li>
-                <a href={c.url}>{c.nombre}</a>: {c.texto}
-              </li>
-            ))
-          }
-        </ul>
-        <p>
-          Cómo se arma la serie, cómo se valida y sus límites:
-          <a href={URL_METODO}>documento del método</a>.
-        </p>
-        <p>
-          Desafío "Harmonization of MODIS and VIIRS Hot Spots", propuesto por CONAE para NASA Space Apps Challenge 2026.
-        </p>
+      <section class="paso" id="zona" data-paso="3" aria-labelledby="titulo-zona">
+        <div class="paso-in">
+          <article class="tarjeta">
+            <span class="eti-paso"><b>3</b>de 5 · <u>Tu zona</u></span>
+            <h2 id="titulo-zona">Dibujás tu zona y <em>el mapa responde.</em></h2>
+            <p>Marcás un área o escribís latitud y longitud.</p>
+            <div class="coords">
+              <span class="campo">Latitud<output>−45,86</output></span>
+              <span class="campo">Longitud<output>−67,48</output></span>
+            </div>
+            <div class="zona-dato"><b id="zona-total">—</b><span>focos de ejemplo en Chubut desde 2001, alrededor de Comodoro Rivadavia</span></div>
+          </article>
+        </div>
       </section>
+
+      <section class="paso" id="calendario" data-paso="4" aria-labelledby="titulo-calendario">
+        <div class="paso-in">
+          <article class="tarjeta">
+            <span class="eti-paso"><b>4</b>de 5 · <u>Calendario de quema</u></span>
+            <h2 id="titulo-calendario">Cada foco vuelve <em>a su mes.</em></h2>
+            <p>Mes por mes y año por año: cuánto fuego hubo y si este mes está por encima de lo normal.</p>
+            <div class="rampa" aria-hidden="true">
+              {[1, 2, 3, 4, 5, 6, 7].map((n) => <i style={`background:var(--rampa-conteo-${n})`}></i>)}
+            </div>
+            <div class="rampa-txt"><span>menos fuego</span><span>más fuego</span></div>
+          </article>
+        </div>
+      </section>
+
+      <section class="paso" id="vivo" data-paso="5" aria-labelledby="titulo-vivo">
+        <div class="paso-in">
+          <article class="tarjeta">
+            <span class="eti-paso"><b>5</b>de 5 · <u>En vivo</u></span>
+            <h2 id="titulo-vivo">Lo que pasó <em>en las últimas horas.</em></h2>
+            <p>Los focos recientes de NOAA-20 y NOAA-21.</p>
+            <ul class="vivo">
+              <li><span class="pulso" aria-hidden="true"></span><span><b>Maule</b>, Chile</span><time>NOAA-21 · hace 2 h</time></li>
+              <li><span class="pulso" aria-hidden="true"></span><span><b>Neuquén</b>, Argentina</span><time>NOAA-20 · hace 4 h</time></li>
+              <li><span class="pulso" aria-hidden="true"></span><span><b>Chubut</b>, Argentina</span><time>NOAA-21 · hace 5 h</time></li>
+            </ul>
+            <span class="ejemplo">Ejemplo</span>
+          </article>
+        </div>
+      </section>
+
+      <div class="paso" data-paso="6" style="min-height:60vh"></div>
     </main>
 
-    <footer class="pie">
-      <p>
-        Charmy no reemplaza a los servicios de emergencia. Si ves un incendio, llamá al 100 (bomberos, Argentina) o al
-        132 (bomberos, Chile).
-      </p>
-    </footer>
+    <div class="resto">
+      <div class="envuelve">
+        <section id="modos" aria-labelledby="titulo-modos">
+          <h2 class="titular" id="titulo-modos">Una respuesta clara, <em>o todos los datos.</em></h2>
+          <p class="subtitular">El mismo mapa sirve a quien quiere saber si su zona está bien y a quien necesita validar la serie.</p>
+          <div class="modos">
+            <article class="modo">
+              <header><span class="modo-n">01</span><span>Modo novato</span></header>
+              <h3>Charmy te lo dice simple.</h3>
+              <figure class="vista">
+                <table class="clave">
+                  <tbody>
+                    <tr><th scope="row">Tu zona</th><td>Comodoro Rivadavia</td></tr>
+                    <tr><th scope="row">Este mes</th><td>14 días con fuego</td></tr>
+                    <tr><th scope="row">Lo normal</th><td>6 días</td></tr>
+                    <tr class="veredicto"><th scope="row">Charmy dice</th><td>Más fuego que lo normal</td></tr>
+                  </tbody>
+                </table>
+                <figcaption>Ejemplo, no son datos reales</figcaption>
+              </figure>
+            </article>
+            <article class="modo">
+              <header><span class="modo-n">02</span><span>Modo experto</span></header>
+              <h3>Todos los datos, en CSV.</h3>
+              <figure class="vista">
+                <table>
+                  <thead><tr><th scope="col">cell_id</th><th scope="col">month</th><th scope="col">fire_days</th></tr></thead>
+                  <tbody>
+                    <tr><td>-67.45_-45.85</td><td>2019-01</td><td>4</td></tr>
+                    <tr><td>-67.45_-45.85</td><td>2019-02</td><td>6</td></tr>
+                    <tr><td>-67.55_-45.75</td><td>2019-02</td><td>3</td></tr>
+                  </tbody>
+                </table>
+                <figcaption>Muestra de la descarga en CSV</figcaption>
+              </figure>
+            </article>
+          </div>
+        </section>
+
+        <section class="kids" id="juego" aria-labelledby="titulo-juego">
+          <div class="kids-txt">
+            <span class="kids-eti">Juego educativo</span>
+            <h2 id="titulo-juego">Charmy Brigada</h2>
+            <p>Un juego para chicas y chicos: Charmy bombero apaga los focos de un día real y deja un consejo de prevención.</p>
+            <ol class="kids-pasos">
+              <li><b>01</b><div><h3>Un día real</h3><p>Los focos del juego salen de un día de la serie.</p></div></li>
+              <li><b>02</b><div><h3>Un consejo</h3><p>Al terminar, Charmy deja una idea para prevenir incendios.</p></div></li>
+            </ol>
+            <a class="boton" href={URL_JUEGO}>Jugar <Fragment set:html={flecha} /></a>
+          </div>
+          <div class="kids-figura" id="kids-figura" aria-hidden="true" set:html={charmyBrigada} />
+        </section>
+
+        <section class="logos" aria-label="Instituciones">
+          <div class="logos-pista">
+            <ul class="logos-fila">
+              {tira.map((l) => <li><img src={l.logo} alt={l.alt} height={l.alto} style={`height:${l.alto}px`} /></li>)}
+            </ul>
+            <ul class="logos-fila" aria-hidden="true">
+              {tira.map((l) => <li><img src={l.logo} alt="" height={l.alto} style={`height:${l.alto}px`} /></li>)}
+            </ul>
+          </div>
+        </section>
+
+        <section class="equipo-sec" id="nosotros" aria-labelledby="titulo-nosotros">
+          <h2 id="titulo-nosotros">Nosotros</h2>
+          <div class="nos-grilla">
+            <div class="tecno">
+              <h3>Tecnologías que usamos</h3>
+              <h4 class="nos-mini">Modelos entrenados</h4>
+              <ul class="modelos">
+                <li>
+                  <div class="mod-img">
+                    <svg viewBox="0 0 160 70" aria-hidden="true"><path d="M6 58 L30 54 L54 56 L76 50" fill="none" stroke="var(--color-tinta-suave)" stroke-width="2.5" stroke-dasharray="5 4"></path><path d="M76 22 L98 16 L120 24 L154 12" fill="none" stroke="var(--color-tinta-suave)" stroke-width="2.5" stroke-dasharray="5 4"></path><path d="M6 30 L30 22 L54 28 L76 20 L98 16 L120 24 L154 12" fill="none" stroke="var(--color-acento)" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"></path><line x1="76" y1="6" x2="76" y2="64" stroke="var(--color-tinta-suave)" stroke-width="1"></line></svg>
+                  </div>
+                  <b>Armoniza MODIS y VIIRS</b>
+                </li>
+                <li>
+                  <div class="mod-img"><img src="/logos/lightgbm.svg" alt="LightGBM" /></div>
+                  <b>LightGBM pronostica el fuego</b>
+                </li>
+                <li>
+                  <div class="mod-img">
+                    <svg viewBox="0 0 160 70" aria-hidden="true"><path d="M104 30 L154 14 L154 50 L104 42 Z" fill="var(--color-acento)" fill-opacity=".16"></path><path d="M6 48 L20 40 L34 46 L48 30 L62 38 L76 26 L90 34 L104 36" fill="none" stroke="var(--charmy-tinta)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"></path><path d="M104 36 L120 30 L136 34 L154 30" fill="none" stroke="var(--color-acento)" stroke-width="3" stroke-linecap="round" stroke-dasharray="4 5"></path><line x1="104" y1="6" x2="104" y2="64" stroke="var(--color-tinta-suave)" stroke-width="1"></line></svg>
+                  </div>
+                  <b>TimesFM, en evaluación</b>
+                </li>
+                <li>
+                  <div class="mod-img"><svg viewBox="0 0 24 24" role="img" aria-label="NVIDIA" class="nv"><path d={iconos.nvidia}></path></svg></div>
+                  <b>NIM etiqueta noticias</b>
+                </li>
+              </ul>
+              <h4 class="nos-mini">Herramientas</h4>
+              <ul class="tecno-logos">
+                {
+                  herramientas.map((h) => (
+                    <li>
+                      <svg viewBox="0 0 24 24" aria-hidden="true" style={`color:${h.color}`}><path d={iconos[h.icono]} /></svg>
+                      <span>{h.nombre}</span>
+                    </li>
+                  ))
+                }
+              </ul>
+            </div>
+            <div class="nos-equipo">
+              <h3>Quiénes somos</h3>
+              <ul class="equipo">
+                {
+                  equipo.map((p) => (
+                    <li>
+                      <a href={`https://github.com/${p.login}`}>
+                        <img src={`/equipo/${p.login}.jpg`} alt="" width="48" height="48" loading="lazy" />
+                        <b>{p.nombre}</b>
+                        <code>@{p.login}</code>
+                      </a>
+                    </li>
+                  ))
+                }
+              </ul>
+            </div>
+          </div>
+        </section>
+
+        <footer class="pie" id="creditos" aria-labelledby="titulo-creditos">
+          <h2 class="solo-lectores" id="titulo-creditos">Créditos de los datos</h2>
+          <div class="creditos">
+            <div><h3>Focos</h3><p><a href="https://firms.modaps.eosdis.nasa.gov/">NASA FIRMS</a></p><p>MODIS y VIIRS (S-NPP, NOAA-20 y NOAA-21).</p></div>
+            <div><h3>Imágenes</h3><p><a href="https://dataspace.copernicus.eu/">Copernicus Data Space Ecosystem</a></p><p>Contiene datos modificados de Copernicus Sentinel.</p></div>
+            <div><h3>Tiempo</h3><p><a href="https://www.meteomatics.com/">Meteomatics</a></p><p>Viento, temperatura, humedad e índices de riesgo.</p></div>
+            <div><h3>Método</h3><p>Cómo se arma la serie, cómo se valida y sus límites: <a href={URL_METODO}>documento del método</a>.</p></div>
+          </div>
+          <p class="aviso">Charmy no reemplaza a los servicios de emergencia. Si ves un incendio, llamá a los bomberos: <b>100</b> en Argentina, <b>132</b> en Chile.</p>
+          <div class="firma">
+            <span>Desafío "Harmonization of MODIS and VIIRS Hot Spots", propuesto por CONAE para NASA Space Apps Challenge 2026.</span>
+            <span>El mapa de esta página es ilustrativo.</span>
+          </div>
+        </footer>
+      </div>
+    </div>
 
     <script>
-      import { gsap } from "gsap";
-      import { ScrollTrigger } from "gsap/ScrollTrigger";
-
-      gsap.registerPlugin(ScrollTrigger);
-
-      // Con movimiento reducido no se registra ninguna animación: todo queda visible y quieto.
-      gsap.matchMedia().add("(prefers-reduced-motion: no-preference)", () => {
-        gsap.from("[data-animar='charmy']", { scale: 0.8, opacity: 0, duration: 0.8, ease: "back.out(1.6)" });
-        gsap.utils.toArray<HTMLElement>("[data-animar='seccion']").forEach((seccion) => {
-          gsap.from(seccion.querySelectorAll("h2, p, [data-animar='tarjeta']"), {
-            y: 24,
-            opacity: 0,
-            duration: 0.6,
-            stagger: 0.08,
-            ease: "power2.out",
-            scrollTrigger: { trigger: seccion, start: "top 80%" },
-          });
-        });
-      });
+      import "../scripts/landing";
     </script>
   </body>
 </html>
-
-<style>
-  .portada {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    justify-content: center;
-    gap: 2rem;
-    max-width: 64rem;
-    margin: 0 auto;
-    padding: 4rem 1rem;
-  }
-
-  .portada-texto {
-    flex: 1 1 20rem;
-  }
-
-  h1 {
-    font-size: clamp(2.5rem, 8vw, 4.5rem);
-    margin: 0;
-    color: var(--color-acento);
-  }
-
-  .bajada {
-    font-size: 1.25rem;
-    color: var(--color-tinta-suave);
-  }
-
-  .accesos {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.75rem;
-    margin-top: 1.5rem;
-  }
-
-  .boton {
-    display: inline-flex;
-    align-items: center;
-    min-height: var(--alto-control-min);
-    padding: 0 1.25rem;
-    border: 1px solid var(--color-borde-control);
-    border-radius: var(--radio-pildora);
-    color: var(--color-tinta);
-    background: var(--color-superficie);
-    font-weight: 600;
-    text-decoration: none;
-  }
-
-  .boton-principal {
-    border-color: var(--color-acento);
-    background: var(--color-acento);
-    color: var(--color-acento-contraste);
-  }
-
-  .boton:focus-visible,
-  a:focus-visible {
-    outline: 3px solid var(--color-foco);
-    outline-offset: 2px;
-  }
-
-  .seccion {
-    max-width: 64rem;
-    margin: 0 auto;
-    padding: 3rem 1rem;
-  }
-
-  .seccion > p {
-    max-width: 42rem;
-    line-height: 1.6;
-  }
-
-  .tarjetas {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
-    gap: 1rem;
-    padding: 0;
-    list-style: none;
-  }
-
-  .tarjeta {
-    padding: 1.25rem;
-    border: 1px solid var(--color-borde);
-    border-radius: var(--radio-tarjeta);
-    background: var(--color-superficie);
-    box-shadow: var(--sombra-tarjeta);
-  }
-
-  .tarjeta h3 {
-    margin: 0 0 0.5rem;
-    font-family: var(--fuente-titulos);
-  }
-
-  .tarjeta p {
-    margin: 0 0 0.5rem;
-    color: var(--color-tinta-suave);
-  }
-
-  .equipo a {
-    font-family: var(--fuente-mono);
-    color: var(--color-acento);
-  }
-
-  .creditos {
-    line-height: 1.8;
-  }
-
-  .creditos a {
-    color: var(--color-acento);
-    font-weight: 600;
-  }
-
-  .pie {
-    padding: 2rem 1rem;
-    background: var(--color-oscuro-fondo);
-    color: var(--color-oscuro-tinta);
-    text-align: center;
-  }
-</style>

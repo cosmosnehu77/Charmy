@@ -54,7 +54,7 @@ export function Calendario() {
   const csv = area ? `${urlApi()}${rutaCsv({ bbox: bboxDeArea(area), desde, hasta, fuente, confianzaMin })}` : null;
 
   return (
-    <section aria-labelledby="titulo-calendario" className="flex flex-col gap-3 p-4">
+    <section aria-labelledby="titulo-calendario" data-guia="calendario" className="flex flex-col gap-3 p-4">
       <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
         <h2 id="titulo-calendario" className="text-lg font-semibold">
           Calendario de quema

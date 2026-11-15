@@ -100,7 +100,7 @@ def test_focos_en_vivo_de_la_zona_sin_fuentes_fijas():
         assert req.url.params["bbox"] == ZONA_DEMO.bbox_param()
         return httpx.Response(200, json=LIVE)
 
-    focos = asyncio.run(cliente(manejador).focos_en_vivo(ZONA_DEMO))
+    focos = asyncio.run(cliente(manejador).focos_en_vivo(ZONA_DEMO.bbox))
     assert [f.id for f in focos] == ["N20-2026-11-14T04:55:00Z--41.95000--71.53000"]
     foco = focos[0]
     assert (foco.tipo, foco.lat, foco.lon) == ("foco_satelital", -41.95, -71.53)
@@ -117,7 +117,7 @@ def test_un_foco_sin_frp_se_avisa_igual():
     def manejador(req):
         return httpx.Response(200, json={**LIVE, "features": [sin_frp, LIVE["features"][0]]})
 
-    focos = asyncio.run(cliente(manejador).focos_en_vivo(ZONA_DEMO))
+    focos = asyncio.run(cliente(manejador).focos_en_vivo(ZONA_DEMO.bbox))
     assert [f.id for f in focos] == ["N21-sin-frp", LIVE["features"][0]["id"]]
     assert focos[0].detalle == "VIIRS NOAA-20, confianza nominal, FRP sin dato, veredicto: probable"
 
@@ -128,7 +128,7 @@ def test_un_foco_malformado_no_tapa_a_los_demas():
     def manejador(req):
         return httpx.Response(200, json={**LIVE, "features": [roto, LIVE["features"][0]]})
 
-    focos = asyncio.run(cliente(manejador).focos_en_vivo(ZONA_DEMO))
+    focos = asyncio.run(cliente(manejador).focos_en_vivo(ZONA_DEMO.bbox))
     assert [f.id for f in focos] == [LIVE["features"][0]["id"]]
 
 
@@ -143,7 +143,7 @@ def test_reportes_con_token_de_servicio():
              "created_at": "2026-11-14T10:06:00Z"},
         ])
 
-    reportes = asyncio.run(cliente(manejador).reportes(ZONA_DEMO))
+    reportes = asyncio.run(cliente(manejador).reportes(ZONA_DEMO.bbox))
     assert [r.tipo for r in reportes] == ["reporte_ciudadano", "reporte_ciudadano"]
     assert reportes[0].detalle == "Columna de humo detrás del cerro"
     assert reportes[1].detalle == "Sin descripción"
@@ -154,8 +154,8 @@ def test_si_live_o_reports_fallan_no_hay_focos_y_el_servicio_sigue():
         return httpx.Response(500)
 
     c = cliente(con_500)
-    assert asyncio.run(c.focos_en_vivo(ZONA_DEMO)) == []
-    assert asyncio.run(c.reportes(ZONA_DEMO)) == []
+    assert asyncio.run(c.focos_en_vivo(ZONA_DEMO.bbox)) == []
+    assert asyncio.run(c.reportes(ZONA_DEMO.bbox)) == []
 
 
 def test_crear_alerta_dice_si_es_nueva():

@@ -10,6 +10,7 @@ import { useFocos } from "@/consulta/useFocos";
 import { useApp } from "@/estado/app";
 import { useConsulta } from "@/estado/consulta";
 import { atributosFoco } from "@/experto/atributos";
+import { urlGoogleMaps, urlGoogleMapsEmbed } from "@/lib/enlaces";
 import { useFocosVivo } from "@/vivo/consultas";
 import { useVivo } from "@/vivo/estado";
 import { useContexto } from "@/contexto/estado";
@@ -98,6 +99,8 @@ export default function Mapa() {
     m.on("click", "focos", (e) => {
       const foco = e.features?.[0];
       if (!foco || useApp.getState().modo !== "experto") return;
+      const contenedorPopup = document.createElement("div");
+      contenedorPopup.className = "flex flex-col gap-2";
       const lista = document.createElement("dl");
       lista.className = "grid grid-cols-[auto_1fr] gap-x-3 gap-y-0.5 font-mono text-xs";
       for (const [nombre, valor] of atributosFoco(foco.properties as Parameters<typeof atributosFoco>[0])) {
@@ -108,7 +111,22 @@ export default function Mapa() {
         dd.textContent = valor;
         lista.append(dt, dd);
       }
-      new maplibregl.Popup({ maxWidth: "320px" }).setLngLat(e.lngLat).setDOMContent(lista).addTo(m);
+      const enlace = document.createElement("a");
+      enlace.href = urlGoogleMaps(e.lngLat.lat, e.lngLat.lng);
+      enlace.target = "_blank";
+      enlace.rel = "noopener noreferrer";
+      enlace.setAttribute("aria-label", "Ver ubicación en Google Maps");
+      enlace.className = "inline-flex items-center gap-1 text-xs font-medium underline";
+      enlace.innerHTML =
+        '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0"/><circle cx="12" cy="10" r="3"/></svg><span>Ver ubicación en Google Maps</span>';
+      const iframe = document.createElement("iframe");
+      iframe.title = "Previsualización de la ubicación en Google Maps";
+      iframe.src = urlGoogleMapsEmbed(e.lngLat.lat, e.lngLat.lng);
+      iframe.loading = "lazy";
+      iframe.referrerPolicy = "no-referrer-when-downgrade";
+      iframe.className = "block h-28 w-full rounded border";
+      contenedorPopup.append(lista, enlace, iframe);
+      new maplibregl.Popup({ maxWidth: "320px" }).setLngLat(e.lngLat).setDOMContent(contenedorPopup).addTo(m);
     });
     // Tocar un foco reciente lo elige en el panel «En vivo» para ver su evidencia.
     m.on("click", "vivo", (e) => {

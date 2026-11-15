@@ -1,4 +1,5 @@
-import { X } from "lucide-react";
+import { MapPin, X } from "lucide-react";
+import { urlGoogleMaps, urlGoogleMapsEmbed } from "@/lib/enlaces";
 import type { FocoReciente } from "./datos";
 import { useRelieve } from "./estado";
 import { colorFoco, hace, nivelFoco, radioFoco, type RegionResumen } from "./logica";
@@ -116,7 +117,7 @@ export function FichaFoco({ foco, regiones }: { foco: FocoReciente; regiones: Re
   return (
     <section
       aria-label="Ficha del foco"
-      className="ficha-relieve pointer-events-auto absolute inset-x-3 bottom-3 z-30 rounded-[18px] px-[18px] py-4 text-white md:inset-x-auto md:bottom-auto md:right-3 md:top-[76px] md:w-[300px]"
+      className="ficha-relieve pointer-events-auto absolute inset-x-3 bottom-3 z-30 max-h-[78%] overflow-y-auto rounded-[18px] px-[18px] py-4 text-white md:inset-x-auto md:bottom-auto md:right-3 md:top-[76px] md:max-h-[calc(100%-92px)] md:w-[300px]"
     >
       <header className="flex items-start justify-between gap-2.5">
         <div>
@@ -153,10 +154,32 @@ export function FichaFoco({ foco, regiones }: { foco: FocoReciente; regiones: Re
         <dt className="text-white/55">Momento</dt>
         <dd className="m-0 text-right font-semibold">{foco.momento === "D" ? "De día" : "De noche"}</dd>
         <dt className="text-white/55">Ubicación</dt>
-        <dd className="m-0 text-right font-semibold tabular-nums">
-          {num(foco.lat, 3)}, {num(foco.lon, 3)}
+        <dd className="m-0 flex flex-wrap items-center justify-end gap-1.5 text-right font-semibold tabular-nums">
+          <span>
+            {num(foco.lat, 3)}, {num(foco.lon, 3)}
+          </span>
+          <a
+            href={urlGoogleMaps(foco.lat, foco.lon)}
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label="Ver ubicación en Google Maps"
+            title="Ver ubicación en Google Maps"
+            className="inline-flex items-center gap-1 rounded-full bg-white/10 px-2 py-0.5 text-xs font-medium text-relieve-brillo hover:bg-white/20"
+          >
+            <MapPin aria-hidden="true" className="size-3.5 shrink-0" />
+            <span>Google Maps</span>
+          </a>
         </dd>
       </dl>
+      <div className="mt-3 overflow-hidden rounded-xl border border-white/10 bg-white/5">
+        <iframe
+          title="Previsualización de la ubicación en Google Maps"
+          src={urlGoogleMapsEmbed(foco.lat, foco.lon)}
+          loading="lazy"
+          referrerPolicy="no-referrer-when-downgrade"
+          className="block h-32 w-full border-0"
+        />
+      </div>
       <p className="mt-3 text-xs leading-snug text-white/55">
         La intensidad (FRP) es la energía que irradia el fuego. Un foco es calor detectado desde el espacio: puede ser un
         incendio, una quema o una fuente fija.

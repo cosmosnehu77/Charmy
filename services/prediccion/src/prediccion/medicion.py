@@ -2,7 +2,7 @@
 
 El MAE contra la climatología, que usa la compuerta D-10, premia predecir cero: la mayoría de las celdas-mes
 no tiene fuego. Esta medición usa la misma tabla, las mismas filas, la misma partición y el mismo LightGBM que
-`pipeline.prediccion` y suma, por horizonte:
+`prediccion.modelo` y suma, por horizonte:
 
 - desvío de Poisson medio: castiga mucho decir casi cero donde hubo fuego;
 - detección: una celda-mes es predicha quemada si P(y ≥ 1) = 1 − e^(−μ) ≥ 0,5, es decir μ ≥ ln 2;
@@ -12,7 +12,7 @@ no tiene fuego. Esta medición usa la misma tabla, las mismas filas, la misma pa
 
 No cambia lo que se publica: `prediccion.parquet` y `/forecast` siguen con la compuerta D-10.
 
-Uso: uv run --package pipeline python -m pipeline.medicion --entrenamiento data/pub/entrenamiento.parquet
+Uso: uv run --package prediccion python -m prediccion.medicion --entrenamiento data/pub/entrenamiento.parquet
 """
 
 import argparse
@@ -22,7 +22,7 @@ from pathlib import Path
 
 import polars as pl
 
-from pipeline.prediccion import HORIZONTES, _ajustar, _predecir, filas, particion
+from prediccion.modelo import HORIZONTES, ajustar, filas, leer_entrenamiento, particion, predecir
 
 EPS = 1e-6  # piso de μ en el desvío: con μ = 0 e y > 0 sería infinito
 UMBRAL = math.log(2)  # μ desde el que P(y ≥ 1) ≥ 0,5
@@ -66,9 +66,9 @@ def top(claves: pl.DataFrame, y: pl.Series, mu: pl.Series) -> dict[str, float | 
 
 
 def prueba_con_referencias(m: pl.DataFrame) -> pl.DataFrame:
-    """Las filas de prueba de `pipeline.prediccion` con la predicción del LightGBM Poisson (`pred`)."""
+    """Las filas de prueba de `prediccion.modelo` con la predicción del LightGBM Poisson (`pred`)."""
     entreno, prueba = particion(filas(m))
-    return prueba.with_columns(pred=_predecir(_ajustar(entreno, "poisson"), prueba))
+    return prueba.with_columns(pred=predecir(ajustar(entreno, "poisson"), prueba))
 
 
 def medir(prueba: pl.DataFrame) -> pl.DataFrame:
@@ -154,10 +154,7 @@ def main(argv: list[str] | None = None) -> int:
     )
     p.add_argument("--entrenamiento", type=Path, required=True, help="entrenamiento.parquet publicado")
     args = p.parse_args(argv)
-    e = pl.read_parquet(args.entrenamiento)
-    m = e.select(
-        "cell_id", mes=pl.col("month").str.to_date("%Y-%m"), dias=pl.col("fire_days").cast(pl.Float64)
-    )
+    m = leer_entrenamiento(args.entrenamiento)
     prueba = prueba_con_referencias(m)
     desde, hasta = prueba["emision"].min(), prueba["emision"].max()
     print(f"prueba: emisiones {desde:%Y-%m} a {hasta:%Y-%m}, horizontes {HORIZONTES}")

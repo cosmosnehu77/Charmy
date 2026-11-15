@@ -13,7 +13,7 @@ Los nombres de campo siguen al OpenAPI (`docs/repo-inicial/openapi.yaml`), así 
 | `calendario` | **estable** | F2-B2, `pipeline.armonizacion` (en `data/muestras`, todavía provisorio) |
 | `metricas` | **estable** | F2-B1, `pipeline.armonizacion` (en `data/muestras`, todavía provisoria) |
 | `fuentes_fijas` | **estable** | F3-B1, `pipeline.fuentes_fijas` |
-| `prediccion` | **estable** | F3-B2, `pipeline.prediccion` (solo si pasa la compuerta D-10) |
+| `prediccion` | **estable** | F3-B2, `prediccion.modelo` en `services/prediccion` (R-E3; solo si pasa la compuerta D-10) |
 | `entrenamiento` | **estable** | F3-B5, `pipeline.prediccion` |
 
 ## Grilla
@@ -187,4 +187,4 @@ Las genera `uv run --package pipeline python -m pipeline.muestras <csv>... --out
 
 `pipeline.armonizacion` deja en `--out` lo que se publica: `serie.parquet`, `calendario.parquet`,
 `metricas.parquet` y `regiones.geojson`; `pipeline.fuentes_fijas`, `fuentes_fijas.csv`; `pipeline.prediccion`,
-`entrenamiento.parquet` y `prediccion.parquet` (este último, si pasa la compuerta). Se suben con `publicar` (`infra/README.md`) como `datos-AAAA-MM-DD`.
+`entrenamiento.parquet`; y `prediccion.modelo` (`services/prediccion`), `prediccion.parquet`, si pasa la compuerta. Se suben con `publicar` (`infra/README.md`) como `datos-AAAA-MM-DD`.

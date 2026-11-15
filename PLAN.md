@@ -10,7 +10,7 @@
 
 **Fase activa:** 4
 **Líder:** `@cosmosnehu77`. Hasta que vuelva (probablemente en la fase 4), **líder interino `@daniace`** (D-28).
-**Versión:** 2.3.11 · **Última actualización:** 15 de noviembre de 2026
+**Versión:** 2.3.12 · **Última actualización:** 15 de noviembre de 2026
 
 ## Objetivo del proyecto
 
@@ -430,6 +430,7 @@ Si falta tiempo en el carril B, el orden es: fuentes fijas, tiempo, imagen y, po
 | #323 | F4-D8 | Organización de Experto: en la barra, Experto anteúltima y sin ícono y En vivo última; el panel va por pasos (dónde, cuándo y filtros plegados), con una franja de resultado y reproducción, pestañas Resumen / Lugar / Validación y Reportar en el encabezado; las descargas del calendario en un menú | `@daniace` | `apps/app/` | F4-D7 | RF-MOD-02, RNF-04 | hecho |
 | #329 | F4-D9 | Charmy guía el panel de Experto: botón Guía en el encabezado que abre el recorrido de Charmy (vestuario científica) por cada parte del panel y sus parámetros, como el de la vista común | `@daniace` | `apps/app/` | F4-D8 | RF-CHA-05, RF-MOD-02, RNF-04 | hecho |
 | #347 | F4-D12 | Pestaña Predicción de Relieve (celdas esperadas contra las habituales por provincia, ficha con los seis meses) y predicción del área en Experto; "no disponible" si la API no responde (D-40) | `@BrunoAguinaga0` (traspaso de `apps/app/`) | `apps/app/` | F4-C4 | RF-PRE-01, RF-PRE-02 | pendiente |
+| #368 | F4-D14 | Charmy guía cada pestaña del mapa: Intensidad, Anomalía, Riesgo y Predicción con su propio recorrido (qué muestra y cómo se usa); En vivo con botón Guía en su panel; Focos mantiene el recorrido general | `@daniace` | `apps/app/` | F4-D9 | RF-CHA-05, RNF-04 | hecho |
 | #60 | F4-E1 | Pulido de la landing; enlaces entre las tres piezas | `@daniace` (D-34) | `apps/landing/` | fase 3 | RF-LAN-04, RNF-12 | pendiente |
 | #61 | F4-E2 | Pulido del juego | `@daniace` (D-34) | `apps/juego/` | F3-E1 | RNF-12 | pendiente |
 | #183 | F4-E3 | El juego pasa a llamarse Charmy Brigada en todas las piezas; requisitos y tareas de D-35 | `@dimidio6` | `apps/juego/`, y el nombre en `apps/app/`, `apps/landing/`, `packages/charmy/`, `docs/` | — | RF-KID-01, RNF-12 | en revisión |
@@ -530,7 +531,7 @@ Qué tareas cubren cada requisito. Si un requisito de `REQUISITOS.md` no aparece
 | RF-MOD-01, 02, 03 | F3-D1, F3-D2; F4-D7 (retira el modo novato), F4-D8 (organización de Experto) | 3, 4 |
 | RF-CHA-01, 04 | F0-E1, F1-E1, F1-E2, F1-E4 | 1 |
 | RF-CHA-02, 03, 06 | F2-E1, F3-E2 | 2 (mínimo) / 3 |
-| RF-CHA-05 | F3-D1; F4-D9 (guía de Experto), F4-D10 (invitación a la guía) | 3, 4 |
+| RF-CHA-05 | F3-D1; F4-D9 (guía de Experto), F4-D10 (invitación a la guía), F4-D14 (guía por pestaña) | 3, 4 |
 | RF-CHA-07 | F2-F1 | 2 |
 | RF-LAN-01 a 04 | F1-F1, F2-E2, F4-E1 | 2 |
 | RF-VIV-01 a 04 | F3-C1, F3-C3, F3-D3, F4-D2, F4-D4 | 3, 4 |
@@ -556,7 +557,7 @@ Qué tareas cubren cada requisito. Si un requisito de `REQUISITOS.md` no aparece
 | RF-CTX-06 | F4-B1 | 4 |
 | RNF-01, 08 | F0-A1, F1-A1, F1-A2, F4-A1 | 4 |
 | RNF-02 | F2-A1, F2-A2, F4-C1 | 4 |
-| RNF-03, 04 | F1-D2, F2-D2, F4-D1, F4-D6, F4-D8, F4-D9 | 4 |
+| RNF-03, 04 | F1-D2, F2-D2, F4-D1, F4-D6, F4-D8, F4-D9, F4-D14 | 4 |
 | RNF-05 | F3-C2 | 3 |
 | RNF-06 | F0-A3, F0-A5, F4-A1, F4-A2, D-13 | 4 |
 | RNF-07, 11 | F0-F1, F3-F1, F4-A1, F4-B1, F4-F1 | 4 |
@@ -643,6 +644,7 @@ La fase 5 no cubre requisitos nuevos: refuerza RNF-02 y RNF-10 sobre lo ya entre
 | 2026-11-15 | Versión 2.3.8. Tarea nueva F4-D8 (#323): organización de Experto (orden de la barra, panel por pasos y pestañas, descargas en un menú), ya fusionada en #327; y F4-D9 (#329): Charmy guía el panel de Experto, en #330. | encabezado, 5, 6 | `@daniace` |
 | 2026-11-15 | Versión 2.3.10. Predicción por zona con el modelo binario servido aparte (D-40): tareas nuevas F4-C4 (#345, API) y F4-D12 (#347, app). | 1.1, 3, 5, 6 | `@BrunoAguinaga0` |
 | 2026-11-15 | Versión 2.3.11. Decisión D-41 (aprobada por el líder el 15/11): los botones de los avisos cambian el estado al instante con un webhook de Telegram a la API. Tarea nueva F4-A4 (#353). | 3, 5 | `@dimidio6` |
+| 2026-11-15 | Versión 2.3.12. Tarea nueva F4-D14 (#368): Charmy guía cada pestaña del mapa. | encabezado, 5, 6 | `@daniace` |
 
 ## 10. Registro de cierres
 

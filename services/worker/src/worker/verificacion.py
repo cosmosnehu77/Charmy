@@ -171,6 +171,9 @@ def _noticias(con, ahora, por_provincia: dict, cliente) -> dict[str, list[dict] 
 def verificar(con: psycopg.Connection, ahora: datetime, cliente: httpx.Client) -> str:
     """Calcula señales, evidencia y veredicto de todos los focos de `focos_vivo`."""
     con.execute(TABLAS)
+    # ALTER TABLE bloquea focos_vivo entero aunque no cambie nada: se suelta antes de las noticias, que pueden
+    # tardar minutos, para que /live siga respondiendo (#268).
+    con.commit()
     columnas = ["id", "latitude", "longitude", "acq_datetime", "satellite", "confidence", "frp", "cell_id"]
     focos = [
         dict(zip(columnas, fila, strict=True))
@@ -204,14 +207,18 @@ def verificar(con: psycopg.Connection, ahora: datetime, cliente: httpx.Client) -
                 "SELECT lat, lon, status FROM reportes WHERE created_at >= %s", [ahora - VENTANA_REPORTES]
             )
         ]
-    avisos = {}
+    avisos, por_celda = {}, {}
     if _existe(con, "avisos"):
-        avisos = dict(
-            con.execute(
-                "SELECT hotspot_id, status FROM avisos "
-                "WHERE kind = 'foco_satelital' AND hotspot_id IS NOT NULL"
-            ).fetchall()
-        )
+        filas_avisos = con.execute(
+            "SELECT hotspot_id, status FROM avisos "
+            "WHERE kind = 'foco_satelital' AND hotspot_id IS NOT NULL ORDER BY updated_at"
+        ).fetchall()
+        avisos = dict(filas_avisos)
+        # D-37: un aviso por celda. Lo que marca la entidad vale para toda la celda; si hay varios, el último.
+        celda_de = {f["id"]: f["cell_id"] for f in focos}
+        por_celda = {
+            celda_de[id_]: estado for id_, estado in filas_avisos if estado in ESTADOS and id_ in celda_de
+        }
 
     cuenta, filas = defaultdict(int), []
     for f in focos:
@@ -224,7 +231,9 @@ def verificar(con: psycopg.Connection, ahora: datetime, cliente: httpx.Client) -
             for r in reportes
             if (km := _km(f["latitude"], f["longitude"], r["lat"], r["lon"])) <= RADIO_REPORTES_KM
         ]
-        rep, ev_rep, falso = senal_reportes(cerca, avisos.get(f["id"]))
+        propio = avisos.get(f["id"])
+        estado_entidad = propio if propio in ESTADOS else por_celda.get(f["cell_id"])
+        rep, ev_rep, falso = senal_reportes(cerca, estado_entidad)
         senales = {"satellite": sat, "fixed_source": fija, "news": noti, "reports": rep}
         resultado, puntaje = veredicto(senales, falso)
         cuenta[resultado] += 1

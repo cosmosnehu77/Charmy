@@ -8,7 +8,7 @@ import { ubicarGlobo } from "./logica";
 /**
  * Charmy guía (RF-CHA-05): al tocarlo recorre la pantalla con un foco que va de un elemento a otro (marcados con
  * `data-guia`). Si un elemento no está en pantalla, ese paso se saltea. En la vista común espera abajo a la izquierda;
- * en Experto va en el encabezado del panel con sus propios pasos (F4-D9).
+ * en Experto y en En vivo va en el encabezado del panel. Cada pestaña trae sus pasos (`guiaPestanas.ts`, `guiaExperto.ts`).
  */
 export interface Paso {
   guia?: string;
@@ -21,140 +21,6 @@ export interface Paso {
   emergencia?: boolean;
 }
 
-const PASOS_MAPA: Paso[] = [
-  {
-    mood: "saluda",
-    get titulo() {
-      return t("¡Hola! Soy Charmy", "Hi! I’m Charmy");
-    },
-    get texto() {
-      return t(
-        "Te muestro en un minuto cómo mirar el fuego en Argentina y Chile. Podés salir cuando quieras.",
-        "I’ll show you in a minute how to explore fire activity in Argentina and Chile. You can exit anytime.",
-      );
-    },
-  },
-  {
-    guia: "indicadores",
-    mood: "explica",
-    get titulo() {
-      return t("Elegí qué mirar", "Choose what to view");
-    },
-    get texto() {
-      return t(
-        "Focos, intensidad o anomalía: cada provincia sube según ese dato. En vivo muestra los focos de las últimas horas.",
-        "Hotspots, intensity, or anomaly: each province rises according to that metric. Live shows hotspots from recent hours.",
-      );
-    },
-  },
-  {
-    guia: "zona",
-    mood: "explica",
-    get titulo() {
-      return t("Marcá tu zona", "Mark your area");
-    },
-    get texto() {
-      return t(
-        "En Experto marcás un área en el mapa: un rectángulo, un polígono, un punto con radio o una localidad. Te muestro cuánto fuego hubo ahí mes a mes y qué hay cerca.",
-        "In Expert you mark an area on the map: a rectangle, a polygon, a point with radius, or a locality. I’ll show you how much fire occurred there month by month and what is nearby.",
-      );
-    },
-  },
-  {
-    guia: "lupa",
-    mood: "explica",
-    get titulo() {
-      return t("Buscá tu lugar", "Find your place");
-    },
-    get texto() {
-      return t(
-        "Tocá la lupa y escribí el nombre de una provincia o región.",
-        "Tap the search icon and type the name of a province or region.",
-      );
-    },
-  },
-  {
-    guia: "ranking",
-    mood: "explica",
-    get titulo() {
-      return t("Las que más arden", "Top burning regions");
-    },
-    get texto() {
-      return t(
-        "El ranking ordena las regiones con más fuego según el indicador. Tocá una para ver su ficha.",
-        "The ranking orders the regions with the most fire by the selected indicator. Tap one to open its card.",
-      );
-    },
-  },
-  {
-    guia: "controles",
-    mood: "explica",
-    get titulo() {
-      return t("Mové el mapa", "Move the map");
-    },
-    get texto() {
-      return t(
-        "Acercá, alejá, mirá al norte, pasá a 2D si tu conexión es lenta y frená el giro. También podés arrastrar el mapa.",
-        "Zoom in, zoom out, reset north, switch to 2D on slower connections, and pause rotation. You can also drag the map.",
-      );
-    },
-  },
-  {
-    guia: "leyenda",
-    mood: "pensando",
-    get titulo() {
-      return t("¿Qué significan los colores?", "What do the colors mean?");
-    },
-    get texto() {
-      return t(
-        "Cuanto más alta y más oscura la región, más fuego. Si dudás, mirá acá.",
-        "The taller and darker the region, the more fire. Whenever in doubt, check here.",
-      );
-    },
-  },
-  {
-    guia: "ficha",
-    abrirRegion: true,
-    mood: "explica",
-    get titulo() {
-      return t("La ficha de una provincia", "A province’s card");
-    },
-    get texto() {
-      return t(
-        "Al tocar una provincia se abre su ficha y las demás se apagan para que la veas sola. Para volver, tocala de nuevo.",
-        "Tapping a province opens its card and dims the others so you can focus on it. Tap it again to go back.",
-      );
-    },
-  },
-  {
-    guia: "linea",
-    mood: "explica",
-    get titulo() {
-      return t("Día por día", "Day by day");
-    },
-    get texto() {
-      return t(
-        "Con el play ves cómo suben y bajan los focos de esa provincia. También podés tocar un día.",
-        "Press play to watch hotspots rise and fall across days in that province, or tap any day directly.",
-      );
-    },
-  },
-  {
-    cerrarRegion: true,
-    mood: "festeja",
-    get titulo() {
-      return t("¡Listo!", "All set!");
-    },
-    get texto() {
-      return t(
-        "Si necesitás ayuda de nuevo, tocame: estoy abajo a la izquierda.",
-        "If you need help again, tap me—I’m in the bottom-left corner.",
-      );
-    },
-    emergencia: true,
-  },
-];
-
 /** El globo «¿Necesitás ayuda?» se muestra solo unas veces al entrar, para que se note la guía (F4-D10). */
 const INVITACION = { visibleMs: 5000, pausaMs: 15000, veces: 3 };
 
@@ -162,13 +28,13 @@ const reducido = () => globalThis.matchMedia?.("(prefers-reduced-motion: reduce)
 
 export function CharmyGuia({
   regionMasFuego = null,
-  pasos: PASOS = PASOS_MAPA,
+  pasos: PASOS,
   outfit = "guia",
   boton = "figura",
   etiqueta,
 }: {
   regionMasFuego?: string | null;
-  pasos?: Paso[];
+  pasos: Paso[];
   outfit?: Outfit;
   /** «figura»: Charmy entero con la pregunta (vista común); «cabeza»: un botón chico para un encabezado. */
   boton?: "figura" | "cabeza";

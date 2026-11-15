@@ -5,8 +5,10 @@ import { useVivo } from "@/vivo/estado";
 import { SATELITES_VIVO } from "@/vivo/satelites";
 import { ETIQUETAS_EVIDENCIA, TIPOS_EVIDENCIA, veredicto } from "@/vivo/veredictos";
 import type { FocoReciente } from "./datos";
+import { CharmyGuia } from "./CharmyGuia";
 import { ComparacionVivo, EstadisticasVivo } from "./ResumenVivo";
 import { useRelieve } from "./estado";
+import { PASOS_VIVO } from "./guiaPestanas";
 import { localeActual, t, useIdioma } from "./idioma";
 import { colorFoco, etiquetaNivelFoco, focosVivoVisibles, hace, type NivelFoco, nivelFoco, radioFoco, type RegionResumen } from "./logica";
 
@@ -69,10 +71,17 @@ export function PanelEnVivo({ focos, disponible, mensaje, regiones }: Props) {
       aria-label={t("Resumen en vivo", "Live summary")}
       className="vidrio-relieve scroll-relieve pointer-events-auto absolute left-3 top-[76px] z-20 max-h-[calc(100dvh-140px)] w-[min(270px,calc(100%-24px))] overflow-y-auto rounded-2xl px-4 py-3.5 text-white"
     >
-      <h2 className="flex items-center gap-2 font-titulos text-lg font-bold">
-        <i aria-hidden="true" className="punto-vivo" />
-        {t("En vivo", "Live")}
-      </h2>
+      <header className="flex items-center justify-between gap-2">
+        <h2 className="flex items-center gap-2 font-titulos text-lg font-bold">
+          <i aria-hidden="true" className="punto-vivo" />
+          {t("En vivo", "Live")}
+        </h2>
+        <CharmyGuia
+          pasos={PASOS_VIVO}
+          boton="cabeza"
+          etiqueta={t("Guía: Charmy te explica cómo se usa En vivo", "Guide: Charmy explains how to use Live")}
+        />
+      </header>
       {!disponible ? (
         <p className="mt-2 text-sm text-white/70">
           {mensaje ?? t("Los focos recientes no están disponibles ahora.", "Recent hotspots are not available right now.")}
@@ -89,7 +98,7 @@ export function PanelEnVivo({ focos, disponible, mensaje, regiones }: Props) {
             .
           </p>
           {mensaje && <p className="mt-1.5 text-xs text-relieve-brillo">{mensaje}</p>}
-          <div className="mt-3 flex items-baseline gap-2">
+          <div data-guia="vivo-total" className="mt-3 flex items-baseline gap-2">
             <b className="font-titulos text-[34px] font-extrabold leading-none text-relieve-brillo tabular-nums">
               {num(visibles.length)}
             </b>
@@ -101,7 +110,7 @@ export function PanelEnVivo({ focos, disponible, mensaje, regiones }: Props) {
             </span>
           </div>
           <ComparacionVivo focos={focos} ultimo={ultimo} horas={horasVivo} niveles={nivelesVivo} />
-          <div role="group" aria-label={t("Ventana de tiempo", "Time window")} className="mt-3 flex gap-1 rounded-full bg-white/5 p-[3px]">
+          <div data-guia="vivo-ventana" role="group" aria-label={t("Ventana de tiempo", "Time window")} className="mt-3 flex gap-1 rounded-full bg-white/5 p-[3px]">
             {([6, 24, 48] as const).map((h) => (
               <button
                 key={h}
@@ -115,7 +124,7 @@ export function PanelEnVivo({ focos, disponible, mensaje, regiones }: Props) {
             ))}
           </div>
           {/* Como el filtro por satélite de FIRMS (#261): solo los que publican en vivo (D-13). */}
-          <div role="group" aria-label={t("Satélites", "Satellites")} className="mt-2 flex gap-1.5">
+          <div data-guia="vivo-satelites" role="group" aria-label={t("Satélites", "Satellites")} className="mt-2 flex gap-1.5">
             {SATELITES_VIVO.map((s) => {
               const elegido = satelites.includes(s.codigo);
               return (
@@ -141,7 +150,7 @@ export function PanelEnVivo({ focos, disponible, mensaje, regiones }: Props) {
               {t("Elegí al menos un satélite para ver los focos.", "Select at least one satellite to view hotspots.")}
             </p>
           )}
-          <div className="mt-3.5 border-t border-white/10 pt-3">
+          <div data-guia="vivo-intensidad" className="mt-3.5 border-t border-white/10 pt-3">
             <h3 className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-white/50">
               {t("Tamaño = intensidad", "Size = intensity")}
             </h3>
@@ -180,7 +189,7 @@ export function PanelEnVivo({ focos, disponible, mensaje, regiones }: Props) {
           </div>
           <EstadisticasVivo visibles={visibles} nombre={nombre} />
           {masIntensos.length > 0 && (
-            <div className="mt-3.5 border-t border-white/10 pt-3">
+            <div data-guia="vivo-intensos" className="mt-3.5 border-t border-white/10 pt-3">
               <h3 className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-white/50">{t("Más intensos", "Most intense")}</h3>
               <ol className="m-0 flex list-none flex-col gap-0.5 p-0">
                 {masIntensos.map((f) => (
@@ -201,7 +210,7 @@ export function PanelEnVivo({ focos, disponible, mensaje, regiones }: Props) {
           )}
           {/* Con teclado o lector de pantalla, los focos se recorren acá; en el mapa solo se tocan (RNF-04). */}
           {visibles.length > 0 && (
-            <details className="mt-3.5 border-t border-white/10 pt-3">
+            <details data-guia="vivo-lista" className="mt-3.5 border-t border-white/10 pt-3">
               <summary className="cursor-pointer rounded-lg px-1.5 py-1 text-[13px] font-semibold text-white/80 hover:bg-white/10">
                 {t("Lista de focos", "Hotspot list")} ({num(visibles.length)})
               </summary>

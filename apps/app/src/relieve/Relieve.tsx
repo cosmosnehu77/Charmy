@@ -44,6 +44,8 @@ export function Relieve() {
   const region = regiones.find((r) => r.id === estado.seleccion) ?? null;
   const dias = resumen.data?.days ?? [];
   const ranking = rankingRegiones(regiones, indicador, 5);
+  // Los días-celda del mes tienen decimales (#373); los conteos y la potencia van enteros.
+  const decimales = indicador === "focos" ? 1 : 0;
   // Hoy (UTC, como `days`) todavía no terminó: la tendencia no lo cuenta (F4-D6).
   const hoy = new Date().toISOString().slice(0, 10);
   const masFuego = rankingRegiones(regiones, "focos", 1)[0]?.id ?? null;
@@ -97,7 +99,7 @@ export function Relieve() {
               <span>
                 {(() => {
                   const v = valorIndicador(regionSobre.properties, indicador);
-                  return v === null ? t("sin dato", "no data") : `${num(v)} ${info?.unidad ?? ""}`;
+                  return v === null ? t("sin dato", "no data") : `${num(v, decimales)} ${info?.unidad ?? ""}`;
                 })()}
               </span>
             </>
@@ -259,7 +261,7 @@ export function Relieve() {
                           />
                         </span>
                         {serie && tend ? <TendenciaRegion serie={serie} tendencia={tend} /> : <span />}
-                        <span className="w-12 text-right tabular-nums text-white/80">{num(r.valor)}</span>
+                        <span className="w-12 text-right tabular-nums text-white/80">{num(r.valor, decimales)}</span>
                       </button>
                     </li>
                   );
@@ -310,7 +312,8 @@ export function Relieve() {
           {region && (
             <>
               <FichaRegion region={region} regiones={regiones} foco={focoElegido} />
-              <LineaTiempo region={region} dias={dias} />
+              {/* Focos es un mes (#373): la línea de días va con Intensidad. */}
+              {indicador !== "focos" && <LineaTiempo region={region} dias={dias} />}
             </>
           )}
           {/* Con una provincia abierta, el foco va dentro de su ficha: una sola ficha a la vez (#236). */}

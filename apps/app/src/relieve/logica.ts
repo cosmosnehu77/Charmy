@@ -24,10 +24,13 @@ export const INDICADORES: { id: Indicador; nombre: string; unidad: string; ayuda
       return t("Focos", "Hotspots");
     },
     get unidad() {
-      return t("focos", "hotspots");
+      return t("días-celda", "cell-days");
     },
     get ayuda() {
-      return t("Focos de calor de los últimos días.", "Thermal hotspots from recent days.");
+      return t(
+        "Fuego del último mes cerrado, en días-celda: cada celda de 0,1° con fuego cuenta una vez por día.",
+        "Fire in the last full month, in cell-days: each 0.1° cell with fire counts once per day.",
+      );
     },
     disponible: true,
   },
@@ -74,7 +77,8 @@ export const INDICADORES: { id: Indicador; nombre: string; unidad: string; ayuda
 ];
 
 export function valorIndicador(p: PropsRegion, indicador: Indicador): number | null {
-  if (indicador === "focos") return p.hotspots ?? null;
+  // El último mes cerrado, como la ficha (#373): los focos de los últimos días están en En vivo.
+  if (indicador === "focos") return p.last_month?.value ?? null;
   if (indicador === "frp") return p.frp_mw ?? null;
   if (indicador === "anomalia") return p.last_month?.percentile ?? null;
   if (indicador === "prediccion") return p.prediccion?.find((m) => m.horizon === 1)?.expected_cells ?? null;
@@ -245,7 +249,7 @@ export type Tono = "alto" | "medio" | "bajo" | "cero";
 /** Estado de la ficha: `posicion` es el lugar de la región en el ranking de focos (-1 si no está). */
 export function nivelRegion(focos: number | null, posicion: number): { texto: string; tono: Tono } {
   if (focos === null) return { texto: t("Focos no disponibles", "Hotspots unavailable"), tono: "cero" };
-  if (focos === 0) return { texto: t("Sin focos esta semana", "No hotspots this week"), tono: "cero" };
+  if (focos === 0) return { texto: t("Sin fuego ese mes", "No fire that month"), tono: "cero" };
   if (posicion >= 0 && posicion < 3) return { texto: t("Entre las de más fuego", "Among the highest fire activity"), tono: "alto" };
   if (focos >= 10) return { texto: t("Con fuego activo", "Active fire"), tono: "medio" };
   return { texto: t("Poca actividad", "Low activity"), tono: "bajo" };
@@ -313,6 +317,19 @@ export function focosVivoVisibles<T extends { t: number; frp: number | null | un
 ): T[] {
   const ultimo = focos.reduce((max, f) => Math.max(max, f.t), 0);
   return focos.filter((f) => f.t >= ultimo - horas * 3_600_000 && enNiveles(f.frp, niveles));
+}
+
+/** En vivo en 3D (#373): cuántos de los focos que se ven caen en cada región. */
+export function focosPorRegion<T extends { region: string | null; t: number; frp: number | null | undefined }>(
+  focos: T[],
+  horas: number,
+  niveles: NivelFoco[],
+): Map<string, number> {
+  const conteo = new Map<string, number>();
+  for (const f of focosVivoVisibles(focos, horas, niveles)) {
+    if (f.region) conteo.set(f.region, (conteo.get(f.region) ?? 0) + 1);
+  }
+  return conteo;
 }
 
 /**
@@ -437,9 +454,8 @@ export type Tendencia = "sube" | "baja" | "estable";
 const CAMBIO_MINIMO = 1;
 const CAMBIO_RELATIVO = 0.2;
 
-/** La serie diaria del indicador: focos y potencia tienen una por día; la anomalía, no. */
+/** La serie diaria del indicador: la potencia tiene una por día; focos (un mes) y la anomalía, no. */
 export function serieDelIndicador(p: Pick<PropsRegion, "by_day" | "frp_by_day">, indicador: Indicador): number[] | null {
-  if (indicador === "focos") return p.by_day ?? null;
   if (indicador === "frp") return p.frp_by_day ?? null;
   return null;
 }

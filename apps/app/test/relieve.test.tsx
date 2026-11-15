@@ -203,15 +203,28 @@ describe("vista Relieve (F4-R1)", () => {
     );
   });
 
-  it("elegir una provincia abre su ficha y la línea de tiempo; elegirla de nuevo las cierra", async () => {
+  it("en Focos, la ficha arranca por el mismo número que el mapa: el último mes cerrado (#373)", async () => {
     montar();
     const u = userEvent.setup();
     const ranking = await screen.findByRole("region", { name: "Ranking" });
-    await u.click(await within(ranking).findByRole("button", { name: /Neuquén/ }));
+    expect(within(ranking).queryByText("La Araucanía")).not.toBeInTheDocument();
+    await u.click(await within(ranking).findByRole("button", { name: /Neuquén.*41,4/ }));
     const ficha = screen.getByRole("region", { name: "Ficha de Neuquén" });
     expect(within(ficha).getByText("Entre las de más fuego")).toBeInTheDocument();
-    expect(within(ficha).getByText("30")).toBeInTheDocument();
+    expect(within(ficha).getByText("41,4")).toBeInTheDocument();
+    expect(within(ficha).getByText("en octubre")).toBeInTheDocument();
     expect(within(ficha).getByText(/Octubre 2026: bastante por encima de lo normal/)).toBeInTheDocument();
+    // Focos es un mes: no hay línea de días.
+    expect(screen.queryByRole("group", { name: "Focos por día en Neuquén" })).not.toBeInTheDocument();
+  });
+
+  it("elegir una provincia abre su ficha y la línea de tiempo; elegirla de nuevo las cierra", async () => {
+    montar();
+    const u = userEvent.setup();
+    await u.click(screen.getByRole("tab", { name: "Intensidad" }));
+    const ranking = await screen.findByRole("region", { name: "Ranking" });
+    await u.click(await within(ranking).findByRole("button", { name: /Neuquén/ }));
+    expect(screen.getByRole("region", { name: "Ficha de Neuquén" })).toBeInTheDocument();
     const linea = screen.getByRole("group", { name: "Focos por día en Neuquén" });
     await u.click(within(linea).getByRole("button", { name: "13/11: 15 focos" }));
     expect(useRelieve.getState().linea).toMatchObject({ activa: true, dia: 1 });
@@ -220,14 +233,17 @@ describe("vista Relieve (F4-R1)", () => {
     expect(screen.queryByRole("region", { name: "Ficha de Neuquén" })).not.toBeInTheDocument();
   });
 
-  it("el ranking muestra la tendencia de los últimos días, sin contar hoy, y no en Anomalía (F4-D6)", async () => {
-    // Hoy es el 14/11: queda afuera. Neuquén: 10 → 15 focos, en alza.
+  it("el ranking muestra la tendencia de los últimos días, sin contar hoy, y no en Focos ni en Anomalía (F4-D6)", async () => {
+    // Hoy es el 14/11: queda afuera. Neuquén: 40 → 60 MW, en alza.
     vi.useFakeTimers({ toFake: ["Date"] });
     vi.setSystemTime(new Date("2026-11-14T12:00:00Z"));
     try {
       montar();
       const u = userEvent.setup();
       const ranking = await screen.findByRole("region", { name: "Ranking" });
+      expect(await within(ranking).findByText("Neuquén")).toBeInTheDocument();
+      expect(within(ranking).queryByText(/en alza|en baja|estable/)).not.toBeInTheDocument();
+      await u.click(screen.getByRole("tab", { name: "Intensidad" }));
       expect(await within(ranking).findByRole("button", { name: /Neuquén.*en alza/ })).toBeInTheDocument();
       await u.click(screen.getByRole("tab", { name: "Anomalía" }));
       expect(within(ranking).queryByText(/en alza|en baja|estable/)).not.toBeInTheDocument();
@@ -259,7 +275,7 @@ describe("vista Relieve (F4-R1)", () => {
     await u.click(await within(ranking).findByRole("button", { name: /Neuquén/ }));
     const ficha = screen.getByRole("region", { name: "Ficha de Neuquén" });
     expect(await within(ficha).findByText(/La comparación con otros años no está disponible ahora/)).toBeInTheDocument();
-    expect(within(ficha).getByText("30")).toBeInTheDocument();
+    expect(within(ficha).getByText("41,4")).toBeInTheDocument();
     expect(within(ficha).getByText("Puesto por focos")).toBeInTheDocument();
   });
 

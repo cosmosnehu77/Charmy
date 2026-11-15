@@ -21,6 +21,7 @@ import {
   enNiveles,
   conPrediccion,
   focosVivoVisibles,
+  focosPorRegion,
   type MesPrediccion,
   plazoPrediccion,
   textoPrediccion,
@@ -50,8 +51,9 @@ function region(id: string, hotspots: number | null, frp: number | null, percent
       frp_mw: frp,
       by_day: hotspots === null ? null : [hotspots],
       frp_by_day: frp === null ? null : [frp],
+      // Focos mide el último mes cerrado (#373): el mismo número va al mes, para que las pruebas sigan legibles.
       last_month:
-        percentil === undefined ? null : { year: 2026, month: 10, value: 10, median: 8, percentile: percentil },
+        hotspots === null ? null : { year: 2026, month: 10, value: hotspots, median: 8, percentile: percentil ?? null },
     },
   };
 }
@@ -67,7 +69,11 @@ describe("valor de cada indicador", () => {
     expect(valorIndicador(a, "prediccion")).toBeNull();
     expect(valorIndicador(REGIONES[1]!.properties, "anomalia")).toBeNull();
   });
-  it("sin focos en vivo, el valor es null", () => {
+  it("focos es el último mes cerrado, no los focos de los últimos días (#373)", () => {
+    const p = { ...REGIONES[0]!.properties, hotspots: 5 };
+    expect(valorIndicador(p, "focos")).toBe(300);
+  });
+  it("sin último mes, el valor de focos es null", () => {
     expect(valorIndicador(region("X", null, null).properties, "focos")).toBeNull();
   });
 });
@@ -106,7 +112,7 @@ describe("nivel de la ficha", () => {
     expect(nivelRegion(300, 0)).toEqual({ texto: "Entre las de más fuego", tono: "alto" });
     expect(nivelRegion(12, 5)).toEqual({ texto: "Con fuego activo", tono: "medio" });
     expect(nivelRegion(4, 8)).toEqual({ texto: "Poca actividad", tono: "bajo" });
-    expect(nivelRegion(0, -1)).toEqual({ texto: "Sin focos esta semana", tono: "cero" });
+    expect(nivelRegion(0, -1)).toEqual({ texto: "Sin fuego ese mes", tono: "cero" });
     expect(nivelRegion(null, -1)).toEqual({ texto: "Focos no disponibles", tono: "cero" });
   });
   it("el percentil en palabras", () => {
@@ -143,6 +149,23 @@ describe("focos en vivo", () => {
     const ahora = new Date("2026-11-14T12:00:00Z");
     expect(hace(ahora, "2026-11-14T11:40:00Z")).toBe("hace menos de 1 h");
     expect(hace(ahora, "2026-11-14T07:00:00Z")).toBe("hace 5 h");
+  });
+});
+
+describe("En vivo en 3D (#373)", () => {
+  const foco = (region: string | null, horas: number, frp: number) => ({
+    region,
+    t: Date.UTC(2026, 10, 15, 12) - horas * 3_600_000,
+    frp,
+  });
+  const focos = [foco("A", 0, 5), foco("A", 1, 40), foco("B", 30, 5), foco(null, 0, 5)];
+  it("cuenta por región los focos que se ven, con la ventana y los niveles elegidos", () => {
+    expect(focosPorRegion(focos, 48, [])).toEqual(new Map([["A", 2], ["B", 1]]));
+    expect(focosPorRegion(focos, 24, [])).toEqual(new Map([["A", 2]]));
+    expect(focosPorRegion(focos, 48, ["Muy fuerte"])).toEqual(new Map([["A", 1]]));
+  });
+  it("sin focos, ninguna región", () => {
+    expect(focosPorRegion([], 48, []).size).toBe(0);
   });
 });
 
@@ -260,7 +283,8 @@ describe("tendencia del ranking (F4-D6)", () => {
   });
   it("la serie sale del indicador: focos y potencia tienen serie diaria; la anomalía no", () => {
     const p = { by_day: [1, 2], frp_by_day: [3.5, 4] } as Parameters<typeof serieDelIndicador>[0];
-    expect(serieDelIndicador(p, "focos")).toEqual([1, 2]);
+    // Focos es del mes: no tiene serie diaria (#373).
+    expect(serieDelIndicador(p, "focos")).toBeNull();
     expect(serieDelIndicador(p, "frp")).toEqual([3.5, 4]);
     expect(serieDelIndicador(p, "anomalia")).toBeNull();
   });

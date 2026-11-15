@@ -1,0 +1,395 @@
+import "maplibre-gl/dist/maplibre-gl.css";
+import * as maplibregl from "maplibre-gl";
+import urlWorker from "maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url";
+import bbox from "@turf/bbox";
+import { interfaz, paleta, rampaConteo, relieve } from "@charmy/ui";
+import { useEffect, useRef } from "react";
+import { LIMITES_MVP } from "@/mapa/perfiles";
+import { controlMapa } from "./controlMapa";
+import type { FocoReciente } from "./datos";
+import { useRelieve } from "./estado";
+import { alturaDelDia, CORTES_FOCO, escalaRegion, maximo, type RegionResumen, valorIndicador } from "./logica";
+
+maplibregl.setWorkerUrl(urlWorker);
+
+/** Mapa base oscuro de OpenFreeMap (sin clave): ciudades, rutas y calles debajo de las regiones. */
+export const ESTILO_OSCURO = "https://tiles.openfreemap.org/styles/dark";
+const VACIO = { type: "FeatureCollection" as const, features: [] };
+/** Metros de alto de una región con altura 1 (la de más fuego). */
+const ALTO_MAX = 380_000;
+const reducido = () => globalThis.matchMedia?.("(prefers-reduced-motion: reduce)").matches ?? false;
+
+const RADIO_FOCO: maplibregl.ExpressionSpecification = ["+", 3, ["*", 1.6, ["sqrt", ["max", 0, ["get", "frp"]]]]];
+const COLOR_FOCO: maplibregl.ExpressionSpecification = [
+  "step",
+  ["get", "frp"],
+  rampaConteo[1],
+  CORTES_FOCO[0],
+  rampaConteo[2],
+  CORTES_FOCO[1],
+  rampaConteo[3],
+  CORTES_FOCO[2],
+  rampaConteo[4],
+  CORTES_FOCO[3],
+  rampaConteo[5],
+  CORTES_FOCO[4],
+  rampaConteo[6],
+];
+
+function mezcla(a: string, b: string, t: number): string {
+  const x = Number.parseInt(a.slice(1), 16);
+  const y = Number.parseInt(b.slice(1), 16);
+  const canal = (s: number) => Math.round(((x >> s) & 255) * (1 - t) + ((y >> s) & 255) * t);
+  return `#${((canal(16) << 16) | (canal(8) << 8) | canal(0)).toString(16).padStart(6, "0")}`;
+}
+
+/** Una aguja por foco: un cuadradito que se extruye sobre la tapa de su región. */
+function agujas(focos: FocoReciente[], base: (region: string | null) => number) {
+  const lado = 0.05;
+  return {
+    type: "FeatureCollection" as const,
+    features: focos.map((f) => {
+      const dx = lado / Math.cos((f.lat * Math.PI) / 180);
+      const b = base(f.region) + 400;
+      return {
+        type: "Feature" as const,
+        properties: { k: f.k, region: f.region, dia: f.dia, b, t: b + (0.25 + 0.22 * Math.log1p(f.frp)) * 90_000 },
+        geometry: {
+          type: "Polygon" as const,
+          coordinates: [
+            [
+              [f.lon - dx, f.lat - lado],
+              [f.lon + dx, f.lat - lado],
+              [f.lon + dx, f.lat + lado],
+              [f.lon - dx, f.lat + lado],
+              [f.lon - dx, f.lat - lado],
+            ],
+          ],
+        },
+      };
+    }),
+  };
+}
+
+function puntos(focos: FocoReciente[]) {
+  return {
+    type: "FeatureCollection" as const,
+    features: focos.map((f) => ({
+      type: "Feature" as const,
+      properties: { k: f.k, frp: f.frp, t: f.t, dia: f.dia, region: f.region, orden: -f.frp },
+      geometry: { type: "Point" as const, coordinates: [f.lon, f.lat] },
+    })),
+  };
+}
+
+interface Props {
+  regiones: RegionResumen[];
+  dias: string[];
+  focos: FocoReciente[];
+  onHover: (h: { id: string | null; foco: number | null; x: number; y: number }) => void;
+}
+
+export default function MapaRelieve({ regiones, dias, focos, onHover }: Props) {
+  const contenedor = useRef<HTMLDivElement>(null);
+  const mapa = useRef<maplibregl.Map | null>(null);
+  const listo = useRef(false);
+  const estado = useRelieve();
+  const props = useRef({ regiones, dias, focos, onHover, estado });
+  props.current = { regiones, dias, focos, onHover, estado };
+  // Altura actual (animada) y destino de cada región, en metros.
+  const alturas = useRef(new Map<string, { actual: number; meta: number }>());
+  const pausaGiro = useRef(0);
+  const regionesPuestas = useRef<RegionResumen[] | null>(null);
+
+  const sincronizar = useRef(() => {});
+  sincronizar.current = () => {
+    const m = mapa.current;
+    if (!m || !listo.current) return;
+    const { regiones: rs, focos: fs, estado: e } = props.current;
+    const vivo = e.pestana === "vivo";
+    const indicador = e.pestana === "vivo" ? "focos" : e.pestana;
+    const max = maximo(rs, indicador);
+    if (regionesPuestas.current !== rs) {
+      m.getSource<maplibregl.GeoJSONSource>("regiones")?.setData({ type: "FeatureCollection", features: rs as never });
+      regionesPuestas.current = rs;
+    }
+    for (const r of rs) {
+      const { color, altura } = escalaRegion(valorIndicador(r.properties, indicador), max, indicador);
+      let meta = altura;
+      let tono = color;
+      if (e.seleccion && r.id !== e.seleccion) {
+        meta = 0;
+        tono = relieve.apagada;
+      } else if (e.seleccion === r.id) {
+        tono = mezcla(color, paleta.hocico, 0.3);
+        if (e.linea.activa && r.properties.by_day) meta = alturaDelDia(altura, r.properties.by_day, e.linea.dia);
+      }
+      const metros = e.plano ? 1500 : 3000 + meta * ALTO_MAX;
+      const a = alturas.current.get(r.id) ?? { actual: 3000, meta: 3000 };
+      a.meta = metros;
+      if (reducido()) a.actual = metros;
+      alturas.current.set(r.id, a);
+      m.setFeatureState({ source: "regiones", id: r.id }, { c: tono, h: a.actual });
+    }
+    // Focos: en el relieve, con el indicador Focos o con una región elegida; con la línea, solo ese día.
+    const dia = props.current.dias[e.linea.dia];
+    const visibles = fs.filter((f) => {
+      if (e.seleccion && f.region !== e.seleccion) return false;
+      if (e.linea.activa && f.dia !== dia) return false;
+      return true;
+    });
+    const verFocos = !vivo && (indicador === "focos" || e.seleccion !== null);
+    m.getSource<maplibregl.GeoJSONSource>("agujas")?.setData(
+      verFocos ? agujas(visibles, (region) => (region ? (alturas.current.get(region)?.meta ?? 0) : 0)) : VACIO,
+    );
+    m.getSource<maplibregl.GeoJSONSource>("puntos")?.setData(verFocos ? puntos(visibles) : VACIO);
+    m.getSource<maplibregl.GeoJSONSource>("vivo")?.setData(vivo ? puntos(fs) : VACIO);
+    const visible = (id: string, si: boolean) => m.setLayoutProperty(id, "visibility", si ? "visible" : "none");
+    visible("reg-3d", !vivo);
+    visible("reg-agujas", !vivo && !e.plano);
+    visible("reg-puntos", !vivo && e.plano);
+    visible("vivo-gris", vivo);
+    visible("vivo-pulso", vivo);
+    visible("vivo-focos", vivo);
+    visible("vivo-sel", vivo);
+    // La ventana se cuenta desde el último foco, así se ve algo aunque el worker esté atrasado.
+    const ultimo = fs.reduce((max, f) => Math.max(max, f.t), 0) || Date.now();
+    const limite = ultimo - e.horasVivo * 3_600_000;
+    m.setFilter("vivo-focos", [">=", ["get", "t"], limite]);
+    m.setFilter("vivo-pulso", [">=", ["get", "t"], Math.max(limite, ultimo - 6 * 3_600_000)]);
+    m.setFilter("vivo-sel", ["==", ["get", "k"], e.focoVivo ?? -1]);
+  };
+
+  // Crear el mapa una sola vez.
+  useEffect(() => {
+    if (!contenedor.current) return;
+    const m = new maplibregl.Map({
+      container: contenedor.current,
+      style: ESTILO_OSCURO,
+      bounds: LIMITES_MVP,
+      fitBoundsOptions: { padding: 40 },
+      pitch: 55,
+      bearing: -12,
+      maxPitch: 70,
+      attributionControl: { compact: true },
+    });
+    mapa.current = m;
+    m.on("style.load", () => {
+      const antes = m.getStyle().layers.find((l) => l.type === "symbol")?.id;
+      m.addSource("regiones", { type: "geojson", data: VACIO, promoteId: "region" });
+      m.addSource("agujas", { type: "geojson", data: VACIO });
+      m.addSource("puntos", { type: "geojson", data: VACIO });
+      m.addSource("vivo", { type: "geojson", data: VACIO });
+      m.addLayer(
+        { id: "vivo-gris", type: "fill", source: "regiones", paint: { "fill-color": relieve.gris, "fill-opacity": 0.55 } },
+        antes,
+      );
+      m.addLayer(
+        {
+          id: "reg-borde",
+          type: "line",
+          source: "regiones",
+          paint: { "line-color": relieve.grisBorde, "line-width": 0.8, "line-opacity": 0.7 },
+        },
+        antes,
+      );
+      m.addLayer(
+        {
+          id: "reg-3d",
+          type: "fill-extrusion",
+          source: "regiones",
+          paint: {
+            "fill-extrusion-color": ["coalesce", ["feature-state", "c"], relieve.sinDato],
+            "fill-extrusion-height": ["coalesce", ["feature-state", "h"], 3000],
+            "fill-extrusion-base": 0,
+            "fill-extrusion-opacity": 0.92,
+            "fill-extrusion-vertical-gradient": true,
+          },
+        },
+        antes,
+      );
+      m.addLayer({
+        id: "reg-agujas",
+        type: "fill-extrusion",
+        source: "agujas",
+        paint: {
+          "fill-extrusion-color": relieve.brillo,
+          "fill-extrusion-base": ["get", "b"],
+          "fill-extrusion-height": ["get", "t"],
+          "fill-extrusion-opacity": 0.95,
+        },
+      });
+      m.addLayer({
+        id: "reg-puntos",
+        type: "circle",
+        source: "puntos",
+        paint: {
+          "circle-radius": RADIO_FOCO,
+          "circle-color": COLOR_FOCO,
+          "circle-opacity": 0.9,
+          "circle-stroke-color": relieve.vidrio,
+          "circle-stroke-width": 1,
+        },
+      });
+      m.addLayer({
+        id: "vivo-pulso",
+        type: "circle",
+        source: "vivo",
+        paint: {
+          "circle-radius": RADIO_FOCO,
+          "circle-opacity": 0,
+          "circle-stroke-color": COLOR_FOCO,
+          "circle-stroke-width": 1.5,
+          "circle-stroke-opacity": 0,
+        },
+      });
+      m.addLayer({
+        id: "vivo-focos",
+        type: "circle",
+        source: "vivo",
+        layout: { "circle-sort-key": ["get", "orden"] },
+        paint: {
+          "circle-radius": RADIO_FOCO,
+          "circle-color": COLOR_FOCO,
+          "circle-opacity": 0.88,
+          "circle-stroke-color": relieve.vidrio,
+          "circle-stroke-width": 1,
+        },
+      });
+      m.addLayer({
+        id: "vivo-sel",
+        type: "circle",
+        source: "vivo",
+        filter: ["==", ["get", "k"], -1],
+        paint: {
+          "circle-radius": ["+", RADIO_FOCO, 2],
+          "circle-opacity": 0,
+          "circle-stroke-color": interfaz.superficie,
+          "circle-stroke-width": 2,
+        },
+      });
+      listo.current = true;
+      regionesPuestas.current = null;
+      sincronizar.current();
+    });
+
+    // Región bajo el puntero y toque para elegirla (tocar la elegida la deselecciona).
+    m.on("mousemove", (e) => {
+      const vivo = props.current.estado.pestana === "vivo";
+      const capa = vivo ? "vivo-focos" : "reg-3d";
+      const f = m.getLayer(capa) ? m.queryRenderedFeatures(e.point, { layers: [capa] })[0] : undefined;
+      m.getCanvas().style.cursor = f ? "pointer" : "";
+      props.current.onHover({
+        id: vivo ? null : ((f?.properties?.region as string | undefined) ?? null),
+        foco: vivo && f ? Number(f.properties?.k) : null,
+        x: e.point.x,
+        y: e.point.y,
+      });
+    });
+    m.on("mouseout", () => props.current.onHover({ id: null, foco: null, x: 0, y: 0 }));
+    m.on("click", (e) => {
+      const { estado: est } = props.current;
+      if (est.pestana === "vivo") {
+        const f = m.getLayer("vivo-focos") ? m.queryRenderedFeatures(e.point, { layers: ["vivo-focos"] }) : [];
+        // Entre focos encimados gana el más chico, que es el que queda arriba.
+        const elegido = [...f].sort((a, b) => Number(a.properties?.frp) - Number(b.properties?.frp))[0];
+        est.cambiar({ focoVivo: elegido ? Number(elegido.properties?.k) : null });
+        return;
+      }
+      const f = m.getLayer("reg-3d") ? m.queryRenderedFeatures(e.point, { layers: ["reg-3d"] })[0] : undefined;
+      const id = (f?.properties?.region as string | undefined) ?? null;
+      if (id || est.seleccion) est.alternarRegion(id ?? est.seleccion);
+    });
+    for (const ev of ["dragstart", "zoomstart", "rotatestart", "pitchstart"] as const) {
+      m.on(ev, (e: { originalEvent?: unknown }) => {
+        if (e.originalEvent) pausaGiro.current = Date.now() + 6000;
+      });
+    }
+
+    controlMapa.zoom = (factor) => {
+      pausaGiro.current = Date.now() + 4000;
+      m.easeTo({ zoom: m.getZoom() - Math.log2(factor), duration: reducido() ? 0 : 400 });
+    };
+    controlMapa.norte = () => {
+      pausaGiro.current = Date.now() + 4000;
+      m.easeTo({ bearing: 0, duration: reducido() ? 0 : 600 });
+    };
+
+    // Cada cuadro: las alturas se acercan a su destino y, si toca, el mapa gira despacio.
+    let raf = 0;
+    let fase = 0;
+    const cuadro = (t: number) => {
+      raf = requestAnimationFrame(cuadro);
+      if (!listo.current) return;
+      for (const [id, a] of alturas.current) {
+        const d = a.meta - a.actual;
+        if (Math.abs(d) > 50) {
+          a.actual += d * 0.12;
+          m.setFeatureState({ source: "regiones", id }, { h: a.actual });
+        }
+      }
+      const e = props.current.estado;
+      if (e.giro && !e.plano && e.pestana !== "vivo" && !e.seleccion && !reducido() && Date.now() > pausaGiro.current && !m.isMoving()) {
+        m.setBearing(m.getBearing() + 0.04);
+      }
+      // Los focos de En vivo de las últimas 6 h laten: un anillo que crece y se apaga.
+      if (e.pestana === "vivo" && !reducido()) {
+        fase = (t % 1800) / 1800;
+        m.setPaintProperty("vivo-pulso", "circle-radius", ["*", RADIO_FOCO, 1 + fase * 1.6]);
+        m.setPaintProperty("vivo-pulso", "circle-stroke-opacity", 0.9 * (1 - fase));
+      }
+    };
+    raf = requestAnimationFrame(cuadro);
+    const ro = new ResizeObserver(() => m.resize());
+    ro.observe(contenedor.current);
+    return () => {
+      cancelAnimationFrame(raf);
+      ro.disconnect();
+      controlMapa.zoom = () => {};
+      controlMapa.norte = () => {};
+      listo.current = false;
+      m.remove();
+      mapa.current = null;
+    };
+  }, []);
+
+  // Cualquier cambio de datos o de estado vuelve a pintar.
+  useEffect(() => {
+    sincronizar.current();
+  });
+
+  // Plano o relieve; En vivo siempre plano.
+  useEffect(() => {
+    const m = mapa.current;
+    if (!m) return;
+    const plano = estado.plano || estado.pestana === "vivo";
+    m.easeTo({ pitch: plano ? 0 : 55, bearing: plano ? 0 : m.getBearing(), duration: reducido() ? 0 : 800 });
+    if (plano) {
+      m.dragRotate.disable();
+      m.touchZoomRotate.disableRotation();
+    } else {
+      m.dragRotate.enable();
+      m.touchZoomRotate.enableRotation();
+    }
+  }, [estado.plano, estado.pestana]);
+
+  // Volar a la región elegida, o volver al país entero.
+  useEffect(() => {
+    const m = mapa.current;
+    if (!m) return;
+    const ancho = (contenedor.current?.clientWidth ?? 1000) >= 768;
+    const region = props.current.regiones.find((r) => r.id === estado.seleccion);
+    const caja = region ? (bbox(region as never) as [number, number, number, number]) : LIMITES_MVP;
+    m.fitBounds(caja, {
+      padding: ancho
+        ? { top: 90, bottom: 80, left: region ? 60 : 300, right: region ? 460 : 80 }
+        : { top: 80, bottom: region ? 300 : 40, left: 20, right: 20 },
+      maxZoom: 6.5,
+      pitch: estado.plano || estado.pestana === "vivo" ? 0 : region ? 58 : 55,
+      bearing: m.getBearing(),
+      duration: reducido() ? 0 : 1200,
+    });
+  }, [estado.seleccion, estado.plano, estado.pestana]);
+
+  return <div ref={contenedor} className="absolute inset-0" aria-hidden="true" />;
+}

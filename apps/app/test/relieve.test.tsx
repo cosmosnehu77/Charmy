@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { act, fireEvent, render, screen, within } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import App from "@/App";
 import { estadoInicialConsulta, useConsulta } from "@/estado/consulta";
@@ -821,6 +821,77 @@ describe("Charmy guía Experto (F4-D9)", () => {
     expect(titulos).not.toContain("Calendario de quema");
     expect(titulos.at(-1)).toBe("¡Listo!");
     vi.restoreAllMocks();
+  });
+});
+
+describe("Charmy guía cada pestaña", () => {
+  /** Avanza con Siguiente y devuelve los títulos de los pasos por los que pasó, hasta el último. */
+  async function recorrer(u: ReturnType<typeof userEvent.setup>) {
+    const titulos: string[] = [];
+    for (let i = 0; i < 20; i++) {
+      const dialogo = await screen.findByRole("dialog");
+      titulos.push(within(dialogo).getByRole("heading").textContent ?? "");
+      const boton = within(dialogo).getByRole("button", { name: /Siguiente|Terminar/ });
+      if (boton.textContent === "Terminar") break;
+      await u.click(boton);
+      // Algunos pasos abren o cierran la ficha antes de moverse: se espera al paso nuevo.
+      await waitFor(() => expect(within(screen.getByRole("dialog")).getByRole("heading").textContent).not.toBe(titulos.at(-1)));
+    }
+    return titulos;
+  }
+  beforeEach(() => {
+    // jsdom no mide: con un tamaño falso ningún paso se saltea por no estar en pantalla.
+    vi.spyOn(Element.prototype, "getBoundingClientRect").mockReturnValue(new DOMRect(0, 0, 120, 40));
+  });
+  afterEach(() => vi.restoreAllMocks());
+
+  it.each([
+    ["Intensidad", ["Intensidad, paso a paso", "Las que más energía liberan", "Cómo leer el mapa", "Intensidad en la ficha", "Día por día", "¡Listo!"]],
+    ["Anomalía", ["Anomalía, paso a paso", "Las más fuera de lo normal", "Cómo leer el mapa", "Comparado con lo normal", "¡Listo!"]],
+    ["Riesgo", ["Riesgo, todavía no", "Mientras tanto", "¡Listo!"]],
+    ["Predicción", ["Predicción, paso a paso", "Dónde se espera más fuego", "Cómo leer el mapa", "Los próximos meses", "¿Y tu zona?", "¡Listo!"]],
+  ])("en %s, Charmy explica qué muestra la pestaña y cómo usarla", async (pestana, pasos) => {
+    montar();
+    const u = userEvent.setup();
+    await screen.findByRole("region", { name: "Ranking" });
+    await u.click(screen.getByRole("tab", { name: pestana }));
+    await u.click(screen.getByRole("button", { name: new RegExp(`Charmy: ¿necesitás ayuda\\?.*${pestana}`) }));
+    expect(await recorrer(u)).toEqual(pasos);
+    expect(screen.getByRole("dialog")).toHaveTextContent(/llamá al 100 en Argentina o al 132 en Chile/);
+  });
+
+  it("En vivo tiene su guía en el panel, que señala cada parte", async () => {
+    montar();
+    const u = userEvent.setup();
+    await u.click(screen.getByRole("tab", { name: "En vivo" }));
+    const panel = await screen.findByRole("complementary", { name: "Resumen en vivo" });
+    await within(panel).findByText("Más intensos");
+    for (const marca of ["vivo-total", "vivo-ventana", "vivo-satelites", "vivo-intensidad", "vivo-estadisticas", "vivo-intensos", "vivo-lista"]) {
+      expect(panel.querySelector(`[data-guia="${marca}"]`)).not.toBeNull();
+    }
+    await u.click(within(panel).getByRole("button", { name: /Guía: Charmy te explica cómo se usa En vivo/ }));
+    expect(await recorrer(u)).toEqual([
+      "En vivo, paso a paso",
+      "Cuántos hay",
+      "Cuánto hacia atrás",
+      "Qué satélites",
+      "Tamaño = intensidad",
+      "Dónde hay más",
+      "Los más intensos",
+      "Lista de focos",
+      "¿Es un incendio?",
+      "¡Listo!",
+    ]);
+    expect(screen.getByRole("dialog")).toHaveTextContent(/llamá al 100 en Argentina o al 132 en Chile/);
+  });
+
+  it("la guía general de Focos avisa que cada pestaña tiene su propia guía", async () => {
+    montar();
+    const u = userEvent.setup();
+    await screen.findByRole("region", { name: "Ranking" });
+    await u.click(screen.getByRole("button", { name: /Charmy: ¿necesitás ayuda\?/ }));
+    await recorrer(u);
+    expect(screen.getByRole("dialog")).toHaveTextContent(/Cada pestaña tiene su propia guía/);
   });
 });
 

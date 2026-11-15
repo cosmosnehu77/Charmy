@@ -50,7 +50,7 @@ export function EstadisticasVivo({ visibles, nombre }: { visibles: FocoReciente[
   const veredictos = porVeredicto(visibles);
 
   return (
-    <section aria-labelledby="titulo-estadisticas-vivo" className="mt-3.5 border-t border-white/10 pt-3">
+    <section data-guia="vivo-estadisticas" aria-labelledby="titulo-estadisticas-vivo" className="mt-3.5 border-t border-white/10 pt-3">
       <h3 id="titulo-estadisticas-vivo" className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-white/50">
         {t("Estadísticas en vivo", "Live statistics")}
       </h3>

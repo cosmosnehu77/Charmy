@@ -9,6 +9,7 @@ import { useDatosRelieve } from "./datos";
 import { FichaFoco, PanelEnVivo } from "./EnVivo";
 import { indicadorDe, useRelieve } from "./estado";
 import { FichaRegion } from "./FichaRegion";
+import { pasosDe } from "./guiaPestanas";
 import { localeActual, t, useIdioma } from "./idioma";
 import { LineaTiempo } from "./LineaTiempo";
 import { INDICADORES, rankingRegiones, serieDelIndicador, tendencia, valorIndicador } from "./logica";
@@ -346,7 +347,19 @@ export function Relieve() {
       >
         {!enVivo && !zona && (
           <div className={region ? "max-md:hidden" : ""}>
-            <CharmyGuia regionMasFuego={masFuego} />
+            {/* Cada pestaña tiene su recorrido: qué muestra y cómo se usa. Focos lleva el general del mapa. */}
+            <CharmyGuia
+              regionMasFuego={masFuego}
+              pasos={pasosDe(indicador)}
+              etiqueta={
+                indicador === "focos"
+                  ? undefined
+                  : t(
+                      `Charmy: ¿necesitás ayuda? Tocá para ver cómo se usa ${info?.nombre}`,
+                      `Charmy: need help? Tap to see how to use ${info?.nombre}`,
+                    )
+              }
+            />
           </div>
         )}
         {/* Sobre la ficha, en celular, el aviso va con fondo sólido para que no se mezcle con su texto. */}

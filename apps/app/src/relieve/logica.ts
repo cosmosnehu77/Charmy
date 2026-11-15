@@ -7,8 +7,12 @@ import type { StyleSpecification } from "maplibre-gl";
 import { rampaAnomalia, rampaConteo, relieve } from "@charmy/ui";
 
 export type Resumen = components["schemas"]["RegionsSummary"];
-export type RegionResumen = Resumen["features"][number];
-export type PropsRegion = RegionResumen["properties"];
+export type PrediccionRegiones = components["schemas"]["RegionsForecast"];
+export type MesPrediccion = components["schemas"]["ForecastMonth"];
+type FeatureResumen = Resumen["features"][number];
+/** Las propiedades de /regions/summary, más los meses de /regions/forecast cuando llegan (F4-D12). */
+export type PropsRegion = FeatureResumen["properties"] & { prediccion?: MesPrediccion[] };
+export type RegionResumen = Omit<FeatureResumen, "properties"> & { properties: PropsRegion };
 
 export type Indicador = "focos" | "frp" | "anomalia" | "riesgo" | "prediccion";
 
@@ -38,9 +42,9 @@ export const INDICADORES: { id: Indicador; nombre: string; unidad: string; ayuda
   {
     id: "prediccion",
     nombre: "Predicción",
-    unidad: "",
-    ayuda: "La predicción por región todavía no está disponible.",
-    disponible: false,
+    unidad: "celdas",
+    ayuda: "Celdas de 0,1° con fuego que el modelo espera el mes que viene. Es una estimación.",
+    disponible: true,
   },
 ];
 
@@ -48,7 +52,42 @@ export function valorIndicador(p: PropsRegion, indicador: Indicador): number | n
   if (indicador === "focos") return p.hotspots ?? null;
   if (indicador === "frp") return p.frp_mw ?? null;
   if (indicador === "anomalia") return p.last_month?.percentile ?? null;
+  if (indicador === "prediccion") return p.prediccion?.find((m) => m.horizon === 1)?.expected_cells ?? null;
   return null;
+}
+
+/** Suma a cada región sus meses de /regions/forecast. Sin predicción, las regiones quedan como estaban. */
+export function conPrediccion(regiones: RegionResumen[], prediccion: PrediccionRegiones | undefined): RegionResumen[] {
+  if (!prediccion?.regions) return regiones;
+  const porRegion = new Map(prediccion.regions.map((r) => [r.region, r.months]));
+  return regiones.map((r) => {
+    const meses = porRegion.get(r.id);
+    return meses ? { ...r, properties: { ...r.properties, prediccion: meses } } : r;
+  });
+}
+
+const decimal = (v: number) => v.toLocaleString("es-AR", { maximumFractionDigits: 1 });
+
+/** Una frase corta: cuántas celdas con fuego se esperan contra las habituales (±15 % cuenta como lo mismo). */
+export function textoPrediccion(m: MesPrediccion): string {
+  const esperadas = `Se esperan ${decimal(m.expected_cells)} ${m.expected_cells === 1 ? "celda" : "celdas"} con fuego`;
+  const habituales = `las ${decimal(m.usual_cells)} habituales`;
+  if (Math.abs(m.expected_cells - m.usual_cells) <= 0.15 * m.usual_cells) return `${esperadas}, como ${habituales}.`;
+  return `${esperadas}, ${m.expected_cells > m.usual_cells ? "más" : "menos"} que ${habituales}.`;
+}
+
+/** En un área chica, la probabilidad de al menos un evento contra la habitual (±15 % cuenta como lo mismo). */
+export function textoProbabilidad(m: MesPrediccion): string {
+  const pct = (v: number) => `${Math.round(v * 100)} %`;
+  const inicio = `Probabilidad de fuego: ${pct(m.probability)}`;
+  const habitual = `el ${pct(m.usual_probability)} habitual`;
+  if (Math.abs(m.probability - m.usual_probability) <= 0.15 * m.usual_probability) return `${inicio}, como ${habitual}.`;
+  return `${inicio}, ${m.probability > m.usual_probability ? "más" : "menos"} que ${habitual}.`;
+}
+
+/** Los plazos 1 y 2 son pronóstico; del 3 al 6 la compuerta no pasó todos los años (D-40). */
+export function plazoPrediccion(m: MesPrediccion): string {
+  return m.kind === "forecast" ? "Pronóstico" : "Lo habitual, ajustado";
 }
 
 export function maximo(regiones: RegionResumen[], indicador: Indicador): number {

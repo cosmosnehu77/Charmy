@@ -24,7 +24,7 @@ const num = (v: number, d = 0) => v.toLocaleString("es-AR", { minimumFractionDig
 
 /** Vista Relieve (F4-R1): el país en relieve por provincia, con paneles de vidrio flotando sobre el mapa. */
 export function Relieve() {
-  const { resumen, vivo, regiones, focos } = useDatosRelieve();
+  const { resumen, vivo, prediccion, regiones, focos } = useDatosRelieve();
   const estado = useRelieve();
   const [sobre, setSobre] = useState<{ id: string | null; foco: number | null; x: number; y: number }>({
     id: null,
@@ -36,6 +36,8 @@ export function Relieve() {
   const zona = estado.pestana === "zona";
   const indicador = indicadorDe(estado.pestana);
   const info = INDICADORES.find((i) => i.id === indicador);
+  // La predicción sale de otro servicio: si no responde, solo esta pestaña lo dice (F4-D12).
+  const sinPrediccion = indicador === "prediccion" && prediccion.isError;
   const region = regiones.find((r) => r.id === estado.seleccion) ?? null;
   const dias = resumen.data?.days ?? [];
   const ranking = rankingRegiones(regiones, indicador, 5);
@@ -147,8 +149,12 @@ export function Relieve() {
             </div>
             {!info?.disponible ? (
               <p className="px-2 text-sm text-white/50">{info?.ayuda}</p>
+            ) : sinPrediccion ? (
+              <p className="px-2 text-sm text-white/50">La predicción no está disponible ahora. Probá en un rato.</p>
             ) : ranking.length === 0 ? (
-              <p className="px-2 text-sm text-white/50">{resumen.isPending ? "Cargando…" : "Sin datos de este indicador ahora."}</p>
+              <p className="px-2 text-sm text-white/50">
+                {resumen.isPending || (indicador === "prediccion" && prediccion.isPending) ? "Cargando…" : "Sin datos de este indicador ahora."}
+              </p>
             ) : (
               <ol className="m-0 flex list-none flex-col p-0">
                 {ranking.map((r, i) => {

@@ -3,7 +3,10 @@ import { useQuery } from "@tanstack/react-query";
 import { pedir, urlApi } from "@/lib/api";
 import type { RespuestaVivo } from "@/vivo/consultas";
 import { LIMITES_MVP } from "@/mapa/perfiles";
-import type { Resumen } from "./logica";
+import type { Poligono } from "@/consulta/consulta";
+import type { PrediccionRegiones, Resumen } from "./logica";
+
+export type PrediccionZona = components["schemas"]["ZoneForecast"];
 
 export type Calendario = components["schemas"]["Calendar"];
 
@@ -14,6 +17,35 @@ export function useResumen() {
     queryFn: ({ signal }) => pedir<Resumen>("/regions/summary?hours=120", { signal }),
     enabled: urlApi() !== "",
     refetchInterval: 10 * 60_000,
+  });
+}
+
+/**
+ * Predicción de las regiones para los próximos seis meses (F4-D12, D-40). Cambia una vez por mes: no se vuelve a
+ * pedir sola. Si el servicio de predicción está dormido la API da 503 y la pestaña lo dice.
+ */
+export function usePrediccionRegiones() {
+  return useQuery({
+    queryKey: ["regiones", "prediccion"],
+    queryFn: ({ signal }) => pedir<PrediccionRegiones>("/regions/forecast", { signal }),
+    enabled: urlApi() !== "",
+    staleTime: 60 * 60_000,
+  });
+}
+
+/** Predicción del área dibujada en Experto (F4-D12, D-40). */
+export function usePrediccionZona(area: Poligono | null) {
+  return useQuery({
+    queryKey: ["prediccion", "zona", area],
+    queryFn: ({ signal }) =>
+      pedir<PrediccionZona>("/forecast/zone", {
+        method: "POST",
+        signal,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ geometry: area }),
+      }),
+    enabled: area !== null && urlApi() !== "",
+    staleTime: 60 * 60_000,
   });
 }
 

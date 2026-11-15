@@ -19,6 +19,9 @@ describe("página del juego", () => {
     expect(html).toContain('href="https://charmy-landing.pages.dev"');
     expect(html).toContain('href="https://charmy-app.pages.dev"');
   });
+  it("tiene un botón de silencio que se puede usar con teclado", () => {
+    expect(html).toMatch(/<button[^>]*id="silencio"[^>]*aria-pressed="false"/);
+  });
   it("tiene descripción y el aviso de emergencias", () => {
     expect(html).toMatch(/<meta name="description" content="[^"]+"/);
     expect(html).toMatch(/no reemplaza a los servicios de emergencia/);

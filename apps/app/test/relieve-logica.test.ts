@@ -10,6 +10,8 @@ import {
   nivelRegion,
   radioFoco,
   rankingRegiones,
+  serieDelIndicador,
+  tendencia,
   regionDePunto,
   enNiveles,
   filtroNiveles,
@@ -230,5 +232,31 @@ describe("filtro por intensidad de En vivo (#251)", () => {
       ["all", [">=", ["get", "frp"], 0], ["<", ["get", "frp"], 10]],
       [">=", ["get", "frp"], 30],
     ]);
+  });
+});
+
+describe("tendencia del ranking (F4-D6)", () => {
+  const dias = ["2026-11-10", "2026-11-11", "2026-11-12", "2026-11-13", "2026-11-14"];
+  it("compara la segunda mitad de los días con la primera", () => {
+    expect(tendencia([2, 3, 8, 9], dias.slice(0, 4), "2026-11-20")).toBe("sube");
+    expect(tendencia([9, 8, 3, 2], dias.slice(0, 4), "2026-11-20")).toBe("baja");
+  });
+  it("el día de hoy no cuenta: todavía no terminó", () => {
+    // Sin hoy: [2, 2, 2, 2] → estable, aunque hoy vaya en 0.
+    expect(tendencia([2, 2, 2, 2, 0], dias, "2026-11-14")).toBe("estable");
+  });
+  it("una diferencia chica se dice estable", () => {
+    expect(tendencia([10, 10, 11, 11], dias.slice(0, 4), "2026-11-20")).toBe("estable");
+    expect(tendencia([0, 0, 1, 0], dias.slice(0, 4), "2026-11-20")).toBe("estable");
+  });
+  it("con menos de dos días o sin serie no hay tendencia", () => {
+    expect(tendencia([5], dias.slice(0, 1), "2026-11-20")).toBeNull();
+    expect(tendencia(null, dias, "2026-11-20")).toBeNull();
+  });
+  it("la serie sale del indicador: focos y potencia tienen serie diaria; la anomalía no", () => {
+    const p = { by_day: [1, 2], frp_by_day: [3.5, 4] } as Parameters<typeof serieDelIndicador>[0];
+    expect(serieDelIndicador(p, "focos")).toEqual([1, 2]);
+    expect(serieDelIndicador(p, "frp")).toEqual([3.5, 4]);
+    expect(serieDelIndicador(p, "anomalia")).toBeNull();
   });
 });

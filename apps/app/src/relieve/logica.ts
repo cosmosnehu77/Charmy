@@ -242,3 +242,33 @@ export function nombresPorZoom(estilo: StyleSpecification): StyleSpecification {
     }),
   };
 }
+
+export type Tendencia = "sube" | "baja" | "estable";
+
+/** Por debajo de esto, un cambio se dice «estable»: no se exagera el ruido de pocos focos (F4-D6). */
+const CAMBIO_MINIMO = 1;
+const CAMBIO_RELATIVO = 0.2;
+
+/** La serie diaria del indicador: focos y potencia tienen una por día; la anomalía, no. */
+export function serieDelIndicador(p: Pick<PropsRegion, "by_day" | "frp_by_day">, indicador: Indicador): number[] | null {
+  if (indicador === "focos") return p.by_day ?? null;
+  if (indicador === "frp") return p.frp_by_day ?? null;
+  return null;
+}
+
+/**
+ * Tendencia de los últimos días: el promedio de la segunda mitad contra el de la primera (con días impares, el del
+ * medio no cuenta). El día de hoy todavía no terminó y no cuenta. null si quedan menos de dos días.
+ */
+export function tendencia(serie: number[] | null, dias: string[], hoy: string): Tendencia | null {
+  if (!serie) return null;
+  const valores = dias.at(-1) === hoy ? serie.slice(0, -1) : serie;
+  if (valores.length < 2) return null;
+  const mitad = Math.floor(valores.length / 2);
+  const promedio = (xs: number[]) => xs.reduce((s, x) => s + x, 0) / xs.length;
+  const antes = promedio(valores.slice(0, mitad));
+  const despues = promedio(valores.slice(valores.length - mitad));
+  const cambio = despues - antes;
+  if (Math.abs(cambio) < CAMBIO_MINIMO || Math.abs(cambio) < CAMBIO_RELATIVO * Math.max(antes, despues)) return "estable";
+  return cambio > 0 ? "sube" : "baja";
+}

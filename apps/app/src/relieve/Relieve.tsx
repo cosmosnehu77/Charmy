@@ -10,8 +10,9 @@ import { FichaFoco, PanelEnVivo } from "./EnVivo";
 import { indicadorDe, useRelieve } from "./estado";
 import { FichaRegion } from "./FichaRegion";
 import { LineaTiempo } from "./LineaTiempo";
-import { INDICADORES, rankingRegiones, valorIndicador } from "./logica";
+import { INDICADORES, rankingRegiones, serieDelIndicador, tendencia, valorIndicador } from "./logica";
 import { Pildora } from "./Pildora";
+import { TendenciaRegion } from "./TendenciaRegion";
 import { Zona } from "./Zona";
 import "./estilos.css";
 
@@ -38,6 +39,8 @@ export function Relieve() {
   const region = regiones.find((r) => r.id === estado.seleccion) ?? null;
   const dias = resumen.data?.days ?? [];
   const ranking = rankingRegiones(regiones, indicador, 5);
+  // Hoy (UTC, como `days`) todavía no terminó: la tendencia no lo cuenta (F4-D6).
+  const hoy = new Date().toISOString().slice(0, 10);
   const masFuego = rankingRegiones(regiones, "focos", 1)[0]?.id ?? null;
   const live = resumen.data?.live;
   // En En vivo, solo los focos de los satélites elegidos: en el panel, en el mapa y en la ficha (#271).
@@ -148,26 +151,32 @@ export function Relieve() {
               <p className="px-2 text-sm text-white/50">{resumen.isPending ? "Cargando…" : "Sin datos de este indicador ahora."}</p>
             ) : (
               <ol className="m-0 flex list-none flex-col p-0">
-                {ranking.map((r, i) => (
-                  <li key={r.id}>
-                    <button
-                      type="button"
-                      aria-pressed={estado.seleccion === r.id}
-                      onClick={() => estado.alternarRegion(r.id)}
-                      className="grid w-full grid-cols-[18px_1fr_auto] items-center gap-2 rounded-lg px-2 py-1.5 text-left text-sm hover:bg-white/10"
-                    >
-                      <span className="text-xs tabular-nums text-white/35">{i + 1}</span>
-                      <span className="flex min-w-0 flex-col gap-1">
-                        <span className="truncate text-white/90">{r.nombre}</span>
-                        <span
-                          className="h-1.5 rounded-full"
-                          style={{ width: `${Math.max(4, (r.valor / (ranking[0]?.valor ?? 1)) * 100)}%`, background: r.color }}
-                        />
-                      </span>
-                      <span className="w-14 text-right tabular-nums text-white/80">{num(r.valor)}</span>
-                    </button>
-                  </li>
-                ))}
+                {ranking.map((r, i) => {
+                  const props = regiones.find((x) => x.id === r.id)?.properties;
+                  const serie = props ? serieDelIndicador(props, indicador) : null;
+                  const tend = tendencia(serie, dias, hoy);
+                  return (
+                    <li key={r.id}>
+                      <button
+                        type="button"
+                        aria-pressed={estado.seleccion === r.id}
+                        onClick={() => estado.alternarRegion(r.id)}
+                        className="grid w-full grid-cols-[18px_1fr_auto_auto] items-center gap-2 rounded-lg px-2 py-1.5 text-left text-sm hover:bg-white/10"
+                      >
+                        <span className="text-xs tabular-nums text-white/35">{i + 1}</span>
+                        <span className="flex min-w-0 flex-col gap-1">
+                          <span className="truncate text-white/90">{r.nombre}</span>
+                          <span
+                            className="h-1.5 rounded-full"
+                            style={{ width: `${Math.max(4, (r.valor / (ranking[0]?.valor ?? 1)) * 100)}%`, background: r.color }}
+                          />
+                        </span>
+                        {serie && tend ? <TendenciaRegion serie={serie} tendencia={tend} /> : <span />}
+                        <span className="w-12 text-right tabular-nums text-white/80">{num(r.valor)}</span>
+                      </button>
+                    </li>
+                  );
+                })}
               </ol>
             )}
           </section>

@@ -189,6 +189,22 @@ describe("vista Relieve (F4-R1)", () => {
     expect(screen.queryByRole("region", { name: "Ficha de Neuquén" })).not.toBeInTheDocument();
   });
 
+  it("el ranking muestra la tendencia de los últimos días, sin contar hoy, y no en Anomalía (F4-D6)", async () => {
+    // Hoy es el 14/11: queda afuera. Neuquén: 10 → 15 focos, en alza.
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date("2026-11-14T12:00:00Z"));
+    try {
+      montar();
+      const u = userEvent.setup();
+      const ranking = await screen.findByRole("region", { name: "Ranking" });
+      expect(await within(ranking).findByRole("button", { name: /Neuquén.*en alza/ })).toBeInTheDocument();
+      await u.click(screen.getByRole("tab", { name: "Anomalía" }));
+      expect(within(ranking).queryByText(/en alza|en baja|estable/)).not.toBeInTheDocument();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it("la ficha suma sus números: puesto, este año contra los anteriores y la temporada (F4-D5)", async () => {
     montar();
     const u = userEvent.setup();

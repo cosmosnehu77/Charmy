@@ -1,31 +1,30 @@
 /* Landing de Charmy. Colores y tipografías salen de @charmy/ui: acá solo hay alias sobre esos tokens. */
 :root{
-  --l-fondo:var(--color-fondo); --l-panel:var(--color-superficie); --l-elevado:var(--color-superficie-2);
-  --l-linea:var(--color-borde); --l-linea-suave:var(--color-borde-suave);
-  --l-texto:var(--color-tinta-suave); --l-tenue:var(--color-tinta-suave); --l-titulo:var(--color-tinta);
-  --l-ambar:var(--charmy-pelaje); --l-ambar-hover:color-mix(in srgb,var(--charmy-pelaje),var(--color-superficie) 15%);
-  --l-ambar-txt:var(--color-acento); --l-sobre-ambar:var(--charmy-tinta);
-  --l-globo:var(--color-tinta); --l-globo-txt:var(--color-superficie);
-  --l-musgo:color-mix(in srgb,var(--charmy-sombrero) 55%,var(--charmy-tinta));
+  --l-fondo:var(--mapa-dia-fondo); --l-panel:var(--mapa-dia-panel); --l-elevado:var(--mapa-dia-elevado);
+  --l-linea:var(--mapa-dia-linea); --l-linea-suave:var(--mapa-dia-linea-suave);
+  --l-texto:var(--mapa-dia-texto); --l-tenue:var(--mapa-dia-tenue); --l-titulo:var(--mapa-dia-tinta);
+  --l-ambar:var(--mapa-dia-acento); --l-ambar-hover:color-mix(in srgb,var(--mapa-dia-acento),var(--mapa-dia-panel) 15%);
+  --l-ambar-txt:var(--mapa-dia-acento-texto); --l-sobre-ambar:var(--mapa-noche-fondo);
+  --l-globo:var(--mapa-dia-tinta); --l-globo-txt:var(--mapa-dia-panel);
+  --l-musgo:var(--mapa-noche-musgo); --l-sombra:var(--mapa-dia-texto);
   /* Placa clara para logos de terceros, en los dos temas: van en su color original. */
   --l-placa:var(--color-superficie); --l-nvidia:var(--color-exito);
   color-scheme:light;
 }
 html[data-tema="oscuro"]{
-  --l-fondo:var(--color-oscuro-fondo); --l-panel:var(--color-oscuro-fondo-2);
-  --l-elevado:color-mix(in srgb,var(--color-oscuro-fondo-2),var(--color-oscuro-tinta) 8%);
-  --l-linea:color-mix(in srgb,var(--color-oscuro-fondo),var(--color-oscuro-tinta) 18%);
-  --l-linea-suave:color-mix(in srgb,var(--color-oscuro-fondo),var(--color-oscuro-tinta) 10%);
-  --l-texto:var(--color-oscuro-tinta-suave); --l-tenue:var(--color-oscuro-tinta-suave); --l-titulo:var(--color-oscuro-tinta);
-  --l-ambar-txt:var(--color-oscuro-acento); --l-globo:var(--color-oscuro-tinta); --l-globo-txt:var(--color-tinta);
-  --l-placa:var(--color-oscuro-tinta);
+  --l-fondo:var(--mapa-noche-fondo); --l-panel:var(--mapa-noche-panel); --l-elevado:var(--mapa-noche-elevado);
+  --l-linea:var(--mapa-noche-linea); --l-linea-suave:var(--mapa-noche-linea-suave);
+  --l-texto:var(--mapa-noche-texto); --l-tenue:var(--mapa-noche-tenue); --l-titulo:var(--mapa-noche-tinta);
+  --l-ambar:var(--mapa-noche-acento); --l-ambar-hover:color-mix(in srgb,var(--mapa-noche-acento),var(--mapa-noche-tinta) 15%);
+  --l-ambar-txt:var(--mapa-noche-acento-texto); --l-globo:var(--mapa-noche-tinta); --l-globo-txt:var(--mapa-noche-fondo);
+  --l-placa:var(--mapa-noche-tinta); --l-sombra:var(--mapa-noche-fondo);
   color-scheme:dark;
 }
 html{background:var(--l-fondo)}
 body{margin:0;background:var(--l-fondo);color:var(--l-texto);font:400 17px/1.55 var(--fuente-texto);-webkit-font-smoothing:antialiased;overflow-x:hidden}
 ::selection{background:var(--l-ambar);color:var(--l-sobre-ambar)}
 a{color:inherit}
-:focus-visible{outline:2px solid var(--color-foco);outline-offset:3px;border-radius:6px}
+:focus-visible{outline:2px solid var(--l-ambar-txt);outline-offset:3px;border-radius:6px}
 .solo-lectores{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
 
 /* Concepto: sala de mapas de noche. El mapa vive fijo detrás de todo y es la única fuente de luz;
@@ -39,6 +38,12 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
 
 /* ---------- Navegación ---------- */
 .nav{position:fixed;top:env(safe-area-inset-top,0px);left:0;right:0;z-index:20;padding-left:max(24px,env(safe-area-inset-left,0px));padding-right:max(24px,env(safe-area-inset-right,0px));background:linear-gradient(to bottom,color-mix(in srgb,var(--l-fondo) 92%,transparent),color-mix(in srgb,var(--l-fondo) 0%,transparent))}
+.nav{transition:transform .3s ease}
+.nav.oculta:not(:hover,:focus-within){transform:translateY(calc(-100% - env(safe-area-inset-top,0px)))}
+/* Franja invisible bajo la barra: con la barra oculta queda arriba de todo y al pasar el mouse la trae de vuelta. */
+.nav::after{content:"";position:absolute;left:0;right:0;top:100%;height:16px}
+.nav:not(.oculta)::after{display:none}
+@media (prefers-reduced-motion:reduce){.nav{transition:none}}
 .nav-in{max-width:1344px;margin:0 auto;height:64px;display:flex;align-items:center;justify-content:space-between;gap:24px}
 .marca{font:800 30px/1 var(--fuente-titulos);letter-spacing:-.03em;color:var(--l-titulo);text-decoration:none}
 .nav-acc{display:flex;align-items:center;gap:10px}
@@ -93,7 +98,7 @@ main{position:relative;z-index:5}
 @keyframes goteo{0%{transform:scaleY(0);transform-origin:top}45%{transform:scaleY(1);transform-origin:top}55%{transform:scaleY(1);transform-origin:bottom}100%{transform:scaleY(0);transform-origin:bottom}}
 
 /* HUD del año */
-.hud-anio{position:fixed;right:max(32px,env(safe-area-inset-right,0px));top:50%;transform:translateY(-50%);z-index:4;text-align:right;pointer-events:none;opacity:0;transition:opacity .25s}
+.hud-anio{position:fixed;right:max(80px,4vw,env(safe-area-inset-right,0px));top:50%;transform:translateY(-50%);z-index:4;text-align:center;pointer-events:none;opacity:0;transition:opacity .25s}
 .hud-anio b{display:block;font:800 clamp(96px,14vw,200px)/.85 var(--fuente-titulos);letter-spacing:.01em;color:var(--l-titulo);font-variant-numeric:tabular-nums}
 .hud-anio span{display:inline-block;margin-top:14px;font:500 12px/1 var(--fuente-mono);letter-spacing:.12em;text-transform:uppercase;padding:7px 10px;border-radius:4px;background:var(--l-elevado);color:var(--l-texto)}
 .hud-anio span.viirs{background:var(--l-ambar);color:var(--l-sobre-ambar)}
@@ -157,18 +162,18 @@ main{position:relative;z-index:5}
 .vista .veredicto td{color:var(--l-ambar-txt);font-weight:600}
 
 .kids{margin-top:140px;background:var(--l-musgo);border-radius:28px;overflow:hidden;position:relative;display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,.85fr);align-items:center;padding:64px 64px 64px 72px;min-height:520px}
-.kids::after{content:"";position:absolute;right:-8%;top:50%;width:640px;height:640px;translate:0 -50%;border-radius:50%;background:radial-gradient(closest-side,color-mix(in srgb,var(--l-ambar) 22%,transparent),color-mix(in srgb,var(--l-ambar) 0%,transparent) 70%),repeating-radial-gradient(circle,color-mix(in srgb,var(--color-oscuro-tinta) 8%,transparent) 0 1px,transparent 1px 64px);pointer-events:none}
+.kids::after{content:"";position:absolute;right:-8%;top:50%;width:640px;height:640px;translate:0 -50%;border-radius:50%;background:radial-gradient(closest-side,color-mix(in srgb,var(--l-ambar) 22%,transparent),color-mix(in srgb,var(--l-ambar) 0%,transparent) 70%),repeating-radial-gradient(circle,color-mix(in srgb,var(--mapa-noche-tinta) 8%,transparent) 0 1px,transparent 1px 64px);pointer-events:none}
 .kids>*{position:relative;z-index:1}
 .guia.aparte{opacity:0!important;visibility:hidden;transition:opacity .4s,visibility 0s .4s}
-.kids-eti{display:block;font:500 12px/1 var(--fuente-mono);letter-spacing:.1em;text-transform:uppercase;color:var(--color-oscuro-acento);margin-bottom:20px}
-.kids h2{font:800 clamp(48px,5.4vw,80px)/.9 var(--fuente-titulos);letter-spacing:-.04em;color:var(--color-oscuro-tinta);margin:0 0 20px}
-.kids-txt>p{color:var(--color-oscuro-tinta);font-size:19px;max-width:40ch;margin:0 0 32px}
-.kids-pasos{list-style:none;margin:0 0 36px;padding:0;max-width:460px;border-top:1px solid color-mix(in srgb,var(--color-oscuro-tinta) 18%,transparent)}
-.kids-pasos li{display:grid;grid-template-columns:44px minmax(0,1fr);gap:8px;padding:16px 0;border-bottom:1px solid color-mix(in srgb,var(--color-oscuro-tinta) 18%,transparent)}
-.kids-pasos b{font:500 12px/1.6 var(--fuente-mono);color:var(--color-oscuro-acento)}
-.kids-pasos h3{margin:0 0 4px;font:600 16px/1.3 var(--fuente-texto);color:var(--color-oscuro-tinta)}
-.kids-pasos p{margin:0;font-size:15px;color:var(--color-oscuro-tinta-suave)}
-.kids-figura{justify-self:center;width:min(340px,100%);aspect-ratio:1;filter:drop-shadow(0 30px 40px color-mix(in srgb,var(--charmy-tinta) 35%,transparent))}
+.kids-eti{display:block;font:500 12px/1 var(--fuente-mono);letter-spacing:.1em;text-transform:uppercase;color:var(--mapa-noche-acento);margin-bottom:20px}
+.kids h2{font:800 clamp(48px,5.4vw,80px)/.9 var(--fuente-titulos);letter-spacing:-.04em;color:var(--mapa-noche-tinta);margin:0 0 20px}
+.kids-txt>p{color:var(--mapa-noche-tinta);font-size:19px;max-width:40ch;margin:0 0 32px}
+.kids-pasos{list-style:none;margin:0 0 36px;padding:0;max-width:460px;border-top:1px solid color-mix(in srgb,var(--mapa-noche-tinta) 18%,transparent)}
+.kids-pasos li{display:grid;grid-template-columns:44px minmax(0,1fr);gap:8px;padding:16px 0;border-bottom:1px solid color-mix(in srgb,var(--mapa-noche-tinta) 18%,transparent)}
+.kids-pasos b{font:500 12px/1.6 var(--fuente-mono);color:var(--mapa-noche-acento)}
+.kids-pasos h3{margin:0 0 4px;font:600 16px/1.3 var(--fuente-texto);color:var(--mapa-noche-tinta)}
+.kids-pasos p{margin:0;font-size:15px;color:var(--mapa-noche-texto)}
+.kids-figura{justify-self:center;width:min(340px,100%);aspect-ratio:1;filter:drop-shadow(0 30px 40px color-mix(in srgb,var(--l-sombra) 35%,transparent))}
 .kids-figura svg{width:100%;height:100%;display:block}
 
 .equipo-sec{margin-top:160px}
@@ -224,9 +229,9 @@ main{position:relative;z-index:5}
 
 /* ---------- Charmy guía ---------- */
 .guia{position:fixed;right:max(24px,env(safe-area-inset-right,0px));bottom:calc(24px + env(safe-area-inset-bottom,0px));z-index:15;display:flex;align-items:flex-end;gap:10px;pointer-events:none;transition:transform .7s cubic-bezier(.16,1,.3,1)}
-.guia .globo{max-width:260px;background:var(--l-globo);color:var(--l-globo-txt);border-radius:18px 18px 4px 18px;padding:14px 16px;font:500 15px/1.35 var(--fuente-texto);box-shadow:0 18px 40px color-mix(in srgb,var(--charmy-tinta) 40%,transparent);margin-bottom:52px;pointer-events:auto;transform-origin:100% 100%;
+.guia .globo{max-width:260px;background:var(--l-globo);color:var(--l-globo-txt);border-radius:18px 18px 4px 18px;padding:14px 16px;font:500 15px/1.35 var(--fuente-texto);box-shadow:0 18px 40px color-mix(in srgb,var(--l-sombra) 40%,transparent);margin-bottom:52px;pointer-events:auto;transform-origin:100% 100%;
   opacity:0;transform:translate(12px,10px) scale(.92);transition:opacity .4s ease,transform .5s cubic-bezier(.4,0,.2,1)}
-.guia .figura{width:118px;height:118px;filter:drop-shadow(0 18px 24px color-mix(in srgb,var(--charmy-tinta) 50%,transparent));transform-origin:50% 100%;
+.guia .figura{width:118px;height:118px;filter:drop-shadow(0 18px 24px color-mix(in srgb,var(--l-sombra) 50%,transparent));transform-origin:50% 100%;
   opacity:0;transform:translateY(46px) scale(.86);transition:opacity .45s ease .12s,transform .6s cubic-bezier(.4,0,.2,1) .12s,width .5s,height .5s}
 .guia .figura svg{width:100%;height:100%}
 /* Entra Charmy con un rebote suave y después el globo; al salir, primero el globo. */
@@ -262,5 +267,5 @@ main{position:relative;z-index:5}
 @media (prefers-reduced-motion: reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
 
 
-html[data-tema="claro"] .guia .figura{filter:drop-shadow(0 14px 18px color-mix(in srgb,var(--charmy-tinta) 25%,transparent))}
+html[data-tema="claro"] .guia .figura{filter:drop-shadow(0 14px 18px color-mix(in srgb,var(--l-sombra) 25%,transparent))}
 [hidden]{display:none!important}

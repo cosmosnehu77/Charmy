@@ -10,7 +10,9 @@ from alertas.botones import Teclado
 from alertas.corrida import Toque
 
 
-def _teclado(teclado: Teclado) -> InlineKeyboardMarkup:
+def _teclado(teclado: Teclado) -> InlineKeyboardMarkup | None:
+    if not teclado:
+        return None  # un aviso de prueba va sin botones (#303)
     fila = [InlineKeyboardButton(text=t, callback_data=d) for t, d in teclado]
     return InlineKeyboardMarkup(inline_keyboard=[fila])
 

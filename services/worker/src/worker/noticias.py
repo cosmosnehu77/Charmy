@@ -13,9 +13,9 @@ import httpx
 
 RSS = "https://news.google.com/rss/search"
 MODELO_URL = "https://integrate.api.nvidia.com/v1/chat/completions"
-# Medición del 15/11 (#279, medir-noticias.yml): 23/24 aciertos y 0,3 s por pedido con el razonamiento
-# apagado. google/gemma-4-31b-it, el anterior, agotaba la espera en cada pedido.
-MODELO = "nvidia/nemotron-3.5-lightning-30b-a3b"
+# Medición del 15/11 (#391, medir-noticias.yml) con el razonamiento apagado: 36/36 en titulares reales y
+# 0,4 s por pedido. nemotron-3.5-lightning, el anterior, acertaba 18/36 con el mismo pedido.
+MODELO = "nvidia/nemotron-3.5-bolt-e4b"
 OPCIONES_MODELO = {"chat_template_kwargs": {"enable_thinking": False}}  # si razona, gasta los tokens pensando
 ETIQUETAS = {"apoya", "contradice", "sin_informacion"}
 MAX_TITULARES = 8
@@ -70,13 +70,21 @@ def etiquetar(
     clave = os.environ.get("NVIDIA_API_KEY", "").strip()
     if not clave:
         raise NoticiasNoDisponibles("Falta NVIDIA_API_KEY")
+    # #391: solo "apoya" el fuego que un satélite puede ver. Las noticias son por provincia: un incendio de
+    # una casa en la capital no puede confirmar un foco en el monte.
     pedido = (
-        "Sos un asistente que etiqueta titulares. Para cada titular, decí si informa un incendio de "
-        f"vegetación (bosque, pastizal, monte) activo o reciente en {provincia}, {pais}: 'apoya' si lo "
-        "informa, 'contradice' si dice que no hay fuego o que fue una falsa alarma, 'sin_informacion' si no "
-        "trata de eso (casas, prevención, política). Respondé solo un arreglo JSON de cadenas, una por "
-        "titular, en el mismo orden.\n\n"
-        + "\n".join(f"{i + 1}. {t['title']}" for i, t in enumerate(titulares))
+        "Etiquetás titulares de noticias para saber si hay fuego en vegetación o al aire libre en "
+        f"{provincia}, {pais}, donde un satélite detectó focos de calor. Para cada titular elegí una "
+        "etiqueta:\n"
+        f'- "apoya": informa un incendio activo o de los últimos días en {provincia}, en vegetación o al '
+        "aire libre: bosque, monte, pastizal, campo, banquina, humedal, isla o basural.\n"
+        f'- "contradice": dice que en {provincia} no hubo fuego en vegetación, que se descartó o que fue '
+        "una falsa alarma o una quema controlada.\n"
+        '- "sin_informacion": todo lo demás. Por ejemplo: incendios de casas, departamentos, comercios, '
+        "galpones, depósitos, fábricas o vehículos; explosiones; incendios de otra provincia u otro país "
+        "o de años anteriores; prevención, alertas, simulacros, balances, policiales, deportes y política.\n"
+        'Ante la duda, "sin_informacion". Respondé solo un arreglo JSON de cadenas, una por titular, en el '
+        "mismo orden.\n\n" + "\n".join(f"{i + 1}. {t['title']}" for i, t in enumerate(titulares))
     )
     try:
         respuesta = cliente.post(

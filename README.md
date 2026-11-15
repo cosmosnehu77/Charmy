@@ -14,9 +14,11 @@ brigadas e investigadores.
 
 NASA Space Apps Challenge 2026 · Desafío *Harmonization of MODIS and VIIRS Hot Spots* · Comodoro Rivadavia, Argentina
 
+**Español** · [English](README.en.md)
+
 </div>
 
-![La landing de Charmy: «Cuando nuestro sur está en peligro», con los focos de calor sobre el Cono Sur](docs/capturas/landing.jpg)
+![La landing de Charmy: «Cuando nuestro sur está en peligro», con los focos de calor sobre el Cono Sur](docs/capturas/es/landing.jpg)
 
 ## El problema
 
@@ -48,37 +50,38 @@ anomalías.
 Cada provincia sube según los días-celda con fuego del último mes cerrado. El ranking de la izquierda y la leyenda de
 la derecha explican lo que se ve; Charmy ofrece un recorrido guiado.
 
-![Mapa 3D de Argentina y Chile: el norte sube en rojo con más fuego, la Patagonia queda baja](docs/capturas/app.jpg)
+![Mapa 3D de Argentina y Chile: el norte sube en rojo con más fuego, la Patagonia queda baja](docs/capturas/es/app.jpg)
 
 ### La ficha de cada provincia
 
 Tocás una provincia y Charmy la resume: fuego del mes, intensidad en megavatios, comparación con lo normal, el último
 mes día por día, su puesto entre las 39 regiones y la temporada típica.
 
-![Ficha de Santa Fe: 339 días-celda en octubre, 2.619 MW, bastante por debajo de lo normal y el último mes día por día](docs/capturas/ficha.jpg)
+![Ficha de Santa Fe: 339 días-celda en octubre, 2.619 MW, bastante por debajo de lo normal (740 es lo habitual en octubre) y el último mes día por día](docs/capturas/es/ficha.jpg)
 
 ### El modo experto y el calendario de quema
 
 Elegís un área (rectángulo, polígono, localidad o punto), las fechas y los filtros de sensor y confianza. Charmy
-agrupa los focos en el mapa y arma el calendario de quema mes por mes, con la anomalía o la cantidad, el mes pico, la
-temporada y la descarga de los datos. La pestaña *Validación* muestra qué tan bien funciona la armonización en esa
-región.
+agrupa los focos sobre el mapa en 3D (o en 2D, más liviano) y arma el calendario de quema mes por mes, con la anomalía
+o la cantidad, el mes pico, la temporada y la descarga de los datos. La pestaña *Validación* muestra qué tan bien
+funciona la armonización en esa región.
 
-![Modo experto en El Bolsón: focos agrupados en el mapa y calendario de quema de 2022 a 2026 con anomalías](docs/capturas/experto.jpg)
+![Modo experto en El Bolsón: focos agrupados sobre el mapa en 3D y calendario de quema de 2022 a 2026 con anomalías](docs/capturas/es/experto.jpg)
 
 ### Predicción contra lo habitual
 
 La altura es el fuego que espera el modelo para el mes que viene; el color dice si es más o menos que lo habitual
 para ese mes.
 
-![Mapa de predicción: provincias en violeta (menos que lo habitual), claro (lo de siempre) y naranja (más)](docs/capturas/prediccion.jpg)
+![Mapa de predicción: provincias en violeta (menos que lo habitual), claro (lo de siempre) y naranja (más)](docs/capturas/es/prediccion.jpg)
 
 ### En vivo
 
-Los focos de las últimas 6, 24 o 48 horas, por satélite, con su intensidad y su estado de verificación: confirmado,
-probable, sin confirmar o probable fuente fija.
+Los focos de las últimas 6, 24 o 48 horas, por satélite, agrupados sobre el mapa 3D, donde cada provincia sube según
+sus focos. Cada uno trae su intensidad y su estado de verificación: confirmado, probable, sin confirmar o probable
+fuente fija.
 
-![Pestaña En vivo: 1.015 focos en las últimas 48 horas, provincias con más focos y estados de verificación](docs/capturas/vivo.jpg)
+![Pestaña En vivo: 1.015 focos en las últimas 48 horas agrupados sobre el mapa 3D, provincias con más focos y estados de verificación](docs/capturas/es/vivo.jpg)
 
 ### Charmy Brigada
 
@@ -86,8 +89,8 @@ Un juego corto sobre una maqueta 3D de Sudamérica. Pasa el satélite, aparecen 
 apagarlos con agua, aviones, cortafuegos y brigadas, mirando el viento y recargando en lagos y represas.
 
 <p>
-  <img src="docs/capturas/juego.jpg" alt="Pantalla de inicio de Charmy Brigada: Charmy bombero junto a las llamas" width="49%">
-  <img src="docs/capturas/juego-partida.jpg" alt="Una partida de Charmy Brigada: focos sobre el mapa 3D, tanque de agua, viento y la pasada de NOAA-20" width="49%">
+  <img src="docs/capturas/es/juego.jpg" alt="Pantalla de inicio de Charmy Brigada: Charmy bombero junto a las llamas" width="49%">
+  <img src="docs/capturas/es/juego-partida.jpg" alt="Una partida de Charmy Brigada: focos sobre la maqueta 3D, tanque de agua, viento y la pasada de NOAA-20" width="49%">
 </p>
 
 ## Por qué podés confiar en los números
@@ -133,7 +136,7 @@ TimesFM 2.5 y 3.0: mejoraban el error medio prediciendo casi siempre cero, así 
 ### En vivo, sin que la IA decida sola
 
 Cada foco en vivo se cruza con varias señales: la confianza del satélite, si cae en una fuente fija, las noticias de
-su provincia y los reportes de la gente cerca. Un modelo de lenguaje (Gemma, vía NVIDIA) solo etiqueta titulares; el
+su provincia y los reportes de la gente cerca. Un modelo de lenguaje (Nemotron, de NVIDIA) solo etiqueta titulares; el
 veredicto sale de reglas fijas sobre todas las señales, y la falta de noticias nunca convierte un foco en falso (D-09).
 Para entender el lugar, Charmy suma el viento, la humedad y el riesgo de incendio de Meteomatics y la imagen
 Sentinel-2 más despejada de Copernicus.
@@ -169,7 +172,7 @@ flowchart LR
 Las claves de FIRMS, Meteomatics y Copernicus viven solo en el servidor, con caché y dentro de los límites de cada
 servicio. El navegador nunca las ve.
 
-## Cinco personas, cinco agentes, 48 horas
+## Cinco personas, cinco agentes, 36 horas
 
 Charmy se hizo en el fin de semana de la competencia con un equipo de cinco personas, cada una con su agente de
 programación (Claude Code y otros). Los agentes se coordinan en un [tablero](https://github.com/cosmosnehu77/Charmy/issues/1):
@@ -268,7 +271,7 @@ lista de permitidos. Las claves de `.env` se piden al líder por un canal privad
 - **Datos y armonización:** sin IA. Son reglas fijas y regresiones lineales ([método](docs/metodologia/README.md)).
 - **Predicción:** aprendizaje automático (LightGBM). Solo se muestra si supera a la climatología en los años de prueba
   (D-10).
-- **Verificación de focos en vivo:** un modelo de lenguaje (Gemma, vía NVIDIA) solo etiqueta titulares de noticias.
+- **Verificación de focos en vivo:** un modelo de lenguaje (Nemotron, de NVIDIA) solo etiqueta titulares de noticias.
   El veredicto sale de reglas fijas sobre varias señales (D-09).
 - **Desarrollo:** el código y la documentación se escribieron con agentes de programación (Claude Code y otros),
   coordinados por el tablero y revisados por las personas del equipo. Toda funcionalidad entra con sus pruebas.

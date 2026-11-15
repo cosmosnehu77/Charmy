@@ -8,7 +8,7 @@ import { LIMITES_MVP, nombresEnEspanol } from "@/mapa/perfiles";
 import { controlMapa } from "./controlMapa";
 import type { FocoReciente } from "./datos";
 import { useRelieve } from "./estado";
-import { alturaDelDia, CORTES_FOCO, escalaRegion, maximo, type RegionResumen, valorIndicador } from "./logica";
+import { alturaDelDia, CORTES_FOCO, escalaRegion, maximo, nombresPorZoom, type RegionResumen, valorIndicador } from "./logica";
 
 maplibregl.setWorkerUrl(urlWorker);
 
@@ -173,8 +173,9 @@ export default function MapaRelieve({ regiones, dias, focos, onHover }: Props) {
       attributionControl: { compact: true },
     });
     mapa.current = m;
-    // El estilo se pone después del constructor porque solo `setStyle` acepta `transformStyle`: nombres en español.
-    m.setStyle(ESTILO_OSCURO, { transformStyle: (_anterior, siguiente) => nombresEnEspanol(siguiente) });
+    // El estilo se pone después del constructor porque solo `setStyle` acepta `transformStyle`: nombres en español,
+    // y que aparezcan de a poco al acercar.
+    m.setStyle(ESTILO_OSCURO, { transformStyle: (_anterior, siguiente) => nombresPorZoom(nombresEnEspanol(siguiente)) });
     m.on("style.load", () => {
       const antes = m.getStyle().layers.find((l) => l.type === "symbol")?.id;
       m.addSource("regiones", { type: "geojson", data: VACIO, promoteId: "region" });
@@ -269,6 +270,10 @@ export default function MapaRelieve({ regiones, dias, focos, onHover }: Props) {
           "circle-stroke-width": 2,
         },
       });
+      // En celular la atribución arranca plegada (ⓘ), como queda después de arrastrar el mapa: desplegada tapa los avisos.
+      if ((contenedor.current?.clientWidth ?? 1000) < 768) {
+        contenedor.current?.querySelector(".maplibregl-compact-show")?.classList.remove("maplibregl-compact-show");
+      }
       listo.current = true;
       regionesPuestas.current = null;
       sincronizar.current();

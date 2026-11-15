@@ -11,6 +11,7 @@ import {
   radioFoco,
   rankingRegiones,
   regionDePunto,
+  nombresPorZoom,
   ubicarGlobo,
   type RegionResumen,
   valorIndicador,
@@ -177,5 +178,37 @@ describe("globo de Charmy guía (#226)", () => {
 
   it("sin elemento, el globo va al centro", () => {
     expect(ubicarGlobo(null, ventana)).toEqual({ x: (1389 - 430) / 2, y: (635 - 160) / 2, izquierda: false });
+  });
+});
+
+describe("nombres del mapa según el zoom (#236)", () => {
+  const capa = (id: string) => ({ id, type: "symbol" as const, source: "openmaptiles", "source-layer": "place" });
+  const estilo = {
+    version: 8 as const,
+    sources: {},
+    layers: [
+      capa("place_country_major"),
+      capa("place_city_large"),
+      capa("place_state"),
+      capa("place_city"),
+      capa("place_town"),
+      capa("place_village"),
+      { id: "water_name", type: "symbol" as const, source: "openmaptiles", "source-layer": "water_name" },
+    ],
+  };
+
+  it("los nombres aparecen de a poco: países, ciudades grandes, provincias, ciudades, pueblos", () => {
+    const capas = nombresPorZoom(estilo).layers;
+    const min = (id: string) => capas.find((c) => c.id === id)?.minzoom ?? 0;
+    expect(min("place_country_major")).toBe(0);
+    expect(min("place_city_large")).toBeGreaterThan(min("place_country_major"));
+    expect(min("place_state")).toBeGreaterThan(min("place_city_large"));
+    expect(min("place_city")).toBeGreaterThan(min("place_state"));
+    expect(min("place_town")).toBeGreaterThan(min("place_city"));
+    expect(min("place_village")).toBeGreaterThan(min("place_town"));
+  });
+
+  it("las capas que no son de lugares no cambian", () => {
+    expect(nombresPorZoom(estilo).layers.find((c) => c.id === "water_name")).toEqual(estilo.layers[6]);
   });
 });

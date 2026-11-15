@@ -2,8 +2,9 @@ import { interfaz, paleta, rampaConteo } from "@charmy/ui";
 import Phaser from "phaser";
 import { crearAzar, type Azar } from "../azar";
 import { barra, AYUDAS, type Barra } from "../barra";
-import { ALTO, ANCHO, DIA, SONIDO, TEXTO, claveCharmy, color, dibujarFondo } from "../comun";
-import { encuadre, proyectar } from "../contorno";
+import { ALTO, ANCHO, DIA, FONDO, SONIDO, TEXTO, anunciar, claveCharmy, color, dibujarFondo } from "../comun";
+import { focos } from "../cierre";
+import { encuadre, proyectar, regionEn } from "../contorno";
 import { cargarDia } from "../datos";
 import { aCelda, centroDe, crearGrilla, type Grilla } from "../grilla";
 import { LAGOS, lagoTocado, type LagoEnPantalla } from "../lagos";
@@ -30,6 +31,9 @@ import {
 } from "../partida";
 import { propagar, type Viento } from "../propagacion";
 import { estadoDeCharmy, factorDeTramo } from "../ritmo";
+import { REGLAS, ordenDeRecorrido, siguiente, textoDeFoco, type Reglas } from "../explorador";
+
+export type Modo = keyof typeof REGLAS;
 
 const MARGEN = 20;
 /** Lugar para el marcador, que ocupa dos líneas. */
@@ -72,14 +76,24 @@ export class Nivel extends Phaser.Scene {
   private dibujos = new Map<number, Dibujo>();
   private cortafuegos!: Phaser.GameObjects.Graphics;
   private barra!: Barra;
+  private modo: Modo = "normal";
+  private reglas: Reglas = REGLAS.normal;
+  /** Región aproximada de cada foco del día, para anunciarla. */
+  private regiones = new Map<number, string | null>();
+  /** Foco elegido con el teclado (modo explorador) y el anillo que lo marca. */
+  private elegido: number | null = null;
+  private anillo!: Phaser.GameObjects.Arc;
 
   constructor() {
     super("nivel");
   }
 
-  create() {
+  create(datos?: { modo?: Modo }) {
+    this.modo = datos?.modo ?? "normal";
+    this.reglas = REGLAS[this.modo];
     this.partida = nuevaPartida();
     this.dibujos = new Map();
+    this.elegido = null;
     this.hud = this.add.text(12, 8, "", { ...TEXTO, fontSize: "18px" }).setDepth(10);
     this.charmy = this.add.image(ANCHO - 64, ALTO - 64, claveCharmy("bombero", "idle")).setScale(0.75).setDepth(10);
     this.ayuda = this.add
@@ -106,17 +120,25 @@ export class Nivel extends Phaser.Scene {
 
     const plan = planPorPasadas(cargarDia(DIA, area), area.alto, DURACION_PASADAS_MS);
     this.proximoId = plan.focos.length;
-    for (const ventana of plan.ventanas) {
-      this.time.delayedCall(ventana.desdeMs, () => this.pasada(ventana, area.alto));
+    this.regiones = new Map(plan.focos.map((f, id) => [id, regionEn(FONDO, [f.lon, f.lat])]));
+    // Sin reloj (modo explorador) el reloj de la partida solo mide el tiempo para el combo: no termina la partida.
+    this.reloj = this.reglas.reloj
+      ? this.time.delayedCall(DURACION_PARTIDA_MS, () => this.terminar())
+      : this.time.addEvent({ delay: Number.MAX_SAFE_INTEGER });
+    if (this.reglas.reloj) {
+      for (const ventana of plan.ventanas) {
+        this.time.delayedCall(ventana.desdeMs, () => this.pasada(ventana, area.alto));
+      }
     }
     plan.focos.forEach((foco, id) => {
-      this.time.delayedCall(foco.apareceMs, () =>
-        this.encender(focoActivo(id, { ...foco, x: foco.x + this.origen.x, y: foco.y + this.origen.y })),
-      );
+      const encender = () =>
+        this.encender(focoActivo(id, { ...foco, x: foco.x + this.origen.x, y: foco.y + this.origen.y }));
+      // Sin reloj, todos los focos del día están desde el principio.
+      if (this.reglas.reloj) this.time.delayedCall(foco.apareceMs, encender);
+      else encender();
     });
-    this.reloj = this.time.delayedCall(DURACION_PARTIDA_MS, () => {
-      this.scene.start("fin", this.partida.marcador);
-    });
+    this.anillo = this.add.circle(0, 0, 14).setStrokeStyle(3, color(interfaz.tinta)).setDepth(7).setVisible(false);
+    if (this.modo === "explorador") this.prepararTeclado(plan.focos.length);
 
     this.barra = barra((h) => this.elegir(h));
     this.barra.marcar("bombero");
@@ -233,7 +255,7 @@ export class Nivel extends Phaser.Scene {
         : null;
     // El ritmo crece por tramo: al principio los focos tardan más en escaparse.
     const escapeMs = potencia(frp).escapeMs * factorDeTramo(this.reloj?.getElapsed() ?? 0, DURACION_PASADAS_MS);
-    const escape = this.time.delayedCall(escapeMs, () => {
+    const escape = this.time.delayedCall(this.reglas.escapes ? escapeMs : Number.MAX_SAFE_INTEGER, () => {
       this.partida = escaparFoco(this.partida, id);
       this.sincronizar();
       if (foco.fuenteFija) return;
@@ -282,12 +304,14 @@ export class Nivel extends Phaser.Scene {
   private tocar(id: number) {
     const foco = this.partida.activos.find((f) => f.id === id);
     if (!foco) return;
+    const ordenAntes = ordenDeRecorrido(this.partida.activos);
     if (this.partida.herramienta === "bombero" && this.partida.agua < 1) {
       this.flotar(foco.x, foco.y, "Sin agua: tocá un lago", interfaz.peligro);
       return;
     }
     const antes = this.partida.marcador;
     this.partida = tocarFoco(this.partida, id, this.reloj.getElapsed());
+    if (!this.reglas.gastaAgua) this.partida = recargar(this.partida);
     const { marcador } = this.partida;
     if (marcador.puntos < antes.puntos) this.flotar(foco.x, foco.y, `-${antes.puntos - marcador.puntos}`, interfaz.peligro);
     if (marcador.apagados > antes.apagados) {
@@ -297,6 +321,73 @@ export class Nivel extends Phaser.Scene {
       SONIDO.tocar(foco.fuenteFija ? "escape" : "apagar");
     }
     this.sincronizar();
+    if (this.modo === "explorador") this.trasTocar(id, ordenAntes);
+  }
+
+  private terminar() {
+    this.scene.start("fin", { ...this.partida.marcador, modo: this.modo });
+  }
+
+  /** Modo explorador: flechas o Tab recorren los focos, Enter o Espacio apagan, V verifica, Escape termina. */
+  private prepararTeclado(total: number) {
+    const teclado = this.input.keyboard;
+    if (!teclado) return;
+    teclado.addCapture("SPACE,UP,DOWN,LEFT,RIGHT");
+    const mover = (paso: 1 | -1) => this.enfocar(siguiente(ordenDeRecorrido(this.partida.activos), this.elegido, paso));
+    teclado.on("keydown-RIGHT", () => mover(1));
+    teclado.on("keydown-DOWN", () => mover(1));
+    teclado.on("keydown-LEFT", () => mover(-1));
+    teclado.on("keydown-UP", () => mover(-1));
+    // Tab y Mayús+Tab se manejan acá y no con Phaser, que no captura Mayús+Tab: el navegador se llevaría el foco a
+    // un botón de la página. Escape sale del modo, así que el teclado nunca queda atrapado.
+    const alTab = (e: KeyboardEvent) => {
+      if (e.key !== "Tab") return;
+      e.preventDefault();
+      mover(e.shiftKey ? -1 : 1);
+    };
+    window.addEventListener("keydown", alTab);
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => window.removeEventListener("keydown", alTab));
+    const apagar = () => {
+      if (this.elegido !== null) this.tocar(this.elegido);
+    };
+    teclado.on("keydown-ENTER", apagar);
+    teclado.on("keydown-SPACE", apagar);
+    teclado.on("keydown-V", () => {
+      if (this.elegido === null) return;
+      this.partida = verificarFoco(this.partida, this.elegido);
+      this.sincronizar();
+      this.enfocar(this.elegido);
+    });
+    teclado.on("keydown-ESC", () => this.terminar());
+    anunciar(
+      `Modo explorador, sin reloj: ${total} focos del ${DIA.fecha}. Usá las flechas o Tab para recorrerlos, Enter o Espacio para apagar, V para verificar y Escape para terminar.`,
+    );
+  }
+
+  /** Elegir un foco con el teclado: se marca con un anillo y se anuncia. */
+  private enfocar(id: number | null) {
+    this.elegido = id;
+    const foco = this.partida.activos.find((f) => f.id === id);
+    this.anillo.setVisible(Boolean(foco));
+    if (!foco) return;
+    this.anillo.setPosition(foco.x, foco.y);
+    const orden = ordenDeRecorrido(this.partida.activos);
+    anunciar(textoDeFoco(foco, orden.indexOf(foco.id) + 1, orden.length, this.regiones.get(foco.id) ?? null));
+  }
+
+  /**
+   * Después de tocar en el modo explorador: si el foco sigue, se vuelve a anunciar; si se apagó, se anuncia y se pasa
+   * al que le seguía en el recorrido; sin focos, termina.
+   */
+  private trasTocar(id: number, ordenAntes: number[]) {
+    if (this.partida.activos.some((f) => f.id === id)) return this.enfocar(id);
+    const quedan = this.partida.activos.length;
+    if (quedan === 0) return this.terminar();
+    const proximo = siguiente(ordenAntes, id, 1);
+    this.enfocar(null);
+    anunciar(`Apagado. Quedan ${focos(quedan)}.`);
+    // Una pausa para que el lector termine de decir "Apagado" antes del foco siguiente.
+    this.time.delayedCall(1200, () => this.enfocar(proximo));
   }
 
   /** Pone los dibujos al día con el estado: borra los focos que ya no están y achica o verifica los que siguen. */
@@ -331,10 +422,10 @@ export class Nivel extends Phaser.Scene {
   }
 
   update() {
-    const restante = Math.ceil(this.reloj.getRemaining() / 1000);
     const p = this.partida;
     const m = p.marcador;
-    this.hud.setText(`Puntos ${m.puntos}   Combo x${m.combo}\nAgua ${p.agua}/${TANQUE}   Tiempo ${restante}s`);
+    const tiempo = this.reglas.reloj ? `Tiempo ${Math.ceil(this.reloj.getRemaining() / 1000)}s` : "Sin reloj";
+    this.hud.setText(`Puntos ${m.puntos}   Combo x${m.combo}\nAgua ${p.agua}/${TANQUE}   ${tiempo}`);
     this.barra.avion(Math.max(0, Math.ceil((p.avionListoMs - this.reloj.getElapsed()) / 1000)));
     const textura = claveCharmy(p.herramienta, estadoDeCharmy(p));
     if (this.charmy.texture.key !== textura) this.charmy.setTexture(textura);

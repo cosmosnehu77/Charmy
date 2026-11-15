@@ -67,6 +67,12 @@ export function dibujarFondo(escena: Phaser.Scene, origen: { x: number; y: numbe
   }
 }
 
+/** Lo que lee el lector de pantalla: la región aria-live de la página, fuera del lienzo. */
+export function anunciar(texto: string) {
+  const region = document.querySelector("#anuncio");
+  if (region) region.textContent = texto;
+}
+
 export function boton(escena: Phaser.Scene, x: number, y: number, texto: string, alTocar: () => void) {
   const etiqueta = escena.add
     .text(x, y, texto, {

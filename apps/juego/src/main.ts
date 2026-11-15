@@ -34,7 +34,7 @@ usarDesafio(
   }),
 );
 
-new Phaser.Game({
+const juego = new Phaser.Game({
   type: Phaser.AUTO,
   parent: "juego",
   width: ANCHO,
@@ -44,3 +44,13 @@ new Phaser.Game({
   scale: { mode: Phaser.Scale.FIT, autoCenter: Phaser.Scale.CENTER_BOTH },
   scene: [Inicio, Nivel, Fin],
 });
+
+/** Modo explorador (accesibilidad): un botón de HTML, que encuentran el teclado y el lector de pantalla. */
+const explorador = document.querySelector<HTMLButtonElement>("#explorador");
+explorador?.addEventListener("click", () => {
+  for (const escena of juego.scene.getScenes(true)) escena.scene.stop();
+  juego.scene.start("nivel", { modo: "explorador" });
+  // Si el foco queda en el botón, sus teclas no llegan al juego (ver el keydown de abajo).
+  explorador.blur();
+});
+explorador?.addEventListener("keydown", (e) => e.stopPropagation());

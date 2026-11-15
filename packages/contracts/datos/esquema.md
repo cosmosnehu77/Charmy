@@ -148,7 +148,7 @@ pasaron la compuerta (D-10, RF-PRE-02): mejorar el error absoluto medio de la cl
 
 La entrada del modelo de predicción, para entrenar y probar modelos sin bajar los focos ni rearmar la armonización
 (F3-B5, D-31). Es exactamente la tabla que arma `pipeline.prediccion` y con la que `prediccion.modelo` (`services/prediccion`) entrena LightGBM: días con fuego de S-NPP
-por celda y mes, sin las celdas de `fuentes_fijas`, solo en meses completos (S-NPP vio focos en al menos el 90 %
+por celda y mes (después de su último mes completo, NOAA-20 llevado a S-NPP; R-B4), sin las celdas de `fuentes_fijas`, solo en meses completos (S-NPP vio focos en al menos el 90 %
 de los días) y solo en celdas con fuego en al menos 5 años. Los meses sin fuego van con `fire_days = 0`.
 
 | Columna | Tipo | Descripción |
@@ -156,8 +156,9 @@ de los días) y solo en celdas con fuego en al menos 5 años. Los meses sin fueg
 | `cell_id` | string | Celda de 0,1° |
 | `month` | string | Mes, `"AAAA-MM"` |
 | `fire_days` | int16 | Días del mes con al menos un foco en la celda (0 a 31) |
+| `source` | string | `snpp` (medido) o `noaa20_convertido` (NOAA-20 con el factor de la armonización de su región y mes) |
 
-Un mes que no está para ninguna celda es un mes incompleto de S-NPP: falta el dato, no es cero.
+Un mes que no está para ninguna celda es un mes incompleto: falta el dato, no es cero.
 
 ## Muestras (`data/muestras/`)
 

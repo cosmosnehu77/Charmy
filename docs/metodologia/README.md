@@ -185,6 +185,12 @@ de 2026 les faltan de 1 a 4 días, pero S-NPP ve en ellos más del 85 % de lo qu
 se los saca de la prueba, la mejora en MAE pasa de +8,1 / +3,3 / +0,4 % a +8,9 / +3,7 / +0,7 % y la compuerta decide
 lo mismo: la ventana es confiable. `pipeline.cobertura` arma este informe.
 
+**Después del corte de S-NPP (R-B4).** La tabla `entrenamiento` sigue con NOAA-20 en los meses completos posteriores
+al último de S-NPP, llevado a la escala de S-NPP con la misma calibración de la armonización (región y mes del año,
+sobre los totales regionales del solape 2018-2026). Cada celda toma el factor de su región y mes (valor convertido
+sobre valor de NOAA-20), redondeado a días enteros y sin pasar los días del mes. La columna `source` dice si el mes
+es `snpp` o `noaa20_convertido`, y `pipeline.prediccion` imprime desde qué mes empieza el empalme.
+
 ## Uso de inteligencia artificial (RNF-07)
 
 - **Datos y armonización:** sin IA. Son reglas fijas y regresiones lineales, descritas arriba.
@@ -200,7 +206,7 @@ lo mismo: la ventana es confiable. `pipeline.cobertura` arma este informe.
 uv run --package pipeline python -m pipeline.firms <carpeta FIRMS> --out data/focos
 uv run --package pipeline python -m pipeline.fuentes_fijas --focos data/focos --out data/pub
 uv run --package pipeline python -m pipeline.armonizacion --focos data/focos --regiones data/muestras/regiones.geojson --out data/pub
-uv run --package pipeline python -m pipeline.prediccion --focos data/focos --out data/pub
+uv run --package pipeline python -m pipeline.prediccion --focos data/focos --regiones data/muestras/regiones.geojson --out data/pub
 uv run --package prediccion python -m prediccion.modelo --entrenamiento data/pub/entrenamiento.parquet --out data/pub
 uv run --package prediccion python -m prediccion.medicion --entrenamiento data/pub/entrenamiento.parquet
 uv run --package pipeline python -m pipeline.cobertura --focos data/focos --entrenamiento data/pub/entrenamiento.parquet --desde 2025-01 --hasta 2026-10

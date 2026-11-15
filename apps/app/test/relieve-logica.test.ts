@@ -11,6 +11,7 @@ import {
   radioFoco,
   rankingRegiones,
   regionDePunto,
+  ubicarGlobo,
   type RegionResumen,
   valorIndicador,
 } from "@/relieve/logica";
@@ -140,5 +141,41 @@ describe("región de un punto", () => {
     expect(regionDePunto(regiones, 2.2, 0.9)).toBe("B");
     expect(regionDePunto(regiones, 5.5, 5.5)).toBe("M");
     expect(regionDePunto(regiones, 1.5, 0.5)).toBeNull();
+  });
+});
+
+describe("globo de Charmy guía (#226)", () => {
+  const caja = (left: number, top: number, width: number, height: number) => ({
+    left,
+    top,
+    width,
+    height,
+    right: left + width,
+    bottom: top + height,
+  });
+  const ventana = { W: 1389, H: 635, ancho: 430, alto: 160 };
+
+  it("con un elemento de arriba (indicadores), el globo va justo debajo y centrado en él", () => {
+    const r = caja(443, 20, 581, 42);
+    const p = ubicarGlobo(r, ventana);
+    expect(p.y).toBe(r.bottom + 16);
+    expect(p.x + ventana.ancho / 2).toBeCloseTo(r.left + r.width / 2);
+  });
+
+  it("con la lupa, arriba a la derecha, el globo va debajo y no se sube a la píldora", () => {
+    const r = caja(1030, 24, 34, 34);
+    const p = ubicarGlobo(r, ventana);
+    expect(p.y).toBe(r.bottom + 16);
+    expect(p.x + ventana.ancho).toBeLessThanOrEqual(ventana.W - 12);
+  });
+
+  it("con un elemento al costado (ranking), el globo va a su lado", () => {
+    const r = caja(16, 76, 250, 90);
+    const p = ubicarGlobo(r, ventana);
+    expect(p).toMatchObject({ x: r.right + 16, izquierda: false });
+  });
+
+  it("sin elemento, el globo va al centro", () => {
+    expect(ubicarGlobo(null, ventana)).toEqual({ x: (1389 - 430) / 2, y: (635 - 160) / 2, izquierda: false });
   });
 });

@@ -163,6 +163,15 @@ describe("vista Relieve (F4-R1)", () => {
     expect(screen.getByRole("button", { name: /Charmy: ¿necesitás ayuda\?/ }).parentElement).toHaveClass("max-md:hidden");
   });
 
+  it("el recorrido de Charmy guía se dibuja fuera de la vista, así ningún panel le queda encima (#226)", async () => {
+    montar();
+    const u = userEvent.setup();
+    await screen.findByRole("region", { name: "Ranking" });
+    await u.click(screen.getByRole("button", { name: /Charmy: ¿necesitás ayuda\?/ }));
+    const recorrido = await screen.findByRole("dialog", { name: "¡Hola! Soy Charmy" });
+    expect(recorrido.parentElement).toBe(document.body);
+  });
+
   it("la lupa busca provincias sin importar los acentos", async () => {
     montar();
     const u = userEvent.setup();

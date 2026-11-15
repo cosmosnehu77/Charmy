@@ -53,16 +53,15 @@ describe("landing", () => {
 
   it("marca las muestras y el mapa como ilustrativos o de ejemplo", () => {
     expect(texto("vivo")).toContain("Ejemplo");
-    expect(texto("modos")).toContain("Ejemplo, no son datos reales");
+    expect(texto("modos")).toContain("Ejemplo");
     expect(texto("zona")).toContain("focos de ejemplo");
     expect(texto("creditos")).toContain("El mapa de esta página es ilustrativo");
   });
 
-  it("dibuja a Charmy desde el componente: guía por paso y bombero en el juego", () => {
+  it("dibuja a Charmy desde el componente: guía por paso", () => {
     const plantillas = Array.from(doc.querySelectorAll<HTMLTemplateElement>("template[id^='charmy-']"));
     expect(plantillas).toHaveLength(7);
     for (const p of plantillas) expect(p.content.querySelector("svg"), p.id).not.toBeNull();
-    expect(doc.querySelector("#kids-figura svg")).not.toBeNull();
   });
 
   it("presenta al equipo con su enlace de GitHub", () => {

@@ -1,6 +1,7 @@
 ---
 import { charmySvg } from "@charmy/charmy/core";
 import iconos from "../data/iconos.json";
+import { barrasExperto, curvaNovato, graficoEmpalme } from "../scripts/graficos";
 import "../styles/global.css";
 import "../styles/landing.css";
 
@@ -21,7 +22,6 @@ const guion = [
 ] as const;
 const figurasGuia = guion.map((g) => charmySvg({ ...g, size: 160, decorative: true }));
 const insignia = charmySvg({ mood: "idle", size: 30, variant: "cabeza", animate: false, decorative: true });
-const charmyBrigada = charmySvg({ mood: "saluda", outfit: "bombero", size: 340, decorative: true });
 
 const flecha = `<svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true"><path d="M4 2.5l5 4.5-5 4.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
 
@@ -121,8 +121,7 @@ const tira = [...instituciones, ...instituciones];
             <span class="eti-paso"><b>1</b>de 5 · <u>El problema</u></span>
             <h2 id="titulo-problema">Cambió el satélite, <em>no el fuego.</em></h2>
             <p>En 2012 llegó VIIRS, que ve focos más chicos y por eso cuenta más.</p>
-            <div class="grafico" id="grafico"></div>
-            <div class="ley" aria-hidden="true"><span class="con"><i></i>armonizada</span><span><i></i>sin armonizar</span></div>
+            <div class="grafico" id="grafico" set:html={graficoEmpalme()} />
           </article>
         </div>
       </section>
@@ -196,53 +195,65 @@ const tira = [...instituciones, ...instituciones];
       <div class="envuelve">
         <section id="modos" aria-labelledby="titulo-modos">
           <h2 class="titular" id="titulo-modos">Una respuesta clara, <em>o todos los datos.</em></h2>
-          <p class="subtitular">El mismo mapa sirve a quien quiere saber si su zona está bien y a quien necesita validar la serie.</p>
+          <p class="subtitular">El mismo mapa sirve a quien quiere saber si su zona está bien, a quien necesita validar la serie y a quien viene a jugar.</p>
           <div class="modos">
-            <article class="modo">
-              <header><span class="modo-n">01</span><span>Modo novato</span></header>
-              <h3>Charmy te lo dice simple.</h3>
-              <figure class="vista">
-                <table class="clave">
-                  <tbody>
-                    <tr><th scope="row">Tu zona</th><td>Comodoro Rivadavia</td></tr>
-                    <tr><th scope="row">Este mes</th><td>14 días con fuego</td></tr>
-                    <tr><th scope="row">Lo normal</th><td>6 días</td></tr>
-                    <tr class="veredicto"><th scope="row">Charmy dice</th><td>Más fuego que lo normal</td></tr>
-                  </tbody>
-                </table>
-                <figcaption>Ejemplo, no son datos reales</figcaption>
-              </figure>
+            <article class="modo n">
+              <div class="modo-txt">
+                <span class="eti">01 <i>·</i> Modo novato</span>
+                <h3>Charmy te lo dice simple.</h3>
+                <p>Elegís tu zona y Charmy compara este mes con lo normal. Sin jerga: más fuego, menos o como siempre.</p>
+              </div>
+              <div class="escena" aria-hidden="true">
+                <svg class="malla" viewBox="0 0 620 620"><circle cx="310" cy="310" r="300" /><circle cx="310" cy="310" r="230" /><circle cx="310" cy="310" r="160" /><circle cx="310" cy="310" r="90" /></svg>
+                <div class="pila">
+                  <div class="lectura atras l3"><span>Enero · Comodoro Rivadavia</span><b>9 días</b></div>
+                  <div class="lectura atras l2"><span>Febrero · Comodoro Rivadavia</span><b>12 días</b></div>
+                  <div class="lectura l1">
+                    <div class="l1-cab"><span class="avatar" set:html={insignia} /><div><strong>Comodoro Rivadavia</strong><span>Marzo</span></div><small>Ejemplo</small></div>
+                    <div class="l1-cifra"><b>14</b><span>días con fuego</span><span class="chip">Más fuego que lo normal</span></div>
+                    <Fragment set:html={curvaNovato()} />
+                    <div class="leyenda"><span><i></i>Este año</span><span><i class="p"></i>Lo normal · 6 días</span></div>
+                  </div>
+                </div>
+              </div>
             </article>
-            <article class="modo">
-              <header><span class="modo-n">02</span><span>Modo experto</span></header>
-              <h3>Todos los datos, en CSV.</h3>
-              <figure class="vista">
-                <table>
-                  <thead><tr><th scope="col">cell_id</th><th scope="col">month</th><th scope="col">fire_days</th></tr></thead>
-                  <tbody>
-                    <tr><td>-67.45_-45.85</td><td>2019-01</td><td>4</td></tr>
-                    <tr><td>-67.45_-45.85</td><td>2019-02</td><td>6</td></tr>
-                    <tr><td>-67.55_-45.75</td><td>2019-02</td><td>3</td></tr>
-                  </tbody>
-                </table>
-                <figcaption>Muestra de la descarga en CSV</figcaption>
-              </figure>
+
+            <article class="modo x">
+              <div class="modo-txt">
+                <span class="eti">02 <i>·</i> Modo experto</span>
+                <h3>Todos los datos, en CSV.</h3>
+                <p>La serie armonizada de MODIS y VIIRS, por celda y por mes. Ves lo mismo que bajás y lo validás por tu cuenta.</p>
+                <div class="datos"><span>Celda <b>0,1°</b></span><span>Desde <b>2001</b></span><span>Sensores <b>MODIS · VIIRS</b></span></div>
+              </div>
+              <div class="escena">
+                <div class="consola">
+                  <div class="c-cab"><h4>Días con fuego</h4><div class="sel"><span><i>Año</i>2019</span><span><i>Celda</i>-67.45_-45.85</span></div></div>
+                  <div class="corch"><span>Total <b>30</b></span><span>Pico <b>Feb · 6</b></span><span>Meses sin fuego <b>4</b></span></div>
+                  <div class="barras" set:html={barrasExperto()} />
+                  <div class="csv" aria-label="Muestra del CSV">
+                    <div><span>cell_id</span><span>month</span><span>fire_days</span></div>
+                    <div><span>-67.45_-45.85</span><span>2019-01</span><span>4</span></div>
+                    <div><span>-67.45_-45.85</span><span>2019-02</span><span>6</span></div>
+                    <div><span>-67.55_-45.75</span><span>2019-02</span><span>3</span></div>
+                    <div class="cursor">charmy_calendario.csv</div>
+                  </div>
+                </div>
+                <span class="esq a"></span><span class="esq b"></span><span class="esq c"></span><span class="esq d"></span>
+              </div>
             </article>
           </div>
         </section>
 
-        <section class="kids" id="juego" aria-labelledby="titulo-juego">
-          <div class="kids-txt">
-            <span class="kids-eti">Juego educativo</span>
-            <h2 id="titulo-juego">Charmy Brigada</h2>
-            <p>Un juego para chicas y chicos: Charmy bombero apaga los focos de un día real y deja un consejo de prevención.</p>
-            <ol class="kids-pasos">
-              <li><b>01</b><div><h3>Un día real</h3><p>Los focos del juego salen de un día de la serie.</p></div></li>
-              <li><b>02</b><div><h3>Un consejo</h3><p>Al terminar, Charmy deja una idea para prevenir incendios.</p></div></li>
-            </ol>
+        <section class="modo j" id="juego" aria-labelledby="titulo-juego">
+          <div class="modo-txt">
+            <span class="eti">03 <i>·</i> Charmy Brigada</span>
+            <h2 id="titulo-juego">Apagá los focos con Charmy.</h2>
+            <p>Un juego para chicas y chicos sobre una maqueta en relieve de Sudamérica. El satélite pasa, aparecen focos y los apagás con agua, aviones y brigadas antes de que el viento los corra.</p>
             <a class="boton" href={URL_JUEGO}>Jugar <Fragment set:html={flecha} /></a>
           </div>
-          <div class="kids-figura" id="kids-figura" aria-hidden="true" set:html={charmyBrigada} />
+          <div class="escena">
+            <a class="captura" href={URL_JUEGO}><img src="/juego/partida.jpg" width="1120" height="673" loading="lazy" alt="Charmy Brigada en partida: la maqueta de Sudamérica en relieve, la barrida del satélite, focos encendidos y Charmy bombero" /></a>
+          </div>
         </section>
 
         <section class="logos" aria-label="Instituciones">

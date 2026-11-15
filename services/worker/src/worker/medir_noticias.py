@@ -26,7 +26,7 @@ SIN_RAZONAR = {"chat_template_kwargs": {"enable_thinking": False}}
 # (nombre en la tabla, modelo, opciones extra del pedido). El primero es el de producción.
 CANDIDATOS = [
     (f"{MODELO} (producción)", MODELO, OPCIONES_MODELO),
-    ("nemotron-3.5-bolt sin razonar", "nvidia/nemotron-3.5-bolt-e4b", SIN_RAZONAR),
+    ("nemotron-3.5-lightning sin razonar (anterior)", "nvidia/nemotron-3.5-lightning-30b-a3b", SIN_RAZONAR),
 ]
 
 # (provincia, país, [(titular, etiqueta esperada)]) — muestra inventada.

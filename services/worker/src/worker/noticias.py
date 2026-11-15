@@ -13,9 +13,9 @@ import httpx
 
 RSS = "https://news.google.com/rss/search"
 MODELO_URL = "https://integrate.api.nvidia.com/v1/chat/completions"
-# Medición del 15/11 (#279, medir-noticias.yml): 23/24 aciertos y 0,3 s por pedido con el razonamiento
-# apagado. google/gemma-4-31b-it, el anterior, agotaba la espera en cada pedido.
-MODELO = "nvidia/nemotron-3.5-lightning-30b-a3b"
+# Medición del 15/11 (#391, medir-noticias.yml) con el razonamiento apagado: 36/36 en titulares reales y
+# 0,4 s por pedido. nemotron-3.5-lightning, el anterior, acertaba 18/36 con el mismo pedido.
+MODELO = "nvidia/nemotron-3.5-bolt-e4b"
 OPCIONES_MODELO = {"chat_template_kwargs": {"enable_thinking": False}}  # si razona, gasta los tokens pensando
 ETIQUETAS = {"apoya", "contradice", "sin_informacion"}
 MAX_TITULARES = 8

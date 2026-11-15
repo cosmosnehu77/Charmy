@@ -43,7 +43,25 @@ const area = {
 };
 
 const fetchSimulado = vi.fn<typeof fetch>();
-let falla: "tiempo" | "imagen" | null = null;
+let falla: "tiempo" | "imagen" | "prediccion" | null = null;
+// Muestra de /forecast/zone (valores inventados): dos meses de pronóstico y uno más adelante.
+const mesZona = (month: string, horizon: number, probability: number) => ({
+  month,
+  horizon,
+  kind: horizon <= 2 ? "forecast" : "usual_adjusted",
+  probability,
+  usual_probability: 0.2,
+  expected_cells: 0.5,
+  usual_cells: 0.4,
+  level: "baja",
+  skill_vs_climatology: 0.12,
+});
+const prediccionZona = {
+  model: "charmy-eventos-v1",
+  emission: "2026-10",
+  zone: { cells: 30, no_history: false },
+  months: [mesZona("2026-11", 1, 0.31), mesZona("2026-12", 2, 0.21), mesZona("2027-01", 3, 0.1)],
+};
 
 /** Monta la app y abre la pestaña Lugar del panel de Experto, donde va el contexto (F4-D8). */
 function montar() {
@@ -66,6 +84,8 @@ beforeEach(() => {
     const error = new Response(JSON.stringify({ code: "fuente_no_disponible", message: "x" }), { status: 503 });
     if (u.includes("/weather")) return falla === "tiempo" ? error : new Response(JSON.stringify(tiempo));
     if (u.includes("/imagery/latest")) return falla === "imagen" ? error : new Response(JSON.stringify(imagen));
+    if (u.includes("/forecast/zone"))
+      return falla === "prediccion" ? error : new Response(JSON.stringify(prediccionZona));
     if (u.includes("/health")) return new Response(JSON.stringify({ status: "ok" }));
     if (u.includes("/calendar")) return new Response(JSON.stringify({ unit: "x", baseline: "x", provisional: false, cells: [] }));
     return new Response(JSON.stringify({ type: "FeatureCollection", features: [] }));
@@ -130,6 +150,24 @@ describe("panel de contexto del lugar (RF-CTX-01, RF-CTX-03)", () => {
       .filter((x) => x.pathname.endsWith("/imagery/latest"))
       .map((x) => x.searchParams.get("style"));
     expect(estilos).toContain("falso_color");
+  });
+});
+
+describe("predicción del área (F4-D12)", () => {
+  it("pide la predicción del área dibujada y la dice en probabilidad", async () => {
+    montar();
+    const seccion = await screen.findByRole("region", { name: "Predicción del área" });
+    expect(await within(seccion).findByText("Probabilidad de fuego: 31 %, más que el 20 % habitual.")).toBeInTheDocument();
+    expect(within(seccion).getAllByText("Pronóstico")).toHaveLength(2);
+    const pedido = fetchSimulado.mock.calls.find(([u]) => String(u).includes("/forecast/zone"));
+    expect(JSON.parse(String(pedido?.[1]?.body))).toEqual({ geometry: area });
+  });
+
+  it("si la predicción no responde, lo dice y el resto del lugar sigue", async () => {
+    falla = "prediccion";
+    montar();
+    const seccion = await screen.findByRole("region", { name: "Predicción del área" });
+    expect(await within(seccion).findByText(/La predicción no está disponible ahora/)).toBeInTheDocument();
   });
 });
 

@@ -17,7 +17,12 @@ import {
   AGRUPAR_ZONA,
   estiloGrupo,
   enNiveles,
+  conPrediccion,
   focosVivoVisibles,
+  type MesPrediccion,
+  plazoPrediccion,
+  textoPrediccion,
+  textoProbabilidad,
   nombresPorZoom,
   ubicarGlobo,
   type RegionResumen,
@@ -46,7 +51,7 @@ function region(id: string, hotspots: number | null, frp: number | null, percent
 const REGIONES = [region("A", 300, 1200, 80), region("B", 0, 0), region("C", 12, 40), region("D", 75, 300, 20)];
 
 describe("valor de cada indicador", () => {
-  it("focos, intensidad y anomalía salen de la región; riesgo y predicción no tienen dato", () => {
+  it("focos, intensidad y anomalía salen de la región; riesgo no tiene dato, y predicción solo si llegó", () => {
     const a = REGIONES[0]!.properties;
     expect(valorIndicador(a, "focos")).toBe(300);
     expect(valorIndicador(a, "frp")).toBe(1200);
@@ -305,5 +310,49 @@ describe("aspecto de un grupo de focos (#343)", () => {
   it("muestra la cantidad con separador de miles", () => {
     expect(estiloGrupo(42, 5).texto).toBe("42");
     expect(estiloGrupo(8567, 5).texto).toBe("8.567");
+  });
+});
+
+describe("predicción por región (F4-D12, #347)", () => {
+  const mes = (m: string, horizon: number, esperadas: number, habituales: number): MesPrediccion => ({
+    month: m,
+    horizon,
+    kind: horizon <= 2 ? "forecast" : "usual_adjusted",
+    probability: 0.9,
+    usual_probability: 0.8,
+    expected_cells: esperadas,
+    usual_cells: habituales,
+    level: "muy alta",
+    skill_vs_climatology: 0.12,
+  });
+  const meses = [mes("2026-11", 1, 33.7, 20), mes("2026-12", 2, 9, 9.4), mes("2027-01", 3, 2, 6)];
+
+  it("suma los meses a cada región; las que no vinieron quedan sin predicción", () => {
+    const juntas = conPrediccion(REGIONES, { model: "m", emission: "2026-10", regions: [{ region: "A", zone: { cells: 5, no_history: false }, months: meses }] });
+    expect(juntas[0]!.properties.prediccion).toEqual(meses);
+    expect(juntas[1]!.properties.prediccion).toBeUndefined();
+    expect(conPrediccion(REGIONES, undefined)).toBe(REGIONES);
+  });
+
+  it("el valor del mapa son las celdas esperadas el mes que viene", () => {
+    const [a] = conPrediccion(REGIONES, { model: "m", emission: "2026-10", regions: [{ region: "A", zone: { cells: 5, no_history: false }, months: meses }] });
+    expect(valorIndicador(a!.properties, "prediccion")).toBe(33.7);
+  });
+
+  it("dice si se espera más, lo mismo o menos que lo habitual", () => {
+    expect(textoPrediccion(meses[0]!)).toBe("Se esperan 33,7 celdas con fuego, más que las 20 habituales.");
+    expect(textoPrediccion(meses[1]!)).toBe("Se esperan 9 celdas con fuego, como las 9,4 habituales.");
+    expect(textoPrediccion(meses[2]!)).toBe("Se esperan 2 celdas con fuego, menos que las 6 habituales.");
+  });
+
+  it("en un área chica habla de probabilidad, contra la habitual", () => {
+    const area = (p: number, h: number) => ({ ...meses[0]!, probability: p, usual_probability: h });
+    expect(textoProbabilidad(area(0.0793, 0.0785))).toBe("Probabilidad de fuego: 8 %, como el 8 % habitual.");
+    expect(textoProbabilidad(area(0.31, 0.2))).toBe("Probabilidad de fuego: 31 %, más que el 20 % habitual.");
+    expect(textoProbabilidad(area(0.05, 0.2))).toBe("Probabilidad de fuego: 5 %, menos que el 20 % habitual.");
+  });
+
+  it("1 y 2 meses son pronóstico; desde 3, lo habitual ajustado", () => {
+    expect(meses.map(plazoPrediccion)).toEqual(["Pronóstico", "Pronóstico", "Lo habitual, ajustado"]);
   });
 });

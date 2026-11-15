@@ -12,7 +12,9 @@ import {
   nombreMes,
   rankingRegiones,
   type RegionResumen,
+  textoPrediccion,
 } from "./logica";
+import { PrediccionMeses } from "./PrediccionMeses";
 
 const num = (v: number, d = 0) => v.toLocaleString("es-AR", { minimumFractionDigits: d, maximumFractionDigits: d });
 const TONOS = { alto: "nivel-alto", medio: "nivel-medio", bajo: "nivel-bajo", cero: "nivel-cero" } as const;
@@ -130,6 +132,11 @@ export function FichaRegion({
                 )}
               </div>
             </dl>
+            {p.prediccion && (
+              <div className="border-t border-white/10 pt-3">
+                <PrediccionMeses meses={p.prediccion} texto={textoPrediccion} />
+              </div>
+            )}
             <NumerosRegion region={region.id} posicion={posicion} total={regiones.length} conHistorial={ultimo != null} />
             <div className="flex items-end gap-2">
               <Charmy size={64} mood="explica" outfit="cientifica" decorative className="shrink-0" />

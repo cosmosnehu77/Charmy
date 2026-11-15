@@ -35,7 +35,7 @@ anomalies read.
   against the historical median and a statistics view: each year, the season, the latest year against the previous
   ones and which sensor each month comes from.
 - **A 3D map** of 39 provinces and regions of Argentina and Chile where height is fire: hotspots, intensity, anomaly,
-  forecast and live hotspots.
+  forecast and live hotspots, over the map or over Sentinel-2 satellite imagery.
 - **Live hotspots** from NOAA-20 and NOAA-21, verified with several signals (satellite confidence, fixed sources, news
   and reports from people), with the local weather and a Sentinel-2 image as context.
 - **One- to six-month forecasts**: the probability of fire in each 11 km square, by province or for the area you draw.
@@ -95,6 +95,14 @@ month day by day, its rank among the 39 regions and its typical season.
 
 ![Santa Fe card: 339 fire days in October, 2,619 MW, well below normal (740 is usual for October) and the last month day by day](docs/capturas/en/ficha.jpg)
 
+### Satellite view
+
+One button swaps the map for the cloudless Sentinel-2 mosaic (EOxCloudless 2024), in 2D or 3D and on every tab. The
+provinces turn transparent so you can see the land under the fire: the green Chaco, the snowy Andes, the Patagonian
+steppe.
+
+![Satellite view: the Sentinel-2 mosaic of South America with the provinces in 3D, transparent, on top](docs/capturas/en/satelital.jpg)
+
 ### Expert mode and the burn calendar
 
 Pick an area (rectangle, polygon, locality or point), the dates and the sensor and confidence filters. Charmy clusters
@@ -111,7 +119,12 @@ You can download the hotspots as CSV and GeoJSON and the calendar as CSV or as a
 weather, the satellite image and the area forecast; *Validation* shows how well the harmonization works in that
 region.
 
-![Expert mode in El Bolsón: hotspots clustered on the 3D map and the 2022–2026 burn calendar with anomalies](docs/capturas/en/experto.jpg)
+![Expert mode in El Bolsón: hotspots clustered on the map and the 2022–2026 burn calendar with anomalies](docs/capturas/en/experto.jpg)
+
+<p>
+  <img src="docs/capturas/en/experto-estadisticas.jpg" alt="Statistics view of the El Bolsón calendar: period total, peak month, year with the most fire, each year's total and the season" width="49%">
+  <img src="docs/capturas/en/experto-minimizado.jpg" alt="The calendar minimized to a bar and the El Bolsón hotspots over the satellite image of the Andes" width="49%">
+</p>
 
 ### Forecast against the usual
 
@@ -127,7 +140,7 @@ Hotspots from the last 6, 24 or 48 hours, by satellite, clustered on the 3D map,
 hotspots, with controls to zoom in, zoom out, face north and switch to 2D. Each one carries its intensity and its
 verification status: confirmed, probable, unconfirmed or probable fixed source.
 
-![Live tab: 1,015 hotspots in the last 48 hours clustered on the 3D map, provinces with the most hotspots and verification statuses](docs/capturas/en/vivo.jpg)
+![Live tab: 1,018 hotspots in the last 48 hours clustered on the 3D map, provinces with the most hotspots and verification statuses](docs/capturas/en/vivo.jpg)
 
 ### Charmy Brigada
 

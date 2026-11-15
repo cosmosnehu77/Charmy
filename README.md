@@ -35,7 +35,7 @@ anomalías.
   con la anomalía contra la mediana histórica y una vista de estadísticas: cada año, la temporada, el último año contra
   los anteriores y de qué sensor sale cada mes.
 - **Un mapa 3D** de 39 provincias y regiones de Argentina y Chile en el que la altura es el fuego: focos, intensidad,
-  anomalía, predicción y focos en vivo.
+  anomalía, predicción y focos en vivo, sobre el mapa o sobre la imagen satelital Sentinel-2.
 - **Focos en vivo** de NOAA-20 y NOAA-21, verificados con varias señales (confianza del satélite, fuentes fijas,
   noticias y reportes de la gente), con el tiempo y la imagen Sentinel-2 del lugar como contexto.
 - **Predicción de uno a seis meses**: la probabilidad de fuego de cada cuadrado de 11 km, por provincia o para el área
@@ -95,6 +95,14 @@ mes día por día, su puesto entre las 39 regiones y la temporada típica.
 
 ![Ficha de Santa Fe: 339 días de fuego en octubre, 2.619 MW, bastante por debajo de lo normal (740 es lo habitual en octubre) y el último mes día por día](docs/capturas/es/ficha.jpg)
 
+### La vista satelital
+
+Un botón cambia el mapa por el mosaico Sentinel-2 sin nubes (EOxCloudless 2024), en 2D o 3D y en todas las pestañas.
+Las provincias se vuelven transparentes para que se vea el terreno debajo del fuego: el Chaco verde, los Andes
+nevados, la estepa patagónica.
+
+![Vista satelital: el mosaico Sentinel-2 de Sudamérica con las provincias en 3D, transparentes, encima](docs/capturas/es/satelital.jpg)
+
 ### El modo experto y el calendario de quema
 
 Elegís un área (rectángulo, polígono, localidad o punto), las fechas y los filtros de sensor y confianza. Charmy
@@ -109,7 +117,12 @@ calendario de quema mes por mes:
 Se descargan los focos en CSV y GeoJSON y el calendario en CSV o como imagen. La pestaña *Lugar* trae el tiempo, la
 imagen satelital y la predicción del área; *Validación* muestra qué tan bien funciona la armonización en esa región.
 
-![Modo experto en El Bolsón: focos agrupados sobre el mapa en 3D y calendario de quema de 2022 a 2026 con anomalías](docs/capturas/es/experto.jpg)
+![Modo experto en El Bolsón: focos agrupados sobre el mapa y calendario de quema de 2022 a 2026 con anomalías](docs/capturas/es/experto.jpg)
+
+<p>
+  <img src="docs/capturas/es/experto-estadisticas.jpg" alt="Vista Estadísticas del calendario de El Bolsón: total del período, mes pico, año con más fuego, el total de cada año y la temporada" width="49%">
+  <img src="docs/capturas/es/experto-minimizado.jpg" alt="El calendario minimizado a una barra y los focos de El Bolsón sobre la imagen satelital de la cordillera" width="49%">
+</p>
 
 ### Predicción contra lo habitual
 
@@ -125,7 +138,7 @@ Los focos de las últimas 6, 24 o 48 horas, por satélite, agrupados sobre el ma
 sus focos, con los controles para acercar, alejar, mirar al norte y pasar a 2D. Cada uno trae su intensidad y su estado
 de verificación: confirmado, probable, sin confirmar o probable fuente fija.
 
-![Pestaña En vivo: 1.015 focos en las últimas 48 horas agrupados sobre el mapa 3D, provincias con más focos y estados de verificación](docs/capturas/es/vivo.jpg)
+![Pestaña En vivo: 1.018 focos en las últimas 48 horas agrupados sobre el mapa 3D, provincias con más focos y estados de verificación](docs/capturas/es/vivo.jpg)
 
 ### Charmy Brigada
 

@@ -53,11 +53,12 @@ export function Pildora({ regiones }: { regiones: RegionResumen[] }) {
               type="button"
               role="tab"
               data-pestana={p.id}
+              data-guia={p.id === "zona" ? "zona" : undefined}
               aria-selected={activa}
               tabIndex={activa ? 0 : -1}
               onClick={() => elegirPestana(p.id)}
               className={`flex shrink-0 items-center gap-2 rounded-full px-[18px] py-2.5 text-[14.5px] transition ${
-                activa ? "bg-white font-semibold text-tinta" : "text-white/65 hover:text-white"
+                activa ? "bg-charmy-llama font-semibold text-tinta" : "text-white/65 hover:text-charmy-llama"
               }`}
             >
               {p.id === "vivo" && <i aria-hidden="true" className="punto-vivo" />}

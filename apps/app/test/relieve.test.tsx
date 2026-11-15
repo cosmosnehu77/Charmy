@@ -206,6 +206,33 @@ describe("vista Relieve (F4-R1)", () => {
     expect(recorrido.parentElement).toBe(document.body);
   });
 
+  it("el recorrido de Charmy explica Tu zona señalando su pestaña (#281)", async () => {
+    // jsdom no mide: con un tamaño falso ningún paso se saltea por no estar en pantalla.
+    vi.spyOn(Element.prototype, "getBoundingClientRect").mockReturnValue(new DOMRect(0, 0, 120, 40));
+    montar();
+    const u = userEvent.setup();
+    await screen.findByRole("region", { name: "Ranking" });
+    expect(screen.getByRole("tab", { name: "Tu zona" })).toHaveAttribute("data-guia", "zona");
+    await u.click(screen.getByRole("button", { name: /Charmy: ¿necesitás ayuda\?/ }));
+    await screen.findByRole("dialog", { name: "¡Hola! Soy Charmy" });
+    await u.click(screen.getByRole("button", { name: "Siguiente" }));
+    await screen.findByRole("dialog", { name: "Elegí qué mirar" });
+    await u.click(screen.getByRole("button", { name: "Siguiente" }));
+    const paso = await screen.findByRole("dialog", { name: "Marcá tu zona" });
+    expect(paso).toHaveTextContent(/rectángulo, un polígono, un punto con radio o una localidad/);
+    vi.restoreAllMocks();
+  });
+
+  it("en la píldora, la pestaña elegida va en naranja y el hover pasa las letras a naranja (#281)", async () => {
+    montar();
+    const elegida = screen.getByRole("tab", { selected: true });
+    expect(elegida).toHaveClass("bg-charmy-llama");
+    expect(elegida).not.toHaveClass("bg-white");
+    const otra = screen.getByRole("tab", { name: "Tu zona" });
+    expect(otra).toHaveClass("hover:text-charmy-llama");
+    expect(otra).not.toHaveClass("hover:text-white");
+  });
+
   it("con una provincia abierta, el foco se ve en la misma ficha y la flecha vuelve a la provincia (#236)", async () => {
     montar();
     const u = userEvent.setup();
@@ -239,6 +266,10 @@ describe("vista Relieve (F4-R1)", () => {
       act(() => vi.advanceTimersByTime(7000));
       expect(useRelieve.getState().ranking).toBe(false);
       expect(screen.queryByRole("region", { name: "Ranking" })).not.toBeInTheDocument();
+      // Sigue montado y oculto para los lectores, así la salida se anima en vez de cortarse (#281).
+      const escondido = document.querySelector('[data-guia="ranking"]');
+      expect(escondido).toHaveAttribute("data-abierto", "false");
+      expect(escondido).toHaveAttribute("aria-hidden", "true");
       fireEvent.mouseEnter(screen.getByRole("button", { name: "Mostrar el ranking" }));
       expect(useRelieve.getState().ranking).toBe(true);
       // Con el cursor encima no se esconde.

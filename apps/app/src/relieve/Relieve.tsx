@@ -119,56 +119,58 @@ export function Relieve() {
               aria-label="Mostrar el ranking"
               onMouseEnter={() => cambiar({ ranking: true })}
               onClick={() => cambiar({ ranking: true })}
-              className="pointer-events-auto absolute left-0 top-[68px] z-10 hidden h-[120px] w-10 items-center md:flex"
+              className="pestana-ranking pointer-events-auto absolute left-0 top-[68px] z-10 hidden h-[120px] w-10 items-center md:flex"
             >
               <span className="vidrio-relieve flex h-16 w-6 items-center justify-center rounded-r-xl text-white/70">
                 <ChevronRight aria-hidden="true" className="size-4" />
               </span>
             </button>
           )}
-          {/* Sobre vidrio: al acercar el mapa quedan regiones de color debajo y el texto blanco se perdía (#214). */}
-          {rankingAbierto && (
-            <section
-              data-guia="ranking"
-              aria-label="Ranking"
-              onMouseEnter={() => setSobreRanking(true)}
-              onMouseLeave={() => setSobreRanking(false)}
-              className="ranking-relieve vidrio-relieve pointer-events-auto absolute left-4 top-[76px] z-10 hidden w-[250px] rounded-2xl px-2 pb-2 pt-3 md:block"
-            >
-              <div className="mb-2 flex items-baseline justify-between px-2 text-[11px] uppercase tracking-[.14em] text-white/45">
-                <span>Ranking · {info?.nombre.toLowerCase()}</span>
-                <span className="normal-case tracking-normal">{info?.unidad}</span>
-              </div>
-              {!info?.disponible ? (
-                <p className="px-2 text-sm text-white/50">{info?.ayuda}</p>
-              ) : ranking.length === 0 ? (
-                <p className="px-2 text-sm text-white/50">{resumen.isPending ? "Cargando…" : "Sin datos de este indicador ahora."}</p>
-              ) : (
-                <ol className="m-0 flex list-none flex-col p-0">
-                  {ranking.map((r, i) => (
-                    <li key={r.id}>
-                      <button
-                        type="button"
-                        aria-pressed={estado.seleccion === r.id}
-                        onClick={() => estado.alternarRegion(r.id)}
-                        className="grid w-full grid-cols-[18px_1fr_auto] items-center gap-2 rounded-lg px-2 py-1.5 text-left text-sm hover:bg-white/10"
-                      >
-                        <span className="text-xs tabular-nums text-white/35">{i + 1}</span>
-                        <span className="flex min-w-0 flex-col gap-1">
-                          <span className="truncate text-white/90">{r.nombre}</span>
-                          <span
-                            className="h-1.5 rounded-full"
-                            style={{ width: `${Math.max(4, (r.valor / (ranking[0]?.valor ?? 1)) * 100)}%`, background: r.color }}
-                          />
-                        </span>
-                        <span className="w-14 text-right tabular-nums text-white/80">{num(r.valor)}</span>
-                      </button>
-                    </li>
-                  ))}
-                </ol>
-              )}
-            </section>
-          )}
+          {/* Sobre vidrio: al acercar el mapa quedan regiones de color debajo y el texto blanco se perdía (#214).
+              Escondido sigue montado, inerte y oculto para los lectores, así entra y sale con una transición (#281). */}
+          <section
+            data-guia="ranking"
+            data-abierto={rankingAbierto}
+            aria-label="Ranking"
+            aria-hidden={!rankingAbierto || undefined}
+            inert={!rankingAbierto}
+            onMouseEnter={() => setSobreRanking(true)}
+            onMouseLeave={() => setSobreRanking(false)}
+            className="ranking-relieve vidrio-relieve absolute left-4 top-[76px] z-10 hidden w-[250px] rounded-2xl px-2 pb-2 pt-3 md:block"
+          >
+            <div className="mb-2 flex items-baseline justify-between px-2 text-[11px] uppercase tracking-[.14em] text-white/45">
+              <span>Ranking · {info?.nombre.toLowerCase()}</span>
+              <span className="normal-case tracking-normal">{info?.unidad}</span>
+            </div>
+            {!info?.disponible ? (
+              <p className="px-2 text-sm text-white/50">{info?.ayuda}</p>
+            ) : ranking.length === 0 ? (
+              <p className="px-2 text-sm text-white/50">{resumen.isPending ? "Cargando…" : "Sin datos de este indicador ahora."}</p>
+            ) : (
+              <ol className="m-0 flex list-none flex-col p-0">
+                {ranking.map((r, i) => (
+                  <li key={r.id}>
+                    <button
+                      type="button"
+                      aria-pressed={estado.seleccion === r.id}
+                      onClick={() => estado.alternarRegion(r.id)}
+                      className="grid w-full grid-cols-[18px_1fr_auto] items-center gap-2 rounded-lg px-2 py-1.5 text-left text-sm hover:bg-white/10"
+                    >
+                      <span className="text-xs tabular-nums text-white/35">{i + 1}</span>
+                      <span className="flex min-w-0 flex-col gap-1">
+                        <span className="truncate text-white/90">{r.nombre}</span>
+                        <span
+                          className="h-1.5 rounded-full"
+                          style={{ width: `${Math.max(4, (r.valor / (ranking[0]?.valor ?? 1)) * 100)}%`, background: r.color }}
+                        />
+                      </span>
+                      <span className="w-14 text-right tabular-nums text-white/80">{num(r.valor)}</span>
+                    </button>
+                  </li>
+                ))}
+              </ol>
+            )}
+          </section>
 
           {!region && (
             // Más arriba que el borde: abajo a la derecha queda el botón de atribución del mapa (#251).

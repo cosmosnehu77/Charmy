@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { progresoPaso, suave, tiempoLectura, tramo } from "../src/scripts/recorrido";
+import { ocultarBarra, progresoPaso, suave, tiempoLectura, tramo } from "../src/scripts/recorrido";
 
 describe("recorrido", () => {
   it("suave va de 0 a 1 y se recorta fuera del intervalo", () => {
@@ -25,5 +25,14 @@ describe("recorrido", () => {
   it("deja leer el globo al menos 5 s y más si el texto es largo", () => {
     expect(tiempoLectura("Hola")).toBe(5000);
     expect(tiempoLectura("una ".repeat(20))).toBe(20 * 380 + 2200);
+  });
+});
+
+describe("barra de navegación", () => {
+  it("se oculta al bajar y vuelve al subir o arriba de todo", () => {
+    expect(ocultarBarra(400, 300)).toBe(true);
+    expect(ocultarBarra(300, 400)).toBe(false);
+    expect(ocultarBarra(40, 10)).toBe(false);
+    expect(ocultarBarra(300, 300)).toBe(true);
   });
 });

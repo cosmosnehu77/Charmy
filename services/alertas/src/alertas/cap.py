@@ -8,7 +8,7 @@ import xml.etree.ElementTree as ET
 from dataclasses import dataclass
 from datetime import UTC, datetime
 
-from alertas.mensaje import aviso_emergencias, enlace_mapa, titulo
+from alertas.mensaje import aviso_emergencias, emergencias, enlace_mapa, titulo
 from alertas.modelos import Foco
 from alertas.zona import Zona
 
@@ -48,7 +48,7 @@ def _info(alert: ET.Element, aviso: AvisoCap, zona: Zona) -> None:
         ("senderName", "Charmy"),
         ("headline", f"{titulo(foco)} en {zona.nombre}"),
         ("description", foco.detalle),
-        ("instruction", aviso_emergencias(zona)),
+        ("instruction", aviso_emergencias(zona, foco)),
         ("web", enlace_mapa(foco)),
     ]:
         _hijo(info, nombre, texto)
@@ -71,7 +71,7 @@ def armar_cap(zona: Zona, avisos: list[AvisoCap], enviado: datetime) -> str:
         ("status", "Exercise"),  # feed no oficial de un hackathon; "Actual" si una entidad lo adopta
         ("msgType", "Alert"),
         ("scope", "Public"),
-        ("note", f"Focos satelitales y reportes de vecinos sin confirmar. {aviso_emergencias(zona)}"),
+        ("note", f"Focos satelitales y reportes de vecinos sin confirmar. {emergencias(zona)}"),
     ]:
         _hijo(alert, nombre, texto)
     for aviso in avisos:

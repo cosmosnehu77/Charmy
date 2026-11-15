@@ -26,19 +26,19 @@ def test_el_mensaje_trae_ubicacion_viento_enlace_y_aviso_de_emergencias():
     assert "Viento: 30 km/h del oeste" in texto
     assert "https://www.openstreetmap.org/?mlat=-41.95000&mlon=-71.53000" in texto
     assert "no reemplaza a los servicios de emergencia" in texto
-    assert "llamá al 100" in texto
+    assert "servicios de emergencia (100)." in texto
 
 
 def test_si_no_hay_viento_lo_dice_y_el_mensaje_sale_igual():
     texto = armar_mensaje(FOCO, ZONA_DEMO, None)
 
     assert "Viento: no disponible" in texto
-    assert "llamá al 100" in texto
+    assert "servicios de emergencia (100)." in texto
 
 
 def test_el_numero_de_emergencias_depende_del_pais_de_la_zona():
     chile = Zona(id="demo-cl", nombre="Araucanía", lat=-38.7, lon=-72.6, radio_km=50, pais="CL")
-    assert "llamá al 132" in armar_mensaje(FOCO, chile, None)
+    assert "servicios de emergencia (132)." in armar_mensaje(FOCO, chile, None)
 
 
 def test_un_reporte_ciudadano_se_nombra_como_tal():
@@ -66,3 +66,22 @@ def test_en_una_zona_de_chile_la_hora_es_la_de_chile_con_horario_de_verano():
     assert "Cuándo: 14/11/2026 01:55 (hora de Chile)" in texto  # noviembre: horario de verano, UTC−3
     texto = armar_mensaje(replace(FOCO, cuando=datetime(2026, 7, 14, 4, 55, tzinfo=UTC)), zona_chile, None)
     assert "Cuándo: 14/07/2026 00:55 (hora de Chile)" in texto  # julio: UTC−4
+
+
+def test_el_aviso_le_pide_a_la_entidad_confirmar_en_el_terreno():
+    # RF-ALE-06 con un tono para entidades: qué hacer con el aviso, que Charmy no reemplaza y el número.
+    texto = armar_mensaje(FOCO, ZONA_DEMO, None)
+    assert texto.endswith(
+        "Aviso automático por satélite: confirmalo en el terreno. "
+        "Charmy no reemplaza a los servicios de emergencia (100)."
+    )
+
+
+def test_un_reporte_de_vecino_no_se_presenta_como_satelital():
+    reporte = Foco(
+        id="r-2", tipo="reporte_ciudadano", lat=-41.9, lon=-71.5,
+        cuando=datetime(2026, 11, 14, 12, 0, tzinfo=UTC), detalle="Humo",
+    )
+    texto = armar_mensaje(reporte, ZONA_DEMO, None)
+    assert "Reporte de un vecino sin verificar: confirmalo en el terreno." in texto
+    assert "por satélite" not in texto

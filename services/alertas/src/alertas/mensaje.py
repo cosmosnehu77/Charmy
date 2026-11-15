@@ -31,9 +31,16 @@ def enlace_mapa(foco: Foco) -> str:
     return f"https://www.openstreetmap.org/?mlat={foco.lat:.5f}&mlon={foco.lon:.5f}#map=13/{foco.lat:.5f}/{foco.lon:.5f}"
 
 
-def aviso_emergencias(zona: Zona) -> str:
-    numero = EMERGENCIAS.get(zona.pais, "112")
-    return f"Charmy no reemplaza a los servicios de emergencia. Si hay peligro, llamá al {numero}."
+def emergencias(zona: Zona) -> str:
+    """RF-ALE-06: Charmy no reemplaza a los servicios de emergencia, y a qué número llamar."""
+    return f"Charmy no reemplaza a los servicios de emergencia ({EMERGENCIAS.get(zona.pais, '112')})."
+
+
+def aviso_emergencias(zona: Zona, foco: Foco) -> str:
+    """El cierre de un aviso, para la entidad: de dónde sale, que lo confirme en el terreno y RF-ALE-06."""
+    satelital = foco.tipo == "foco_satelital"
+    origen = "Aviso automático por satélite" if satelital else "Reporte de un vecino sin verificar"
+    return f"{origen}: confirmalo en el terreno. {emergencias(zona)}"
 
 
 def cuando(foco: Foco, zona: Zona) -> str:
@@ -56,7 +63,7 @@ def armar_confirmado(foco: Foco, zona: Zona) -> str:
             f"Qué: {foco.detalle}",
             f"Mapa: {enlace_mapa(foco)}",
             "",
-            aviso_emergencias(zona),
+            aviso_emergencias(zona, foco),
         ]
     )
 
@@ -81,6 +88,6 @@ def armar_mensaje(foco: Foco, zona: Zona, viento: Viento | None, anterior: datet
             linea_viento,
             f"Mapa: {enlace_mapa(foco)}",
             "",
-            aviso_emergencias(zona),
+            aviso_emergencias(zona, foco),
         ]
     )

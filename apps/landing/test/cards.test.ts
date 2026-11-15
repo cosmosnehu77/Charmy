@@ -37,6 +37,15 @@ describe("cards de la landing (F4-E1b, #286)", () => {
     expect(texto("#modos .modo.n .lectura.l1")).toContain("Ejemplo");
   });
 
+  it("no presenta el Modo novato, retirado en F4-D7: la card 01 es la ficha de tu provincia (#409)", () => {
+    const pagina = doc.body.textContent ?? "";
+    expect(pagina).not.toMatch(/modo novato/i);
+    expect(texto("#modos .modo.n .eti")).toContain("Tu provincia");
+    expect(texto("#modos .modo.n .lectura.l1")).toContain("días de fuego");
+    expect(Object.values(EN).join(" ")).not.toMatch(/beginner mode/i);
+    expect(EN["Tu provincia"]).toBe("Your province");
+  });
+
   it("la card del juego muestra una captura real, enlaza al juego y no promete focos de un día real", () => {
     const img = doc.querySelector<HTMLImageElement>("#juego .captura img");
     expect(img?.getAttribute("alt")).toBeTruthy();
@@ -48,12 +57,12 @@ describe("cards de la landing (F4-E1b, #286)", () => {
 
   it("los textos nuevos tienen su versión en inglés", () => {
     const nuevos = [
-      "Elegís tu zona y Charmy compara este mes con lo normal. Sin jerga: más fuego, menos o como siempre.",
+      "Tocás tu provincia y Charmy compara el último mes con lo normal. Sin jerga: más fuego, menos o como siempre.",
       "La serie armonizada de MODIS y VIIRS, por celda y por mes. Ves lo mismo que bajás y lo validás por tu cuenta.",
       "Apagá los focos con Charmy.",
       "Un juego para chicas y chicos sobre una maqueta en relieve de Sudamérica. El satélite pasa, aparecen focos y los apagás con agua, aviones y brigadas antes de que el viento los corra.",
       "El mismo mapa sirve a quien quiere saber si su zona está bien, a quien necesita validar la serie y a quien viene a jugar.",
-      "días con fuego", "Más fuego que lo normal", "Este año", "Lo normal · 6 días", "Días con fuego", "Meses sin fuego",
+      "días de fuego", "Más fuego que lo normal", "Este año", "Lo normal · 6 días", "Días con fuego", "Meses sin fuego",
       "LLEGA VIIRS", "ILUSTRATIVO", "DÍAS CON FUEGO",
     ];
     for (const t of nuevos) {

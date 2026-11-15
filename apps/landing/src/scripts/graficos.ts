@@ -42,7 +42,7 @@ ${nodo(34, y(cru[0]!), "MODIS", x0)}${nodo(W - 34, y(arm.at(-1)!), "VIIRS", x1)}
 <text class="ilus" x="${(x0 + x1) / 2}" y="${yb + 44}" text-anchor="middle">ILUSTRATIVO</text></svg>`;
 }
 
-/** Modo novato: lo normal de los doce meses y este año hasta marzo. */
+/** Card «Tu provincia»: lo normal de los doce meses y este año hasta marzo. */
 export function curvaNovato(): string {
   const normal = [7, 8, 6, 3, 1, 0, 0, 0, 1, 2, 4, 6], anio = [9, 12, 14], W = 440, top = 8, base = 86, max = 16;
   const x = (i: number) => 8 + (i * (W - 16)) / 11, y = (v: number) => base - (v / max) * (base - top);

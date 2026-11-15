@@ -1,3 +1,5 @@
+import { proyectar } from "./contorno";
+
 /** Forma de data/muestras/dia-juego.json (esquema en packages/contracts/datos/esquema.md). */
 export interface FocoDelDia {
   lat: number;
@@ -34,9 +36,5 @@ export function cargarDia(dia: DiaJuego, area: Area): FocoEnPantalla[] {
   const [oeste, sur, este, norte] = dia.bbox;
   return dia.focos
     .filter((f) => f.lon >= oeste && f.lon <= este && f.lat >= sur && f.lat <= norte)
-    .map((f) => ({
-      ...f,
-      x: ((f.lon - oeste) / (este - oeste)) * area.ancho,
-      y: ((norte - f.lat) / (norte - sur)) * area.alto,
-    }));
+    .map((f) => ({ ...f, ...proyectar([f.lon, f.lat], dia.bbox, area) }));
 }

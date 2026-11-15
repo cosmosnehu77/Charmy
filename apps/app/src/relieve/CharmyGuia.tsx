@@ -31,6 +31,13 @@ const PASOS: Paso[] = [
     titulo: "Elegí qué mirar",
     texto: "Focos, intensidad o anomalía: cada provincia sube según ese dato. En vivo muestra los focos de las últimas horas.",
   },
+  {
+    guia: "zona",
+    mood: "explica",
+    titulo: "Marcá tu zona",
+    texto:
+      "En Tu zona marcás un área en el mapa: un rectángulo, un polígono, un punto con radio o una localidad. Te muestro cuánto fuego hubo ahí mes a mes y qué hay cerca.",
+  },
   { guia: "lupa", mood: "explica", titulo: "Buscá tu lugar", texto: "Tocá la lupa y escribí el nombre de una provincia o región." },
   {
     guia: "ranking",

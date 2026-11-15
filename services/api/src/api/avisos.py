@@ -56,6 +56,11 @@ CREATE TABLE IF NOT EXISTS avisos (
 CREATE UNIQUE INDEX IF NOT EXISTS avisos_unico
     ON avisos (zone_id, kind, coalesce(hotspot_id, ''), coalesce(report_id, ''));
 ALTER TABLE avisos ENABLE ROW LEVEL SECURITY;
+-- #280: cuándo el servicio de avisos lo mandó. Al crear la columna, los avisos que ya existían se dan
+-- por enviados (DEFAULT now()), así no se reenvían; después se saca el default y un aviso nuevo nace
+-- sin enviar.
+ALTER TABLE avisos ADD COLUMN IF NOT EXISTS sent_at timestamptz DEFAULT now();
+ALTER TABLE avisos ALTER COLUMN sent_at DROP DEFAULT;
 """
 _tablas_listas = False
 
@@ -175,12 +180,19 @@ class CambioDeEstado(BaseModel):
     note: str | None = Field(default=None, max_length=500)
 
 
-COLUMNAS_AVISO = "id, zone_id, kind, hotspot_id, report_id, status, note, created_at"
+COLUMNAS_AVISO = "id, zone_id, kind, hotspot_id, report_id, status, note, created_at, sent_at"
 
 
 def _aviso(fila: tuple) -> dict:
-    id_, zona, tipo, foco, reporte, estado, nota, creado = fila
-    aviso = {"id": id_, "zone_id": zona, "kind": tipo, "status": estado, "created_at": _fecha(creado)}
+    id_, zona, tipo, foco, reporte, estado, nota, creado, enviado = fila
+    aviso = {
+        "id": id_,
+        "zone_id": zona,
+        "kind": tipo,
+        "status": estado,
+        "created_at": _fecha(creado),
+        "sent_at": _fecha(enviado) if enviado else None,
+    }
     opcionales = (("hotspot_id", foco), ("report_id", reporte), ("note", nota))
     return aviso | {k: v for k, v in opcionales if v is not None}
 
@@ -231,5 +243,21 @@ def cambiar_estado(
         # El estado que marca la entidad es una señal para la verificación del reporte (RF-ALE-03).
         if fila[4]:
             con.execute("UPDATE reportes SET status = %s WHERE id = %s", [cambio.status, fila[4]])
+        con.commit()
+    return _aviso(fila)
+
+
+@router.post("/alerts/{alert_id}/sent", operation_id="markAlertSent", tags=["alertas"])
+def marcar_enviado(alert_id: str, authorization: Annotated[str | None, Header()] = None) -> dict:
+    """El servicio de avisos lo llama después de mandar el mensaje. La primera fecha queda (#280)."""
+    _exigir_token(authorization)
+    with conectar() as con:
+        _tablas(con)
+        fila = con.execute(
+            f"UPDATE avisos SET sent_at = coalesce(sent_at, now()) WHERE id = %s RETURNING {COLUMNAS_AVISO}",
+            [alert_id],
+        ).fetchone()
+        if fila is None:
+            raise ErrorDeContrato(404, "no_existe", "No encontramos ese aviso.")
         con.commit()
     return _aviso(fila)

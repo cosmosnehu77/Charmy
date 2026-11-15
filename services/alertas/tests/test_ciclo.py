@@ -21,8 +21,13 @@ def foco(id_: str, lat: float = -41.95, lon: float = -71.53, tipo="foco_satelita
 class ApiFalsa:
     def __init__(self, focos, reportes, viento=None, ya_existentes=()):
         self._focos, self._reportes, self._viento = focos, reportes, viento
-        self._ya = set(ya_existentes)
-        self.creadas = []
+        self._ya = set(ya_existentes)  # ya registrados y enviados
+        self.creadas, self.marcadas = [], []
+
+    async def marcar_enviada(self, alert_id):
+        self.marcadas.append(alert_id)
+        self._ya.add(alert_id.removeprefix("a-"))
+        return True
 
     async def focos_en_vivo(self, zona):
         return self._focos
@@ -102,3 +107,21 @@ def test_un_envio_que_falla_no_frena_los_siguientes_y_queda_en_el_registro(caplo
     assert [e[2] for e in tg.enviados] == [botones("a-f2")]
     assert (resumen.mandados, resumen.fallidos) == (1, 1)
     assert any("a-f1" in m and "no se pudo mandar" in m for m in caplog.messages)
+
+
+def test_un_aviso_mandado_queda_marcado_como_enviado():
+    api, tg = ApiFalsa([foco("f1")], []), TelegramFalso()
+    asyncio.run(avisar(api, tg, ZONA_DEMO, CHAT, set()))
+    assert api.marcadas == ["a-f1"]
+
+
+def test_un_envio_fallido_no_se_marca_y_sale_en_la_corrida_siguiente():
+    # #280: el aviso queda registrado sin enviar; la corrida siguiente lo reintenta.
+    api = ApiFalsa([foco("f1")], [])
+    asyncio.run(avisar(api, TelegramFalso(fallan={"f1"}), ZONA_DEMO, CHAT, set()))
+    assert api.marcadas == []
+
+    tg = TelegramFalso()
+    asyncio.run(avisar(api, tg, ZONA_DEMO, CHAT, set()))
+    assert [e[2] for e in tg.enviados] == [botones("a-f1")]
+    assert api.marcadas == ["a-f1"]

@@ -39,6 +39,9 @@ class ApiFalsa:
     async def crear_alerta(self, zone_id, kind, ref_id):
         return f"a-{ref_id}", True
 
+    async def marcar_enviada(self, alert_id):
+        return True
+
 
 class TelegramFalso:
     def __init__(self, toques=(), falla_editar=False):

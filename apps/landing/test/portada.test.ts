@@ -17,7 +17,7 @@ const texto = (id: string) => doc.getElementById(id)?.textContent ?? "";
 
 describe("landing", () => {
   it("los enlaces al juego están marcados para llevar el idioma", () => {
-    const alJuego = Array.from(doc.querySelectorAll("a[href*='juego.pages.dev']"));
+    const alJuego = Array.from(doc.querySelectorAll("a[href*='juego.charmy.earth']"));
     expect(alJuego.length).toBeGreaterThan(0);
     for (const a of alJuego) expect(a.hasAttribute("data-juego"), a.outerHTML).toBe(true);
   });
@@ -35,8 +35,8 @@ describe("landing", () => {
   });
 
   it("enlaza a la app, al juego y al documento del método", () => {
-    expect(enlaces()).toContain("https://charmy-app.pages.dev");
-    expect(enlaces()).toContain("https://charmy-juego.pages.dev");
+    expect(enlaces()).toContain("https://app.charmy.earth");
+    expect(enlaces()).toContain("https://juego.charmy.earth");
     expect(enlaces()).toContain("https://github.com/cosmosnehu77/Charmy/blob/main/docs/metodologia/README.md");
   });
 

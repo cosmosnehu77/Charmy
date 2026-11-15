@@ -5,10 +5,11 @@ que `pipeline.prediccion` (LightGBM): se prueba en las emisiones de los últimos
 terminan en el mes de emisión. TimesFM es preentrenado (zero-shot): no se entrena, solo se le da la historia
 de cada celda.
 
-Un horizonte se publica con TimesFM solo si supera a la climatología en más de MIN_MEJORA **y** supera a
-LightGBM en la misma prueba. Si no, queda LightGBM (que publica `pipeline.prediccion`).
+Un horizonte se publica con TimesFM solo si supera a la climatología en más de MIN_MEJORA, a LightGBM y a dos
+referencias triviales (decir siempre 0 y repetir el mes de emisión) en la misma prueba. Si no, queda LightGBM.
 """
 
+from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import date
 from pathlib import Path
@@ -17,7 +18,7 @@ from typing import Protocol
 import numpy as np
 import polars as pl
 from pipeline.esquema import ESQUEMAS
-from pipeline.prediccion import HORIZONTES, MIN_MEJORA, filas, particion
+from pipeline.prediccion import HORIZONTES, MIN_MEJORA, _ajustar, _predecir, filas, particion
 
 MODELO = "timesfm-2.5"
 
@@ -34,6 +35,9 @@ class Resultado:
     mejora: dict[int, float]  # 1 - MAE TimesFM / MAE climatología, por horizonte
     mejora_vigente: dict[int, float]  # la de LightGBM, con la que se compara
     emisiones: list[date]  # meses de emisión de la prueba
+    # Referencias triviales en la misma prueba: «cero» (siempre 0) y «persistencia» (repetir el mes de
+    # emisión). Con MAE y conteos casi siempre en cero, decir 0 ya le gana a la climatología.
+    referencias: dict[str, dict[int, float]]
 
 
 def leer_entrenamiento(ruta: Path) -> pl.DataFrame:
@@ -79,24 +83,66 @@ def _pronosticar(modelo: Pronosticador, m: pl.DataFrame, emision: date) -> pl.Da
     ).with_columns(pl.col("pred", "q10", "q90").clip(lower_bound=0))
 
 
-def comparar(m: pl.DataFrame, modelo: Pronosticador, mejora_vigente: dict[int, float]) -> Resultado:
-    """`m`: días con fuego por celda y mes. `mejora_vigente`: la de LightGBM en la misma prueba."""
-    f = filas(m)
-    _, prueba = particion(f)
-    emisiones = sorted(set(prueba["emision"].to_list()))
-    pronosticos = pl.concat([_pronosticar(modelo, m, e) for e in emisiones])
-    p = prueba.join(pronosticos, on=["cell_id", "emision", "horizonte"], how="inner")
-
+def _mejora(p: pl.DataFrame, columna: str) -> dict[int, float]:
+    """1 - MAE del modelo / MAE de la climatología, por horizonte."""
     mejora = {}
     for h in HORIZONTES:
         ph = p.filter(pl.col("horizonte") == h)
         mae_clim = (ph["y"] - ph["clim"]).abs().mean()
-        mae_tfm = (ph["y"] - ph["pred"]).abs().mean()
-        mejora[h] = round(1 - mae_tfm / mae_clim, 4) if mae_clim else 0.0
-    ganan = [h for h in HORIZONTES if mejora[h] > MIN_MEJORA and mejora[h] > mejora_vigente.get(h, 0.0)]
+        mae = (ph["y"] - ph[columna]).abs().mean()
+        mejora[h] = round(1 - mae / mae_clim, 4) if mae_clim else 0.0
+    return mejora
+
+
+def mejora_lightgbm(m: pl.DataFrame, celdas: list[str] | None = None) -> dict[int, float]:
+    """La mejora de LightGBM (el modelo de pipeline.prediccion, entrenado con todas las celdas) medida en la
+    prueba temporal, opcionalmente solo sobre `celdas`: así se compara con TimesFM en la misma prueba."""
+    entreno, prueba = particion(filas(m))
+    if celdas is not None:
+        prueba = prueba.filter(pl.col("cell_id").is_in(celdas))
+    prueba = prueba.with_columns(pred=_predecir(_ajustar(entreno, "poisson"), prueba))
+    return _mejora(prueba, "pred")
+
+
+def comparar(
+    m: pl.DataFrame,
+    modelo: Pronosticador,
+    mejora_vigente: dict[int, float],
+    al_avanzar: Callable[[date], None] | None = None,
+    celdas: list[str] | None = None,
+) -> Resultado:
+    """`m`: días con fuego por celda y mes. `mejora_vigente`: la de LightGBM en la misma prueba.
+
+    Con `celdas`, la prueba se hace solo sobre esa muestra (TimesFM en CPU tarda); la emisión final que se
+    publica es siempre para todas las celdas.
+    """
+    f = filas(m)
+    _, prueba = particion(f)
+    muestra = m
+    if celdas is not None:
+        prueba = prueba.filter(pl.col("cell_id").is_in(celdas))
+        muestra = m.filter(pl.col("cell_id").is_in(celdas))
+    emisiones = sorted(set(prueba["emision"].to_list()))
+    partes = []
+    for e in emisiones:
+        partes.append(_pronosticar(modelo, muestra, e))
+        if al_avanzar:
+            al_avanzar(e)
+    pronosticos = pl.concat(partes)
+    p = prueba.join(pronosticos, on=["cell_id", "emision", "horizonte"], how="inner")
+
+    mejora = _mejora(p, "pred")
+    p = p.with_columns(cero=pl.lit(0.0), persistencia=pl.col("lag0"))
+    referencias = {"cero": _mejora(p, "cero"), "persistencia": _mejora(p, "persistencia")}
+
+    def gana(h: int) -> bool:
+        piso = max(MIN_MEJORA, mejora_vigente.get(h, 0.0), *(ref[h] for ref in referencias.values()))
+        return mejora[h] > piso
+
+    ganan = [h for h in HORIZONTES if gana(h)]
     vacia = pl.DataFrame(schema=ESQUEMAS["prediccion"])
     if not ganan:
-        return Resultado(vacia, mejora, mejora_vigente, emisiones)
+        return Resultado(vacia, mejora, mejora_vigente, emisiones, referencias)
 
     # Se emite desde el último mes conocido, con toda la historia.
     ultimo = m["mes"].max()
@@ -113,5 +159,9 @@ def comparar(m: pl.DataFrame, modelo: Pronosticador, mejora_vigente: dict[int, f
         model=pl.lit(MODELO),
     )
     return Resultado(
-        prediccion.cast(ESQUEMAS["prediccion"]).sort("cell_id", "horizon"), mejora, mejora_vigente, emisiones
+        prediccion.cast(ESQUEMAS["prediccion"]).sort("cell_id", "horizon"),
+        mejora,
+        mejora_vigente,
+        emisiones,
+        referencias,
     )

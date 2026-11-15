@@ -13,9 +13,7 @@ import json
 import sys
 from pathlib import Path
 
-from pipeline.prediccion import entrenar_y_validar
-
-from prediccion.comparar import comparar, leer_entrenamiento
+from prediccion.comparar import comparar, leer_entrenamiento, mejora_lightgbm
 
 PESOS = "google/timesfm-2.5-200m-pytorch"  # Apache-2.0. La 3.0 no: sus pesos son no comerciales (D-31).
 
@@ -29,7 +27,7 @@ def cargar_timesfm():
     modelo = timesfm.TimesFM_2p5_200M_torch.from_pretrained(PESOS)
     modelo.compile(
         timesfm.ForecastConfig(
-            max_context=512,
+            max_context=192,  # la serie más larga tiene 177 meses: más contexto es relleno
             max_horizon=128,
             normalize_inputs=True,
             per_core_batch_size=256,
@@ -46,20 +44,45 @@ def main(argv: list[str] | None = None) -> int:
     p = argparse.ArgumentParser(description="TimesFM 2.5 contra LightGBM con la compuerta D-10")
     p.add_argument("--entrenamiento", type=Path, required=True, help="entrenamiento.parquet (F3-B5)")
     p.add_argument("--out", type=Path, required=True)
+    p.add_argument(
+        "--celdas-prueba",
+        type=int,
+        default=3000,
+        help="Celdas al azar (semilla fija) para la prueba; 0 = todas. TimesFM en CPU tarda.",
+    )
     args = p.parse_args(argv)
 
     m = leer_entrenamiento(args.entrenamiento)
     print(f"{m['cell_id'].n_unique()} celdas, {m['mes'].min()} a {m['mes'].max()}")
-    vigente = entrenar_y_validar(m).mejora
+    todas = m["cell_id"].unique().sort()
+    celdas = None
+    if 0 < args.celdas_prueba < todas.len():
+        celdas = todas.sample(args.celdas_prueba, seed=0).to_list()
+        print(f"prueba sobre {len(celdas)} celdas al azar (semilla 0)")
+    vigente = mejora_lightgbm(m, celdas)
     print("LightGBM, mejora sobre la climatología:", vigente)
-    r = comparar(m, cargar_timesfm(), mejora_vigente=vigente)
+    r = comparar(
+        m,
+        cargar_timesfm(),
+        mejora_vigente=vigente,
+        al_avanzar=lambda e: print("emisión", e, flush=True),
+        celdas=celdas,
+    )
     print("TimesFM 2.5, mejora sobre la climatología:", r.mejora)
+    for nombre, ref in r.referencias.items():
+        print(f"Referencia «{nombre}», mejora sobre la climatología:", ref)
 
     args.out.mkdir(parents=True, exist_ok=True)
-    resumen = {"emisiones_de_prueba": [str(e) for e in r.emisiones], "lightgbm": vigente, "timesfm": r.mejora}
+    resumen = {
+        "celdas_prueba": len(celdas) if celdas else todas.len(),
+        "emisiones_de_prueba": [str(e) for e in r.emisiones],
+        "lightgbm": vigente,
+        "timesfm": r.mejora,
+        "referencias": r.referencias,
+    }
     (args.out / "comparacion.json").write_text(json.dumps(resumen, indent=2, ensure_ascii=False))
     if r.prediccion.is_empty():
-        print("TimesFM no le gana a LightGBM en ningún horizonte: queda LightGBM (D-31)")
+        print("TimesFM no supera a LightGBM y a las referencias en ningún horizonte: queda LightGBM (D-31)")
         return 0
     r.prediccion.write_parquet(args.out / "prediccion.parquet")
     horizontes = sorted(set(r.prediccion["horizon"].to_list()))

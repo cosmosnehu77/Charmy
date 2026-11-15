@@ -7,8 +7,8 @@ from datetime import date
 import numpy as np
 import polars as pl
 from pipeline.esquema import ESQUEMAS
-from pipeline.prediccion import filas, particion
-from prediccion.comparar import MODELO, comparar, leer_entrenamiento
+from pipeline.prediccion import entrenar_y_validar, filas, particion
+from prediccion.comparar import MODELO, comparar, leer_entrenamiento, mejora_lightgbm
 
 
 def mensual(tendencia: float, celdas: int = 12, semilla: int = 5) -> pl.DataFrame:
@@ -104,3 +104,65 @@ def test_lee_la_tabla_de_entrenamiento_publicada(tmp_path):
     m = leer_entrenamiento(ruta)
     assert m.schema == {"cell_id": pl.String, "mes": pl.Date, "dias": pl.Float64}
     assert m["mes"].to_list() == [date(2012, 2, 1), date(2012, 3, 1)]
+
+
+def test_con_muestra_de_celdas_solo_evalua_esas_y_emite_para_todas():
+    m = mensual(1.0, celdas=6)
+    todas = sorted(set(m["cell_id"].to_list()))
+    muestra = todas[:2]
+    modelo = Estacional(1.0)
+    contextos: list[int] = []
+    original = modelo.forecast
+
+    def contar(horizon, inputs):
+        contextos.append(len(inputs))
+        return original(horizon, inputs)
+
+    modelo.forecast = contar
+    r = comparar(m, modelo, mejora_vigente={1: 0.0, 2: 0.0, 3: 0.0}, celdas=muestra)
+    # En la prueba, solo las celdas de la muestra; la emisión final, para todas.
+    assert contextos[:-1] == [2] * len(r.emisiones)
+    assert contextos[-1] == 6
+    assert set(r.prediccion["cell_id"].to_list()) == set(todas)
+
+
+def test_lightgbm_se_mide_con_la_misma_prueba():
+    m = mensual(1.0, celdas=6)
+    todas = sorted(set(m["cell_id"].to_list()))
+    # Con todas las celdas coincide con la mejora que publica pipeline.prediccion.
+    assert mejora_lightgbm(m) == entrenar_y_validar(m).mejora
+    # Con una muestra, devuelve los tres horizontes medidos solo sobre esas celdas.
+    parcial = mejora_lightgbm(m, celdas=todas[:3])
+    assert set(parcial) == {1, 2, 3}
+
+
+class Cero:
+    """Modelo falso que siempre dice cero: con conteos casi siempre en cero «gana» en MAE."""
+
+    def forecast(self, horizon: int, inputs: list[np.ndarray]):
+        punto = np.zeros((len(inputs), horizon))
+        return punto, np.zeros((len(inputs), horizon, 10))
+
+
+def ralo(celdas: int = 8, semilla: int = 2) -> pl.DataFrame:
+    """Días con fuego casi siempre en cero y un mes de fuego cada tanto, como casi todas las celdas."""
+    rnd = random.Random(semilla)
+    meses = pl.date_range(date(2012, 1, 1), date(2025, 12, 1), "1mo", eager=True).to_list()
+    datos = [
+        (f"-4{c}.0_-70.0", m, float(rnd.choice([3, 5, 8])) if rnd.random() < 0.1 else 0.0)
+        for c in range(celdas)
+        for m in meses
+    ]
+    return pl.DataFrame(
+        datos, schema={"cell_id": pl.String, "mes": pl.Date, "dias": pl.Float64}, orient="row"
+    )
+
+
+def test_no_publica_un_modelo_que_no_supera_a_decir_siempre_cero():
+    m = ralo()
+    r = comparar(m, Cero(), mejora_vigente={1: 0.0, 2: 0.0, 3: 0.0})
+    # Le gana a la climatología (con MAE, decir cero rinde cuando casi todo es cero)...
+    assert all(v > 0.02 for v in r.mejora.values())
+    # ...pero no a la referencia «siempre cero», que es él mismo: no se publica.
+    assert r.referencias["cero"] == r.mejora
+    assert r.prediccion.is_empty()

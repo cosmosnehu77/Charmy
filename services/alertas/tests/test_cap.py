@@ -38,7 +38,7 @@ def test_el_feed_valida_contra_cap_1_2_y_trae_un_info_por_aviso():
     assert infos[0].findtext("cap:category", namespaces=NS) == "Fire"
     assert infos[0].findtext("cap:area/cap:circle", namespaces=NS) == "-41.95000,-71.53000 0.5"
     assert infos[0].findtext("cap:area/cap:areaDesc", namespaces=NS) == "Comarca Andina"
-    assert "llamá al 100" in infos[0].findtext("cap:instruction", namespaces=NS)
+    assert "servicios de emergencia (100)." in infos[0].findtext("cap:instruction", namespaces=NS)
     assert infos[1].findtext("cap:parameter[cap:valueName='estado']/cap:value", namespaces=NS) == "en_camino"
 
 

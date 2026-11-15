@@ -149,7 +149,7 @@ def test_un_foco_que_paso_a_confirmado_manda_una_actualizacion_como_respuesta():
 
     assert len(tg.enviados) == 1 and tg.respuestas == [77]
     texto = tg.enviados[0][1]
-    assert "ahora está confirmado" in texto and "llamá al 100" in texto
+    assert "ahora está confirmado" in texto and "servicios de emergencia (100)." in texto
     assert tg.enviados[0][2] == []  # sin botones: los del aviso original siguen valiendo
     assert api.marcas == [("a-f1", "confirmado", None)]
     assert (resumen.mandados, resumen.actualizados) == (0, 1)

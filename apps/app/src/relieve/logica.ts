@@ -3,7 +3,7 @@
  * el nivel de la ficha y el tamaño de los focos en vivo. Sin React ni MapLibre, para poder probarla.
  */
 import type { components } from "@charmy/contracts-api";
-import type { ExpressionSpecification, StyleSpecification } from "maplibre-gl";
+import type { StyleSpecification } from "maplibre-gl";
 import { rampaAnomalia, rampaConteo, relieve } from "@charmy/ui";
 
 export type Resumen = components["schemas"]["RegionsSummary"];
@@ -138,16 +138,21 @@ export function enNiveles(frp: number | null | undefined, niveles: NivelFoco[]):
   return niveles.length === 0 || niveles.includes(nivelFoco(frp));
 }
 
-/** Lo mismo como filtro de MapLibre sobre la propiedad `frp`; null si entran todos. */
-export function filtroNiveles(niveles: NivelFoco[]): ExpressionSpecification | null {
-  if (niveles.length === 0) return null;
-  const rangos = NIVELES_FOCO.filter((n) => niveles.includes(n.nivel)).map(({ desde, hasta }) =>
-    hasta === null
-      ? [">=", ["get", "frp"], desde]
-      : ["all", [">=", ["get", "frp"], desde], ["<", ["get", "frp"], hasta]],
-  );
-  return ["any", ...rangos] as ExpressionSpecification;
+/** Focos de En vivo que se ven: los de las últimas `horas` (contadas desde el último foco) y de los niveles elegidos. */
+export function focosVivoVisibles<T extends { t: number; frp: number | null | undefined }>(
+  focos: T[],
+  horas: number,
+  niveles: NivelFoco[],
+): T[] {
+  const ultimo = focos.reduce((max, f) => Math.max(max, f.t), 0);
+  return focos.filter((f) => f.t >= ultimo - horas * 3_600_000 && enNiveles(f.frp, niveles));
 }
+
+/**
+ * Agrupado de En vivo (#333): los focos a menos de 50 px en pantalla se juntan en un círculo con la cantidad, desde
+ * 3 focos. Hasta el zoom 8 (provincia); desde el 9 (departamento) se ven todos sueltos.
+ */
+export const AGRUPAR_VIVO = { clusterRadius: 50, clusterMinPoints: 3, clusterMaxZoom: 8 } as const;
 
 export function hace(ahora: Date, cuando: string): string {
   const horas = Math.round((ahora.getTime() - new Date(cuando).getTime()) / 3_600_000);

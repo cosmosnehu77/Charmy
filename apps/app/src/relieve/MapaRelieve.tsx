@@ -16,10 +16,11 @@ import { controlMapa } from "./controlMapa";
 import type { FocoReciente } from "./datos";
 import { indicadorDe, useRelieve } from "./estado";
 import {
+  AGRUPAR_VIVO,
   alturaDelDia,
   CORTES_FOCO,
   escalaRegion,
-  filtroNiveles,
+  focosVivoVisibles,
   maximo,
   nombresPorZoom,
   type RegionResumen,
@@ -51,6 +52,8 @@ const COLOR_FOCO: maplibregl.ExpressionSpecification = [
   CORTES_FOCO[4],
   rampaConteo[6],
 ];
+/** Los grupos de En vivo (#333) llevan `point_count`; los focos sueltos, no. */
+const SUELTO: maplibregl.ExpressionSpecification = ["!", ["has", "point_count"]];
 
 function mezcla(a: string, b: string, t: number): string {
   const x = Number.parseInt(a.slice(1), 16);
@@ -122,6 +125,7 @@ export default function MapaRelieve({ regiones, dias, focos, onHover }: Props) {
   const alturas = useRef(new Map<string, { actual: number; meta: number }>());
   const pausaGiro = useRef(0);
   const regionesPuestas = useRef<RegionResumen[] | null>(null);
+  const vivoPuesto = useRef<unknown[]>([]);
 
   const sincronizar = useRef(() => {});
   sincronizar.current = () => {
@@ -170,7 +174,14 @@ export default function MapaRelieve({ regiones, dias, focos, onHover }: Props) {
       verFocos ? agujas(visibles, (region) => (region ? (alturas.current.get(region)?.meta ?? 0) : 0)) : VACIO,
     );
     m.getSource<maplibregl.GeoJSONSource>("puntos")?.setData(verFocos ? puntos(visibles) : VACIO);
-    m.getSource<maplibregl.GeoJSONSource>("vivo")?.setData(vivo ? puntos(fs) : VACIO);
+    // La ventana de horas y los niveles van en los datos y no en las capas: así los grupos cuentan solo lo que se ve.
+    // Se mandan solo si cambian: el puntero vuelve a pintar en cada movimiento y rearmar los grupos cada vez es caro.
+    const claveVivo = vivo ? [fs, e.horasVivo, e.nivelesVivo] : [];
+    if (claveVivo.length !== vivoPuesto.current.length || claveVivo.some((x, i) => x !== vivoPuesto.current[i])) {
+      const enVivo = vivo ? puntos(focosVivoVisibles(fs, e.horasVivo, e.nivelesVivo)) : VACIO;
+      m.getSource<maplibregl.GeoJSONSource>("vivo")?.setData(enVivo);
+      vivoPuesto.current = claveVivo;
+    }
     m.getSource<maplibregl.GeoJSONSource>("zona-area")?.setData(zona ? datosArea(a) : VACIO);
     m.getSource<maplibregl.GeoJSONSource>("zona-focos")?.setData(zona && fz ? fz : VACIO);
     const visible = (id: string, si: boolean) => m.setLayoutProperty(id, "visibility", si ? "visible" : "none");
@@ -180,16 +191,12 @@ export default function MapaRelieve({ regiones, dias, focos, onHover }: Props) {
     visible("vivo-gris", apagado);
     visible("vivo-pulso", vivo);
     visible("vivo-focos", vivo);
+    visible("vivo-grupos", vivo);
+    visible("vivo-cantidad", vivo);
     visible("vivo-sel", vivo);
-    // La ventana se cuenta desde el último foco, así se ve algo aunque el worker esté atrasado.
+    // Laten los focos sueltos de las últimas 6 h, contadas desde el último foco.
     const ultimo = fs.reduce((max, f) => Math.max(max, f.t), 0) || Date.now();
-    const limite = ultimo - e.horasVivo * 3_600_000;
-    // Y solo los niveles de intensidad elegidos en el panel (#251).
-    const niveles = filtroNiveles(e.nivelesVivo);
-    const conNiveles = (f: maplibregl.ExpressionSpecification): maplibregl.ExpressionSpecification =>
-      niveles ? ["all", f, niveles] : f;
-    m.setFilter("vivo-focos", conNiveles([">=", ["get", "t"], limite]));
-    m.setFilter("vivo-pulso", conNiveles([">=", ["get", "t"], Math.max(limite, ultimo - 6 * 3_600_000)]));
+    m.setFilter("vivo-pulso", ["all", SUELTO, [">=", ["get", "t"], ultimo - 6 * 3_600_000]]);
     m.setFilter("vivo-sel", ["==", ["get", "k"], e.focoVivo ?? -1]);
   };
 
@@ -219,7 +226,15 @@ export default function MapaRelieve({ regiones, dias, focos, onHover }: Props) {
       m.addSource("regiones", { type: "geojson", data: VACIO, promoteId: "region" });
       m.addSource("agujas", { type: "geojson", data: VACIO });
       m.addSource("puntos", { type: "geojson", data: VACIO });
-      m.addSource("vivo", { type: "geojson", data: VACIO });
+      // En vivo agrupa los focos cercanos y los separa al acercar (#333). Cada grupo guarda el `frp` de su foco más
+      // intenso, así toma el mismo color que tendría ese foco.
+      m.addSource("vivo", {
+        type: "geojson",
+        data: VACIO,
+        cluster: true,
+        ...AGRUPAR_VIVO,
+        clusterProperties: { frp: ["max", ["get", "frp"]] },
+      });
       m.addSource("zona-area", { type: "geojson", data: VACIO });
       m.addSource("zona-focos", { type: "geojson", data: VACIO });
       m.addLayer(
@@ -289,6 +304,7 @@ export default function MapaRelieve({ regiones, dias, focos, onHover }: Props) {
         id: "vivo-focos",
         type: "circle",
         source: "vivo",
+        filter: SUELTO,
         layout: { "circle-sort-key": ["get", "orden"] },
         paint: {
           "circle-radius": RADIO_FOCO,
@@ -297,6 +313,32 @@ export default function MapaRelieve({ regiones, dias, focos, onHover }: Props) {
           "circle-stroke-color": relieve.vidrio,
           "circle-stroke-width": 1,
         },
+      });
+      m.addLayer({
+        id: "vivo-grupos",
+        type: "circle",
+        source: "vivo",
+        filter: ["has", "point_count"],
+        paint: {
+          "circle-radius": ["step", ["get", "point_count"], 14, 10, 18, 50, 24, 200, 30],
+          "circle-color": COLOR_FOCO,
+          "circle-opacity": 0.85,
+          "circle-stroke-color": relieve.vidrio,
+          "circle-stroke-width": 2,
+        },
+      });
+      m.addLayer({
+        id: "vivo-cantidad",
+        type: "symbol",
+        source: "vivo",
+        filter: ["has", "point_count"],
+        layout: {
+          "text-field": ["get", "point_count_abbreviated"],
+          "text-font": ["Noto Sans Bold"],
+          "text-size": 12,
+          "text-allow-overlap": true,
+        },
+        paint: { "text-color": interfaz.superficie, "text-halo-color": relieve.vidrio, "text-halo-width": 1.2 },
       });
       m.addLayer({
         id: "vivo-sel",
@@ -341,6 +383,7 @@ export default function MapaRelieve({ regiones, dias, focos, onHover }: Props) {
       }
       listo.current = true;
       regionesPuestas.current = null;
+      vivoPuesto.current = [];
       sincronizar.current();
       herramienta.current();
       imagen.current();
@@ -361,7 +404,8 @@ export default function MapaRelieve({ regiones, dias, focos, onHover }: Props) {
       const vivo = props.current.estado.pestana === "vivo";
       const capa = vivo ? "vivo-focos" : "reg-3d";
       const f = m.getLayer(capa) ? m.queryRenderedFeatures(e.point, { layers: [capa] })[0] : undefined;
-      m.getCanvas().style.cursor = f ? "pointer" : "";
+      const grupo = vivo && m.getLayer("vivo-grupos") && m.queryRenderedFeatures(e.point, { layers: ["vivo-grupos"] })[0];
+      m.getCanvas().style.cursor = f || grupo ? "pointer" : "";
       props.current.onHover({
         id: vivo ? null : ((f?.properties?.region as string | undefined) ?? null),
         foco: vivo && f ? Number(f.properties?.k) : null,
@@ -382,6 +426,17 @@ export default function MapaRelieve({ regiones, dias, focos, onHover }: Props) {
         return;
       }
       if (est.pestana === "vivo") {
+        // Tocar un grupo acerca hasta que se abre. Los grupos se arman por zoom entero, así que el zoom de apertura puede
+        // quedar por debajo del actual: siempre se acerca al menos uno.
+        const grupo = m.getLayer("vivo-grupos") ? m.queryRenderedFeatures(e.point, { layers: ["vivo-grupos"] })[0] : undefined;
+        if (grupo) {
+          const centro = (grupo.geometry as GeoJSON.Point).coordinates as [number, number];
+          void m
+            .getSource<maplibregl.GeoJSONSource>("vivo")
+            ?.getClusterExpansionZoom(Number(grupo.properties?.cluster_id))
+            .then((zoom) => m.easeTo({ center: centro, zoom: Math.max(zoom, m.getZoom() + 1), duration: reducido() ? 0 : 600 }));
+          return;
+        }
         const f = m.getLayer("vivo-focos") ? m.queryRenderedFeatures(e.point, { layers: ["vivo-focos"] }) : [];
         // Entre focos encimados gana el más chico, que es el que queda arriba.
         const elegido = [...f].sort((a, b) => Number(a.properties?.frp) - Number(b.properties?.frp))[0];

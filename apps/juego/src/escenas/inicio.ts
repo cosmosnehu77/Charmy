@@ -1,7 +1,8 @@
 import { paleta } from "@charmy/ui";
 import Phaser from "phaser";
 import { fechaLarga } from "../cierre";
-import { ANCHO, DIA, LINEAS, TEXTO, Y, almacen, boton, cargarCharmy, claveCharmy } from "../comun";
+import { ANCHO, AVISO_DIA, DIA, LINEAS, TEXTO, Y, almacen, boton, cargarCharmy, claveCharmy } from "../comun";
+import { interfaz } from "@charmy/ui";
 import { HERRAMIENTAS } from "../partida";
 import { leerRecord } from "../record";
 
@@ -34,6 +35,11 @@ export class Inicio extends Phaser.Scene {
     const record = leerRecord(almacen());
     if (record > 0) {
       this.add.text(ANCHO / 2, Y(470), `Tu récord: ${record}`, { ...TEXTO, fontSize: "18px" }).setOrigin(0.5);
+    }
+    if (AVISO_DIA) {
+      this.add
+        .text(ANCHO / 2, Y(40), AVISO_DIA, { ...TEXTO, ...LINEAS, fontSize: "15px", color: interfaz.avisoTexto })
+        .setOrigin(0.5, 0);
     }
     boton(this, ANCHO / 2, Y(510), "Jugar", () => this.scene.start("nivel"));
   }

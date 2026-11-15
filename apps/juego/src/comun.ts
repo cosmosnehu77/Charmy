@@ -7,6 +7,7 @@ import type { Area, DiaJuego } from "./datos";
 import fondo from "./fondo.json";
 import { dimensiones } from "./pantalla";
 import type { Almacen } from "./record";
+import type { Desafio } from "./desafio";
 import { crearSonido, leerSilencio } from "./sonido";
 
 export const { ancho: ANCHO, alto: ALTO } = dimensiones(window.innerWidth, window.innerHeight);
@@ -16,7 +17,15 @@ export const Y = (y: number) => Math.round((y / 600) * ALTO);
 export const LINEAS = { wordWrap: { width: ANCHO - 80 }, align: "center" } as const;
 export const TEXTO = { fontFamily: "monospace", color: interfaz.tinta } as const;
 
-export const DIA = dia as DiaJuego;
+/** El día que se juega: la muestra hasta que main.ts carga el desafío del día (F4-E8). */
+export let DIA = dia as DiaJuego;
+/** Qué decir en el inicio si se juega la muestra en lugar del desafío. */
+export let AVISO_DIA: string | null = null;
+
+export function usarDesafio(d: Desafio) {
+  DIA = d.dia;
+  AVISO_DIA = d.aviso;
+}
 export const FONDO = fondo as Contorno;
 export const color = (hex: string) => Phaser.Display.Color.HexStringToColor(hex).color;
 
@@ -43,14 +52,14 @@ export function cargarCharmy(escena: Phaser.Scene, outfit: Outfit, mood: Mood) {
   escena.load.svg(clave, `data:image/svg+xml;base64,${base64}`, { width: 128, height: 128 });
 }
 
-/** El contorno de las regiones, con la misma proyección que los focos y corrido al origen del área de juego. */
+/** El contorno de las regiones, con la misma proyección (y el mismo recuadro) que los focos, corrido al origen del mapa. */
 export function dibujarFondo(escena: Phaser.Scene, origen: { x: number; y: number }, area: Area) {
   const g = escena.add.graphics().setDepth(-1);
   g.fillStyle(color(interfaz.superficie));
   g.lineStyle(1, color(interfaz.borde));
   for (const anillo of FONDO.anillos as Anillo[]) {
     const puntos = anillo.map((p) => {
-      const { x, y } = proyectar(p, FONDO.bbox, area);
+      const { x, y } = proyectar(p, DIA.bbox, area);
       return new Phaser.Math.Vector2(x + origen.x, y + origen.y);
     });
     g.fillPoints(puntos, true);

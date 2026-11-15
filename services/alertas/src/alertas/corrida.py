@@ -71,9 +71,12 @@ async def procesar_toques(api: Api, tg: Telegram) -> int:
     return guardados
 
 
-async def corrida(api: Api, tg: Telegram, destinos: Sequence[tuple[Zona, int]]) -> None:
-    """Una corrida que deja una línea de resumen en el registro (Actions), aunque no haya nada que avisar."""
-    guardados = await procesar_toques(api, tg)
+async def corrida(
+    api: Api, tg: Telegram, destinos: Sequence[tuple[Zona, int]], leer_toques: bool = True
+) -> None:
+    """Una corrida que deja una línea de resumen en el registro (Actions), aunque no haya nada que avisar.
+    Con el webhook activo (D-41), los toques los guarda la API al instante y acá no se leen."""
+    guardados = await procesar_toques(api, tg) if leer_toques else 0
     r = await avisar(api, tg.enviar, destinos, {})
     log.info(
         "corrida: zonas %d · botones %d · focos en vivo %d · reportes %d · nuevos en las zonas %d"

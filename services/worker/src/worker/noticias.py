@@ -13,7 +13,10 @@ import httpx
 
 RSS = "https://news.google.com/rss/search"
 MODELO_URL = "https://integrate.api.nvidia.com/v1/chat/completions"
-MODELO = "google/gemma-4-31b-it"
+# Medición del 15/11 (#279, medir-noticias.yml): 23/24 aciertos y 0,3 s por pedido con el razonamiento
+# apagado. google/gemma-4-31b-it, el anterior, agotaba la espera en cada pedido.
+MODELO = "nvidia/nemotron-3.5-lightning-30b-a3b"
+OPCIONES_MODELO = {"chat_template_kwargs": {"enable_thinking": False}}  # si razona, gasta los tokens pensando
 ETIQUETAS = {"apoya", "contradice", "sin_informacion"}
 MAX_TITULARES = 8
 ESPERA_MODELO_S = 20  # con 60 s, un modelo caído alargaba cada vuelta varios minutos (#279)
@@ -58,7 +61,7 @@ def etiquetar(
     pais: str,
     cliente: httpx.Client,
     modelo: str = MODELO,
-    opciones: dict | None = None,
+    opciones: dict | None = OPCIONES_MODELO,
 ) -> list[str]:
     """Una etiqueta por titular, en el mismo orden. `modelo` y `opciones` (campos extra del pedido, como
     apagar el razonamiento) solo cambian para medir otros modelos (#279)."""

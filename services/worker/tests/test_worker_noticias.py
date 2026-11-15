@@ -181,3 +181,16 @@ def test_una_respuesta_sin_texto_dice_por_que_termino():
     sin_texto = {"choices": [{"message": {"content": None}, "finish_reason": "length"}]}
     with pytest.raises(NoticiasNoDisponibles, match="length"):
         etiquetar(TITULARES, "Chubut", "Argentina", cliente(lambda req: httpx.Response(200, json=sin_texto)))
+
+
+def test_produccion_usa_nemotron_lightning_sin_razonar():
+    # Medición del 15/11 (#279): 23/24 aciertos y 0,3 s por pedido; el modelo anterior, 0/24.
+    pedidos = []
+
+    def manejador(req):
+        pedidos.append(json.loads(req.content))
+        return httpx.Response(200, json=respuesta_grabada('["apoya", "sin_informacion"]'))
+
+    etiquetar(TITULARES, "Chubut", "Argentina", cliente(manejador))
+    assert pedidos[0]["model"] == "nvidia/nemotron-3.5-lightning-30b-a3b"
+    assert pedidos[0]["chat_template_kwargs"] == {"enable_thinking": False}

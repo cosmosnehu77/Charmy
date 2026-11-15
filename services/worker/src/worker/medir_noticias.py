@@ -15,20 +15,15 @@ import time
 
 import httpx
 
-from worker.noticias import MODELO, NoticiasNoDisponibles, etiquetar
+from worker.noticias import MODELO, OPCIONES_MODELO, NoticiasNoDisponibles, etiquetar
 
 SIN_RAZONAR = {"chat_template_kwargs": {"enable_thinking": False}}
 
-# (nombre en la tabla, modelo, opciones extra del pedido).
+# (nombre en la tabla, modelo, opciones extra del pedido). El primero es el de producción.
 CANDIDATOS = [
-    (MODELO, MODELO, {}),
-    ("nemotron-3.5-lightning", "nvidia/nemotron-3.5-lightning-30b-a3b", {}),
-    ("nemotron-3.5-lightning sin razonar", "nvidia/nemotron-3.5-lightning-30b-a3b", SIN_RAZONAR),
-    ("nemotron-3.5-lightning 1500 tokens", "nvidia/nemotron-3.5-lightning-30b-a3b", {"max_tokens": 1500}),
+    (f"{MODELO} (producción)", MODELO, OPCIONES_MODELO),
     ("nemotron-3.5-bolt sin razonar", "nvidia/nemotron-3.5-bolt-e4b", SIN_RAZONAR),
-    ("gpt-oss-20b", "openai/gpt-oss-20b", {"max_tokens": 1500}),
-    ("glm-5.3-flash", "z-ai/glm-5.3-flash", {}),
-    ("minimax-m3.1-flash", "minimaxai/minimax-m3.1-flash", {"max_tokens": 1500}),
+    ("gemma-4-31b-it (anterior)", "google/gemma-4-31b-it", {}),
 ]
 
 # (provincia, país, [(titular, etiqueta esperada)]) — muestra inventada.

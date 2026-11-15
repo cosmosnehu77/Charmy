@@ -1,6 +1,7 @@
 """Una corrida programada (Actions): botones pendientes y avisos nuevos. Telegram y la API simulados."""
 
 import asyncio
+import logging
 from datetime import UTC, datetime
 
 from alertas.botones import botones
@@ -114,3 +115,26 @@ def test_la_corrida_procesa_botones_y_despues_avisa_lo_nuevo():
 
     assert tg.orden == ["toques", "enviar"]
     assert tg.enviados[0][2] == botones("a-f1")
+
+
+def test_la_corrida_deja_una_linea_de_resumen_en_el_registro(caplog):
+    foco = Foco(id="f1", tipo="foco_satelital", lat=-41.95, lon=-71.53,
+                cuando=datetime(2026, 11, 14, 4, 55, tzinfo=UTC), detalle="muestra")
+    api = ApiFalsa(focos=[foco])
+    tg = TelegramFalso([toque(5, botones("a-1")[0][1]), toque(6, "otra:cosa")])
+    with caplog.at_level(logging.INFO, logger="alertas.corrida"):
+        asyncio.run(corrida(api, tg, ZONA_DEMO, CHAT))
+
+    assert caplog.messages == [
+        "corrida: botones 1 · focos en vivo 1 · reportes 0 · nuevos en la zona 1 · avisos mandados 1"
+    ]
+
+
+def test_sin_focos_la_linea_de_resumen_sale_igual(caplog):
+    # Si /live falla, el cliente deja el warning y devuelve cero focos: la corrida igual se anota.
+    with caplog.at_level(logging.INFO, logger="alertas.corrida"):
+        asyncio.run(corrida(ApiFalsa(), TelegramFalso(), ZONA_DEMO, CHAT))
+
+    assert caplog.messages == [
+        "corrida: botones 0 · focos en vivo 0 · reportes 0 · nuevos en la zona 0 · avisos mandados 0"
+    ]

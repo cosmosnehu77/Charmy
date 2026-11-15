@@ -77,3 +77,12 @@ def test_una_alerta_que_ya_existia_en_la_api_no_se_reenvia_tras_reiniciar():
     tg = TelegramFalso()
     asyncio.run(avisar(ApiFalsa([foco("f1")], [], ya_existentes={"f1"}), tg, ZONA_DEMO, CHAT, set()))
     assert tg.enviados == []
+
+
+def test_avisar_devuelve_cuantos_reviso_y_cuantos_mando():
+    # f1 y r1 son nuevos en la zona; "lejos" queda afuera; f2 ya se había avisado antes (la API lo dice).
+    api = ApiFalsa([foco("f1"), foco("lejos", lat=-36.8), foco("f2")], [foco("r1", tipo="reporte_ciudadano")],
+                   ya_existentes={"f2"})
+    resumen = asyncio.run(avisar(api, TelegramFalso(), ZONA_DEMO, CHAT, set()))
+
+    assert (resumen.focos, resumen.reportes, resumen.nuevos, resumen.mandados) == (3, 1, 3, 2)

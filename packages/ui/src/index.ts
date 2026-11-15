@@ -57,6 +57,18 @@ export const rampaAnomalia = [
 
 export const colorSinDato = "#e3e9ef";
 
+/** Vista Relieve (F4-R1): mapa oscuro con paneles de vidrio. Los mismos valores que `--relieve-*`. */
+export const relieve = {
+  fondo: "#10151c",
+  vidrio: "#0b0f14",
+  panel: "#0d1117",
+  brillo: "#ff8a47",
+  apagada: "#262d37",
+  sinDato: "#3a4653",
+  gris: "#2b3038",
+  grisBorde: "#3d444e",
+} as const;
+
 export const fuentes = {
   titulos: '"Bricolage Grotesque Variable", "Bricolage Grotesque", system-ui, sans-serif',
   texto: '"IBM Plex Sans", system-ui, sans-serif',

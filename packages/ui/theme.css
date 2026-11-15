@@ -34,6 +34,10 @@
   --color-oscuro-tinta: var(--color-oscuro-tinta);
   --color-oscuro-tinta-suave: var(--color-oscuro-tinta-suave);
   --color-oscuro-acento: var(--color-oscuro-acento);
+  --color-relieve-fondo: var(--relieve-fondo);
+  --color-relieve-vidrio: var(--relieve-vidrio);
+  --color-relieve-panel: var(--relieve-panel);
+  --color-relieve-brillo: var(--relieve-brillo);
 
   /* Nombres de shadcn/ui */
   --color-background: var(--color-fondo);

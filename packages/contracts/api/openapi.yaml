@@ -914,6 +914,7 @@ components:
                   frp_by_day: { type: [array, 'null'], items: { type: number } }
                   last_month:
                     type: [object, 'null']
+                    required: [year, month, value, median, percentile]
                     properties:
                       year: { type: integer }
                       month: { type: integer }

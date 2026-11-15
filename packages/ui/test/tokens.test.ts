@@ -7,6 +7,7 @@ import {
   interfaz,
   paleta,
   rampaAnomalia,
+  relieve,
   rampaConteo,
 } from "../src/index";
 
@@ -29,6 +30,16 @@ describe("tokens.css e index.ts dicen lo mismo", () => {
     expect(variable("charmy-tinta")).toBe(paleta.tinta);
     expect(variable("charmy-llama")).toBe(paleta.llama);
     expect(variable("charmy-agua")).toBe(paleta.agua);
+  });
+  it("vista Relieve", () => {
+    expect(variable("relieve-fondo")).toBe(relieve.fondo);
+    expect(variable("relieve-vidrio")).toBe(relieve.vidrio);
+    expect(variable("relieve-panel")).toBe(relieve.panel);
+    expect(variable("relieve-brillo")).toBe(relieve.brillo);
+    expect(variable("relieve-apagada")).toBe(relieve.apagada);
+    expect(variable("relieve-sin-dato")).toBe(relieve.sinDato);
+    expect(variable("relieve-gris")).toBe(relieve.gris);
+    expect(variable("relieve-gris-borde")).toBe(relieve.grisBorde);
   });
   it("sin dato", () => {
     expect(variable("rampa-sin-dato")).toBe(colorSinDato);

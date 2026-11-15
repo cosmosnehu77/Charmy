@@ -1,6 +1,7 @@
 import { Charmy } from "@charmy/charmy";
 import { Search } from "lucide-react";
 import { useId, useRef, useState } from "react";
+import { URL_LANDING } from "@/lib/enlaces";
 import { useRelieve } from "./estado";
 import { INDICADORES, type RegionResumen } from "./logica";
 
@@ -8,7 +9,7 @@ const sinTildes = (s: string) => s.normalize("NFD").replace(/\p{Diacritic}/gu, "
 
 /** Píldora central: Charmy, los indicadores, En vivo y la lupa (F4-R1). */
 export function Pildora({ regiones }: { regiones: RegionResumen[] }) {
-  const { pestana, elegirPestana, alternarRegion } = useRelieve();
+  const { pestana, elegirPestana } = useRelieve();
   const pestanas = [...INDICADORES.map((i) => ({ id: i.id, nombre: i.nombre })), { id: "vivo" as const, nombre: "En vivo" }];
   const lista = useRef<HTMLDivElement>(null);
 
@@ -24,15 +25,14 @@ export function Pildora({ regiones }: { regiones: RegionResumen[] }) {
 
   return (
     <div className="pildora-relieve vidrio-relieve pointer-events-auto absolute left-1/2 top-3 z-30 flex w-max max-w-[calc(100%-24px)] -translate-x-1/2 items-center gap-1.5 rounded-full p-1.5">
-      <button
-        type="button"
-        onClick={() => alternarRegion(null)}
+      <a
+        href={URL_LANDING}
         className="flex shrink-0 items-center gap-2 rounded-full py-0.5 pl-1 pr-2.5 hover:bg-white/5"
-        aria-label="Charmy: volver al país entero"
+        aria-label="Charmy: ir a la página de inicio"
       >
         <Charmy size={36} variant="cabeza" animate={false} decorative />
         <span className="hidden font-titulos text-[17px] font-semibold tracking-tight sm:inline">Charmy</span>
-      </button>
+      </a>
       <div
         ref={lista}
         role="tablist"

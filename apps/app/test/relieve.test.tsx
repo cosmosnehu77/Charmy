@@ -118,6 +118,14 @@ describe("vista Relieve (F4-R1)", () => {
     expect(screen.getByText(/no reemplaza a los servicios de emergencia/)).toBeInTheDocument();
   });
 
+  it("Charmy en la píldora lleva a la landing", () => {
+    montar();
+    expect(screen.getByRole("link", { name: "Charmy: ir a la página de inicio" })).toHaveAttribute(
+      "href",
+      "https://charmy-landing.pages.dev",
+    );
+  });
+
   it("elegir una provincia abre su ficha y la línea de tiempo; elegirla de nuevo las cierra", async () => {
     montar();
     const u = userEvent.setup();

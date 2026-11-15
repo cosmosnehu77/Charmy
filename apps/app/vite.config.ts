@@ -13,5 +13,7 @@ export default defineConfig({
     environment: "jsdom",
     setupFiles: ["./test/setup.ts"],
     css: false,
+    // Las pruebas que montan la app entera pasan los 5 s por defecto con la máquina cargada (hook pre-commit).
+    testTimeout: 15_000,
   },
 });

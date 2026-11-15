@@ -1,6 +1,6 @@
 # apps/juego: reglas para los agentes
 
-Charmy Kids, juego web en Phaser 4 y pixel art 2D (D-11). Dueño: `@dimidio6` (carril E, D-25). Cloudflare Pages
+Charmy Brigada, juego web en Phaser 4 y pixel art 2D (D-11). Dueño: `@dimidio6` (carril E, D-25). Cloudflare Pages
 publica `apps/juego/dist` al entrar cambios en `main` (`deploy-web.yml`).
 
 ## Comandos
@@ -17,6 +17,7 @@ pnpm check --filter @charmy/juego     # tipos, pruebas y compilación
 - Charmy se dibuja con `charmySvg()` de `@charmy/charmy/core` y se carga como textura. Nunca se copia su SVG.
 - Colores con `paleta`, `interfaz` y las rampas de `@charmy/ui`. Nada de valores sueltos.
 - La lógica (puntaje, combo, carga de datos) va en módulos puros con pruebas de Vitest; Phaser solo dibuja.
-- `src/partida.ts` (puntaje, combo, ritmo del nivel) y `src/cierre.ts` (dato real y consejo) son puros y probados.
+- `src/partida.ts` (puntaje, combo, ritmo del nivel), `src/cierre.ts` (dato real y consejo) y `src/record.ts` (récord en
+  el navegador, que sigue leyendo la clave de cuando el juego se llamaba Charmy Kids) son puros y probados.
 - En las escenas, todo tiempo de juego sale del reloj de la escena (`this.time`, `TimerEvent`), nunca de `this.time.now`
   ni de `Date.now()`: los temporizadores se frenan con la pestaña en segundo plano y el resto no.

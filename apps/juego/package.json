@@ -2,7 +2,7 @@
   "name": "@charmy/juego",
   "version": "0.1.0",
   "private": true,
-  "description": "Charmy Kids: juego web en pixel art donde Charmy bombero apaga focos de un día real.",
+  "description": "Charmy Brigada: juego web en pixel art donde Charmy bombero apaga focos de un día real.",
   "type": "module",
   "scripts": {
     "dev": "vite",

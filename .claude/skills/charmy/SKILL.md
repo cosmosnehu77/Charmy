@@ -36,9 +36,9 @@ Dependencia en el `package.json` del consumidor: `"@charmy/charmy": "workspace:*
 | Cargando o procesando datos | `pensando` | el de la pantalla |
 | Foco nuevo en la zona o mes por encima de lo normal | `alerta` | el de la pantalla |
 | Aviso a entidades (Telegram) | `alerta` | `bombero` |
-| Charmy Kids: protagonista | según la jugada | `bombero` |
-| Charmy Kids: logro, fin de partida ganada | `festeja` | `bombero` |
-| Charmy Kids: poder del avión hidrante | — | `piloto` |
+| Charmy Brigada: protagonista | según la jugada | `bombero` |
+| Charmy Brigada: logro, fin de partida ganada | `festeja` | `bombero` |
+| Charmy Brigada: poder del avión hidrante | — | `piloto` |
 | Reporte confirmado | `festeja` | el de la pantalla |
 | La app espera sin nada que decir | `idle` | el de la pantalla |
 

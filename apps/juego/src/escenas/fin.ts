@@ -15,7 +15,11 @@ export class Fin extends Phaser.Scene {
     const esRecord = m.puntos > record;
     if (esRecord) guardarRecord(almacen(), m.puntos);
     SONIDO.tocar("fin");
-    const { dato, consejo } = cierreDePartida(DIA, Math.floor(Math.random() * CONSEJOS.length));
+    const { dato, consejo, fuentesFijas } = cierreDePartida(
+      DIA,
+      Math.floor(Math.random() * CONSEJOS.length),
+      m.fijasTocadas,
+    );
 
     this.add.image(ANCHO / 2, Y(120), "charmy-festeja");
     this.add
@@ -32,7 +36,7 @@ export class Fin extends Phaser.Scene {
         fontSize: "18px",
       })
       .setOrigin(0.5);
-    this.add.text(ANCHO / 2, Y(325), dato, { ...TEXTO, ...LINEAS, fontSize: "18px" }).setOrigin(0.5);
+    this.add.text(ANCHO / 2, Y(325), fuentesFijas ?? dato, { ...TEXTO, ...LINEAS, fontSize: "18px" }).setOrigin(0.5);
     this.add
       .text(ANCHO / 2, Y(420), consejo, { ...TEXTO, ...LINEAS, fontSize: "20px", color: interfaz.exito })
       .setOrigin(0.5);

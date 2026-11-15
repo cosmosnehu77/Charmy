@@ -1,18 +1,19 @@
 import { describe, expect, it } from "vitest";
-import dia from "../../../data/muestras/dia-juego.json";
-import { cargarDia, type DiaJuego } from "../src/datos";
 import {
   PUNTOS_BASE,
   VENTANA_COMBO_MS,
   apagar,
-  apagarFoco,
+  PENALIDAD,
   dejarEscapar,
   encenderFoco,
   escaparFoco,
+  focoActivo,
+  golpearFoco,
   marcadorInicial,
   nuevaPartida,
-  planDeNivel,
+  verificarFoco,
 } from "../src/partida";
+import type { FocoEnPantalla } from "../src/datos";
 
 describe("puntaje y combo", () => {
   it("el primer foco apagado suma los puntos base con combo 1", () => {
@@ -46,55 +47,105 @@ describe("puntaje y combo", () => {
   });
 });
 
-describe("planDeNivel", () => {
-  const focos = cargarDia(dia as DiaJuego, { ancho: 800, alto: 600 });
-
-  it("usa todos los focos de dia-juego.json, ordenados por hora y dentro de la duración", () => {
-    const plan = planDeNivel(focos, 60_000);
-    expect(plan).toHaveLength(focos.length);
-    for (let i = 1; i < plan.length; i++) {
-      expect(plan[i]!.apareceMs).toBeGreaterThanOrEqual(plan[i - 1]!.apareceMs);
-      expect(plan[i]!.hora_utc >= plan[i - 1]!.hora_utc).toBe(true);
-    }
-    expect(plan[0]!.apareceMs).toBe(0);
-    expect(plan.at(-1)!.apareceMs).toBeLessThanOrEqual(60_000);
-  });
-
-  it("con un solo foco aparece al principio", () => {
-    expect(planDeNivel(focos.slice(0, 1), 60_000)[0]!.apareceMs).toBe(0);
-  });
-});
-
-describe("ritmo del nivel", () => {
-  it("reparte los focos parejo aunque las pasadas de los satélites estén agrupadas", () => {
-    const base = { lat: -40, lon: -70, frp: 1, confidence: "nominal", x: 0, y: 0 };
-    const focos = ["04:00", "04:01", "18:00", "18:01"].map((hora_utc) => ({ ...base, hora_utc }));
-    expect(planDeNivel(focos, 3000).map((f) => f.apareceMs)).toEqual([0, 1000, 2000, 3000]);
-  });
+const dato = (extra: Partial<FocoEnPantalla> = {}): FocoEnPantalla => ({
+  lat: -40,
+  lon: -70,
+  hora_utc: "04:00",
+  frp: 1,
+  confidence: "nominal",
+  x: 10,
+  y: 20,
+  ...extra,
 });
 
 describe("estado de la partida", () => {
-  const foco = { id: 1, x: 10, y: 20, frp: 2 };
+  const foco = focoActivo(1, dato());
 
   it("un foco encendido queda activo hasta que se apaga", () => {
     let p = encenderFoco(nuevaPartida(), foco);
     expect(p.activos).toEqual([foco]);
-    p = apagarFoco(p, 1, 1000);
+    p = golpearFoco(p, 1, 1000);
     expect(p.activos).toEqual([]);
     expect(p.marcador).toMatchObject({ apagados: 1, puntos: PUNTOS_BASE });
   });
 
+  it("un foco potente necesita varios toques", () => {
+    let p = encenderFoco(nuevaPartida(), focoActivo(1, dato({ frp: 15 })));
+    p = golpearFoco(p, 1, 100);
+    p = golpearFoco(p, 1, 200);
+    expect(p.activos).toHaveLength(1);
+    expect(p.activos[0]!.golpes).toBe(1);
+    expect(p.marcador.apagados).toBe(0);
+    p = golpearFoco(p, 1, 300);
+    expect(p.activos).toEqual([]);
+    expect(p.marcador.apagados).toBe(1);
+  });
+
   it("un foco que se escapa deja de estar activo y corta el combo", () => {
     let p = encenderFoco(encenderFoco(nuevaPartida(), foco), { ...foco, id: 2 });
-    p = apagarFoco(p, 2, 500);
+    p = golpearFoco(p, 2, 500);
     p = escaparFoco(p, 1);
     expect(p.activos).toEqual([]);
     expect(p.marcador).toMatchObject({ combo: 0, escapados: 1, apagados: 1 });
   });
 
-  it("apagar o dejar escapar un foco que ya no está activo no cambia nada", () => {
-    const p = apagarFoco(encenderFoco(nuevaPartida(), foco), 1, 500);
-    expect(apagarFoco(p, 1, 600)).toBe(p);
+  it("golpear o dejar escapar un foco que ya no está activo no cambia nada", () => {
+    const p = golpearFoco(encenderFoco(nuevaPartida(), foco), 1, 500);
+    expect(golpearFoco(p, 1, 600)).toBe(p);
     expect(escaparFoco(p, 1)).toBe(p);
+    expect(verificarFoco(p, 1)).toBe(p);
+  });
+});
+
+describe("confianza del satélite", () => {
+  const apagarUno = (extra: Partial<FocoEnPantalla>, verificar = false) => {
+    let p = encenderFoco(nuevaPartida(), focoActivo(1, dato(extra)));
+    if (verificar) p = verificarFoco(p, 1);
+    return golpearFoco(p, 1, 1000).marcador;
+  };
+
+  it("un foco de confianza baja apagado sin verificar descuenta", () => {
+    expect(apagarUno({ confidence: "low" })).toMatchObject({ puntos: PUNTOS_BASE - PENALIDAD, sinVerificar: 1 });
+  });
+
+  it("verificado no descuenta", () => {
+    expect(apagarUno({ confidence: "low" }, true)).toMatchObject({ puntos: PUNTOS_BASE, sinVerificar: 0 });
+  });
+
+  it("nominal y high no descuentan", () => {
+    expect(apagarUno({ confidence: "nominal" }).puntos).toBe(PUNTOS_BASE);
+    expect(apagarUno({ confidence: "high" }).puntos).toBe(PUNTOS_BASE);
+  });
+
+  it("los puntos nunca bajan de cero", () => {
+    let p = encenderFoco(nuevaPartida(), focoActivo(1, dato({ frp: 15, confidence: "low" })));
+    p = golpearFoco(p, 1, 100);
+    expect(p.marcador.puntos).toBe(0);
+  });
+});
+
+describe("fuentes fijas", () => {
+  it("tocar una fuente fija resta y corta el combo", () => {
+    let p = encenderFoco(encenderFoco(nuevaPartida(), focoActivo(1, dato())), focoActivo(2, dato({ fuente_fija: true })));
+    p = golpearFoco(p, 1, 100);
+    p = golpearFoco(p, 1, 100);
+    p = encenderFoco(p, focoActivo(3, dato()));
+    p = golpearFoco(p, 3, 200);
+    const antes = p.marcador.puntos;
+    p = golpearFoco(p, 2, 300);
+    expect(p.activos).toEqual([]);
+    expect(p.marcador).toMatchObject({ puntos: antes - PENALIDAD, combo: 0, fijasTocadas: 1, apagados: 2 });
+  });
+
+  it("dejarla no castiga", () => {
+    let p = encenderFoco(nuevaPartida(), focoActivo(1, dato({ fuente_fija: true })));
+    p = escaparFoco(p, 1);
+    expect(p.activos).toEqual([]);
+    expect(p.marcador).toEqual(marcadorInicial());
+  });
+
+  it("sin el campo, ningún foco es fuente fija", () => {
+    expect(focoActivo(1, dato()).fuenteFija).toBe(false);
+    expect(focoActivo(1, dato({ fuente_fija: false })).fuenteFija).toBe(false);
   });
 });

@@ -1,9 +1,12 @@
 import type { FocoEnPantalla } from "./datos";
+import { potencia } from "./mecanica";
 
 /** Puntos por foco apagado con combo 1. Con combo N suma N veces esto. */
 export const PUNTOS_BASE = 10;
 /** Tiempo máximo entre dos focos apagados para que el combo siga. */
 export const VENTANA_COMBO_MS = 2000;
+/** Lo que se pierde por tocar una fuente fija o un foco de confianza baja sin verificar (gastar agua de más). */
+export const PENALIDAD = 5;
 
 export interface Marcador {
   puntos: number;
@@ -11,11 +14,14 @@ export interface Marcador {
   mejorCombo: number;
   apagados: number;
   escapados: number;
+  /** Toques a focos de confianza baja sin verificar. */
+  sinVerificar: number;
+  fijasTocadas: number;
   ultimoApagadoMs: number | null;
 }
 
 export function marcadorInicial(): Marcador {
-  return { puntos: 0, combo: 0, mejorCombo: 0, apagados: 0, escapados: 0, ultimoApagadoMs: null };
+  return { puntos: 0, combo: 0, mejorCombo: 0, apagados: 0, escapados: 0, sinVerificar: 0, fijasTocadas: 0, ultimoApagadoMs: null };
 }
 
 /** Apagar un foco: si el anterior fue hace menos de la ventana, el combo crece; si no, vuelve a 1. */
@@ -38,26 +44,30 @@ export function dejarEscapar(m: Marcador): Marcador {
   return { ...m, combo: 0, escapados: m.escapados + 1 };
 }
 
-export interface FocoDelNivel extends FocoEnPantalla {
-  apareceMs: number;
-}
-
-/**
- * Reparte los focos del día a lo largo de la partida en el orden en que los vieron los satélites, a ritmo
- * parejo: las pasadas se agrupan de noche y de tarde, y repartirlas por hora dejaría la pantalla vacía.
- */
-export function planDeNivel(focos: FocoEnPantalla[], duracionMs: number): FocoDelNivel[] {
-  const ordenados = [...focos].sort((a, b) => a.hora_utc.localeCompare(b.hora_utc));
-  const ultimo = ordenados.length - 1;
-  return ordenados.map((f, i) => ({ ...f, apareceMs: ultimo === 0 ? 0 : (i / ultimo) * duracionMs }));
-}
-
 /** Un foco encendido en la pantalla. */
 export interface FocoActivo {
   id: number;
   x: number;
   y: number;
   frp: number;
+  /** Toques que faltan para apagarlo. */
+  golpes: number;
+  confianza: string;
+  verificado: boolean;
+  fuenteFija: boolean;
+}
+
+export function focoActivo(id: number, f: FocoEnPantalla): FocoActivo {
+  return {
+    id,
+    x: f.x,
+    y: f.y,
+    frp: f.frp,
+    golpes: potencia(f.frp).toques,
+    confianza: f.confidence,
+    verificado: false,
+    fuenteFija: f.fuente_fija === true,
+  };
 }
 
 /** Estado de la partida: las escenas lo dibujan y lo cambian solo con estas funciones. */
@@ -74,15 +84,39 @@ export function encenderFoco(p: Partida, foco: FocoActivo): Partida {
   return { ...p, activos: [...p.activos, foco] };
 }
 
-const activo = (p: Partida, id: number) => p.activos.some((f) => f.id === id);
+const buscar = (p: Partida, id: number) => p.activos.find((f) => f.id === id);
 const sin = (p: Partida, id: number) => p.activos.filter((f) => f.id !== id);
+const restar = (puntos: number) => Math.max(0, puntos - PENALIDAD);
 
-/** Apagar un foco activo. Si ya no estaba (se escapó o ya se apagó), nada cambia. */
-export function apagarFoco(p: Partida, id: number, ahoraMs: number): Partida {
-  return activo(p, id) ? { marcador: apagar(p.marcador, ahoraMs), activos: sin(p, id) } : p;
+/**
+ * Un toque a un foco activo. Una fuente fija no se apaga: tocarla resta y corta el combo. Un foco de confianza baja
+ * sin verificar descuenta en cada toque. Si ya no estaba activo, nada cambia.
+ */
+export function golpearFoco(p: Partida, id: number, ahoraMs: number): Partida {
+  const foco = buscar(p, id);
+  if (!foco) return p;
+  const m = p.marcador;
+  if (foco.fuenteFija) {
+    return { marcador: { ...m, puntos: restar(m.puntos), combo: 0, fijasTocadas: m.fijasTocadas + 1 }, activos: sin(p, id) };
+  }
+  const golpes = foco.golpes - 1;
+  let marcador = golpes > 0 ? m : apagar(m, ahoraMs);
+  if (foco.confianza === "low" && !foco.verificado) {
+    marcador = { ...marcador, puntos: restar(marcador.puntos), sinVerificar: marcador.sinVerificar + 1 };
+  }
+  const activos = golpes > 0 ? p.activos.map((f) => (f.id === id ? { ...f, golpes } : f)) : sin(p, id);
+  return { marcador, activos };
 }
 
-/** Un foco activo que nadie apagó a tiempo. Si ya no estaba, nada cambia. */
+/** Verificar un foco de confianza baja: después se puede apagar sin descuento. */
+export function verificarFoco(p: Partida, id: number): Partida {
+  if (!buscar(p, id)) return p;
+  return { ...p, activos: p.activos.map((f) => (f.id === id ? { ...f, verificado: true } : f)) };
+}
+
+/** Un foco activo que nadie apagó a tiempo corta el combo. Una fuente fija que se deja no castiga. */
 export function escaparFoco(p: Partida, id: number): Partida {
-  return activo(p, id) ? { marcador: dejarEscapar(p.marcador), activos: sin(p, id) } : p;
+  const foco = buscar(p, id);
+  if (!foco) return p;
+  return { marcador: foco.fuenteFija ? p.marcador : dejarEscapar(p.marcador), activos: sin(p, id) };
 }

@@ -20,15 +20,15 @@ export class Inicio extends Phaser.Scene {
       .text(ANCHO / 2, Y(320), "Charmy Brigada", { ...TEXTO, fontSize: "40px", color: paleta.acento })
       .setOrigin(0.5);
     this.add
-      .text(ANCHO / 2, Y(395), `Estos son los focos de calor que vieron los satélites el ${fechaLarga(DIA.fecha)}.\nTocalos para apagarlos. Si apagás seguido, sumás combo.`, {
+      .text(ANCHO / 2, Y(350), `Apagá los focos de calor que vieron los satélites el ${fechaLarga(DIA.fecha)}. Los más fuertes piden más toques. Si un foco tiene "?", mantenelo apretado para verificarlo.`, {
         ...TEXTO,
         ...LINEAS,
         fontSize: "18px",
       })
-      .setOrigin(0.5);
+      .setOrigin(0.5, 0);
     const record = leerRecord(almacen());
     if (record > 0) {
-      this.add.text(ANCHO / 2, Y(455), `Tu récord: ${record}`, { ...TEXTO, fontSize: "18px" }).setOrigin(0.5);
+      this.add.text(ANCHO / 2, Y(470), `Tu récord: ${record}`, { ...TEXTO, fontSize: "18px" }).setOrigin(0.5);
     }
     boton(this, ANCHO / 2, Y(510), "Jugar", () => this.scene.start("nivel"));
   }

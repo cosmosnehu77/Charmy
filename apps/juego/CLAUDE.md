@@ -23,7 +23,10 @@ pnpm --filter @charmy/juego contorno  # regenera src/fondo.json desde data/muest
 - Todo azar del juego sale de `crearAzar(semilla)` (`src/azar.ts`), con una fecha `AAAA-MM-DD` como semilla.
 - `src/grilla.ts` pasa del lienzo a celdas y de vuelta. `src/contorno.ts` simplifica las regiones y proyecta igual
   que los focos; su resultado, `src/fondo.json`, es generado: no se edita a mano (una prueba lo compara).
-- `src/partida.ts` (puntaje, combo, ritmo del nivel y el estado de la partida con sus focos activos), `src/cierre.ts` (dato real y consejo) y `src/record.ts` (récord en
+- `src/mecanica.ts` pasa el dato real a la mecánica: tabla de FRP a toques y tiempo de escape, y pasadas del
+  satélite por hora de detección (de noche la franja baja, de día sube).
+- `src/partida.ts` (puntaje, combo, penalidades y el estado de la partida con sus focos activos: toques que faltan,
+  confianza, verificación y fuente fija), `src/cierre.ts` (dato real y consejo) y `src/record.ts` (récord en
   el navegador, que sigue leyendo la clave de cuando el juego se llamaba Charmy Kids) son puros y probados.
 - El sonido sale de `SONIDO` (`src/sonido.ts`, Web Audio, sin archivos). El silencio es un botón de HTML en el pie
   y se recuerda en el navegador.

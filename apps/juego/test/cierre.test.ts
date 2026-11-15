@@ -34,3 +34,16 @@ describe("cierreDePartida", () => {
     expect(CONSEJOS.some((c) => c.includes("100") && c.includes("132"))).toBe(true);
   });
 });
+
+describe("cierre con fuentes fijas", () => {
+  it("si tocaste fuentes fijas, explica por qué no se apagan", () => {
+    const { fuentesFijas } = cierreDePartida(real, 0, 2);
+    expect(fuentesFijas).toMatch(/2 fuentes fijas/);
+    expect(fuentesFijas).toMatch(/no son incendios/i);
+  });
+
+  it("si no tocaste ninguna, no dice nada", () => {
+    expect(cierreDePartida(real, 0).fuentesFijas).toBeNull();
+    expect(cierreDePartida(real, 0, 0).fuentesFijas).toBeNull();
+  });
+});

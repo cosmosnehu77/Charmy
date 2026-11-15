@@ -1,6 +1,6 @@
 import type { components } from "@charmy/contracts-api";
 import type { CeldaCalendario } from "@/calendario/grilla";
-import { resumenCalendario } from "@/calendario/estadisticas";
+import { anioContraLoNormal, resumenCalendario } from "@/calendario/estadisticas";
 import { resumenFocos } from "@/consulta/estadisticas";
 
 type Foco = components["schemas"]["Hotspot"];
@@ -58,6 +58,25 @@ describe("resumenCalendario", () => {
     expect(r.pico).toBeNull();
     expect(r.anioMayor).toBeNull();
     expect(r.mesMasActivo).toBeNull();
+  });
+});
+
+describe("anioContraLoNormal", () => {
+  it("suma el último año hasta su último mes con dato y lo compara con el promedio de los años anteriores hasta ese mes", () => {
+    const r = anioContraLoNormal([
+      celda(2023, 1, 4, 50),
+      celda(2023, 2, 2, 50),
+      celda(2023, 9, 30, 50), // después de febrero: no cuenta
+      celda(2024, 1, 2, 50),
+      celda(2025, 1, 6, 90),
+      celda(2025, 2, 3, 90),
+    ]);
+    expect(r).toEqual({ anio: 2025, hastaMes: 2, acumulado: 9, promedio: 4, desde: 2023, hasta: 2024 });
+  });
+
+  it("sin años anteriores no compara", () => {
+    expect(anioContraLoNormal([celda(2025, 1, 6, 90)])).toBeNull();
+    expect(anioContraLoNormal([])).toBeNull();
   });
 });
 

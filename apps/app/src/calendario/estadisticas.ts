@@ -59,3 +59,38 @@ export function resumenCalendario(celdas: CeldaCalendario[]): ResumenCalendario 
     mesMasActivo,
   };
 }
+
+export interface AnioContraLoNormal {
+  anio: number;
+  /** Último mes con dato del año (1 a 12): la comparación llega hasta acá. */
+  hastaMes: number;
+  /** Días-celda con fuego del año hasta `hastaMes`. */
+  acumulado: number;
+  /** Promedio de los años anteriores hasta el mismo mes. */
+  promedio: number;
+  desde: number;
+  hasta: number;
+}
+
+/**
+ * El último año contra los anteriores «a esta altura»: suma de enero al último mes con dato, y el promedio de esa
+ * misma suma en los años anteriores que tienen datos. null si no hay años anteriores.
+ */
+export function anioContraLoNormal(celdas: CeldaCalendario[]): AnioContraLoNormal | null {
+  if (celdas.length === 0) return null;
+  const anio = Math.max(...celdas.map((c) => c.year));
+  const hastaMes = Math.max(...celdas.filter((c) => c.year === anio).map((c) => c.month));
+  const porAnio = new Map<number, number>();
+  for (const c of celdas) if (c.month <= hastaMes) porAnio.set(c.year, (porAnio.get(c.year) ?? 0) + c.value);
+  const anteriores = [...porAnio].filter(([y]) => y < anio);
+  if (anteriores.length === 0) return null;
+  const years = anteriores.map(([y]) => y);
+  return {
+    anio,
+    hastaMes,
+    acumulado: porAnio.get(anio) ?? 0,
+    promedio: anteriores.reduce((s, [, v]) => s + v, 0) / anteriores.length,
+    desde: Math.min(...years),
+    hasta: Math.max(...years),
+  };
+}

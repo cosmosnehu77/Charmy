@@ -8,6 +8,7 @@ import {
   encenderFoco,
   escaparFoco,
   focoActivo,
+  focoPropagado,
   golpearFoco,
   marcadorInicial,
   nuevaPartida,
@@ -147,5 +148,20 @@ describe("fuentes fijas", () => {
   it("sin el campo, ningún foco es fuente fija", () => {
     expect(focoActivo(1, dato()).fuenteFija).toBe(false);
     expect(focoActivo(1, dato({ fuente_fija: false })).fuenteFija).toBe(false);
+  });
+});
+
+describe("focos propagados", () => {
+  it("un foco propagado se apaga de un toque, es de confianza nominal y no es fuente fija", () => {
+    expect(focoPropagado(7, 30, 40)).toEqual({
+      id: 7,
+      x: 30,
+      y: 40,
+      frp: 1,
+      golpes: 1,
+      confianza: "nominal",
+      verificado: false,
+      fuenteFija: false,
+    });
   });
 });

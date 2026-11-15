@@ -1,20 +1,24 @@
 import { interfaz, paleta, rampaConteo } from "@charmy/ui";
 import Phaser from "phaser";
+import { crearAzar, type Azar } from "../azar";
 import { ALTO, ANCHO, DIA, SONIDO, TEXTO, color, dibujarFondo } from "../comun";
+import { encuadre } from "../contorno";
 import { cargarDia } from "../datos";
-import { DURACION_PASADAS_MS, planPorPasadas, potencia, type Ventana } from "../mecanica";
+import { aCelda, centroDe, crearGrilla, type Grilla } from "../grilla";
+import { DURACION_PARTIDA_MS, DURACION_PASADAS_MS, planPorPasadas, potencia, type Ventana } from "../mecanica";
 import {
   encenderFoco,
   escaparFoco,
   focoActivo,
+  focoPropagado,
   golpearFoco,
   nuevaPartida,
   verificarFoco,
   type FocoActivo,
   type Partida,
 } from "../partida";
+import { propagar, type Viento } from "../propagacion";
 
-const DURACION_MS = 60_000;
 const MARGEN = 20;
 /** Lugar para el marcador, que ocupa dos líneas. */
 const ARRIBA = 60;
@@ -24,12 +28,22 @@ const VERIFICAR_MS = 500;
 const lado = (golpes: number) => 7 + 3 * golpes;
 /** Hora de Argentina (UTC−3) de una hora UTC. */
 const horaArgentina = (horaUtc: number) => (horaUtc + 21) % 24;
+/** Lado de las celdas por las que se propaga el fuego. */
+const LADO_CELDA = 24;
+/** El viento real del día llega con F4-C2 (después del envío). Hasta entonces el fuego se propaga sin dirección. */
+const VIENTO: Viento | null = null;
 
 export class Nivel extends Phaser.Scene {
   private partida: Partida = nuevaPartida();
   /** Reloj de la partida: el contador y el combo usan el mismo tiempo que los temporizadores de la escena. */
   private reloj!: Phaser.Time.TimerEvent;
   private hud!: Phaser.GameObjects.Text;
+  private grilla!: Grilla;
+  /** Azar de la partida, con la fecha del día como semilla. */
+  private azar!: Azar;
+  private proximoId = 0;
+  /** Esquina superior izquierda del mapa en el lienzo. */
+  private origen = { x: 0, y: 0 };
 
   constructor() {
     super("nivel");
@@ -41,25 +55,32 @@ export class Nivel extends Phaser.Scene {
     this.add.image(ANCHO - 64, ALTO - 64, "charmy").setScale(0.75).setDepth(10);
 
     // Margen arriba para el marcador y a los costados para que ningún foco quede cortado.
-    const area = { ancho: ANCHO - 2 * MARGEN, alto: ALTO - ARRIBA - MARGEN };
-    dibujarFondo(this, { x: MARGEN, y: ARRIBA }, area);
+    // El mapa conserva su proporción real (no se estira) y se centra en el área de juego.
+    const mapa = encuadre(DIA.bbox, { ancho: ANCHO - 2 * MARGEN, alto: ALTO - ARRIBA - MARGEN });
+    const area = { ancho: mapa.ancho, alto: mapa.alto };
+    this.origen = { x: MARGEN + mapa.dx, y: ARRIBA + mapa.dy };
+    dibujarFondo(this, this.origen, area);
+    this.grilla = crearGrilla(area, LADO_CELDA);
+    this.azar = crearAzar(DIA.fecha);
     const plan = planPorPasadas(cargarDia(DIA, area), area.alto, DURACION_PASADAS_MS);
+    this.proximoId = plan.focos.length;
     for (const ventana of plan.ventanas) {
       this.time.delayedCall(ventana.desdeMs, () => this.pasada(ventana, area.alto));
     }
     plan.focos.forEach((foco, id) => {
       this.time.delayedCall(foco.apareceMs, () =>
-        this.encender(focoActivo(id, { ...foco, x: foco.x + MARGEN, y: foco.y + ARRIBA })),
+        this.encender(focoActivo(id, { ...foco, x: foco.x + this.origen.x, y: foco.y + this.origen.y })),
       );
     });
-    this.reloj = this.time.delayedCall(DURACION_MS, () => {
+    this.reloj = this.time.delayedCall(DURACION_PARTIDA_MS, () => {
       this.scene.start("fin", this.partida.marcador);
     });
   }
 
   /** La franja del satélite cruza el área de juego mientras dura su pasada. */
   private pasada(v: Ventana, alto: number) {
-    const [desde, hasta] = v.haciaElSur ? [ARRIBA, ARRIBA + alto] : [ARRIBA + alto, ARRIBA];
+    const arriba = this.origen.y;
+    const [desde, hasta] = v.haciaElSur ? [arriba, arriba + alto] : [arriba + alto, arriba];
     const franja = this.add.rectangle(ANCHO / 2, desde, ANCHO, 6, color(paleta.llama)).setAlpha(0.35).setDepth(5);
     const rotulo = this.add
       .text(12, desde, `Pasada del satélite: ${horaArgentina(v.hora)} h`, {
@@ -109,7 +130,9 @@ export class Nivel extends Phaser.Scene {
     const escape = this.time.delayedCall(potencia(frp).escapeMs, () => {
       borrar();
       this.partida = escaparFoco(this.partida, id);
-      if (!foco.fuenteFija) SONIDO.tocar("escape");
+      if (foco.fuenteFija) return;
+      SONIDO.tocar("escape");
+      this.propagar(foco);
     });
 
     const golpe = () => {
@@ -153,6 +176,16 @@ export class Nivel extends Phaser.Scene {
     };
     cuadro.on("pointerup", soltar);
     cuadro.on("pointerout", soltar);
+  }
+
+  /** Un foco que se escapa enciende celdas vecinas, sesgadas por el viento, hasta el tope de encendidas. */
+  private propagar(foco: FocoActivo) {
+    const celda = (f: { x: number; y: number }) => aCelda(this.grilla, f.x - this.origen.x, f.y - this.origen.y);
+    const encendidas = this.partida.activos.filter((f) => !f.fuenteFija).map(celda);
+    for (const nueva of propagar(this.grilla, celda(foco), encendidas, this.azar, VIENTO)) {
+      const { x, y } = centroDe(this.grilla, nueva);
+      this.encender(focoPropagado(this.proximoId++, x + this.origen.x, y + this.origen.y));
+    }
   }
 
   private flotar(x: number, y: number, texto: string, tinta: string) {

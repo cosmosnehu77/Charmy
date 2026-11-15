@@ -1,18 +1,18 @@
 import { describe, expect, it } from "vitest";
 import dia from "../../../data/muestras/dia-juego.json";
 import { cargarDia, type DiaJuego, type FocoEnPantalla } from "../src/datos";
-import { DURACION_PASADAS_MS, pasadas, planPorPasadas, potencia } from "../src/mecanica";
+import { DURACION_PARTIDA_MS, DURACION_PASADAS_MS, pasadas, planPorPasadas, potencia } from "../src/mecanica";
 
 describe("potencia (FRP) como vida del foco", () => {
   it.each([
-    [0.26, 1, 5000],
-    [1.99, 1, 5000],
-    [2, 2, 4500],
-    [9.99, 2, 4500],
-    [10, 3, 4000],
-    [29.99, 3, 4000],
-    [30, 4, 3500],
-    [55.06, 4, 3500],
+    [0.26, 1, 6000],
+    [1.99, 1, 6000],
+    [2, 2, 5400],
+    [9.99, 2, 5400],
+    [10, 3, 4800],
+    [29.99, 3, 4800],
+    [30, 4, 4200],
+    [55.06, 4, 4200],
   ])("%s MW: %s toques y %s ms para escaparse", (frp, toques, escapeMs) => {
     expect(potencia(frp)).toEqual({ toques, escapeMs });
   });
@@ -88,5 +88,11 @@ describe("plan por pasadas", () => {
     const focos = [foco("04:00", 0), ...Array.from({ length: 9 }, () => foco("18:00", 0))];
     const [chica, grande] = planPorPasadas(focos, ALTO, 10_000).ventanas;
     expect(grande!.hastaMs - grande!.desdeMs).toBeGreaterThan(chica!.hastaMs - chica!.desdeMs);
+  });
+});
+
+describe("tiempos de la partida", () => {
+  it("el último foco de las pasadas tiene tiempo de vivir antes de que termine la partida", () => {
+    expect(DURACION_PASADAS_MS + potencia(0).escapeMs).toBeLessThan(DURACION_PARTIDA_MS);
   });
 });

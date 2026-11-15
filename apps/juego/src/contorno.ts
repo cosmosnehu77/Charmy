@@ -82,3 +82,24 @@ export function contornoDelDia(regiones: GeoJson, bbox: Recuadro, tolerancia = T
 export function proyectar([lon, lat]: Punto, [oeste, sur, este, norte]: Recuadro, area: Area): { x: number; y: number } {
   return { x: ((lon - oeste) / (este - oeste)) * area.ancho, y: ((norte - lat) / (norte - sur)) * area.alto };
 }
+
+export interface Encuadre extends Area {
+  /** Corrimiento del mapa dentro del área, para centrarlo. */
+  dx: number;
+  dy: number;
+}
+
+/**
+ * El área donde se dibuja el mapa sin estirarlo: un grado de longitud mide cos(latitud) de uno de latitud, así que
+ * el recuadro se ajusta al área con esa proporción y se centra en el lado que sobra.
+ */
+export function encuadre([oeste, sur, este, norte]: Recuadro, area: Area): Encuadre {
+  const latitudMedia = ((sur + norte) / 2) * (Math.PI / 180);
+  const proporcion = ((este - oeste) * Math.cos(latitudMedia)) / (norte - sur);
+  if (area.ancho / area.alto > proporcion) {
+    const ancho = area.alto * proporcion;
+    return { ancho, alto: area.alto, dx: (area.ancho - ancho) / 2, dy: 0 };
+  }
+  const alto = area.ancho / proporcion;
+  return { ancho: area.ancho, alto, dx: 0, dy: (area.alto - alto) / 2 };
+}

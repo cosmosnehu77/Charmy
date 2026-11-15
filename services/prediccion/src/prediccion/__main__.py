@@ -1,11 +1,13 @@
-"""Corre la comparación real: TimesFM 2.5 contra LightGBM sobre la tabla `entrenamiento` publicada.
+"""Corre la comparación real: TimesFM contra LightGBM sobre la tabla `entrenamiento` publicada (R-E2, #253).
 
+Por defecto usa TimesFM 3.0, el candidato de D-31; `--modelo 2.5` queda para comparar.
 Uso (necesita el extra pesado, que trae torch):
 uv run --package prediccion --extra timesfm python -m prediccion \
     --entrenamiento entrenamiento.parquet --out salida
 
-Escribe `prediccion.parquet` (modelo timesfm-2.5) solo para los horizontes en que TimesFM le gana a la
-climatología y a LightGBM. Si no gana ninguno, no escribe nada y queda la predicción de LightGBM.
+Escribe `comparacion.json` con la versión usada y, solo para los horizontes en que TimesFM le gana a la
+climatología, a LightGBM y a las referencias triviales, `prediccion.parquet`.
+Si no gana en ninguno, queda LightGBM.
 """
 
 import argparse
@@ -15,16 +17,16 @@ from pathlib import Path
 
 from prediccion.comparar import comparar, leer_entrenamiento, mejora_lightgbm
 
-PESOS = "google/timesfm-2.5-200m-pytorch"  # Apache-2.0. La 3.0 no: sus pesos son no comerciales (D-31).
+PESOS_2_5 = "google/timesfm-2.5-200m-pytorch"  # Apache-2.0. Los de la 3.0 están en prediccion.timesfm3.
 
 
-def cargar_timesfm():
+def cargar_timesfm_2_5():
     """Carga TimesFM 2.5 (baja los pesos la primera vez). Se importa solo acá: las pruebas usan uno falso."""
     import timesfm
     import torch
 
     torch.set_float32_matmul_precision("high")
-    modelo = timesfm.TimesFM_2p5_200M_torch.from_pretrained(PESOS)
+    modelo = timesfm.TimesFM_2p5_200M_torch.from_pretrained(PESOS_2_5)
     modelo.compile(
         timesfm.ForecastConfig(
             max_context=192,  # la serie más larga tiene 177 meses: más contexto es relleno
@@ -40,11 +42,25 @@ def cargar_timesfm():
     return modelo
 
 
+def cargar(version: str):
+    """El modelo de TimesFM de esa versión, con la interfaz de la comparación."""
+    if version == "3.0":
+        from prediccion import timesfm3
+
+        return timesfm3.cargar()
+    return cargar_timesfm_2_5()
+
+
 def main(argv: list[str] | None = None) -> int:
-    p = argparse.ArgumentParser(description="TimesFM 2.5 contra LightGBM con la compuerta D-10")
+    p = argparse.ArgumentParser(description="TimesFM contra LightGBM con la compuerta D-10")
     p.add_argument("--entrenamiento", type=Path, required=True, help="entrenamiento.parquet (F3-B5)")
     p.add_argument("--out", type=Path, required=True)
-    p.add_argument("--modelo", choices=["3.0", "2.5"], default="3.0", help="Versión de TimesFM")
+    p.add_argument(
+        "--modelo",
+        choices=["3.0", "2.5"],
+        default="3.0",
+        help="Versión de TimesFM (3.0, el candidato de D-31; 2.5 para comparar)",
+    )
     p.add_argument(
         "--celdas-prueba",
         type=int,
@@ -62,12 +78,7 @@ def main(argv: list[str] | None = None) -> int:
         print(f"prueba sobre {len(celdas)} celdas al azar (semilla 0)")
     vigente = mejora_lightgbm(m, celdas)
     print("LightGBM, mejora sobre la climatología:", vigente)
-    if args.modelo == "3.0":
-        from prediccion import timesfm3
-
-        modelo, nombre = timesfm3.cargar(), "timesfm-3.0"
-    else:
-        modelo, nombre = cargar_timesfm(), "timesfm-2.5"
+    modelo, nombre = cargar(args.modelo), f"timesfm-{args.modelo}"
     r = comparar(
         m,
         modelo,
@@ -77,11 +88,12 @@ def main(argv: list[str] | None = None) -> int:
         celdas=celdas,
     )
     print(f"{nombre}, mejora sobre la climatología:", r.mejora)
-    for nombre, ref in r.referencias.items():
-        print(f"Referencia «{nombre}», mejora sobre la climatología:", ref)
+    for referencia, ref in r.referencias.items():
+        print(f"Referencia «{referencia}», mejora sobre la climatología:", ref)
 
     args.out.mkdir(parents=True, exist_ok=True)
     resumen = {
+        "modelo": nombre,
         "celdas_prueba": len(celdas) if celdas else todas.len(),
         "emisiones_de_prueba": [str(e) for e in r.emisiones],
         "lightgbm": vigente,
@@ -90,11 +102,11 @@ def main(argv: list[str] | None = None) -> int:
     }
     (args.out / "comparacion.json").write_text(json.dumps(resumen, indent=2, ensure_ascii=False))
     if r.prediccion.is_empty():
-        print("TimesFM no supera a LightGBM y a las referencias en ningún horizonte: queda LightGBM (D-31)")
+        print(f"{nombre} no supera a LightGBM y a las referencias en ningún horizonte: queda LightGBM (D-31)")
         return 0
     r.prediccion.write_parquet(args.out / "prediccion.parquet")
     horizontes = sorted(set(r.prediccion["horizon"].to_list()))
-    print(f"TimesFM gana en los horizontes {horizontes}: {r.prediccion.height} filas en prediccion.parquet")
+    print(f"{nombre} gana en los horizontes {horizontes}: {r.prediccion.height} filas en prediccion.parquet")
     return 0
 
 

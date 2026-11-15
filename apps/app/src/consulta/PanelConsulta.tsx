@@ -3,7 +3,6 @@ import { type FormEvent, useEffect, useId, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { type ModoDibujo, useConsulta } from "@/estado/consulta";
 import { areaDesdePunto, type Confianza, type Fuente, INICIO_DATOS, leerPunto, type Momento, validarPunto } from "./consulta";
-import { useApp } from "@/estado/app";
 import { nombreMes, Reproduccion } from "@/experto/Reproduccion";
 import { BuscarLocalidad } from "@/novato/BuscarLocalidad";
 import { cn } from "@/lib/utils";

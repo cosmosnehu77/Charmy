@@ -7,7 +7,7 @@ import { type CeldaCalendario, formatear, MESES, MESES_LARGOS } from "./grilla";
  * Estadísticas del calendario: totales del período y la temporada (promedio de cada mes del año).
  * Salen de las mismas celdas que la tabla, que queda como su vista en tabla.
  */
-export function ResumenCalendario({ celdas, novato }: { celdas: CeldaCalendario[]; novato: boolean }) {
+export function ResumenCalendario({ celdas }: { celdas: CeldaCalendario[] }) {
   const r = useMemo(() => resumenCalendario(celdas), [celdas]);
   const cuando = (year: number, month: number) => `${MESES_LARGOS[month - 1]} de ${year}`;
 
@@ -15,14 +15,14 @@ export function ResumenCalendario({ celdas, novato }: { celdas: CeldaCalendario[
     {
       nombre: "Total del período",
       valor: formatear(r.total),
-      detalle: novato ? `${formatear(r.promedioMensual)} por mes` : `días-celda · ${formatear(r.promedioMensual)} por mes`,
+      detalle: `días-celda · ${formatear(r.promedioMensual)} por mes`,
     },
     { nombre: "Mes pico", valor: r.pico ? cuando(r.pico.year, r.pico.month) : "Sin fuego", detalle: r.pico ? formatear(r.pico.value) : undefined },
     { nombre: "Año con más fuego", valor: r.anioMayor ? String(r.anioMayor.year) : "—", detalle: r.anioMayor ? formatear(r.anioMayor.total) : undefined },
     {
-      nombre: novato ? "Meses con más fuego que lo normal" : "Meses sobre lo normal",
+      nombre: "Meses sobre lo normal",
       valor: `${r.mesesSobreLoNormal} de ${r.mesesConDato}`,
-      detalle: novato ? `${r.mesesBajoLoNormal} con menos` : `percentil ≥ 75 · ${r.mesesBajoLoNormal} bajo el 25`,
+      detalle: `percentil ≥ 75 · ${r.mesesBajoLoNormal} bajo el 25`,
     },
   ];
 

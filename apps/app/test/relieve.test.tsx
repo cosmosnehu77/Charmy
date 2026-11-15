@@ -2,7 +2,6 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { act, fireEvent, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import App from "@/App";
-import { useApp } from "@/estado/app";
 import { estadoInicialConsulta, useConsulta } from "@/estado/consulta";
 import { urlGoogleMaps, urlGoogleMapsEmbed } from "@/lib/enlaces";
 import { useRelieve } from "@/relieve/estado";
@@ -120,7 +119,6 @@ beforeEach(() => {
     return new Response(JSON.stringify({ status: "ok" }));
   });
   vi.stubGlobal("fetch", fetchSimulado);
-  useApp.setState({ modo: "novato" });
   useConsulta.setState(estadoInicialConsulta("2026-11-14"));
   useVivo.setState({ satelites: ["N20", "N21"] });
   useRelieve.setState({
@@ -150,7 +148,7 @@ describe("vista Relieve (F4-R1)", () => {
       "Riesgo",
       "Predicción",
       "En vivo",
-      "Tu zona",
+      "Experto",
     ]);
     const ranking = await screen.findByRole("region", { name: "Ranking" });
     expect(await within(ranking).findByText("Neuquén")).toBeInTheDocument();
@@ -253,13 +251,13 @@ describe("vista Relieve (F4-R1)", () => {
     expect(recorrido.parentElement).toBe(document.body);
   });
 
-  it("el recorrido de Charmy explica Tu zona señalando su pestaña (#281)", async () => {
+  it("el recorrido de Charmy explica Experto señalando su pestaña (#281)", async () => {
     // jsdom no mide: con un tamaño falso ningún paso se saltea por no estar en pantalla.
     vi.spyOn(Element.prototype, "getBoundingClientRect").mockReturnValue(new DOMRect(0, 0, 120, 40));
     montar();
     const u = userEvent.setup();
     await screen.findByRole("region", { name: "Ranking" });
-    expect(screen.getByRole("tab", { name: "Tu zona" })).toHaveAttribute("data-guia", "zona");
+    expect(screen.getByRole("tab", { name: "Experto" })).toHaveAttribute("data-guia", "zona");
     await u.click(screen.getByRole("button", { name: /Charmy: ¿necesitás ayuda\?/ }));
     await screen.findByRole("dialog", { name: "¡Hola! Soy Charmy" });
     await u.click(screen.getByRole("button", { name: "Siguiente" }));
@@ -275,7 +273,7 @@ describe("vista Relieve (F4-R1)", () => {
     const elegida = screen.getByRole("tab", { selected: true });
     expect(elegida).toHaveClass("bg-charmy-llama");
     expect(elegida).not.toHaveClass("bg-white");
-    const otra = screen.getByRole("tab", { name: "Tu zona" });
+    const otra = screen.getByRole("tab", { name: "Experto" });
     expect(otra).toHaveClass("hover:text-charmy-llama");
     expect(otra).not.toHaveClass("hover:text-white");
   });
@@ -546,11 +544,11 @@ describe("vista Relieve (F4-R1)", () => {
 });
 
 describe("tu zona en Relieve (#262)", () => {
-  it("elegir Tu zona abre su panel con las herramientas de dibujo y esconde el ranking", async () => {
+  it("elegir Experto abre su panel con las herramientas de dibujo y esconde el ranking", async () => {
     montar();
     const u = userEvent.setup();
-    await u.click(screen.getByRole("tab", { name: "Tu zona" }));
-    const panel = screen.getByRole("complementary", { name: "Tu zona" });
+    await u.click(screen.getByRole("tab", { name: "Experto" }));
+    const panel = screen.getByRole("complementary", { name: "Experto" });
     expect(screen.queryByRole("region", { name: "Ranking" })).not.toBeInTheDocument();
     const rectangulo = within(panel).getByRole("button", { name: "Dibujar rectángulo" });
     expect(rectangulo).toHaveAttribute("aria-pressed", "false");
@@ -569,16 +567,17 @@ describe("tu zona en Relieve (#262)", () => {
     expect(rectangulo).toHaveAttribute("aria-pressed", "false");
     expect(screen.queryByText("Dibujando en el mapa")).not.toBeInTheDocument();
     expect(within(panel).getByLabelText("Desde")).toHaveValue("2022-01-01");
-    // Los filtros técnicos, solo en el modo experto (RF-MOD-01).
-    expect(within(panel).queryByLabelText("Serie")).not.toBeInTheDocument();
+    // Ya no hay modo novato: los filtros técnicos se ven siempre.
+    expect(within(panel).getByLabelText("Serie")).toBeInTheDocument();
+    expect(within(panel).queryByRole("radio", { name: "Novato" })).not.toBeInTheDocument();
     expect(screen.getByText(/no reemplaza a los servicios de emergencia/)).toBeInTheDocument();
   });
 
   it("con un punto y un radio: focos, calendario con CSV, contexto y reporte; borrar el área los saca", async () => {
     montar();
     const u = userEvent.setup();
-    await u.click(screen.getByRole("tab", { name: "Tu zona" }));
-    const panel = screen.getByRole("complementary", { name: "Tu zona" });
+    await u.click(screen.getByRole("tab", { name: "Experto" }));
+    const panel = screen.getByRole("complementary", { name: "Experto" });
     await u.type(within(panel).getByLabelText("Latitud"), "-42,9");
     await u.type(within(panel).getByLabelText("Longitud"), "-71,3");
     await u.click(within(panel).getByRole("button", { name: "Usar este punto" }));
@@ -586,8 +585,7 @@ describe("tu zona en Relieve (#262)", () => {
     expect(await within(panel).findByText("1 foco en el área y el período.")).toBeInTheDocument();
     const resumen = within(panel).getByRole("region", { name: "Resumen de los focos" });
     expect(within(resumen).getByText("Día con más focos").nextSibling).toHaveTextContent(/^\d{1,2} [a-z]{3} \d{4}$/);
-    // La potencia es un término técnico: solo en experto (RF-MOD-01).
-    expect(resumen).not.toHaveTextContent(/potencia/i);
+    expect(resumen).toHaveTextContent(/potencia/i);
     const calendario = await screen.findByRole("region", { name: "Calendario de quema" });
     expect(within(calendario).getByRole("link", { name: /Descargar CSV/ })).toHaveAttribute(
       "href",
@@ -600,17 +598,16 @@ describe("tu zona en Relieve (#262)", () => {
     expect(screen.queryByRole("region", { name: "Calendario de quema" })).not.toBeInTheDocument();
   });
 
-  it("salir de Tu zona apaga la herramienta de dibujo", async () => {
+  it("salir de Experto apaga la herramienta de dibujo", async () => {
     montar();
     const u = userEvent.setup();
-    await u.click(screen.getByRole("tab", { name: "Tu zona" }));
+    await u.click(screen.getByRole("tab", { name: "Experto" }));
     await u.click(screen.getByRole("button", { name: "Dibujar polígono" }));
     await u.click(screen.getByRole("tab", { name: "Focos" }));
     expect(useConsulta.getState().dibujando).toBeNull();
   });
 
-  it("en experto suma filtros, reproducción y validación, y un foco tocado muestra sus atributos (RF-MOD-02, #276)", async () => {
-    useApp.setState({ modo: "experto" });
+  it("Experto suma filtros, reproducción y validación, y un foco tocado muestra sus atributos (RF-MOD-02, #276)", async () => {
     useConsulta.setState({ area: { type: "Polygon", coordinates: [[[-72, -43], [-71, -43], [-71, -42], [-72, -42], [-72, -43]]] } });
     useRelieve.setState({
       pestana: "zona",
@@ -620,21 +617,13 @@ describe("tu zona en Relieve (#262)", () => {
         propiedades: { acq_datetime: "2025-01-10T15:00:00Z", satellite: "N20", instrument: "VIIRS", confidence: "high", frp: 12, daynight: "D" },
       },
     });
-    try {
-      montar();
-      const panel = screen.getByRole("complementary", { name: "Tu zona" });
-      expect(within(panel).getByLabelText("Serie")).toBeInTheDocument();
-      expect(await within(panel).findByRole("group", { name: "Reproducir por mes" })).toBeInTheDocument();
-      expect(within(panel).getByRole("region", { name: "Validación de la armonización" })).toBeInTheDocument();
-      const ficha = screen.getByRole("region", { name: "Atributos del foco" });
-      expect(within(ficha).getByText("NOAA-20 (VIIRS)")).toBeInTheDocument();
-      expect(within(ficha).getByText("12 MW")).toBeInTheDocument();
-      await userEvent.setup().click(within(panel).getByRole("radio", { name: "Novato" }));
-      expect(within(panel).queryByLabelText("Serie")).not.toBeInTheDocument();
-      expect(screen.queryByRole("region", { name: "Atributos del foco" })).not.toBeInTheDocument();
-      expect(useConsulta.getState().area).not.toBeNull();
-    } finally {
-      useApp.setState({ modo: "novato" });
-    }
+    montar();
+    const panel = screen.getByRole("complementary", { name: "Experto" });
+    expect(within(panel).getByLabelText("Serie")).toBeInTheDocument();
+    expect(await within(panel).findByRole("group", { name: "Reproducir por mes" })).toBeInTheDocument();
+    expect(within(panel).getByRole("region", { name: "Validación de la armonización" })).toBeInTheDocument();
+    const ficha = screen.getByRole("region", { name: "Atributos del foco" });
+    expect(within(ficha).getByText("NOAA-20 (VIIRS)")).toBeInTheDocument();
+    expect(within(ficha).getByText("12 MW")).toBeInTheDocument();
   });
 });

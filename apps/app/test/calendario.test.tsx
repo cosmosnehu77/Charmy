@@ -6,7 +6,6 @@ import App from "@/App";
 import { armarGrilla, colorCelda, describirCelda, type CeldaCalendario } from "@/calendario/grilla";
 import { Calendario } from "@/calendario/Calendario";
 import { rutaCsv } from "@/consulta/consulta";
-import { useApp } from "@/estado/app";
 import { estadoInicialConsulta, useConsulta } from "@/estado/consulta";
 
 vi.mock("@/relieve/MapaRelieve", () => ({ default: () => <div data-testid="mapa" /> }));
@@ -65,8 +64,6 @@ beforeEach(() => {
   responder();
   vi.stubGlobal("fetch", fetchSimulado);
   useConsulta.setState({ ...estadoInicialConsulta("2026-11-14"), desde: "2025-01-01", area });
-  // Estas pruebas miran el calendario técnico (modo experto); el de novato está en novato.test.tsx.
-  useApp.setState({ modo: "experto" });
 });
 afterEach(() => {
   vi.unstubAllEnvs();
@@ -184,14 +181,6 @@ describe("estadísticas del calendario", () => {
     expect(within(temporada).getAllByRole("listitem")).toHaveLength(12);
     expect(within(temporada).getByRole("listitem", { name: /enero: 12,6 en promedio/i })).toBeInTheDocument();
     expect(within(temporada).getByRole("listitem", { name: /marzo: sin dato/i })).toBeInTheDocument();
-  });
-
-  it("en novato usa palabras simples, sin días-celda", async () => {
-    useApp.setState({ modo: "novato" });
-    montar(<Calendario />);
-    const resumen = await screen.findByRole("region", { name: "Estadísticas del calendario" });
-    expect(within(resumen).getByText("Meses con más fuego que lo normal")).toBeInTheDocument();
-    expect(resumen).not.toHaveTextContent(/días-celda/);
   });
 });
 

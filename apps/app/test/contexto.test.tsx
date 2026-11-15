@@ -3,7 +3,6 @@ import { fireEvent, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import App from "@/App";
 import { direccionViento, urlImagen } from "@/contexto/contexto";
-import { useApp } from "@/estado/app";
 import { estadoInicialConsulta, useConsulta } from "@/estado/consulta";
 import { useVivo } from "@/vivo/estado";
 
@@ -70,7 +69,6 @@ beforeEach(() => {
   });
   vi.stubGlobal("fetch", fetchSimulado);
   useConsulta.setState({ ...estadoInicialConsulta("2026-11-14"), area });
-  useApp.setState({ modo: "novato" });
   useVivo.setState({ reportando: false });
 });
 afterEach(() => {

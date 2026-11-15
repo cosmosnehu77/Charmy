@@ -2,7 +2,6 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import App from "@/App";
-import { useApp } from "@/estado/app";
 
 // jsdom no tiene WebGL: el mapa se revisa en el navegador.
 vi.mock("@/relieve/MapaRelieve", () => ({ default: () => <div data-testid="mapa" /> }));
@@ -19,8 +18,6 @@ function montar() {
 }
 
 describe("esqueleto de la app", () => {
-  beforeEach(() => useApp.setState({ modo: "novato" }));
-
   it("es una sola vista: Relieve con la píldora y el aviso de emergencias (#276)", () => {
     montar();
     expect(screen.getByRole("tablist", { name: "Indicador" })).toBeInTheDocument();
@@ -31,9 +28,9 @@ describe("esqueleto de la app", () => {
     );
   });
 
-  it("cambia de modo desde Tu zona", async () => {
+  it("la pestaña Experto no tiene modo novato: los filtros técnicos se ven siempre", () => {
     montar();
-    await userEvent.setup().click(screen.getByRole("radio", { name: "Experto" }));
-    expect(useApp.getState().modo).toBe("experto");
+    expect(screen.queryByRole("radio", { name: "Novato" })).not.toBeInTheDocument();
+    expect(screen.getByLabelText("Serie")).toBeInTheDocument();
   });
 });

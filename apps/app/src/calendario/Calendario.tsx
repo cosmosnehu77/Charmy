@@ -4,10 +4,8 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { bboxDeArea, rutaCsv } from "@/consulta/consulta";
-import { useApp } from "@/estado/app";
 import { useConsulta } from "@/estado/consulta";
 import { Descargas } from "@/experto/Descargas";
-import { conclusionDelArea } from "@/novato/conclusion";
 import { ErrorApi, urlApi } from "@/lib/api";
 import {
   armarGrilla,
@@ -16,7 +14,6 @@ import {
   colorCelda,
   colorTexto,
   describirCelda,
-  describirCeldaSimple,
   formatear,
   MESES,
   type Vista,
@@ -52,7 +49,6 @@ export function Calendario() {
   const [vista, setVista] = useState<Vista>("anomalia");
   const { area, desde, hasta, fuente, confianzaMin } = useConsulta();
   const { consulta, desdeAnio, hastaAnio, hayConsulta } = useCalendario();
-  const novato = useApp((s) => s.modo === "novato");
 
   if (!hayConsulta) return null;
 
@@ -70,7 +66,7 @@ export function Calendario() {
           </span>
         )}
         <ToggleGroup type="single" aria-label="Qué mostrar en el calendario" value={vista} onValueChange={(v) => v && setVista(v as Vista)}>
-          <ToggleGroupItem value="anomalia">{novato ? "Comparado con lo normal" : "Anomalía"}</ToggleGroupItem>
+          <ToggleGroupItem value="anomalia">Anomalía</ToggleGroupItem>
           <ToggleGroupItem value="cantidad">Cantidad</ToggleGroupItem>
         </ToggleGroup>
         {csv && (
@@ -91,9 +87,6 @@ export function Calendario() {
             : "El calendario no está disponible ahora. El mapa y la descarga siguen funcionando."}
         </p>
       )}
-      {consulta.isSuccess && novato && consulta.data.cells.length > 0 && (
-        <p className="rounded-control bg-superficie-2 p-2 text-sm">{conclusionDelArea(consulta.data)}</p>
-      )}
       {consulta.isSuccess && consulta.data.cells.length === 0 && (
         // Sin celdas, la API explica el motivo en message (fuera de cobertura, región sin calendario).
         <p className="rounded-control bg-superficie-2 p-2 text-sm">
@@ -102,25 +95,18 @@ export function Calendario() {
       )}
       {consulta.isSuccess && consulta.data.cells.length > 0 && (
         <>
-          {novato ? (
-            <p className="text-xs text-tinta-suave">
-              Cada cuadrito es un mes y el número dice cuánto fuego hubo. Naranja es más fuego que lo normal para ese
-              mes; violeta, menos.
-            </p>
-          ) : (
-            <p className="text-xs text-tinta-suave">
-              Cada celda es un mes: días-celda con fuego, en equivalente VIIRS. La anomalía compara con la{" "}
-              {consulta.data.baseline}
-              {consulta.data.region ? `, región ${consulta.data.region}` : ""}.
-            </p>
-          )}
-          <ResumenCalendario celdas={consulta.data.cells} novato={novato} />
+          <p className="text-xs text-tinta-suave">
+            Cada celda es un mes: días-celda con fuego, en equivalente VIIRS. La anomalía compara con la{" "}
+            {consulta.data.baseline}
+            {consulta.data.region ? `, región ${consulta.data.region}` : ""}.
+          </p>
+          <ResumenCalendario celdas={consulta.data.cells} />
           <Leyenda vista={vista} />
           <div className="overflow-x-auto">
             <table className="w-full min-w-[34rem] table-fixed border-separate border-spacing-0.5 text-center font-mono text-[11px]">
               <caption className="sr-only">
                 Calendario de quema por año y mes,{" "}
-                {vista === "cantidad" ? "cantidad" : novato ? "comparado con lo normal" : "anomalía"}
+                {vista === "cantidad" ? "cantidad" : "anomalía"}
               </caption>
               <thead>
                 <tr>
@@ -142,9 +128,7 @@ export function Calendario() {
                     </th>
                     {fila.meses.map((celda, i) => {
                       const fondo = colorCelda(celda, vista);
-                      const descripcion = novato
-                        ? describirCeldaSimple(celda, fila.year, i)
-                        : describirCelda(celda, fila.year, i);
+                      const descripcion = describirCelda(celda, fila.year, i);
                       return (
                         <td
                           key={MESES[i]}
@@ -162,7 +146,7 @@ export function Calendario() {
               </tbody>
             </table>
           </div>
-          {!novato && <Descargas calendario={consulta.data} desdeAnio={desdeAnio} hastaAnio={hastaAnio} vista={vista} />}
+          <Descargas calendario={consulta.data} desdeAnio={desdeAnio} hastaAnio={hastaAnio} vista={vista} />
         </>
       )}
     </section>

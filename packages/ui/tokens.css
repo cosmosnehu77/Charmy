@@ -48,6 +48,16 @@
   --color-oscuro-tinta-suave: #b8c3ce;
   --color-oscuro-acento: #ff7a3d;
 
+  /* Vista Relieve (F4-R1): mapa oscuro con paneles de vidrio. */
+  --relieve-fondo: #10151c;
+  --relieve-vidrio: #0b0f14;
+  --relieve-panel: #0d1117;
+  --relieve-brillo: #ff8a47;
+  --relieve-apagada: #262d37;
+  --relieve-sin-dato: #3a4653;
+  --relieve-gris: #2b3038;
+  --relieve-gris-borde: #3d444e;
+
   /* ---- Mapa de la landing ("sala de mapas"): negro cálido, musgo y ámbar; de día, papel cálido ---- */
   --mapa-noche-fondo: #0b0d0a;
   --mapa-noche-panel: #131611;

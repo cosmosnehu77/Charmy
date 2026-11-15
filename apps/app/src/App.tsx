@@ -10,11 +10,19 @@ import { PanelContexto } from "@/contexto/PanelContexto";
 import { Recorrido } from "@/novato/Recorrido";
 import { FormReporte } from "@/vivo/FormReporte";
 import { PanelVivo } from "@/vivo/PanelVivo";
+import { Relieve } from "@/relieve/Relieve";
 
 // MapLibre pesa: se carga aparte para que el resto de la app aparezca enseguida (RNF-03).
 const Mapa = lazy(() => import("@/mapa/Mapa"));
 
 export default function App() {
+  const vista = useApp((s) => s.vista);
+  // Vista principal (F4-R1): el país en relieve por provincia. La consulta por área sigue a un toque.
+  if (vista === "relieve") return <Relieve />;
+  return <Consulta />;
+}
+
+function Consulta() {
   const perfilMapa = useApp((s) => s.perfilMapa);
   const modo = useApp((s) => s.modo);
   const mostrarRecorrido = useApp((s) => s.modo === "novato" && !s.recorridoVisto);

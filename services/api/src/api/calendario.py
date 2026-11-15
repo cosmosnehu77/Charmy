@@ -7,7 +7,7 @@ Un polígono se asigna a la región de `regiones.geojson` con la que comparte m�
 from typing import Literal
 
 from fastapi import APIRouter
-from pydantic import BaseModel, field_validator
+from pydantic import BaseModel, field_validator, model_validator
 from shapely.geometry import shape
 
 from api.datos import archivos, conexion, geojson
@@ -37,10 +37,18 @@ class Poligono(BaseModel):
 
 
 class PedidoCalendario(BaseModel):
-    area: Poligono
+    # Un área dibujada o el código de una región (`AR-U`), para la ficha de la vista Relieve (F4-R1).
+    area: Poligono | None = None
+    region: str | None = None
     from_year: int = 2001
     to_year: int | None = None
     resolution: Literal["month", "day_of_year"] = "month"
+
+    @model_validator(mode="after")
+    def area_o_region(self) -> "PedidoCalendario":
+        if self.area is None and self.region is None:
+            raise ValueError("falta area o region")
+        return self
 
 
 def region_de(poligono: Poligono) -> str | None:
@@ -66,7 +74,12 @@ def calendario(pedido: PedidoCalendario) -> dict:
     if pedido.to_year is not None and pedido.to_year < pedido.from_year:
         raise ErrorDeContrato(400, "anios_invalidos", "El año de inicio tiene que ir antes que el de fin.")
 
-    region = region_de(pedido.area)
+    if pedido.region is not None:
+        if pedido.region not in {f["properties"]["region"] for f in geojson("regiones")["features"]}:
+            raise ErrorDeContrato(404, "no_existe", "No conocemos esa región.")
+        region = pedido.region
+    else:
+        region = region_de(pedido.area)
     if region is None:
         respuesta = {"unit": UNIDAD, "baseline": BASE, "provisional": False}
         return respuesta | {"message": FUERA_DE_COBERTURA, "cells": []}

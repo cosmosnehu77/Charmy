@@ -112,16 +112,17 @@ paths:
     post:
       operationId: getCalendar
       tags: [historico]
-      summary: Calendario de actividad de quema armonizado para un polígono
+      summary: Calendario de actividad de quema armonizado para un polígono o una región
       requestBody:
         required: true
         content:
           application/json:
             schema:
               type: object
-              required: [area]
+              description: Va `area` o `region` (si vienen los dos, manda `region`). Sin ninguno, 400.
               properties:
                 area: { $ref: '#/components/schemas/GeoJSONPolygon' }
+                region: { type: string, description: 'Código de la región (`AR-U`), como en `/regions/summary`. Si no existe, 404', example: AR-U }
                 from_year: { type: integer, default: 2001 }
                 to_year: { type: integer }
                 resolution: { type: string, enum: [month, day_of_year], default: month }
@@ -165,6 +166,7 @@ paths:
                     message: 'Sin datos para esta área: está fuera de la cobertura.'
                     cells: []
         '400': { $ref: '#/components/responses/BadRequest' }
+        '404': { $ref: '#/components/responses/NotFound' }
         '503': { $ref: '#/components/responses/DatosNoDisponibles' }
   /forecast:
     get:
@@ -217,6 +219,50 @@ paths:
             application/json:
               schema: { $ref: '#/components/schemas/Error' }
               example: { code: sin_prediccion, message: 'Para ese plazo el modelo no supera a lo habitual, así que no mostramos predicción.' }
+        '503': { $ref: '#/components/responses/DatosNoDisponibles' }
+  /regions/summary:
+    get:
+      operationId: getRegionsSummary
+      tags: [vivo]
+      summary: Las 39 regiones con sus focos recientes por día y su último mes (vista Relieve)
+      description: |
+        Una `FeatureCollection` con la geometría de cada región de `regiones` y, en `properties`, los focos de
+        `/live` de las últimas `hours` asignados a la región que los contiene: total, intensidad (FRP) sumada y
+        lo mismo por día UTC (en el orden de `days`). `last_month` es el último mes de la tabla `calendario`.
+        Si los focos recientes no están disponibles, responde 200 igual: `live.available` es false y los
+        conteos vienen en null, para que el mapa se siga dibujando.
+      parameters:
+        - name: hours
+          in: query
+          schema: { type: integer, minimum: 1, maximum: 120, default: 120 }
+      responses:
+        '200':
+          description: Regiones con sus focos recientes
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/RegionsSummary' }
+              examples:
+                muestra:
+                  summary: Muestra provisoria (una región, valores inventados)
+                  value:
+                    type: FeatureCollection
+                    hours: 48
+                    days: ['2026-11-12', '2026-11-13', '2026-11-14']
+                    live: { available: true, fetched_at: '2026-11-14T11:30:00Z', stale: false }
+                    features:
+                      - type: Feature
+                        id: AR-U
+                        geometry: { type: Polygon, coordinates: [[[-72.0, -42.0], [-64.5, -42.0], [-64.5, -46.0], [-72.0, -46.0], [-72.0, -42.0]]] }
+                        properties:
+                          region: AR-U
+                          name: Chubut
+                          country: Argentina
+                          hotspots: 2
+                          frp_mw: 15.5
+                          by_day: [1, 0, 1]
+                          frp_by_day: [10.0, 0.0, 5.5]
+                          last_month: { year: 2026, month: 10, value: 41.4, median: 34.3, percentile: 75.0 }
+        '400': { $ref: '#/components/responses/BadRequest' }
         '503': { $ref: '#/components/responses/DatosNoDisponibles' }
   /live:
     get:
@@ -825,6 +871,56 @@ components:
       properties:
         code: { type: string, description: Ver el catálogo de códigos en la descripción del contrato, example: bbox_invalido }
         message: { type: string, example: 'El área debe tener el formato oeste,sur,este,norte.' }
+    RegionsSummary:
+      type: object
+      required: [type, hours, days, live, features]
+      properties:
+        type: { type: string, enum: [FeatureCollection] }
+        hours: { type: integer }
+        days: { type: array, items: { type: string, format: date }, description: 'Días UTC del período, del más viejo al más nuevo' }
+        live:
+          type: object
+          required: [available]
+          properties:
+            available: { type: boolean }
+            fetched_at: { type: string, format: date-time }
+            stale: { type: boolean }
+            message: { type: string, description: 'Con `available: false` o `stale: true`: qué pasa, para mostrarlo' }
+        features:
+          type: array
+          items:
+            type: object
+            required: [type, id, geometry, properties]
+            properties:
+              type: { type: string, enum: [Feature] }
+              id: { type: string }
+              geometry:
+                type: object
+                description: Polygon o MultiPolygon de la región
+                required: [type, coordinates]
+                properties:
+                  type: { type: string, enum: [Polygon, MultiPolygon] }
+                  coordinates: { type: array, items: {} }
+              properties:
+                type: object
+                required: [region, name, country, hotspots, frp_mw, by_day, frp_by_day, last_month]
+                properties:
+                  region: { type: string }
+                  name: { type: string }
+                  country: { type: string }
+                  hotspots: { type: [integer, 'null'] }
+                  frp_mw: { type: [number, 'null'] }
+                  by_day: { type: [array, 'null'], items: { type: integer } }
+                  frp_by_day: { type: [array, 'null'], items: { type: number } }
+                  last_month:
+                    type: [object, 'null']
+                    required: [year, month, value, median, percentile]
+                    properties:
+                      year: { type: integer }
+                      month: { type: integer }
+                      value: { type: number }
+                      median: { type: [number, 'null'] }
+                      percentile: { type: [number, 'null'] }
     GeoJSONPolygon:
       type: object
       required: [type, coordinates]

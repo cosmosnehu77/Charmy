@@ -1,0 +1,37 @@
+# Medición de modelos para etiquetar noticias (services/worker, #279). Solo a mano: pestaña Actions,
+# "Medir modelos de noticias", Run workflow. Corre worker.medir_noticias con una muestra inventada contra
+# varios modelos de NVIDIA NIM y deja la tabla de resultados en el resumen de la corrida.
+# Usa el secreto NVIDIA_API_KEY, que nunca se imprime. Unos 15 pedidos por corrida: dentro del cupo gratuito.
+name: Medir modelos de noticias
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: medir-noticias
+  cancel-in-progress: false
+
+jobs:
+  medir:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      # Los secretos no se pueden usar en un `if`: se pasan por una variable, como en worker-vivo.yml.
+      HAY_CLAVE: ${{ secrets.NVIDIA_API_KEY != '' }}
+    steps:
+      - name: Aviso si falta el secreto
+        if: env.HAY_CLAVE != 'true'
+        run: |
+          echo "::error::Falta el secreto NVIDIA_API_KEY."
+          exit 1
+      - uses: actions/checkout@v7
+      - uses: astral-sh/setup-uv@v10.3.3
+        with:
+          enable-cache: true
+      - name: Medir
+        env:
+          NVIDIA_API_KEY: ${{ secrets.NVIDIA_API_KEY }}
+        run: uv run --package worker python -m worker.medir_noticias | tee -a "$GITHUB_STEP_SUMMARY"

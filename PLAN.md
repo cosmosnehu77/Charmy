@@ -10,7 +10,7 @@
 
 **Fase activa:** 4
 **Líder:** `@cosmosnehu77`. Hasta que vuelva (probablemente en la fase 4), **líder interino `@daniace`** (D-28).
-**Versión:** 2.3.13 · **Última actualización:** 15 de noviembre de 2026
+**Versión:** 2.3.14 · **Última actualización:** 15 de noviembre de 2026
 
 ## Objetivo del proyecto
 
@@ -433,6 +433,7 @@ Si falta tiempo en el carril B, el orden es: fuentes fijas, tiempo, imagen y, po
 | #368 | F4-D14 | Charmy guía cada pestaña del mapa: Intensidad, Anomalía, Riesgo y Predicción con su propio recorrido (qué muestra y cómo se usa); En vivo con botón Guía en su panel; Focos mantiene el recorrido general | `@daniace` | `apps/app/` | F4-D9 | RF-CHA-05, RNF-04 | hecho |
 | #377 | F4-D15 | El último mes en la ficha de Focos (focos por día de 30 días, con `/hotspots` y el contorno de la provincia); en Predicción, color contra lo habitual (rampa divergente), ficha solo con la predicción y su porqué, y cómo predice el modelo; Charmy en el ícono de la pestaña. Sin cambiar el contrato | `@daniace` | `apps/app/` | F4-D12 | RF-CAL-03, RF-PRE-01, RF-PRE-02, RF-CHA-05, RNF-04 | en revisión |
 | #396 | F4-D16 | Botón de vista satelital junto a 2D/3D en todas las pestañas: cambia el mapa base a imagen Sentinel-2 (EOxCloudless) y, otra vez, vuelve al modelo; las provincias se ven más transparentes sobre la imagen | `@BrunoAguinaga0` (traspaso de `apps/app/`) | `apps/app/` | — | RF-MAP-06 | en revisión |
+| #406 | F4-D17 | La navbar del mapa pasa a íconos (boceto 6 de los bocetos de la navbar): Charmy, pestañas y lupa en piezas de vidrio; las inactivas solo con su ícono y la elegida con su nombre junto a un círculo naranja; «Charmy» sale del logo con el hover; en el teléfono entran las seis pestañas | `@dimidio6` (traspaso de `apps/app/src/relieve/`) | `apps/app/` | — | RF-MAP-01, RNF-04 | en revisión |
 | #60 | F4-E1 | Pulido de la landing; enlaces entre las tres piezas | `@daniace` (D-34) | `apps/landing/` | fase 3 | RF-LAN-04, RNF-12 | pendiente |
 | #61 | F4-E2 | Pulido del juego | `@daniace` (D-34) | `apps/juego/` | F3-E1 | RNF-12 | pendiente |
 | #183 | F4-E3 | El juego pasa a llamarse Charmy Brigada en todas las piezas; requisitos y tareas de D-35 | `@dimidio6` | `apps/juego/`, y el nombre en `apps/app/`, `apps/landing/`, `packages/charmy/`, `docs/` | — | RF-KID-01, RNF-12 | en revisión |
@@ -524,7 +525,7 @@ Qué tareas cubren cada requisito. Si un requisito de `REQUISITOS.md` no aparece
 | RF-ARM-05 | F3-B1, F3-C3 | 3 |
 | RF-CAL-01, 02, 03, 05 | F2-B2, F2-C2, F2-D2; F4-D3 y F4-D5 (estadísticas) | 2, 4 |
 | RF-CAL-04 | sin tarea (deseable) | hoja de ruta |
-| RF-MAP-01, 02, 04, 05 | F2-C1, F2-D1; F4-D3 (toggle de dibujo), F4-D6 (tendencia) | 2, 4 |
+| RF-MAP-01, 02, 04, 05 | F2-C1, F2-D1; F4-D3 (toggle de dibujo), F4-D6 (tendencia), F4-D17 (navbar con íconos) | 2, 4 |
 | RF-MAP-03, 07 | F3-D1, F3-D2 | 3 |
 | RF-MAP-06 | F0-D1, F1-D2; F4-D16 (vista satelital) | 1, 4 |
 | RF-MAP-08 | F0-B1 (cobertura); vista global sin tarea | 2 / hoja de ruta |
@@ -648,6 +649,7 @@ La fase 5 no cubre requisitos nuevos: refuerza RNF-02 y RNF-10 sobre lo ya entre
 | 2026-11-15 | Versión 2.3.11. Decisión D-41 (aprobada por el líder el 15/11): los botones de los avisos cambian el estado al instante con un webhook de Telegram a la API. Tarea nueva F4-A4 (#353). | 3, 5 | `@dimidio6` |
 | 2026-11-15 | Versión 2.3.12. Tarea nueva F4-D14 (#368): Charmy guía cada pestaña del mapa. | encabezado, 5, 6 | `@daniace` |
 | 2026-11-15 | Versión 2.3.13. Tarea nueva F4-D16 (#396): vista satelital del mapa con EOxCloudless 2024 (tabla 1.1). | encabezado, 1.1, 5, 6 | `@BrunoAguinaga0` |
+| 2026-11-15 | Versión 2.3.14. Tarea nueva F4-D17 (#406): la navbar del mapa pasa a íconos con el nombre de la pestaña elegida. | encabezado, 5, 6 | `@dimidio6` |
 
 ## 10. Registro de cierres
 

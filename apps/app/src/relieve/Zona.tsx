@@ -5,6 +5,7 @@ import { useCalendario } from "@/calendario/useCalendario";
 import { Seguro } from "@/components/Seguro";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { Area, Fechas, Filtros, Resultado } from "@/consulta/PanelConsulta";
+import { ResumenFocos } from "@/consulta/ResumenFocos";
 import { useFocos } from "@/consulta/useFocos";
 import { PanelContexto } from "@/contexto/PanelContexto";
 import { type Modo, useApp } from "@/estado/app";
@@ -40,6 +41,7 @@ function useEsAncho() {
 export function Zona() {
   const { focos, errorFechas, consulta, hayArea } = useFocos();
   const mesReproduccion = useConsulta((s) => s.mesReproduccion);
+  const dibujando = useConsulta((s) => s.dibujando);
   const { hayConsulta } = useCalendario();
   const ancho = useEsAncho();
   const { modo, cambiarModo } = useApp();
@@ -83,6 +85,11 @@ export function Zona() {
             total={consulta.data?.truncated ? (consulta.data.total ?? null) : null}
             mes={mesReproduccion}
           />
+          {focos && !consulta.isFetching && (
+            <Seguro nombre="El resumen de los focos">
+              <ResumenFocos focos={focos} />
+            </Seguro>
+          )}
           {!ancho && calendario}
           {hayArea && (
             <Seguro nombre="El contexto del lugar">
@@ -99,6 +106,16 @@ export function Zona() {
           )}
         </div>
       </aside>
+      {dibujando && (
+        // Sobre el mapa, para que se vea dónde se dibuja. El panel ya lo anuncia a los lectores de pantalla.
+        <div
+          aria-hidden="true"
+          className="tema-relieve ficha-relieve pointer-events-none absolute left-1/2 top-3 z-30 flex -translate-x-1/2 items-center gap-2 rounded-full border border-charmy-llama/60 px-3 py-1.5 text-xs font-medium text-white md:left-[calc(50%+170px)] md:top-[76px]"
+        >
+          <span className="size-2 animate-pulse rounded-full bg-charmy-llama motion-reduce:animate-none" />
+          {dibujando === "rectangle" ? "Marcá el rectángulo en el mapa" : "Marcá el polígono en el mapa"}
+        </div>
+      )}
       {experto && <FichaAtributos />}
       {ancho && calendario && (
         <div className="tema-relieve ficha-relieve scroll-relieve pointer-events-auto absolute bottom-11 left-[364px] right-[72px] z-20 max-h-[46%] overflow-y-auto rounded-[20px]">

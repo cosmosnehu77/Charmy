@@ -171,8 +171,9 @@ def test_crear_alerta_dice_si_es_nueva():
                                             "created_at": "2026-11-14T10:06:00Z"})
 
     c = cliente(manejador)
-    assert asyncio.run(c.crear_alerta("zona-demo", "reporte_ciudadano", "r-1")) == ("muestra-a-0001", True)
-    assert asyncio.run(c.crear_alerta("zona-demo", "reporte_ciudadano", "r-1")) == ("muestra-a-0001", False)
+    primera = asyncio.run(c.crear_alerta("zona-demo", "reporte_ciudadano", "r-1"))
+    segunda = asyncio.run(c.crear_alerta("zona-demo", "reporte_ciudadano", "r-1"))
+    assert (primera.id, primera.pendiente, segunda.pendiente) == ("muestra-a-0001", True, False)
     assert pedidos[0] == {"zone_id": "zona-demo", "kind": "reporte_ciudadano", "report_id": "r-1"}
 
 
@@ -188,7 +189,48 @@ def test_crear_alerta_dice_si_falta_mandarlo(estado, sent_at, pendiente):
     aviso = {"id": "a-1", "zone_id": "zona-demo", "kind": "foco_satelital", "status": "nueva",
              "created_at": "2026-11-14T10:06:00Z", "sent_at": sent_at}
     c = cliente(lambda req: httpx.Response(estado, json=aviso))
-    assert asyncio.run(c.crear_alerta("zona-demo", "foco_satelital", "h-1")) == ("a-1", pendiente)
+    alerta = asyncio.run(c.crear_alerta("zona-demo", "foco_satelital", "h-1"))
+    assert (alerta.id, alerta.pendiente) == ("a-1", pendiente)
+
+
+def test_crear_alerta_manda_la_celda_y_lee_veredicto_mensaje_y_anterior():
+    pedidos = []
+    aviso = {"id": "a-2", "zone_id": "zona-demo", "kind": "foco_satelital", "status": "nueva",
+             "created_at": "2026-11-15T10:00:00Z", "sent_at": None, "cell_id": "-42.0_-71.6",
+             "sent_verdict": None, "message_id": None,
+             "previous": {"id": "a-1", "sent_at": "2026-11-13T12:00:00Z", "message_id": 55}}
+
+    def manejador(req):
+        pedidos.append(json.loads(req.content))
+        return httpx.Response(201, json=aviso)
+
+    alerta = asyncio.run(cliente(manejador).crear_alerta("zona-demo", "foco_satelital", "h-2", "-42.0_-71.6"))
+    assert pedidos[0]["cell_id"] == "-42.0_-71.6"
+    assert alerta.anterior.message_id == 55
+    assert alerta.anterior.sent_at == datetime(2026, 11, 13, 12, 0, tzinfo=UTC)
+
+
+def test_crear_alerta_lee_lo_que_se_mando_antes():
+    aviso = {"id": "a-1", "zone_id": "zona-demo", "kind": "foco_satelital", "status": "nueva",
+             "created_at": "2026-11-15T10:00:00Z", "sent_at": "2026-11-15T10:00:02Z",
+             "sent_verdict": "probable", "message_id": 77, "previous": None}
+    alerta = asyncio.run(cliente(lambda req: httpx.Response(200, json=aviso))
+                         .crear_alerta("zona-demo", "foco_satelital", "h-1"))
+    assert (alerta.pendiente, alerta.veredicto_enviado, alerta.message_id, alerta.anterior) == (
+        False, "probable", 77, None)
+
+
+def test_marcar_enviada_manda_veredicto_y_mensaje():
+    cuerpos = []
+
+    def manejador(req):
+        cuerpos.append(json.loads(req.content) if req.content else None)
+        return httpx.Response(200, json={})
+
+    c = cliente(manejador)
+    asyncio.run(c.marcar_enviada("a-1", "probable", 901))
+    asyncio.run(c.marcar_enviada("a-1", "confirmado"))
+    assert cuerpos == [{"verdict": "probable", "message_id": 901}, {"verdict": "confirmado"}]
 
 
 def test_marcar_enviada_hace_post_con_el_token():

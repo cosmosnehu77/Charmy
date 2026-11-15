@@ -1,5 +1,6 @@
 """Armado del texto del aviso. Función pura (RF-ALE-02, RF-ALE-06, RF-CTX-02)."""
 
+from datetime import datetime
 from zoneinfo import ZoneInfo
 
 from alertas.modelos import Foco, Viento
@@ -42,14 +43,37 @@ def cuando(foco: Foco, zona: Zona) -> str:
     return f"{foco.cuando.astimezone(huso):%d/%m/%Y %H:%M} ({nombre})"
 
 
-def armar_mensaje(foco: Foco, zona: Zona, viento: Viento | None) -> str:
+def fecha_local(momento: datetime, zona: Zona) -> str:
+    huso = HORA_LOCAL.get(zona.pais, (ZoneInfo("UTC"), "UTC"))[0]
+    return f"{momento.astimezone(huso):%d/%m/%Y %H:%M}"
+
+
+def armar_confirmado(foco: Foco, zona: Zona) -> str:
+    """Actualización corta cuando un aviso que salió como probable pasa a confirmado (#321)."""
+    return "\n".join(
+        [
+            f"Actualización: el foco de calor en tu zona ({zona.nombre}) ahora está confirmado.",
+            f"Qué: {foco.detalle}",
+            f"Mapa: {enlace_mapa(foco)}",
+            "",
+            aviso_emergencias(zona),
+        ]
+    )
+
+
+def armar_mensaje(foco: Foco, zona: Zona, viento: Viento | None, anterior: datetime | None = None) -> str:
+    """`anterior`: cuándo se avisó antes la misma celda; el aviso dice que el incendio sigue activo (#321)."""
     coords = f"{foco.lat:.5f}, {foco.lon:.5f}"
     if viento is None:
         linea_viento = "Viento: no disponible"
     else:
         linea_viento = f"Viento: {viento.velocidad_kmh:.0f} km/h del {punto_cardinal(viento.direccion_deg)}"
+    sigue = []
+    if anterior:
+        sigue = [f"Sigue activo el incendio que te avisamos el {fecha_local(anterior, zona)}.", ""]
     return "\n".join(
-        [
+        sigue
+        + [
             f"{titulo(foco)} en tu zona ({zona.nombre})",
             f"Dónde: {coords}",
             f"Cuándo: {cuando(foco, zona)}",

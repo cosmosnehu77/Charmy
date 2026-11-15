@@ -630,6 +630,9 @@ paths:
                 kind: { type: string, enum: [foco_satelital, reporte_ciudadano] }
                 hotspot_id: { type: string }
                 report_id: { type: string }
+                cell_id:
+                  type: string
+                  description: Celda de 0,1° del foco. Sirve para devolver en `previous` el aviso anterior de la misma celda.
             examples:
               muestra:
                 summary: Aviso de ejemplo
@@ -651,6 +654,10 @@ paths:
                     status: nueva
                     created_at: '2026-11-14T04:45:00Z'
                     sent_at: null
+                    cell_id: '-42.2_-71.3'
+                    sent_verdict: null
+                    message_id: null
+                    previous: { id: muestra-a-0000, sent_at: '2026-11-12T04:45:02Z', message_id: 101 }
         '200':
           description: El aviso ya existía para esa zona y ese foco o reporte
           content:
@@ -667,6 +674,10 @@ paths:
                     status: visto
                     created_at: '2026-11-14T04:45:00Z'
                     sent_at: '2026-11-14T04:45:02Z'
+                    cell_id: '-42.2_-71.3'
+                    sent_verdict: probable
+                    message_id: 102
+                    previous: null
         '400': { $ref: '#/components/responses/BadRequest' }
         '401': { $ref: '#/components/responses/Unauthorized' }
         '503': { $ref: '#/components/responses/DatosNoDisponibles' }
@@ -728,12 +739,28 @@ paths:
       description: |
         Lo llama el servicio de avisos después de mandar el mensaje. Pide el token de servicio. Pone `sent_at` la
         primera vez; si ya estaba marcado, no lo cambia. Un aviso sin marcar se reintenta en la corrida siguiente.
+        El cuerpo es opcional: `verdict` guarda el veredicto mandado (también en una actualización) y `message_id`,
+        el id del mensaje la primera vez.
       security: [{ servicio: [] }]
       parameters:
         - name: alert_id
           in: path
           required: true
           schema: { type: string }
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              properties:
+                verdict: { type: string, enum: [confirmado, probable, sin_confirmar, fuente_fija] }
+                message_id: { type: integer }
+            examples:
+              muestra:
+                summary: Marca de ejemplo
+                value: { verdict: probable, message_id: 101 }
       responses:
         '200':
           description: Aviso marcado como enviado
@@ -751,6 +778,10 @@ paths:
                     status: nueva
                     created_at: '2026-11-14T04:45:00Z'
                     sent_at: '2026-11-14T04:45:02Z'
+                    cell_id: '-42.2_-71.3'
+                    sent_verdict: probable
+                    message_id: 101
+        '400': { $ref: '#/components/responses/BadRequest' }
         '401': { $ref: '#/components/responses/Unauthorized' }
         '404': { $ref: '#/components/responses/NotFound' }
         '503': { $ref: '#/components/responses/DatosNoDisponibles' }
@@ -1130,3 +1161,23 @@ components:
           description: |
             Cuándo el servicio de avisos lo mandó a la entidad (`POST /alerts/{alert_id}/sent`). `null` si todavía no
             salió: el servicio lo reintenta en la corrida siguiente. Los avisos anteriores a este campo se dan por enviados.
+        cell_id: { type: string, description: 'Celda de 0,1° del foco, si el servicio la mandó al crearlo' }
+        sent_verdict:
+          type: [string, 'null']
+          enum: [confirmado, probable, sin_confirmar, fuente_fija, null]
+          description: Veredicto con el que se avisó la última vez. Si pasa de `probable` a `confirmado`, el servicio manda una actualización.
+        message_id:
+          type: [integer, 'null']
+          description: Id del mensaje en Telegram, para responderle con una actualización.
+        previous:
+          description: |
+            Solo en `POST /alerts`. El último aviso enviado de la misma zona y celda en los últimos 7 días, o `null`:
+            si existe, el incendio sigue activo y el servicio lo dice al mandar el aviso nuevo.
+          oneOf:
+            - type: 'null'
+            - type: object
+              required: [id, sent_at]
+              properties:
+                id: { type: string }
+                sent_at: { type: string, format: date-time }
+                message_id: { type: [integer, 'null'] }

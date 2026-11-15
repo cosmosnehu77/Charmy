@@ -27,3 +27,23 @@ class Foco:
 class Viento:
     velocidad_kmh: float
     direccion_deg: float
+
+
+@dataclass(frozen=True)
+class Anterior:
+    """El último aviso enviado de la misma celda (#321)."""
+
+    id: str
+    sent_at: datetime | None
+    message_id: int | None
+
+
+@dataclass(frozen=True)
+class Alerta:
+    """Lo que dice la API de un aviso: si falta mandarlo y qué se mandó antes (#280, #321)."""
+
+    id: str
+    pendiente: bool
+    veredicto_enviado: str | None = None
+    message_id: int | None = None
+    anterior: Anterior | None = None

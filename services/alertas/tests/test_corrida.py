@@ -36,10 +36,12 @@ class ApiFalsa:
     async def viento(self, lat, lon):
         return None
 
-    async def crear_alerta(self, zone_id, kind, ref_id):
-        return f"a-{ref_id}", True
+    async def crear_alerta(self, zone_id, kind, ref_id, celda=None):
+        from alertas.modelos import Alerta
 
-    async def marcar_enviada(self, alert_id):
+        return Alerta(id=f"a-{ref_id}", pendiente=True)
+
+    async def marcar_enviada(self, alert_id, veredicto=None, message_id=None):
         return True
 
 
@@ -62,9 +64,10 @@ class TelegramFalso:
     async def confirmar(self, update_id):
         self.confirmado = update_id
 
-    async def enviar(self, chat_id, texto, teclado):
+    async def enviar(self, chat_id, texto, teclado, responder_a=None):
         self.orden.append("enviar")
         self.enviados.append((chat_id, texto, teclado))
+        return 1
 
 
 def test_un_boton_pendiente_hace_patch_y_el_mensaje_muestra_el_estado():
@@ -132,7 +135,7 @@ def test_la_corrida_deja_una_linea_de_resumen_en_el_registro(caplog):
 
     assert caplog.messages == [
         "corrida: botones 1 · focos en vivo 1 · reportes 0 · nuevos en la zona 1 · avisos mandados 1"
-        " · envíos fallidos 0"
+        " · envíos fallidos 0 · actualizaciones 0"
     ]
 
 
@@ -143,5 +146,5 @@ def test_sin_focos_la_linea_de_resumen_sale_igual(caplog):
 
     assert caplog.messages == [
         "corrida: botones 0 · focos en vivo 0 · reportes 0 · nuevos en la zona 0 · avisos mandados 0"
-        " · envíos fallidos 0"
+        " · envíos fallidos 0 · actualizaciones 0"
     ]

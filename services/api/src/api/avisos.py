@@ -61,6 +61,10 @@ ALTER TABLE avisos ENABLE ROW LEVEL SECURITY;
 -- sin enviar.
 ALTER TABLE avisos ADD COLUMN IF NOT EXISTS sent_at timestamptz DEFAULT now();
 ALTER TABLE avisos ALTER COLUMN sent_at DROP DEFAULT;
+-- #321: celda del foco, veredicto con el que se avisó e id del mensaje en Telegram.
+ALTER TABLE avisos ADD COLUMN IF NOT EXISTS cell_id text;
+ALTER TABLE avisos ADD COLUMN IF NOT EXISTS sent_verdict text;
+ALTER TABLE avisos ADD COLUMN IF NOT EXISTS message_id bigint;
 """
 _tablas_listas = False
 
@@ -164,6 +168,7 @@ class NuevoAviso(BaseModel):
     kind: Literal["foco_satelital", "reporte_ciudadano"]
     hotspot_id: str | None = None
     report_id: str | None = None
+    cell_id: str | None = Field(default=None, min_length=1, max_length=40)
 
     @model_validator(mode="after")
     def origen_segun_tipo(self) -> "NuevoAviso":
@@ -180,11 +185,23 @@ class CambioDeEstado(BaseModel):
     note: str | None = Field(default=None, max_length=500)
 
 
-COLUMNAS_AVISO = "id, zone_id, kind, hotspot_id, report_id, status, note, created_at, sent_at"
+COLUMNAS_AVISO = (
+    "id, zone_id, kind, hotspot_id, report_id, status, note, created_at, sent_at,"
+    " cell_id, sent_verdict, message_id"
+)
+Veredicto = Literal["confirmado", "probable", "sin_confirmar", "fuente_fija"]
+
+
+class Envio(BaseModel):
+    """Cuerpo opcional de POST /alerts/{id}/sent (#321)."""
+
+    model_config = ConfigDict(extra="forbid")
+    verdict: Veredicto | None = None
+    message_id: int | None = None
 
 
 def _aviso(fila: tuple) -> dict:
-    id_, zona, tipo, foco, reporte, estado, nota, creado, enviado = fila
+    id_, zona, tipo, foco, reporte, estado, nota, creado, enviado, celda, veredicto, mensaje = fila
     aviso = {
         "id": id_,
         "zone_id": zona,
@@ -192,9 +209,29 @@ def _aviso(fila: tuple) -> dict:
         "status": estado,
         "created_at": _fecha(creado),
         "sent_at": _fecha(enviado) if enviado else None,
+        "sent_verdict": veredicto,
+        "message_id": mensaje,
     }
-    opcionales = (("hotspot_id", foco), ("report_id", reporte), ("note", nota))
+    opcionales = (("hotspot_id", foco), ("report_id", reporte), ("note", nota), ("cell_id", celda))
     return aviso | {k: v for k, v in opcionales if v is not None}
+
+
+def _anterior(con: psycopg.Connection, zona: str, celda: str | None, id_: str) -> dict | None:
+    """El último aviso enviado de la misma zona y celda en 7 días: el incendio sigue activo (#321)."""
+    if not celda:
+        return None
+    fila = con.execute(
+        """
+        SELECT id, sent_at, message_id FROM avisos
+        WHERE zone_id = %s AND kind = 'foco_satelital' AND cell_id = %s AND id <> %s
+          AND sent_at IS NOT NULL AND sent_at > now() - interval '7 days'
+        ORDER BY sent_at DESC LIMIT 1
+        """,
+        [zona, celda, id_],
+    ).fetchone()
+    if fila is None:
+        return None
+    return {"id": fila[0], "sent_at": _fecha(fila[1]), "message_id": fila[2]}
 
 
 @router.post("/alerts", operation_id="createAlert", tags=["alertas"])
@@ -204,24 +241,31 @@ def crear_aviso(aviso: NuevoAviso, authorization: Annotated[str | None, Header()
         _tablas(con)
         nueva = con.execute(
             f"""
-            INSERT INTO avisos (id, zone_id, kind, hotspot_id, report_id) VALUES (%s, %s, %s, %s, %s)
+            INSERT INTO avisos (id, zone_id, kind, hotspot_id, report_id, cell_id)
+            VALUES (%s, %s, %s, %s, %s, %s)
             ON CONFLICT DO NOTHING RETURNING {COLUMNAS_AVISO}
             """,
-            [f"a-{uuid.uuid4().hex[:12]}", aviso.zone_id, aviso.kind, aviso.hotspot_id, aviso.report_id],
+            [
+                f"a-{uuid.uuid4().hex[:12]}", aviso.zone_id, aviso.kind, aviso.hotspot_id, aviso.report_id,
+                aviso.cell_id,
+            ],
         ).fetchone()
+        # Si ya existía, completa la celda que no tenía (avisos anteriores a #321).
         fila = (
             nueva
             or con.execute(
                 f"""
-            SELECT {COLUMNAS_AVISO} FROM avisos
+            UPDATE avisos SET cell_id = coalesce(cell_id, %s)
             WHERE zone_id = %s AND kind = %s
               AND coalesce(hotspot_id, '') = %s AND coalesce(report_id, '') = %s
+            RETURNING {COLUMNAS_AVISO}
             """,
-                [aviso.zone_id, aviso.kind, aviso.hotspot_id or "", aviso.report_id or ""],
+                [aviso.cell_id, aviso.zone_id, aviso.kind, aviso.hotspot_id or "", aviso.report_id or ""],
             ).fetchone()
         )
+        anterior = _anterior(con, aviso.zone_id, fila[9], fila[0])
         con.commit()
-    return JSONResponse(_aviso(fila), status_code=201 if nueva else 200)
+    return JSONResponse(_aviso(fila) | {"previous": anterior}, status_code=201 if nueva else 200)
 
 
 @router.patch("/alerts/{alert_id}", operation_id="updateAlert", tags=["alertas"])
@@ -248,14 +292,22 @@ def cambiar_estado(
 
 
 @router.post("/alerts/{alert_id}/sent", operation_id="markAlertSent", tags=["alertas"])
-def marcar_enviado(alert_id: str, authorization: Annotated[str | None, Header()] = None) -> dict:
-    """El servicio de avisos lo llama después de mandar el mensaje. La primera fecha queda (#280)."""
+def marcar_enviado(
+    alert_id: str, envio: Envio | None = None, authorization: Annotated[str | None, Header()] = None
+) -> dict:
+    """El servicio de avisos lo llama después de mandar el mensaje. La primera fecha y el primer mensaje
+    quedan (#280); el veredicto es el último mandado, también en una actualización (#321)."""
     _exigir_token(authorization)
+    envio = envio or Envio()
     with conectar() as con:
         _tablas(con)
         fila = con.execute(
-            f"UPDATE avisos SET sent_at = coalesce(sent_at, now()) WHERE id = %s RETURNING {COLUMNAS_AVISO}",
-            [alert_id],
+            f"""
+            UPDATE avisos SET sent_at = coalesce(sent_at, now()), sent_verdict = coalesce(%s, sent_verdict),
+                message_id = coalesce(message_id, %s)
+            WHERE id = %s RETURNING {COLUMNAS_AVISO}
+            """,
+            [envio.verdict, envio.message_id, alert_id],
         ).fetchone()
         if fila is None:
             raise ErrorDeContrato(404, "no_existe", "No encontramos ese aviso.")

@@ -5,7 +5,7 @@ from datetime import datetime
 
 import httpx
 
-from alertas.modelos import Foco, Tipo, Viento
+from alertas.modelos import Alerta, Anterior, Foco, Tipo, Viento
 from alertas.zona import Zona
 
 log = logging.getLogger(__name__)
@@ -80,21 +80,37 @@ class ClienteCharmy:
             log.warning("/reports no disponible: %s", e)
             return []
 
-    async def crear_alerta(self, zone_id: str, kind: Tipo, ref_id: str) -> tuple[str, bool]:
-        """POST /alerts. Devuelve el id y si falta mandarlo: es nuevo (201), o ya existía pero `sent_at` es
-        null porque no salió (#280). Una API sin `sent_at` (anterior a #280) solo manda los nuevos."""
+    async def crear_alerta(self, zone_id: str, kind: Tipo, ref_id: str, celda: str | None = None) -> Alerta:
+        """POST /alerts. Falta mandarlo si es nuevo (201) o si existía pero `sent_at` es null (#280). Trae
+        también qué veredicto se mandó, el id del mensaje y el aviso anterior de la celda (#321). Con una API
+        sin esos campos, se comporta como antes."""
         campo = "hotspot_id" if kind == "foco_satelital" else "report_id"
-        r = await self._http.post("/alerts", json={"zone_id": zone_id, "kind": kind, campo: ref_id},
-                                  headers=self._auth)
+        cuerpo = {"zone_id": zone_id, "kind": kind, campo: ref_id} | ({"cell_id": celda} if celda else {})
+        r = await self._http.post("/alerts", json=cuerpo, headers=self._auth)
         r.raise_for_status()
         aviso = r.json()
-        pendiente = r.status_code == 201 or ("sent_at" in aviso and aviso["sent_at"] is None)
-        return aviso["id"], pendiente
+        previo = aviso.get("previous")
+        anterior = None
+        if previo:
+            enviado = previo.get("sent_at")
+            anterior = Anterior(previo["id"], datetime.fromisoformat(enviado) if enviado else None,
+                                previo.get("message_id"))
+        return Alerta(
+            id=aviso["id"],
+            pendiente=r.status_code == 201 or ("sent_at" in aviso and aviso["sent_at"] is None),
+            veredicto_enviado=aviso.get("sent_verdict"),
+            message_id=aviso.get("message_id"),
+            anterior=anterior,
+        )
 
-    async def marcar_enviada(self, alert_id: str) -> bool:
-        """POST /alerts/{id}/sent. Si falla, el aviso se reenvía en la corrida siguiente."""
+    async def marcar_enviada(
+        self, alert_id: str, veredicto: str | None = None, message_id: int | None = None
+    ) -> bool:
+        """POST /alerts/{id}/sent con el veredicto mandado y el id del mensaje. Si falla, el aviso se
+        reenvía en la corrida siguiente."""
+        cuerpo = {k: v for k, v in (("verdict", veredicto), ("message_id", message_id)) if v is not None}
         try:
-            r = await self._http.post(f"/alerts/{alert_id}/sent", headers=self._auth)
+            r = await self._http.post(f"/alerts/{alert_id}/sent", json=cuerpo or None, headers=self._auth)
             r.raise_for_status()
             return True
         except httpx.HTTPError as e:

@@ -34,7 +34,9 @@ class Telegram(Protocol):
     async def toques_pendientes(self) -> list[Toque]: ...
     async def editar(self, chat_id: int, message_id: int, texto: str, teclado: Teclado) -> None: ...
     async def confirmar(self, update_id: int) -> None: ...
-    async def enviar(self, chat_id: int, texto: str, teclado: Teclado) -> None: ...
+    async def enviar(
+        self, chat_id: int, texto: str, teclado: Teclado, responder_a: int | None = None
+    ) -> int | None: ...
 
 
 class Api(ApiAvisos, Protocol):
@@ -74,6 +76,6 @@ async def corrida(api: Api, tg: Telegram, zona: Zona, chat_id: int) -> None:
     r = await avisar(api, tg.enviar, zona, chat_id, set())
     log.info(
         "corrida: botones %d · focos en vivo %d · reportes %d · nuevos en la zona %d · avisos mandados %d"
-        " · envíos fallidos %d",
-        guardados, r.focos, r.reportes, r.nuevos, r.mandados, r.fallidos,
+        " · envíos fallidos %d · actualizaciones %d",
+        guardados, r.focos, r.reportes, r.nuevos, r.mandados, r.fallidos, r.actualizados,
     )

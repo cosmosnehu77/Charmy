@@ -15,11 +15,17 @@ class BotFalso:
         self.fallas = list(fallas)  # una excepción por intento; None = sale bien
         self.intentos = 0
 
-    async def send_message(self, chat_id, texto, **_):
+    async def send_message(self, chat_id, texto, **opciones):
         self.intentos += 1
+        self.opciones = opciones
         falla = self.fallas.pop(0) if self.fallas else None
         if falla:
             raise falla
+
+        class Mensaje:
+            message_id = 4242
+
+        return Mensaje()
 
 
 def retry_after(segundos: int) -> TelegramRetryAfter:
@@ -62,3 +68,10 @@ def test_otro_error_no_se_reintenta():
     with pytest.raises(TelegramNetworkError):
         asyncio.run(TelegramAiogram(bot).enviar(1, "hola", TECLADO))
     assert bot.intentos == 1
+
+
+def test_enviar_devuelve_el_id_y_puede_responder_a_otro_mensaje():
+    bot = BotFalso([])
+    assert asyncio.run(TelegramAiogram(bot).enviar(1, "hola", TECLADO, responder_a=77)) == 4242
+    respuesta = bot.opciones["reply_parameters"]
+    assert respuesta.message_id == 77 and respuesta.allow_sending_without_reply is True

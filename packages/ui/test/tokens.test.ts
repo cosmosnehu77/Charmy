@@ -28,6 +28,7 @@ describe("tokens.css e index.ts dicen lo mismo", () => {
     expect(variable("charmy-acento")).toBe(paleta.acento);
     expect(variable("charmy-tinta")).toBe(paleta.tinta);
     expect(variable("charmy-llama")).toBe(paleta.llama);
+    expect(variable("charmy-agua")).toBe(paleta.agua);
   });
   it("sin dato", () => {
     expect(variable("rampa-sin-dato")).toBe(colorSinDato);
@@ -64,5 +65,12 @@ describe("colorDeRampa", () => {
   });
   it("rechaza cortes mal contados", () => {
     expect(() => colorDeRampa(1, [1, 2], rampaConteo)).toThrow();
+  });
+});
+
+describe("agua (lagos del juego)", () => {
+  it("se distingue del fondo cielo y de los tonos de fuego", () => {
+    expect(contraste(paleta.agua, paleta.cielo)).toBeGreaterThanOrEqual(3);
+    expect(paleta.agua).not.toBe(paleta.cielo);
   });
 });

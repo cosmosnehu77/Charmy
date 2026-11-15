@@ -15,6 +15,8 @@ export const paleta = {
   chaqueta: "#2e3b4e",
   sombrero: "#4f7a55",
   cielo: "#eef2f4",
+  /** Lagos y agua del juego. Azul frente a los naranjas del fuego: se distingue también con daltonismo. */
+  agua: "#3b7fb0",
   tinta: "#1b2430",
 } as const;
 

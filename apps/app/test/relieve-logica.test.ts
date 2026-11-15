@@ -14,6 +14,8 @@ import {
   tendencia,
   regionDePunto,
   AGRUPAR_VIVO,
+  AGRUPAR_ZONA,
+  estiloGrupo,
   enNiveles,
   focosVivoVisibles,
   nombresPorZoom,
@@ -276,5 +278,32 @@ describe("agrupado de En vivo (#333)", () => {
 
   it("agrupa a menos de 50 px, desde 3 focos y hasta el zoom 8", () => {
     expect(AGRUPAR_VIVO).toEqual({ clusterRadius: 50, clusterMinPoints: 3, clusterMaxZoom: 8 });
+  });
+});
+
+describe("agrupado de Experto (#343)", () => {
+  it("agrupa a menos de 50 px, desde 3 focos y hasta el zoom 12", () => {
+    expect(AGRUPAR_ZONA).toEqual({ clusterRadius: 50, clusterMinPoints: 3, clusterMaxZoom: 12 });
+  });
+});
+
+describe("aspecto de un grupo de focos (#343)", () => {
+  it("crece con la cantidad", () => {
+    expect([3, 9, 10, 49, 50, 199, 200, 5000].map((n) => estiloGrupo(n, 5).diametro)).toEqual([30, 30, 36, 36, 44, 44, 54, 54]);
+  });
+
+  it("late desde 100 focos", () => {
+    expect(estiloGrupo(99, 5).late).toBe(false);
+    expect(estiloGrupo(100, 5).late).toBe(true);
+  });
+
+  it("toma el color de su foco más intenso", () => {
+    expect(estiloGrupo(12, 80).color).toBe(colorFoco(80));
+    expect(estiloGrupo(12, null).color).toBe(colorFoco(0));
+  });
+
+  it("muestra la cantidad con separador de miles", () => {
+    expect(estiloGrupo(42, 5).texto).toBe("42");
+    expect(estiloGrupo(8567, 5).texto).toBe("8.567");
   });
 });

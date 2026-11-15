@@ -18,6 +18,8 @@ export interface ResumenCalendario {
   anioMayor: { year: number; total: number } | null;
   mesesSobreLoNormal: number;
   mesesBajoLoNormal: number;
+  /** Meses con dato y sin fuego (valor 0). */
+  mesesSinFuego: number;
   /** Promedio de cada mes del año (enero a diciembre) sobre los años con dato; null si ese mes no tiene dato. */
   temporada: (number | null)[];
   /** Mes del año (1 a 12) con el promedio más alto; null si no hubo fuego. */
@@ -55,6 +57,7 @@ export function resumenCalendario(celdas: CeldaCalendario[]): ResumenCalendario 
     anioMayor,
     mesesSobreLoNormal: celdas.filter((c) => c.percentile >= ALTO).length,
     mesesBajoLoNormal: celdas.filter((c) => c.percentile <= BAJO).length,
+    mesesSinFuego: celdas.filter((c) => c.value === 0).length,
     temporada,
     mesMasActivo,
   };
@@ -93,4 +96,39 @@ export function anioContraLoNormal(celdas: CeldaCalendario[]): AnioContraLoNorma
     desde: Math.min(...years),
     hasta: Math.max(...years),
   };
+}
+
+export interface TotalAnio {
+  year: number;
+  /** Días de fuego sumados en el año. */
+  total: number;
+  /** Meses del año con dato. */
+  meses: number;
+  /** Meses con percentil 75 o más (sobre lo normal). */
+  sobre: number;
+  /** Meses con percentil 25 o menos (bajo lo normal). */
+  bajo: number;
+  sinFuego: number;
+}
+
+/** Cada año del período con su total y sus meses fuera de lo normal, del más viejo al más nuevo (F4-R2). */
+export function porAnio(celdas: CeldaCalendario[]): TotalAnio[] {
+  const anios = new Map<number, TotalAnio>();
+  for (const c of celdas) {
+    const a = anios.get(c.year) ?? { year: c.year, total: 0, meses: 0, sobre: 0, bajo: 0, sinFuego: 0 };
+    a.total += c.value;
+    a.meses += 1;
+    if (c.percentile >= ALTO) a.sobre += 1;
+    if (c.percentile <= BAJO) a.bajo += 1;
+    if (c.value === 0) a.sinFuego += 1;
+    anios.set(c.year, a);
+  }
+  return [...anios.values()].sort((a, b) => a.year - b.year);
+}
+
+/** Cuántos meses salen de cada origen (MODIS convertido, VIIRS medido…), del más usado al menos usado (F4-R2). */
+export function porOrigen(celdas: CeldaCalendario[]): { origin: string; meses: number }[] {
+  const cuenta = new Map<string, number>();
+  for (const c of celdas) cuenta.set(c.origin, (cuenta.get(c.origin) ?? 0) + 1);
+  return [...cuenta].map(([origin, meses]) => ({ origin, meses })).sort((a, b) => b.meses - a.meses);
 }

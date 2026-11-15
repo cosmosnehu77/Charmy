@@ -67,6 +67,17 @@ MUESTRA = [
 # (provincia, país, [(titular, etiqueta esperada)]): titulares reales del 15/11/2026, a mano (#391).
 S = "sin_informacion"
 MUESTRA_REAL = [
+    ("Santa Cruz", "Argentina", [
+        # Medios de Bolivia con dominio genérico (#407): Santa Cruz también es un departamento boliviano.
+        ("Envían 194 efectivos y cinco medios aéreos para combatir incendio forestal en San José de "
+         "Chiquitos - El Potosí", S),
+        ("Santa Cruz: Gobierno despliega apoyo aéreo y terrestre para combatir incendio forestal - El "
+         "Potosí", S),
+        ("Bomberos y militares trabajan para evitar que las llamas lleguen a áreas protegidas en Santa Cruz "
+         "- El Potosí", S),
+        ("Incendio en Chiquitos supera las 8.000 hectáreas - Correo del Sur", S),
+        ("Incendio en una fábrica de colchones : fuerte operativo - NoticiasNQN", S),
+    ]),
     ("Los Lagos", "Chile", [
         ("Incendio forestal afecta cerca de ocho hectáreas en Maullín durante jornada de altas temperaturas "
          "en Los Lagos - Diario De Puerto Montt", "apoya"),

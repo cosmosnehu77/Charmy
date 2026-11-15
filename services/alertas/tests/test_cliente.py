@@ -174,3 +174,10 @@ def test_actualizar_alerta_hace_patch_con_el_estado():
 
 def test_actualizar_alerta_que_falla_devuelve_false():
     assert asyncio.run(cliente(lambda req: httpx.Response(404)).actualizar_alerta("x", "visto")) is False
+
+
+def test_la_espera_a_la_api_aguanta_que_live_renueve_su_cache():
+    # /live tarda unos 58 s cuando renueva la caché: con 60 s de tope, 6 de 40 corridas se cortaron.
+    from alertas.__main__ import TIEMPO_ESPERA_S
+
+    assert TIEMPO_ESPERA_S == 120

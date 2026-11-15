@@ -70,6 +70,11 @@ export function focoActivo(id: number, f: FocoEnPantalla): FocoActivo {
   };
 }
 
+/** Un foco que nació de otro que se escapó: chico, de un toque. */
+export function focoPropagado(id: number, x: number, y: number): FocoActivo {
+  return { id, x, y, frp: 1, golpes: 1, confianza: "nominal", verificado: false, fuenteFija: false };
+}
+
 /** Estado de la partida: las escenas lo dibujan y lo cambian solo con estas funciones. */
 export interface Partida {
   marcador: Marcador;

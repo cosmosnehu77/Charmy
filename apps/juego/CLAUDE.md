@@ -25,6 +25,8 @@ pnpm --filter @charmy/juego contorno  # regenera src/fondo.json desde data/muest
   que los focos; su resultado, `src/fondo.json`, es generado: no se edita a mano (una prueba lo compara).
 - `src/mecanica.ts` pasa el dato real a la mecánica: tabla de FRP a toques y tiempo de escape, y pasadas del
   satélite por hora de detección (de noche la franja baja, de día sube).
+- `src/propagacion.ts`: un foco que se escapa enciende celdas vecinas de la grilla, con el azar de la partida y
+  sesgadas por el viento, hasta un tope. Hasta F4-C2 no hay viento (`VIENTO = null` en el nivel).
 - `src/partida.ts` (puntaje, combo, penalidades y el estado de la partida con sus focos activos: toques que faltan,
   confianza, verificación y fuente fija), `src/cierre.ts` (dato real y consejo) y `src/record.ts` (récord en
   el navegador, que sigue leyendo la clave de cuando el juego se llamaba Charmy Kids) son puros y probados.

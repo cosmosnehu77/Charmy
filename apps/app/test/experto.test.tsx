@@ -4,7 +4,6 @@ import { act, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import App from "@/App";
 import { armarGrilla, type CeldaCalendario } from "@/calendario/grilla";
-import { useApp } from "@/estado/app";
 import { estadoInicialConsulta, useConsulta } from "@/estado/consulta";
 import { atributosFoco } from "@/experto/atributos";
 import { calendarioCsv, calendarioSvg } from "@/experto/archivos";
@@ -75,7 +74,6 @@ beforeEach(() => {
   });
   vi.stubGlobal("fetch", fetchSimulado);
   useConsulta.setState({ ...estadoInicialConsulta("2026-11-14"), desde: "2025-01-01", hasta: "2025-03-31", area });
-  useApp.setState({ modo: "experto" });
 });
 afterEach(() => {
   vi.useRealTimers();
@@ -93,13 +91,6 @@ describe("panel de validación (RF-ARM-04)", () => {
     expect(filas[2]).toHaveTextContent(/AR-V.*NOAA-20 → S-NPP.*sin fuego en el solape/);
     expect(within(panel).getByText("Dato de ejemplo")).toBeInTheDocument();
     expect(within(panel).getByText(/dejando un año afuera/)).toBeInTheDocument();
-  });
-
-  it("no aparece en el modo novato", async () => {
-    useApp.setState({ modo: "novato" });
-    montar();
-    await screen.findByTestId("mapa");
-    expect(screen.queryByRole("region", { name: "Validación de la armonización" })).not.toBeInTheDocument();
   });
 });
 

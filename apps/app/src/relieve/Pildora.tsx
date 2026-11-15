@@ -7,13 +7,13 @@ import { INDICADORES, type RegionResumen } from "./logica";
 
 const sinTildes = (s: string) => s.normalize("NFD").replace(/\p{Diacritic}/gu, "").toLowerCase();
 
-/** Píldora central: Charmy, los indicadores, En vivo, Tu zona (#262) y la lupa (F4-R1). */
+/** Píldora central: Charmy, los indicadores, En vivo, Experto (ex Tu zona, #262) y la lupa (F4-R1). */
 export function Pildora({ regiones }: { regiones: RegionResumen[] }) {
   const { pestana, elegirPestana } = useRelieve();
   const pestanas = [
     ...INDICADORES.map((i) => ({ id: i.id, nombre: i.nombre })),
     { id: "vivo" as const, nombre: "En vivo" },
-    { id: "zona" as const, nombre: "Tu zona" },
+    { id: "zona" as const, nombre: "Experto" },
   ];
   const lista = useRef<HTMLDivElement>(null);
 

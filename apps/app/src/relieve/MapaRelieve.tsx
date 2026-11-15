@@ -8,7 +8,6 @@ import type { TerraDraw } from "terra-draw";
 import { bboxDeArea } from "@/consulta/consulta";
 import { useFocos } from "@/consulta/useFocos";
 import { useContexto } from "@/contexto/estado";
-import { useApp } from "@/estado/app";
 import { useConsulta } from "@/estado/consulta";
 import { datosArea, ponerImagen } from "@/mapa/capas";
 import { crearDibujo } from "@/mapa/dibujo";
@@ -350,8 +349,12 @@ export default function MapaRelieve({ regiones, dias, focos, onHover }: Props) {
     // Región bajo el puntero y toque para elegirla (tocar la elegida la deselecciona).
     m.on("mousemove", (e) => {
       if (props.current.estado.pestana === "zona") {
-        const experto = useApp.getState().modo === "experto" && !useConsulta.getState().dibujando;
-        const f = experto && m.getLayer("zona-focos") ? m.queryRenderedFeatures(e.point, { layers: ["zona-focos"] })[0] : undefined;
+        // Mientras se dibuja el área, la cruz: la mano de arrastrar confundía al marcar las esquinas.
+        if (useConsulta.getState().dibujando) {
+          m.getCanvas().style.cursor = "crosshair";
+          return;
+        }
+        const f = m.getLayer("zona-focos") ? m.queryRenderedFeatures(e.point, { layers: ["zona-focos"] })[0] : undefined;
         m.getCanvas().style.cursor = f ? "pointer" : "";
         return;
       }
@@ -370,8 +373,8 @@ export default function MapaRelieve({ regiones, dias, focos, onHover }: Props) {
     m.on("click", (e) => {
       const { estado: est } = props.current;
       if (est.pestana === "zona") {
-        // En Tu zona el mapa es para dibujar; en el modo experto, tocar un foco muestra sus atributos (RF-MOD-02).
-        if (useConsulta.getState().dibujando || useApp.getState().modo !== "experto") return;
+        // En Experto el mapa es para dibujar; si no se dibuja, tocar un foco muestra sus atributos (RF-MOD-02).
+        if (useConsulta.getState().dibujando) return;
         const f = m.getLayer("zona-focos") ? m.queryRenderedFeatures(e.point, { layers: ["zona-focos"] })[0] : undefined;
         est.cambiar({
           focoZona: f ? { lon: e.lngLat.lng, lat: e.lngLat.lat, propiedades: f.properties as Record<string, unknown> } : null,
@@ -508,6 +511,8 @@ export default function MapaRelieve({ regiones, dias, focos, onHover }: Props) {
     if (!m || !d?.enabled) return;
     const zona = estado.pestana === "zona";
     d.setMode(zona && dibujando ? dibujando : "static");
+    // La cruz aparece apenas se elige la herramienta, sin esperar a que se mueva el puntero.
+    m.getCanvas().style.cursor = zona && dibujando ? "crosshair" : "";
     // El doble clic que cierra el polígono también acercaba el mapa y lo sacaba del encuadre del área.
     if (zona) m.doubleClickZoom.disable();
     else m.doubleClickZoom.enable();

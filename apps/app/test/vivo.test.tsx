@@ -2,7 +2,6 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import App from "@/App";
-import { useApp } from "@/estado/app";
 import { estadoInicialConsulta, useConsulta } from "@/estado/consulta";
 import { useVivo } from "@/vivo/estado";
 import { filtrarPorSatelite } from "@/vivo/satelites";
@@ -93,7 +92,6 @@ beforeEach(() => {
   });
   vi.stubGlobal("fetch", fetchSimulado);
   useConsulta.setState({ ...estadoInicialConsulta("2026-11-14") });
-  useApp.setState({ modo: "novato" });
   useVivo.setState({ reportando: false, satelites: ["N20", "N21"] });
 });
 afterEach(() => {

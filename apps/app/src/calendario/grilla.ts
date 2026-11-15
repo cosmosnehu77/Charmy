@@ -66,21 +66,3 @@ export function describirCelda(celda: CeldaCalendario | null, year: number, mes:
   const origen = ORIGENES[celda.origin] ?? celda.origin;
   return `${cuando}: ${formatear(celda.value)} días-celda con fuego, anomalía ${conSigno(celda.anomaly)}, percentil ${Math.round(celda.percentile)} (mediana ${formatear(celda.median)}), ${origen}`;
 }
-
-/** Percentiles a partir de los que un mes se dice «más» o «menos» fuego que lo normal (modo novato). */
-const ALTO = 75;
-const BAJO = 25;
-
-/** Comparación en lenguaje simple, sin percentiles (RF-MOD-01). */
-export function comparacionSimple(percentile: number): string {
-  if (percentile >= ALTO) return "más fuego que lo normal";
-  if (percentile <= BAJO) return "menos fuego que lo normal";
-  return "fuego dentro de lo normal";
-}
-
-/** Descripción de la celda para el modo novato: sin siglas ni términos técnicos. */
-export function describirCeldaSimple(celda: CeldaCalendario | null, year: number, mes: number): string {
-  const cuando = `${MESES_LARGOS[mes]} de ${year}`;
-  if (!celda) return `${cuando}: sin dato`;
-  return `${cuando}: ${formatear(celda.value)}, ${comparacionSimple(celda.percentile)}`;
-}

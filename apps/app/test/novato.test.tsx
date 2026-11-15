@@ -1,11 +1,9 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { render, screen, waitFor, within } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import App from "@/App";
 import { bboxDeArea } from "@/consulta/consulta";
-import { useApp } from "@/estado/app";
 import { estadoInicialConsulta, useConsulta } from "@/estado/consulta";
-import { conclusionDelArea } from "@/novato/conclusion";
 
 vi.mock("@/relieve/MapaRelieve", () => ({ default: () => <div data-testid="mapa" /> }));
 // Tu zona no necesita las regiones ni los focos en vivo de Relieve.
@@ -57,7 +55,6 @@ beforeEach(() => {
   });
   vi.stubGlobal("fetch", fetchSimulado);
   useConsulta.setState({ ...estadoInicialConsulta("2026-11-14") });
-  useApp.setState({ modo: "novato" });
 });
 afterEach(() => {
   vi.unstubAllEnvs();
@@ -89,66 +86,5 @@ describe("búsqueda por localidad (RF-MAP-03)", () => {
     expect(await screen.findByText(/la búsqueda de localidades no está disponible/i)).toBeInTheDocument();
     expect(screen.getByLabelText("Latitud")).toBeInTheDocument();
     expect(await screen.findByTestId("mapa")).toBeInTheDocument();
-  });
-});
-
-describe("conclusión del área en lenguaje simple (RF-MOD-01)", () => {
-  it("dice si el último mes estuvo por encima, dentro o por debajo de lo normal, y cuál fue el pico", () => {
-    const texto = conclusionDelArea(calendario as never);
-    expect(texto).toMatch(/enero de 2026 hubo menos fuego que lo normal/);
-    expect(texto).toMatch(/más fuego.*enero de 2025/);
-    expect(texto).toMatch(/datos de ejemplo/);
-    expect(texto).not.toMatch(/percentil|anomalía|VIIRS|MODIS/);
-  });
-
-  it("si no hay celdas, usa el motivo de la API", () => {
-    expect(conclusionDelArea({ ...calendario, provisional: false, message: "Fuera de cobertura.", cells: [] } as never)).toBe(
-      "Fuera de cobertura.",
-    );
-  });
-
-  it("la muestra en el modo novato, junto al calendario", async () => {
-    useConsulta.setState({ area });
-    montar();
-    expect(await screen.findByText(/hubo menos fuego que lo normal/)).toBeInTheDocument();
-  });
-});
-
-describe("modos (RF-MOD-01, RF-MOD-03)", () => {
-  it("el modo novato oculta los filtros técnicos y el experto los muestra", async () => {
-    montar();
-    expect(screen.queryByLabelText("Serie")).not.toBeInTheDocument();
-    await userEvent.setup().click(screen.getByRole("radio", { name: "Experto" }));
-    expect(screen.getByLabelText("Serie")).toBeInTheDocument();
-  });
-
-  it("cambiar de modo no pierde el área ni las fechas", async () => {
-    useConsulta.setState({ area, desde: "2024-03-01", hasta: "2026-10-31" });
-    montar();
-    const u = userEvent.setup();
-    await u.click(screen.getByRole("radio", { name: "Experto" }));
-    await u.click(screen.getByRole("radio", { name: "Novato" }));
-    await waitFor(() => expect(useConsulta.getState().area).toEqual(area));
-    expect(useConsulta.getState().desde).toBe("2024-03-01");
-    expect(useConsulta.getState().hasta).toBe("2026-10-31");
-  });
-});
-
-describe("calendario sin jerga en el modo novato (RF-MOD-01)", () => {
-  it("en novato explica el calendario sin siglas ni términos técnicos", async () => {
-    useConsulta.setState({ area });
-    montar();
-    const seccion = (await screen.findByRole("heading", { name: "Calendario de quema" })).closest("section") as HTMLElement;
-    await within(seccion).findByRole("table");
-    expect(seccion.textContent).not.toMatch(/VIIRS|MODIS|días-celda|mediana|percentil|anomalía/i);
-    expect(within(seccion).getByRole("radio", { name: "Comparado con lo normal" })).toBeInTheDocument();
-  });
-
-  it("en experto mantiene la explicación técnica", async () => {
-    useApp.setState({ modo: "experto" });
-    useConsulta.setState({ area });
-    montar();
-    expect(await screen.findByText(/equivalente VIIRS/)).toBeInTheDocument();
-    expect(screen.getByRole("radio", { name: "Anomalía" })).toBeInTheDocument();
   });
 });

@@ -1,7 +1,9 @@
 """Pruebas de GET /regions/summary y de POST /calendar por región (F4-R1), sin red ni base."""
 
+import threading
+import time
 from contextlib import contextmanager
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 
 import pytest
 from api import regiones
@@ -46,15 +48,21 @@ class _Base:
 def cliente(monkeypatch):
     monkeypatch.delenv("DATA_MANIFEST_URL", raising=False)
     monkeypatch.setattr(regiones, "_ahora", lambda: AHORA)
+    regiones._guardado.clear()
     return TestClient(app)
 
 
 def _con_base(monkeypatch, estado=(datetime(2026, 11, 14, 11, 30, tzinfo=UTC), None), focos=FOCOS):
+    """Base simulada; devuelve la lista de conexiones abiertas, una por cálculo del resumen."""
+    abiertas = []
+
     @contextmanager
     def conectar():
+        abiertas.append(1)
         yield _Base(estado, focos)
 
     monkeypatch.setattr(regiones, "conectar", conectar)
+    return abiertas
 
 
 def _por_region(cuerpo):
@@ -133,3 +141,52 @@ def test_calendario_de_region_desconocida_da_404(cliente):
 def test_calendario_sin_area_ni_region_da_400(cliente, cuerpo):
     r = cliente.post("/api/v1/calendar", json=cuerpo)
     assert r.status_code == 400 and r.json()["code"] == "parametros_invalidos"
+
+
+# #243: después de cada despliegue el resumen tardó más de un minuto; se guarda y se calcula una sola vez.
+
+
+def test_dentro_del_minuto_se_reusa_el_resumen_y_despues_se_calcula_de_nuevo(cliente, monkeypatch):
+    abiertas = _con_base(monkeypatch)
+    primero = cliente.get("/api/v1/regions/summary").json()
+    assert cliente.get("/api/v1/regions/summary").json() == primero
+    assert len(abiertas) == 1
+    monkeypatch.setattr(regiones, "_ahora", lambda: AHORA + timedelta(seconds=61))
+    cliente.get("/api/v1/regions/summary")
+    assert len(abiertas) == 2
+
+
+def test_cada_ventana_de_horas_se_guarda_aparte(cliente, monkeypatch):
+    abiertas = _con_base(monkeypatch)
+    assert cliente.get("/api/v1/regions/summary", params={"hours": 48}).json()["hours"] == 48
+    assert cliente.get("/api/v1/regions/summary", params={"hours": 120}).json()["hours"] == 120
+    assert len(abiertas) == 2
+
+
+def test_pedidos_simultaneos_comparten_un_solo_calculo(cliente, monkeypatch):
+    calculos = []
+    original = regiones._calcular
+
+    def lento(horas):
+        calculos.append(horas)
+        time.sleep(0.2)
+        return original(horas)
+
+    _con_base(monkeypatch)
+    monkeypatch.setattr(regiones, "_calcular", lento)
+    hilos = [threading.Thread(target=regiones.resumen, args=(120,)) for _ in range(4)]
+    for h in hilos:
+        h.start()
+    for h in hilos:
+        h.join()
+    assert calculos == [120]
+
+
+def test_al_arrancar_deja_el_resumen_calculado(monkeypatch):
+    from api import main
+
+    calculados = []
+    monkeypatch.setattr(main, "copiar", lambda: 0)
+    monkeypatch.setattr(main.regiones, "resumen", lambda horas=120: calculados.append(horas))
+    main._copiar_datos()
+    assert calculados == [120]

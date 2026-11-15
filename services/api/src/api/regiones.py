@@ -3,14 +3,19 @@
 Los focos salen de `focos_vivo` (services/worker) y se asignan a la región que los contiene. El último mes
 sale de la tabla `calendario`. Si la base no responde, igual se devuelven las regiones (para dibujar el mapa)
 con `live.available: false` y los conteos en null: el resto de la vista sigue andando (RNF-02).
+
+Con unos 16.000 focos en 120 h, el cálculo tarda segundos (y más de un minuto con la CPU del servidor recién
+desplegado): la respuesta se guarda un minuto y los pedidos simultáneos comparten un solo cálculo (#243).
 """
 
+import threading
 from datetime import UTC, date, datetime, timedelta
 from functools import cache
 from typing import Annotated
 
+import shapely
 from fastapi import APIRouter, Query
-from shapely.geometry import Point, shape
+from shapely.geometry import shape
 from shapely.strtree import STRtree
 
 from api.base import conectar
@@ -20,6 +25,12 @@ router = APIRouter()
 
 # Como en /live: más de una hora sin una consulta exitosa a FIRMS cuenta como dato viejo.
 VIGENCIA = timedelta(hours=1)
+# Los focos cambian cada vez que corre el worker (minutos): un minuto guardado no atrasa nada que se note.
+VIDA_GUARDADO = timedelta(minutes=1)
+
+# Resumen guardado por ventana de horas: (cuándo se calculó, respuesta).
+_guardado: dict[int, tuple[datetime, dict]] = {}
+_candado = threading.Lock()
 
 
 def _ahora() -> datetime:
@@ -33,11 +44,15 @@ def _indice(id_regiones: int) -> tuple[STRtree, list[str]]:
     return STRtree([shape(f["geometry"]) for f in features]), [f["properties"]["region"] for f in features]
 
 
-def _region_de(lon: float, lat: float, arbol: STRtree, codigos: list[str]) -> str | None:
-    punto = Point(lon, lat)
-    for i in arbol.query(punto, predicate="intersects"):
-        return codigos[int(i)]
-    return None
+def _regiones_de(focos: list[tuple], arbol: STRtree, codigos: list[str]) -> list[str | None]:
+    """Región de cada foco, en una sola consulta en bloque al índice (de a uno era lo lento)."""
+    puntos = shapely.points([(lon, lat) for lat, lon, _, _ in focos])
+    regiones: list[str | None] = [None] * len(focos)
+    if len(focos):
+        for foco, i in zip(*arbol.query(puntos, predicate="intersects"), strict=True):
+            if regiones[int(foco)] is None:
+                regiones[int(foco)] = codigos[int(i)]
+    return regiones
 
 
 def _ultimos_meses() -> dict[str, dict]:
@@ -75,6 +90,17 @@ def _vivo(desde: datetime) -> tuple[tuple | None, list[tuple]]:
 
 @router.get("/regions/summary", operation_id="getRegionsSummary", tags=["vivo"])
 def resumen(hours: Annotated[int, Query(ge=1, le=120)] = 120) -> dict:
+    # Con el candado tomado, un pedido que llega mientras otro calcula espera y usa ese mismo resultado.
+    with _candado:
+        guardado = _guardado.get(hours)
+        if guardado is not None and _ahora() - guardado[0] < VIDA_GUARDADO:
+            return guardado[1]
+        cuerpo = _calcular(hours)
+        _guardado[hours] = (_ahora(), cuerpo)
+        return cuerpo
+
+
+def _calcular(hours: int) -> dict:
     ahora = _ahora()
     desde = ahora - timedelta(hours=hours)
     dias = [desde.date() + timedelta(days=i) for i in range((ahora.date() - desde.date()).days + 1)]
@@ -101,8 +127,7 @@ def resumen(hours: Annotated[int, Query(ge=1, le=120)] = 120) -> dict:
             live["message"] = f"Mostramos los focos de la última consulta a FIRMS ({hora} UTC)."
         arbol, codigos = _indice(id(regiones))
         conteos = {c: ([0] * len(dias), [0.0] * len(dias)) for c in codigos}
-        for lat, lon, cuando, frp in focos:
-            region = _region_de(lon, lat, arbol, codigos)
+        for (_, _, cuando, frp), region in zip(focos, _regiones_de(focos, arbol, codigos), strict=True):
             dia: date = cuando.astimezone(UTC).date()
             if region is None or dia not in posicion:
                 continue

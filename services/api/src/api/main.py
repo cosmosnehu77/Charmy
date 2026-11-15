@@ -29,6 +29,11 @@ def _copiar_datos() -> None:
         log.warning("Copia local de los datos: %s archivos nuevos", copiar())
     except DatosNoDisponibles as error:
         log.warning("Sin copia local de los datos: %s", error)
+    # El resumen de Relieve es lo más pesado de calcular: queda listo antes de que lo pida el primero (#243).
+    try:
+        regiones.resumen(120)
+    except Exception as error:  # noqa: BLE001 - si falla, lo calcula el primer pedido
+        log.warning("No se precalculó el resumen de regiones: %s", type(error).__name__)
 
 
 @asynccontextmanager

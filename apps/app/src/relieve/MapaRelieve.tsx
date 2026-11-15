@@ -15,10 +15,13 @@ import { LIMITES_MVP, nombresEnEspanol } from "@/mapa/perfiles";
 import { controlMapa } from "./controlMapa";
 import type { FocoReciente } from "./datos";
 import { indicadorDe, useRelieve } from "./estado";
+import { t, useIdioma } from "./idioma";
 import {
   AGRUPAR_VIVO,
   AGRUPAR_ZONA,
   alturaDelDia,
+  capaRegiones,
+  capasRegionesVisibles,
   CORTES_FOCO,
   escalaRegion,
   estiloGrupo,
@@ -31,8 +34,9 @@ import {
 
 maplibregl.setWorkerUrl(urlWorker);
 
-/** Mapa base oscuro de OpenFreeMap (sin clave): ciudades, rutas y calles debajo de las regiones. */
+/** Mapa base oscuro y claro de OpenFreeMap (sin clave): ciudades, rutas y calles debajo de las regiones. */
 export const ESTILO_OSCURO = "https://tiles.openfreemap.org/styles/dark";
+export const ESTILO_CLARO = "https://tiles.openfreemap.org/styles/positron";
 const VACIO = { type: "FeatureCollection" as const, features: [] };
 /** Metros de alto de una región con altura 1 (la de más fuego). */
 const ALTO_MAX = 380_000;
@@ -90,7 +94,7 @@ function marcadoresDeGrupo(m: maplibregl.Map, fuente: string) {
         el.style.setProperty("--grupo-color", color);
         el.style.setProperty("--grupo-d", `${diametro}px`);
         el.textContent = texto;
-        el.setAttribute("aria-label", `${texto} focos juntos. Tocá para acercar.`);
+        el.setAttribute("aria-label", t(`${texto} focos juntos. Tocá para acercar.`, `${texto} hotspots together. Tap to zoom in.`));
         el.addEventListener("click", (e) => {
           e.stopPropagation();
           abrirGrupo(m, fuente, id, centro);
@@ -164,6 +168,8 @@ export default function MapaRelieve({ regiones, dias, focos, onHover }: Props) {
   const contenedor = useRef<HTMLDivElement>(null);
   const mapa = useRef<maplibregl.Map | null>(null);
   const listo = useRef(false);
+  const tema = useIdioma((s) => s.tema);
+  const temaActual = useRef(tema);
   const estado = useRelieve();
   // Tu zona (#262): el área, sus focos, la herramienta de dibujo y la imagen satelital del contexto.
   const area = useConsulta((s) => s.area);
@@ -214,7 +220,9 @@ export default function MapaRelieve({ regiones, dias, focos, onHover }: Props) {
       m.setFeatureState({ source: "regiones", id: r.id }, { c: tono, h: a.actual });
     }
     // Con una provincia elegida, las regiones van opacas: las rutas y límites del mapa base no se mezclan (#251).
-    m.setPaintProperty("reg-3d", "fill-extrusion-opacity", e.seleccion ? 1 : 0.92);
+    const opacidadReg = e.seleccion ? 1 : 0.92;
+    m.setPaintProperty("reg-2d", "fill-opacity", opacidadReg);
+    m.setPaintProperty("reg-3d", "fill-extrusion-opacity", opacidadReg);
     // Focos: en el relieve, con el indicador Focos o con una región elegida; con la línea, solo ese día.
     const dia = props.current.dias[e.linea.dia];
     const visibles = fs.filter((f) => {
@@ -242,11 +250,15 @@ export default function MapaRelieve({ regiones, dias, focos, onHover }: Props) {
       m.getSource<maplibregl.GeoJSONSource>("zona-focos")?.setData(datosZona);
       zonaPuesta.current = datosZona;
     }
+    const capasReg = capasRegionesVisibles(e.plano, apagado);
     const visible = (id: string, si: boolean) => m.setLayoutProperty(id, "visibility", si ? "visible" : "none");
-    visible("reg-3d", !apagado);
+    visible("reg-2d", capasReg.reg2d);
+    visible("reg-3d", capasReg.reg3d);
+    visible("reg-borde-halo", capasReg.regBorde);
+    visible("reg-borde", capasReg.regBorde);
     visible("reg-agujas", !apagado && !e.plano);
     visible("reg-puntos", !apagado && e.plano);
-    visible("vivo-gris", apagado);
+    visible("vivo-gris", capasReg.vivoGris);
     visible("vivo-pulso", vivo);
     visible("vivo-focos", vivo);
     visible("vivo-sel", vivo);
@@ -272,7 +284,9 @@ export default function MapaRelieve({ regiones, dias, focos, onHover }: Props) {
     mapa.current = m;
     // El estilo se pone después del constructor porque solo `setStyle` acepta `transformStyle`: nombres en español,
     // y que aparezcan de a poco al acercar.
-    m.setStyle(ESTILO_OSCURO, { transformStyle: (_anterior, siguiente) => nombresPorZoom(nombresEnEspanol(siguiente)) });
+    m.setStyle(temaActual.current === "claro" ? ESTILO_CLARO : ESTILO_OSCURO, {
+      transformStyle: (_anterior, siguiente) => nombresPorZoom(nombresEnEspanol(siguiente)),
+    });
     m.on("style.load", () => {
       // Las regiones van encima de todas las líneas y rellenos del mapa base (rutas, vías, límites) y debajo solo de
       // los nombres de lugares. Antes iban antes del primer nombre (`water_name`), que está antes que las rutas:
@@ -299,10 +313,43 @@ export default function MapaRelieve({ regiones, dias, focos, onHover }: Props) {
       );
       m.addLayer(
         {
+          id: "reg-2d",
+          type: "fill",
+          source: "regiones",
+          paint: {
+            "fill-color": ["coalesce", ["feature-state", "c"], relieve.sinDato],
+            "fill-opacity": 0.92,
+          },
+        },
+        antes,
+      );
+      // En 2D las divisiones van encima de `vivo-gris` y `reg-2d` (antes iban debajo de `reg-3d` y se tapaban).
+      // Halo oscuro + trazo claro para que se lean sobre fondos oscuros (sin dato, apagada, En vivo) y rampas claras.
+      m.addLayer(
+        {
+          id: "reg-borde-halo",
+          type: "line",
+          source: "regiones",
+          layout: { "line-join": "round", "line-cap": "round" },
+          paint: {
+            "line-color": relieve.vidrio,
+            "line-width": ["interpolate", ["linear"], ["zoom"], 3, 1.8, 7, 2.8],
+            "line-opacity": 0.55,
+          },
+        },
+        antes,
+      );
+      m.addLayer(
+        {
           id: "reg-borde",
           type: "line",
           source: "regiones",
-          paint: { "line-color": relieve.grisBorde, "line-width": 0.8, "line-opacity": 0.7 },
+          layout: { "line-join": "round", "line-cap": "round" },
+          paint: {
+            "line-color": "#dce3ec",
+            "line-width": ["interpolate", ["linear"], ["zoom"], 3, 0.85, 7, 1.3],
+            "line-opacity": 0.72,
+          },
         },
         antes,
       );
@@ -434,7 +481,7 @@ export default function MapaRelieve({ regiones, dias, focos, onHover }: Props) {
         return;
       }
       const vivo = props.current.estado.pestana === "vivo";
-      const capa = vivo ? "vivo-focos" : "reg-3d";
+      const capa = vivo ? "vivo-focos" : capaRegiones(props.current.estado.plano);
       const f = m.getLayer(capa) ? m.queryRenderedFeatures(e.point, { layers: [capa] })[0] : undefined;
       m.getCanvas().style.cursor = f ? "pointer" : "";
       props.current.onHover({
@@ -471,7 +518,8 @@ export default function MapaRelieve({ regiones, dias, focos, onHover }: Props) {
         est.cambiar({ focoVivo: Number(fFoco.properties.k) });
         return;
       }
-      const f = m.getLayer("reg-3d") ? m.queryRenderedFeatures(e.point, { layers: ["reg-3d"] })[0] : undefined;
+      const capaReg = capaRegiones(est.plano);
+      const f = m.getLayer(capaReg) ? m.queryRenderedFeatures(e.point, { layers: [capaReg] })[0] : undefined;
       const id = (f?.properties?.region as string | undefined) ?? null;
       if (id || est.seleccion) est.alternarRegion(id ?? est.seleccion);
     });
@@ -549,6 +597,19 @@ export default function MapaRelieve({ regiones, dias, focos, onHover }: Props) {
   useEffect(() => {
     sincronizar.current();
   });
+
+  useEffect(() => {
+    if (temaActual.current === tema) return;
+    temaActual.current = tema;
+    const m = mapa.current;
+    if (!m) return;
+    listo.current = false;
+    dibujo.current?.stop();
+    dibujo.current = null;
+    m.setStyle(tema === "claro" ? ESTILO_CLARO : ESTILO_OSCURO, {
+      transformStyle: (_anterior, siguiente) => nombresPorZoom(nombresEnEspanol(siguiente)),
+    });
+  }, [tema]);
 
   // Plano o relieve; En vivo siempre plano.
   useEffect(() => {

@@ -3,17 +3,19 @@ import { Search } from "lucide-react";
 import { useId, useRef, useState } from "react";
 import { URL_LANDING } from "@/lib/enlaces";
 import { useRelieve } from "./estado";
+import { t, useIdioma } from "./idioma";
 import { INDICADORES, type RegionResumen } from "./logica";
 
 const sinTildes = (s: string) => s.normalize("NFD").replace(/\p{Diacritic}/gu, "").toLowerCase();
 
 /** Píldora central: Charmy, los indicadores, Experto (ex Tu zona, #262), En vivo y la lupa (F4-R1). */
 export function Pildora({ regiones }: { regiones: RegionResumen[] }) {
+  useIdioma((s) => s.idioma);
   const { pestana, elegirPestana } = useRelieve();
   const pestanas = [
     ...INDICADORES.map((i) => ({ id: i.id, nombre: i.nombre })),
-    { id: "zona" as const, nombre: "Experto" },
-    { id: "vivo" as const, nombre: "En vivo" },
+    { id: "zona" as const, nombre: t("Experto", "Expert") },
+    { id: "vivo" as const, nombre: t("En vivo", "Live") },
   ];
   const lista = useRef<HTMLDivElement>(null);
 
@@ -32,7 +34,7 @@ export function Pildora({ regiones }: { regiones: RegionResumen[] }) {
       <a
         href={URL_LANDING}
         className="flex shrink-0 items-center gap-2 rounded-full py-0.5 pl-1 pr-2.5 hover:bg-white/5"
-        aria-label="Charmy: ir a la página de inicio"
+        aria-label={t("Charmy: ir a la página de inicio", "Charmy: go to home page")}
       >
         <Charmy size={36} variant="cabeza" animate={false} decorative />
         <span className="hidden font-titulos text-[17px] font-semibold tracking-tight sm:inline">Charmy</span>
@@ -40,7 +42,7 @@ export function Pildora({ regiones }: { regiones: RegionResumen[] }) {
       <div
         ref={lista}
         role="tablist"
-        aria-label="Indicador"
+        aria-label={t("Indicador", "Indicator")}
         onKeyDown={moverConFlechas}
         data-guia="indicadores"
         className="no-scrollbar flex min-w-0 gap-1 overflow-x-auto"
@@ -87,9 +89,9 @@ function Lupa({ regiones }: { regiones: RegionResumen[] }) {
   };
   return (
     <div className="buscador-relieve" data-guia="lupa">
-      <label htmlFor={id} className="buscador-lupa" title="Buscar una provincia o región">
+      <label htmlFor={id} className="buscador-lupa" title={t("Buscar una provincia o región", "Search for a province or region")}>
         <Search aria-hidden="true" className="size-[18px]" />
-        <span className="sr-only">Buscá tu provincia o región</span>
+        <span className="sr-only">{t("Buscá tu provincia o región", "Search your province or region")}</span>
       </label>
       <input
         id={id}
@@ -100,7 +102,7 @@ function Lupa({ regiones }: { regiones: RegionResumen[] }) {
         aria-activedescendant={resultados.length ? `${id}-op-${activa}` : undefined}
         autoComplete="off"
         value={texto}
-        placeholder="Buscá tu provincia o región"
+        placeholder={t("Buscá tu provincia o región", "Search your province or region")}
         className="buscador-campo"
         onChange={(e) => {
           setTexto(e.target.value);
@@ -117,7 +119,10 @@ function Lupa({ regiones }: { regiones: RegionResumen[] }) {
         }}
       />
       <span className="buscador-pista" aria-hidden="true">
-        Escribí el nombre de una provincia o región, por ejemplo Neuquén, y elegila de la lista.
+        {t(
+          "Escribí el nombre de una provincia o región, por ejemplo Neuquén, y elegila de la lista.",
+          "Type the name of a province or region, for example Neuquén, and pick it from the list.",
+        )}
       </span>
       {resultados.length > 0 && (
         <ul id={`${id}-lista`} role="listbox" className="buscador-lista">

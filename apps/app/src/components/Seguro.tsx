@@ -1,4 +1,5 @@
 import { Component, type ReactNode } from "react";
+import { t } from "@/relieve/idioma";
 
 /**
  * Límite de errores para las partes complementarias (RNF-14): si una tira un error (por ejemplo, una
@@ -17,7 +18,11 @@ export class Seguro extends Component<{ nombre: string; children: ReactNode }, {
 
   render() {
     if (this.state.fallo) {
-      return <p className="rounded-control bg-superficie-2 p-2 text-sm">{this.props.nombre} no está disponible ahora.</p>;
+      return (
+        <p className="rounded-control bg-superficie-2 p-2 text-sm">
+          {t(`${this.props.nombre} no está disponible ahora.`, `${this.props.nombre} is not available right now.`)}
+        </p>
+      );
     }
     return this.props.children;
   }

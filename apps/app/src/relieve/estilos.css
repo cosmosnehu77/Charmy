@@ -736,3 +736,162 @@
     animation: none;
   }
 }
+
+/* Botones de tema e idioma arriba a la derecha (como en la landing). */
+.nav-acc {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.nav-btn {
+  height: 40px;
+  min-width: 40px;
+  padding: 0;
+  border: 0;
+  border-radius: 100px;
+  background: color-mix(in srgb, var(--relieve-vidrio) 72%, transparent);
+  box-shadow:
+    inset 0 0 0 1px color-mix(in srgb, white 10%, transparent),
+    0 12px 34px color-mix(in srgb, var(--mapa-noche-fondo) 40%, transparent);
+  color: var(--mapa-noche-tinta);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
+  transition:
+    color 0.2s,
+    box-shadow 0.2s;
+}
+.nav-btn:hover {
+  color: var(--color-oscuro-acento);
+  box-shadow: inset 0 0 0 1px var(--color-oscuro-acento);
+}
+.nav-btn:focus-visible {
+  outline: 2px solid var(--color-oscuro-acento);
+  outline-offset: 2px;
+}
+.nav-btn .i-luna,
+html[data-tema="claro"] .nav-btn .i-sol {
+  display: none;
+}
+html[data-tema="claro"] .nav-btn .i-luna {
+  display: block;
+}
+.idioma {
+  padding: 0 4px;
+  gap: 2px;
+  font: 500 12px/1 var(--fuente-mono);
+  letter-spacing: 0.06em;
+}
+.idioma span {
+  padding: 8px 9px;
+  border-radius: 100px;
+  color: color-mix(in srgb, currentColor 65%, transparent);
+  transition:
+    background 0.25s,
+    color 0.25s;
+}
+.idioma span.on {
+  background: var(--color-oscuro-acento);
+  color: var(--mapa-noche-fondo);
+}
+
+/* Tema claro sobre los tokens de @charmy/ui. */
+html[data-tema="claro"] .relieve {
+  --relieve-fondo: var(--mapa-dia-fondo);
+  --relieve-vidrio: var(--mapa-dia-panel);
+  --relieve-panel: var(--mapa-dia-panel);
+  --relieve-tierra: var(--mapa-dia-elevado);
+  --relieve-borde: var(--mapa-dia-linea);
+  --relieve-sin-dato: var(--mapa-dia-elevado);
+  background: var(--mapa-dia-fondo);
+  color: var(--mapa-dia-tinta);
+  color-scheme: light;
+}
+html[data-tema="claro"] .vidrio-relieve {
+  background: color-mix(in srgb, var(--mapa-dia-panel) 84%, transparent);
+  box-shadow:
+    inset 0 0 0 1px var(--mapa-dia-linea),
+    0 12px 34px color-mix(in srgb, var(--mapa-dia-tinta) 14%, transparent);
+  color: var(--mapa-dia-tinta);
+}
+html[data-tema="claro"] .ficha-relieve {
+  background: color-mix(in srgb, var(--mapa-dia-panel) 95%, transparent);
+  box-shadow:
+    inset 0 0 0 1px var(--mapa-dia-linea),
+    0 24px 60px color-mix(in srgb, var(--mapa-dia-tinta) 18%, transparent);
+  color: var(--mapa-dia-tinta);
+}
+html[data-tema="claro"] .nav-btn {
+  background: color-mix(in srgb, var(--mapa-dia-panel) 84%, transparent);
+  box-shadow:
+    inset 0 0 0 1px var(--mapa-dia-linea),
+    0 10px 26px color-mix(in srgb, var(--mapa-dia-tinta) 12%, transparent);
+  color: var(--mapa-dia-tinta);
+}
+html[data-tema="claro"] .nav-btn:hover {
+  color: var(--mapa-dia-acento-texto);
+  box-shadow: inset 0 0 0 1px var(--mapa-dia-acento-texto);
+}
+html[data-tema="claro"] .idioma span {
+  color: var(--mapa-dia-tenue);
+}
+html[data-tema="claro"] .idioma span.on {
+  background: var(--mapa-dia-tinta);
+  color: var(--mapa-dia-fondo);
+}
+html[data-tema="claro"] .tema-relieve {
+  --color-fondo: var(--mapa-dia-fondo);
+  --color-superficie: var(--mapa-dia-panel);
+  --color-superficie-2: var(--mapa-dia-elevado);
+  --color-tinta: var(--mapa-dia-tinta);
+  --color-tinta-suave: var(--mapa-dia-tenue);
+  --color-borde: var(--mapa-dia-linea);
+  --color-borde-suave: var(--mapa-dia-linea-suave);
+  --color-borde-control: var(--mapa-dia-linea);
+  --color-acento: var(--mapa-dia-acento);
+  --color-foco: var(--mapa-dia-acento);
+  color: var(--mapa-dia-tinta);
+  color-scheme: light;
+}
+html[data-tema="claro"] .tema-relieve [data-state="on"] {
+  color: var(--mapa-dia-panel);
+}
+html[data-tema="claro"] .buscador-lupa {
+  color: var(--mapa-dia-texto);
+}
+html[data-tema="claro"] .buscador-lupa:hover {
+  background: color-mix(in srgb, var(--mapa-dia-tinta) 8%, transparent);
+  color: var(--mapa-dia-tinta);
+}
+html[data-tema="claro"] .buscador-campo {
+  color: var(--mapa-dia-tinta);
+}
+html[data-tema="claro"] .buscador-campo::placeholder {
+  color: var(--mapa-dia-tenue);
+}
+html[data-tema="claro"] .buscador-pista,
+html[data-tema="claro"] .buscador-lista {
+  background: var(--mapa-dia-panel);
+  color: var(--mapa-dia-tinta);
+  box-shadow:
+    inset 0 0 0 1px var(--mapa-dia-linea),
+    0 12px 34px color-mix(in srgb, var(--mapa-dia-tinta) 16%, transparent);
+}
+html[data-tema="claro"] .relieve [class*="text-white"] {
+  color: var(--mapa-dia-tinta);
+}
+html[data-tema="claro"] .relieve [class*="text-white/"] {
+  color: var(--mapa-dia-tenue);
+}
+html[data-tema="claro"] .relieve [class*="border-white/"] {
+  border-color: var(--mapa-dia-linea);
+}
+html[data-tema="claro"] .relieve [class*="bg-white/"] {
+  background-color: color-mix(in srgb, var(--mapa-dia-tinta) 6%, transparent);
+}
+html[data-tema="claro"] .relieve [role="tab"][aria-selected="true"] {
+  color: var(--mapa-noche-fondo);
+}

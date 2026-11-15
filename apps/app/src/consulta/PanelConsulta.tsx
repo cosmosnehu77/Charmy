@@ -15,6 +15,7 @@ import {
 import { nombreMes } from "@/experto/Reproduccion";
 import { BuscarLocalidad } from "@/novato/BuscarLocalidad";
 import { cn } from "@/lib/utils";
+import { localeActual, t, useIdioma } from "@/relieve/idioma";
 import { useFocos } from "./useFocos";
 
 /** Tope de focos por respuesta de /hotspots en GeoJSON (decisión del 14/11, #127). */
@@ -70,6 +71,7 @@ function BotonForma({
 }
 
 export function Area() {
+  useIdioma((s) => s.idioma);
   const { area, dibujando, cambiar } = useConsulta();
   const [lat, setLat] = useState("");
   const [lon, setLon] = useState("");
@@ -104,31 +106,31 @@ export function Area() {
     <section aria-labelledby="titulo-area" className="flex flex-col gap-2">
       <div className="flex min-h-8 items-center justify-between gap-2">
         <h3 id="titulo-area" className={paso}>
-          1 · Dónde
+          {t("1 · Dónde", "1 · Where")}
         </h3>
         {area && (
           <Button variant="ghost" size="sm" onClick={() => cambiar({ area: null, dibujando: null })}>
             <Trash2 aria-hidden="true" />
-            Borrar área
+            {t("Borrar área", "Clear area")}
           </Button>
         )}
       </div>
       {/* Un solo selector: la forma encendida va en el naranja primario de Relieve (como las pestañas). */}
-      <div role="group" aria-label="Cómo marcar el área" className="grid grid-cols-4 gap-0.5 rounded-control border border-input bg-card p-0.5">
-        <BotonForma encendido={forma === "rectangle"} etiqueta="Dibujar rectángulo" onClick={() => elegir("rectangle")}>
-          Rectángulo
+      <div role="group" aria-label={t("Cómo marcar el área", "How to mark the area")} className="grid grid-cols-4 gap-0.5 rounded-control border border-input bg-card p-0.5">
+        <BotonForma encendido={forma === "rectangle"} etiqueta={t("Dibujar rectángulo", "Draw rectangle")} onClick={() => elegir("rectangle")}>
+          {t("Rectángulo", "Rectangle")}
         </BotonForma>
-        <BotonForma encendido={forma === "polygon"} etiqueta="Dibujar polígono" onClick={() => elegir("polygon")}>
-          Polígono
+        <BotonForma encendido={forma === "polygon"} etiqueta={t("Dibujar polígono", "Draw polygon")} onClick={() => elegir("polygon")}>
+          {t("Polígono", "Polygon")}
         </BotonForma>
         <BotonForma encendido={forma === "localidad"} onClick={() => elegir("localidad")}>
-          Localidad
+          {t("Localidad", "Locality")}
         </BotonForma>
         <BotonForma encendido={forma === "punto"} onClick={() => elegir("punto")}>
-          Punto
+          {t("Punto", "Point")}
         </BotonForma>
       </div>
-      {!forma && <p className="text-xs text-tinta-suave">Elegí cómo marcar el área.</p>}
+      {!forma && <p className="text-xs text-tinta-suave">{t("Elegí cómo marcar el área.", "Choose how to mark the area.")}</p>}
       {dibujando && (
         <div role="status" className="flex items-start gap-2 rounded-control border border-charmy-llama/60 bg-charmy-llama/10 p-2 text-xs">
           <span aria-hidden="true" className="relative mt-1 flex size-2 shrink-0">
@@ -136,11 +138,14 @@ export function Area() {
             <span className="relative inline-flex size-2 rounded-full bg-charmy-llama" />
           </span>
           <p>
-            <strong className="block font-semibold">Dibujando en el mapa</strong>
+            <strong className="block font-semibold">{t("Dibujando en el mapa", "Drawing on the map")}</strong>
             <span className="text-tinta-suave">
               {dibujando === "rectangle"
-                ? "Hacé clic en dos esquinas opuestas del mapa."
-                : "Hacé clic en cada vértice y doble clic en el último para cerrar."}
+                ? t("Hacé clic en dos esquinas opuestas del mapa.", "Click two opposite corners on the map.")
+                : t(
+                    "Hacé clic en cada vértice y doble clic en el último para cerrar.",
+                    "Click each vertex and double-click the last one to close.",
+                  )}
             </span>
           </p>
         </div>
@@ -149,18 +154,18 @@ export function Area() {
       {forma === "punto" && (
       <form onSubmit={usarPunto} className="flex flex-col gap-2" noValidate>
         <div className="grid grid-cols-2 gap-2">
-          <Campo label="Latitud">
+          <Campo label={t("Latitud", "Latitude")}>
             {(id) => (
               <input id={id} className={control} inputMode="decimal" placeholder="-42,90" value={lat} onChange={(e) => setLat(e.target.value)} />
             )}
           </Campo>
-          <Campo label="Longitud">
+          <Campo label={t("Longitud", "Longitude")}>
             {(id) => (
               <input id={id} className={control} inputMode="decimal" placeholder="-71,30" value={lon} onChange={(e) => setLon(e.target.value)} />
             )}
           </Campo>
         </div>
-        <Campo label="Radio">
+        <Campo label={t("Radio", "Radius")}>
           {(id) => (
             <select id={id} className={control} value={radio} onChange={(e) => setRadio(e.target.value)}>
               <option value="10">10 km</option>
@@ -176,7 +181,7 @@ export function Area() {
           </p>
         )}
         <Button type="submit" variant="outline" size="sm" className="self-start">
-          Usar este punto
+          {t("Usar este punto", "Use this point")}
         </Button>
       </form>
       )}
@@ -185,19 +190,20 @@ export function Area() {
 }
 
 export function Fechas({ error }: { error: string | null }) {
+  useIdioma((s) => s.idioma);
   const { desde, hasta, hoy, cambiar } = useConsulta();
   return (
     <section aria-labelledby="titulo-fechas" className="flex flex-col gap-2">
       <h3 id="titulo-fechas" className={paso}>
-        2 · Cuándo
+        {t("2 · Cuándo", "2 · When")}
       </h3>
       <div className="grid grid-cols-2 gap-2">
-        <Campo label="Desde">
+        <Campo label={t("Desde", "From")}>
           {(id) => (
             <input id={id} type="date" className={control} min={INICIO_DATOS} max={hoy} value={desde} onChange={(e) => cambiar({ desde: e.target.value })} />
           )}
         </Campo>
-        <Campo label="Hasta">
+        <Campo label={t("Hasta", "To")}>
           {(id) => (
             <input id={id} type="date" className={control} min={INICIO_DATOS} max={hoy} value={hasta} onChange={(e) => cambiar({ hasta: e.target.value })} />
           )}
@@ -214,33 +220,34 @@ export function Fechas({ error }: { error: string | null }) {
 
 /** Paso 3, plegado: el resumen dice qué está elegido sin abrirlo (F4-D8). */
 export function Filtros() {
+  useIdioma((s) => s.idioma);
   const { fuente, confianzaMin, frpMin, momento, cambiar } = useConsulta();
   return (
     <details className="group rounded-control bg-superficie-2 px-3 py-2">
       <summary className="flex min-h-8 cursor-pointer list-none flex-wrap items-center justify-between gap-x-2 gap-y-0.5 [&::-webkit-details-marker]:hidden">
-        <span className={paso}>3 · Filtros</span>
+        <span className={paso}>{t("3 · Filtros", "3 · Filters")}</span>
         <span className="text-xs text-tinta-suave">{resumenFiltros({ fuente, confianzaMin, frpMin, momento })}</span>
       </summary>
       <div className="mt-2 grid grid-cols-2 gap-2">
-        <Campo label="Serie">
+        <Campo label={t("Serie", "Series")}>
           {(id) => (
             <select id={id} className={control} value={fuente} onChange={(e) => cambiar({ fuente: e.target.value as Fuente })}>
-              <option value="harmonized">Armonizada</option>
+              <option value="harmonized">{t("Armonizada", "Harmonized")}</option>
               <option value="modis">MODIS</option>
               <option value="viirs">VIIRS</option>
             </select>
           )}
         </Campo>
-        <Campo label="Confianza mínima">
+        <Campo label={t("Confianza mínima", "Minimum confidence")}>
           {(id) => (
             <select id={id} className={control} value={confianzaMin} onChange={(e) => cambiar({ confianzaMin: e.target.value as Confianza })}>
-              <option value="low">Baja</option>
-              <option value="nominal">Nominal</option>
-              <option value="high">Alta</option>
+              <option value="low">{t("Baja", "Low")}</option>
+              <option value="nominal">{t("Nominal", "Nominal")}</option>
+              <option value="high">{t("Alta", "High")}</option>
             </select>
           )}
         </Campo>
-        <Campo label="Potencia mínima (MW)">
+        <Campo label={t("Potencia mínima (MW)", "Minimum power (MW)")}>
           {(id) => (
             <input
               id={id}
@@ -253,12 +260,12 @@ export function Filtros() {
             />
           )}
         </Campo>
-        <Campo label="Momento del día">
+        <Campo label={t("Momento del día", "Time of day")}>
           {(id) => (
             <select id={id} className={control} value={momento} onChange={(e) => cambiar({ momento: e.target.value as Momento })}>
-              <option value="todos">Día y noche</option>
-              <option value="D">Día</option>
-              <option value="N">Noche</option>
+              <option value="todos">{t("Día y noche", "Day and night")}</option>
+              <option value="D">{t("Día", "Day")}</option>
+              <option value="N">{t("Noche", "Night")}</option>
             </select>
           )}
         </Campo>
@@ -266,8 +273,6 @@ export function Filtros() {
     </details>
   );
 }
-
-const enteros = new Intl.NumberFormat("es-AR");
 
 export function Resultado({
   focos,
@@ -286,6 +291,8 @@ export function Resultado({
   /** Mes de la reproducción temporal (AAAA-MM), si está activa. */
   mes: string | null;
 }) {
+  useIdioma((s) => s.idioma);
+  const enteros = new Intl.NumberFormat(localeActual());
   // El servidor gratuito se duerme: si la búsqueda tarda, se explica por qué (RNF-02).
   const [demora, setDemora] = useState(false);
   useEffect(() => {
@@ -296,15 +303,24 @@ export function Resultado({
     const id = setTimeout(() => setDemora(true), 8000);
     return () => clearTimeout(id);
   }, [cargando]);
-  let texto = "Elegí un área para ver sus focos.";
+  let texto = t("Elegí un área para ver sus focos.", "Select an area to view its hotspots.");
   if (hayArea && cargando)
     texto = demora
-      ? "Buscando focos… La primera búsqueda puede tardar: el servidor se está despertando."
-      : "Buscando focos…";
-  else if (fallo) texto = "Los focos no están disponibles ahora. Probá de nuevo en un rato.";
+      ? t(
+          "Buscando focos… La primera búsqueda puede tardar: el servidor se está despertando.",
+          "Searching for hotspots… The first search may take a moment while the server wakes up.",
+        )
+      : t("Buscando focos…", "Searching for hotspots…");
+  else if (fallo)
+    texto = t("Los focos no están disponibles ahora. Probá de nuevo en un rato.", "Hotspots are not available right now. Try again shortly.");
   else if (focos !== null) {
-    const donde = mes ? `en el área en ${nombreMes(mes)}` : "en el área y el período";
-    texto = focos === 1 ? `1 foco ${donde}.` : `${focos} focos ${donde}.`;
+    const donde = mes
+      ? t(`en el área en ${nombreMes(mes)}`, `in the area in ${nombreMes(mes)}`)
+      : t("en el área y el período", "in the area and period");
+    texto =
+      focos === 1
+        ? t(`1 foco ${donde}.`, `1 hotspot ${donde}.`)
+        : t(`${focos} focos ${donde}.`, `${focos} hotspots ${donde}.`);
   }
   return (
     // La franja que lo enmarca (con la reproducción al lado) la pone el panel de Experto (F4-D8).
@@ -312,8 +328,10 @@ export function Resultado({
       <p>{texto}</p>
       {total !== null && !cargando && !fallo && (
         <p className="text-aviso-texto">
-          Hay muchos focos: mostramos los primeros {enteros.format(LIMITE_FOCOS)} de {enteros.format(total)} focos.
-          Para verlos todos, achicá el área o el período. El CSV los trae completos.
+          {t(
+            `Hay muchos focos: mostramos los primeros ${enteros.format(LIMITE_FOCOS)} de ${enteros.format(total)} focos. Para verlos todos, achicá el área o el período. El CSV los trae completos.`,
+            `There are many hotspots: showing the first ${enteros.format(LIMITE_FOCOS)} of ${enteros.format(total)} hotspots. To view all of them, narrow the area or period. The CSV export includes the full set.`,
+          )}
         </p>
       )}
     </div>

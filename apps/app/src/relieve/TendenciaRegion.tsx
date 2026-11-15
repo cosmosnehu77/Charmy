@@ -1,18 +1,26 @@
 import { ArrowDownRight, ArrowRight, ArrowUpRight } from "lucide-react";
+import { t, useIdioma } from "./idioma";
 import type { Tendencia } from "./logica";
 
-const TEXTO: Record<Tendencia, string> = { sube: "en alza", baja: "en baja", estable: "estable" };
 const ICONO = { sube: ArrowUpRight, baja: ArrowDownRight, estable: ArrowRight } as const;
+
+function textoTendencia(tendencia: Tendencia): string {
+  if (tendencia === "sube") return t("en alza", "rising");
+  if (tendencia === "baja") return t("en baja", "falling");
+  return t("estable", "stable");
+}
 
 /**
  * Minigráfica de los últimos días y flecha de tendencia de una fila del ranking (F4-D6).
  * La gráfica es decorativa; la tendencia también va en texto para los lectores de pantalla.
  */
 export function TendenciaRegion({ serie, tendencia }: { serie: number[]; tendencia: Tendencia }) {
+  useIdioma((s) => s.idioma);
   const max = Math.max(1, ...serie);
   const Icono = ICONO[tendencia];
+  const txt = textoTendencia(tendencia);
   return (
-    <span className="flex items-center gap-1" title={`Últimos días: ${TEXTO[tendencia]}`}>
+    <span className="flex items-center gap-1" title={`${t("Últimos días", "Recent days")}: ${txt}`}>
       <span aria-hidden="true" className="flex h-3.5 w-8 items-end gap-px">
         {serie.map((v, i) => (
           <span
@@ -23,7 +31,7 @@ export function TendenciaRegion({ serie, tendencia }: { serie: number[]; tendenc
         ))}
       </span>
       <Icono aria-hidden="true" className="size-3.5 text-white/70" />
-      <span className="sr-only">, {TEXTO[tendencia]}</span>
+      <span className="sr-only">, {txt}</span>
     </span>
   );
 }

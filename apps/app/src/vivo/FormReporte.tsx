@@ -4,6 +4,7 @@ import { AvisoEmergencias } from "@/components/AvisoEmergencias";
 import { Button } from "@/components/ui/button";
 import { leerPunto, validarPunto } from "@/consulta/consulta";
 import { ErrorApi, pedir } from "@/lib/api";
+import { t, useIdioma } from "@/relieve/idioma";
 import { useVivo } from "./estado";
 
 const control =
@@ -17,6 +18,7 @@ interface Reporte {
 
 /** Reporte ciudadano sin cuenta (RF-ALE-01). No pide ni manda datos personales (RNF-05). Se abre con `reportando`. */
 export function FormReporte() {
+  useIdioma((s) => s.idioma);
   const id = useId();
   const { reportando, cambiar } = useVivo();
   const [lat, setLat] = useState("");
@@ -48,16 +50,22 @@ export function FormReporte() {
   const mensajeError =
     envio.error instanceof ErrorApi && envio.error.mensaje
       ? envio.error.mensaje
-      : "No pudimos enviar el reporte. Probá de nuevo en un rato; lo que escribiste sigue acá.";
+      : t(
+          "No pudimos enviar el reporte. Probá de nuevo en un rato; lo que escribiste sigue acá.",
+          "Could not send the report. Try again shortly; what you wrote is still here.",
+        );
 
   return (
-    <form aria-label="Reportar un foco" onSubmit={enviar} noValidate className="flex flex-col gap-2 rounded-tarjeta border p-3">
-      <h3 className="text-sm font-semibold">Reportar un foco</h3>
+    <form aria-label={t("Reportar un foco", "Report a hotspot")} onSubmit={enviar} noValidate className="flex flex-col gap-2 rounded-tarjeta border p-3">
+      <h3 className="text-sm font-semibold">{t("Reportar un foco", "Report a hotspot")}</h3>
       <AvisoEmergencias />
       {envio.isSuccess ? (
         <>
           <p role="status" className="text-sm">
-            Recibimos tu reporte. Queda «sin verificar» hasta que alguien lo revise. Gracias.
+            {t(
+              "Recibimos tu reporte. Queda «sin verificar» hasta que alguien lo revise. Gracias.",
+              "We received your report. It remains “unverified” until reviewed. Thank you.",
+            )}
           </p>
           <Button
             variant="outline"
@@ -71,23 +79,23 @@ export function FormReporte() {
               cambiar({ reportando: false });
             }}
           >
-            Listo
+            {t("Listo", "Done")}
           </Button>
         </>
       ) : (
         <>
           <div className="grid grid-cols-2 gap-2">
             <div className="flex flex-col gap-1 text-sm font-medium">
-              <label htmlFor={`${id}-lat`}>Latitud del foco</label>
+              <label htmlFor={`${id}-lat`}>{t("Latitud del foco", "Hotspot latitude")}</label>
               <input id={`${id}-lat`} className={control} inputMode="decimal" value={lat} onChange={(e) => setLat(e.target.value)} />
             </div>
             <div className="flex flex-col gap-1 text-sm font-medium">
-              <label htmlFor={`${id}-lon`}>Longitud del foco</label>
+              <label htmlFor={`${id}-lon`}>{t("Longitud del foco", "Hotspot longitude")}</label>
               <input id={`${id}-lon`} className={control} inputMode="decimal" value={lon} onChange={(e) => setLon(e.target.value)} />
             </div>
           </div>
           <div className="flex flex-col gap-1 text-sm font-medium">
-            <label htmlFor={`${id}-desc`}>Qué ves (opcional)</label>
+            <label htmlFor={`${id}-desc`}>{t("Qué ves (opcional)", "What do you see? (optional)")}</label>
             <textarea
               id={`${id}-desc`}
               className={`${control} min-h-16 py-1`}
@@ -96,7 +104,7 @@ export function FormReporte() {
               onChange={(e) => setDescripcion(e.target.value)}
             />
           </div>
-          <p className="text-xs text-tinta-suave">No pedimos ni guardamos datos personales.</p>
+          <p className="text-xs text-tinta-suave">{t("No pedimos ni guardamos datos personales.", "We do not ask for or store personal data.")}</p>
           {(error || envio.isError) && (
             <p role="alert" className="text-sm text-peligro">
               {error ?? mensajeError}
@@ -104,10 +112,10 @@ export function FormReporte() {
           )}
           <div className="flex gap-2">
             <Button type="submit" size="sm" disabled={envio.isPending}>
-              Enviar reporte
+              {t("Enviar reporte", "Submit report")}
             </Button>
             <Button variant="ghost" size="sm" onClick={() => cambiar({ reportando: false })}>
-              Cancelar
+              {t("Cancelar", "Cancel")}
             </Button>
           </div>
         </>

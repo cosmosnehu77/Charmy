@@ -3,14 +3,17 @@ import { useEffect, useState } from "react";
 import { MESES_LARGOS } from "@/calendario/grilla";
 import { Button } from "@/components/ui/button";
 import { useConsulta } from "@/estado/consulta";
+import { t, useIdioma } from "@/relieve/idioma";
 import { mesesDelPeriodo } from "./meses";
 
 const PASO_MS = 1500;
 
-export const nombreMes = (m: string) => `${MESES_LARGOS[Number(m.slice(5, 7)) - 1]} de ${m.slice(0, 4)}`;
+export const nombreMes = (m: string) =>
+  t(`${MESES_LARGOS[Number(m.slice(5, 7)) - 1]} de ${m.slice(0, 4)}`, `${MESES_LARGOS[Number(m.slice(5, 7)) - 1]} ${m.slice(0, 4)}`);
 
 /** Muestra en el mapa los focos de un mes por vez, en orden (RF-MAP-07). */
 export function Reproduccion() {
+  useIdioma((s) => s.idioma);
   const { desde, hasta, mesReproduccion, cambiar } = useConsulta();
   const [reproduciendo, setReproduciendo] = useState(false);
   const meses = mesesDelPeriodo(desde, hasta);
@@ -39,13 +42,13 @@ export function Reproduccion() {
   // Compacto, en la franja del resultado (F4-D8): el botón redondo y, si hay un mes elegido, el mes y la vuelta al período.
   const boton = "grid size-[34px] shrink-0 place-items-center rounded-full bg-charmy-llama text-tinta hover:brightness-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring";
   return (
-    <div role="group" aria-label="Reproducir por mes" className="flex flex-col items-end gap-1">
+    <div role="group" aria-label={t("Reproducir por mes", "Play by month")} className="flex flex-col items-end gap-1">
       {reproduciendo ? (
-        <button type="button" aria-label="Pausar" title="Pausar" className={boton} onClick={() => setReproduciendo(false)}>
+        <button type="button" aria-label={t("Pausar", "Pause")} title={t("Pausar", "Pause")} className={boton} onClick={() => setReproduciendo(false)}>
           <Pause aria-hidden="true" className="size-4" />
         </button>
       ) : (
-        <button type="button" aria-label="Reproducir" title="Reproducir por mes" className={boton} onClick={reproducir}>
+        <button type="button" aria-label={t("Reproducir", "Play")} title={t("Reproducir por mes", "Play by month")} className={boton} onClick={reproducir}>
           <Play aria-hidden="true" className="size-4" />
         </button>
       )}
@@ -59,7 +62,7 @@ export function Reproduccion() {
             cambiar({ mesReproduccion: null });
           }}
         >
-          Ver todo el período
+          {t("Ver todo el período", "View full period")}
         </Button>
       )}
     </div>

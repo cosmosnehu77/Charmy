@@ -1,6 +1,8 @@
 import { rampaAnomalia, rampaConteo, relieve } from "@charmy/ui";
 import {
   alturaDelDia,
+  capaRegiones,
+  capasRegionesVisibles,
   colorFoco,
   escalaRegion,
   hace,
@@ -354,5 +356,19 @@ describe("predicción por región (F4-D12, #347)", () => {
 
   it("1 y 2 meses son pronóstico; desde 3, lo habitual ajustado", () => {
     expect(meses.map(plazoPrediccion)).toEqual(["Pronóstico", "Pronóstico", "Lo habitual, ajustado"]);
+  });
+});
+
+describe("capas de regiones en 2D y 3D", () => {
+  it("usa reg-2d en modo plano y reg-3d en relieve", () => {
+    expect(capaRegiones(true)).toBe("reg-2d");
+    expect(capaRegiones(false)).toBe("reg-3d");
+  });
+
+  it("muestra las divisiones en todos los mapas 2D (plano, En vivo y Experto) y las oculta en 3D", () => {
+    expect(capasRegionesVisibles(false, false)).toEqual({ vivoGris: false, reg2d: false, regBorde: false, reg3d: true });
+    expect(capasRegionesVisibles(true, false)).toEqual({ vivoGris: false, reg2d: true, regBorde: true, reg3d: false });
+    expect(capasRegionesVisibles(false, true)).toEqual({ vivoGris: true, reg2d: false, regBorde: true, reg3d: false });
+    expect(capasRegionesVisibles(true, true)).toEqual({ vivoGris: true, reg2d: false, regBorde: true, reg3d: false });
   });
 });

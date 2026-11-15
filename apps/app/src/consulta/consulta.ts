@@ -5,6 +5,7 @@
 import type { components } from "@charmy/contracts-api";
 import turfBbox from "@turf/bbox";
 import turfCircle from "@turf/circle";
+import { t } from "@/relieve/idioma";
 
 export type Poligono = components["schemas"]["GeoJSONPolygon"];
 export type ColeccionFocos = components["schemas"]["HotspotCollection"];
@@ -26,8 +27,10 @@ const numero = (texto: string) => {
 export function validarPunto(lat: string, lon: string): string | null {
   const la = numero(lat);
   const lo = numero(lon);
-  if (!Number.isFinite(la) || la < -90 || la > 90) return "La latitud tiene que ser un número entre -90 y 90.";
-  if (!Number.isFinite(lo) || lo < -180 || lo > 180) return "La longitud tiene que ser un número entre -180 y 180.";
+  if (!Number.isFinite(la) || la < -90 || la > 90)
+    return t("La latitud tiene que ser un número entre -90 y 90.", "Latitude must be a number between -90 and 90.");
+  if (!Number.isFinite(lo) || lo < -180 || lo > 180)
+    return t("La longitud tiene que ser un número entre -180 y 180.", "Longitude must be a number between -180 and 180.");
   return null;
 }
 
@@ -48,10 +51,10 @@ export function bboxDeArea(area: Poligono): Bbox {
 
 /** Devuelve el mensaje de error, o null si el rango es válido. `hoy` se inyecta (AAAA-MM-DD). */
 export function validarFechas(desde: string, hasta: string, hoy: string): string | null {
-  if (!desde || !hasta) return "Elegí una fecha de inicio y una de fin.";
-  if (desde > hasta) return "La fecha «desde» tiene que ser anterior o igual a «hasta».";
-  if (hasta > hoy) return "No hay datos de fechas futuras: elegí hasta hoy como máximo.";
-  if (desde < INICIO_DATOS) return "Los datos empiezan en noviembre de 2000.";
+  if (!desde || !hasta) return t("Elegí una fecha de inicio y una de fin.", "Choose a start date and an end date.");
+  if (desde > hasta) return t("La fecha «desde» tiene que ser anterior o igual a «hasta».", "The start date must be on or before the end date.");
+  if (hasta > hoy) return t("No hay datos de fechas futuras: elegí hasta hoy como máximo.", "Future dates are not available: choose up to today at most.");
+  if (desde < INICIO_DATOS) return t("Los datos empiezan en noviembre de 2000.", "Data starts in November 2000.");
   return null;
 }
 
@@ -104,17 +107,17 @@ export function filtrarFocos(coleccion: ColeccionFocos, f: FiltrosLocales): Cole
   };
 }
 
-const SERIES: Record<Fuente, string> = { harmonized: "Armonizada", modis: "MODIS", viirs: "VIIRS" };
-const CONFIANZAS: Record<Confianza, string> = {
-  low: "cualquier confianza",
-  nominal: "confianza nominal o más",
-  high: "confianza alta",
-};
-
 /** Una línea con los filtros elegidos, para el paso Filtros plegado (F4-D8). Potencia y momento, solo si filtran. */
 export function resumenFiltros(f: { fuente: Fuente; confianzaMin: Confianza; frpMin: number; momento: Momento }): string {
-  const partes = [SERIES[f.fuente], CONFIANZAS[f.confianzaMin]];
-  if (f.frpMin > 0) partes.push(`${f.frpMin} MW o más`);
-  if (f.momento !== "todos") partes.push(f.momento === "D" ? "de día" : "de noche");
+  const serie = f.fuente === "harmonized" ? t("Armonizada", "Harmonized") : f.fuente === "modis" ? "MODIS" : "VIIRS";
+  const confianza =
+    f.confianzaMin === "low"
+      ? t("cualquier confianza", "any confidence")
+      : f.confianzaMin === "nominal"
+        ? t("confianza nominal o más", "nominal confidence or higher")
+        : t("confianza alta", "high confidence");
+  const partes = [serie, confianza];
+  if (f.frpMin > 0) partes.push(t(`${f.frpMin} MW o más`, `${f.frpMin} MW or more`));
+  if (f.momento !== "todos") partes.push(f.momento === "D" ? t("de día", "daytime") : t("de noche", "nighttime"));
   return partes.join(" · ");
 }

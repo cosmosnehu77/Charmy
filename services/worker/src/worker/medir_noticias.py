@@ -72,8 +72,9 @@ def medir(modelo: str, cliente: httpx.Client) -> dict:
         inicio = time.monotonic()
         try:
             obtenidas = etiquetar(titulares, provincia, pais, cliente, modelo=modelo)
-        except NoticiasNoDisponibles as error:
-            print(f"{modelo} / {provincia}: {error}", file=sys.stderr)
+        except Exception as error:  # medir: un modelo que falla raro no corta la medición de los demás
+            motivo = error if isinstance(error, NoticiasNoDisponibles) else type(error).__name__
+            print(f"{modelo} / {provincia}: {motivo}", file=sys.stderr)
             resultado["fallas"] += 1
             continue
         finally:

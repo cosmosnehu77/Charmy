@@ -1,6 +1,7 @@
 import { paleta } from "@charmy/ui";
 import Phaser from "phaser";
-import { ALTO, ANCHO, SONIDO, almacen } from "./comun";
+import { ALTO, ANCHO, SONIDO, almacen, usarDesafio } from "./comun";
+import { ESPERA_MS, cargarDesafio, fechaDeAyerArgentina } from "./desafio";
 import { Fin } from "./escenas/fin";
 import { Inicio } from "./escenas/inicio";
 import { Nivel } from "./escenas/nivel";
@@ -23,6 +24,15 @@ if (silencio) {
   // Enter o Espacio sobre el botón no deben llegar al juego (empezarían la partida).
   silencio.addEventListener("keydown", (e) => e.stopPropagation());
 }
+
+// Desafío del día: los focos de ayer (hora de Argentina) desde nuestra API; si no llegan, la muestra.
+usarDesafio(
+  await cargarDesafio(fechaDeAyerArgentina(new Date()), {
+    base: import.meta.env.VITE_API_URL ?? "",
+    pedir: (url, init) => fetch(url, init),
+    tiempoMs: ESPERA_MS,
+  }),
+);
 
 new Phaser.Game({
   type: Phaser.AUTO,

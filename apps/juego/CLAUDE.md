@@ -13,8 +13,10 @@ pnpm --filter @charmy/juego contorno  # regenera src/fondo.json desde data/muest
 
 ## Reglas
 
-- Los focos salen de `data/muestras/dia-juego.json` (contrato de `packages/contracts/datos/`). `src/datos.ts` los pasa
-  a coordenadas de pantalla y se prueba sin Phaser.
+- Desafío del día (`src/desafio.ts`): `main.ts` pide los focos de ayer (hora de Argentina) a nuestra API,
+  `GET {VITE_API_URL}/game/day?date=` (F4-C2), con la forma de `data/muestras/dia-juego.json`. Sin API, si tarda más de
+  3 s, falla o trae menos de 20 focos, se juega la muestra y el inicio lo avisa. Nunca se llama a FIRMS ni a
+  Meteomatics, y las pruebas no tocan la red (respuestas grabadas). `src/datos.ts` pasa los focos a la pantalla.
 - Charmy se dibuja con `charmySvg()` de `@charmy/charmy/core` y se carga como textura. Nunca se copia su SVG.
 - Colores con `paleta`, `interfaz` y las rampas de `@charmy/ui`. Nada de valores sueltos.
 - La lógica (puntaje, combo, carga de datos) va en módulos puros con pruebas de Vitest; Phaser solo dibuja.

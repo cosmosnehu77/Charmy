@@ -6,6 +6,7 @@ import { areaDesdePunto, type Confianza, type Fuente, INICIO_DATOS, leerPunto, t
 import { useApp } from "@/estado/app";
 import { nombreMes, Reproduccion } from "@/experto/Reproduccion";
 import { BuscarLocalidad } from "@/novato/BuscarLocalidad";
+import { cn } from "@/lib/utils";
 import { useFocos } from "./useFocos";
 
 /** Tope de focos por respuesta de /hotspots en GeoJSON (decisión del 14/11, #127). */
@@ -22,6 +23,35 @@ function Campo({ label, children }: { label: string; children: (id: string) => R
       <label htmlFor={id}>{label}</label>
       {children(id)}
     </div>
+  );
+}
+
+function BotonDibujo({
+  modo,
+  activo,
+  onClick,
+  children,
+}: {
+  modo: ModoDibujo;
+  activo: ModoDibujo | null;
+  onClick: (modo: ModoDibujo) => void;
+  children: React.ReactNode;
+}) {
+  const encendido = activo === modo;
+  return (
+    <button
+      type="button"
+      aria-pressed={encendido}
+      data-state={encendido ? "on" : "off"}
+      onClick={() => onClick(modo)}
+      className={cn(
+        "inline-flex min-h-8 items-center justify-center gap-1.5 rounded-[calc(var(--radius-control)-2px)] px-2.5 text-xs font-medium text-muted-foreground transition-colors",
+        "hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring [&_svg]:size-4 [&_svg]:shrink-0",
+        "data-[state=on]:bg-charmy-llama data-[state=on]:font-semibold data-[state=on]:text-tinta data-[state=on]:shadow-[0_0_14px_var(--charmy-llama)]",
+      )}
+    >
+      {children}
+    </button>
   );
 }
 
@@ -48,15 +78,18 @@ export function Area() {
       <h2 id="titulo-area" className="text-lg font-semibold">
         Área
       </h2>
-      <div className="flex flex-wrap gap-2">
-        <Button variant="outline" size="sm" aria-pressed={dibujando === "rectangle"} onClick={() => dibujar("rectangle")}>
-          <Square aria-hidden="true" />
-          Dibujar rectángulo
-        </Button>
-        <Button variant="outline" size="sm" aria-pressed={dibujando === "polygon"} onClick={() => dibujar("polygon")}>
-          <Pentagon aria-hidden="true" />
-          Dibujar polígono
-        </Button>
+      <div className="flex flex-wrap items-center gap-2">
+        {/* Toggle: el modo encendido va en el naranja primario de Relieve (como las pestañas); tocarlo de nuevo lo apaga. */}
+        <div role="group" aria-label="Herramienta de dibujo" className="inline-flex rounded-control border border-input bg-card p-0.5">
+          <BotonDibujo modo="rectangle" activo={dibujando} onClick={dibujar}>
+            <Square aria-hidden="true" />
+            Dibujar rectángulo
+          </BotonDibujo>
+          <BotonDibujo modo="polygon" activo={dibujando} onClick={dibujar}>
+            <Pentagon aria-hidden="true" />
+            Dibujar polígono
+          </BotonDibujo>
+        </div>
         {area && (
           <Button variant="ghost" size="sm" onClick={() => cambiar({ area: null, dibujando: null })}>
             <Trash2 aria-hidden="true" />
@@ -65,11 +98,20 @@ export function Area() {
         )}
       </div>
       {dibujando && (
-        <p className="text-xs text-tinta-suave">
-          {dibujando === "rectangle"
-            ? "Hacé clic en dos esquinas opuestas del mapa."
-            : "Hacé clic en cada vértice y doble clic en el último para cerrar."}
-        </p>
+        <div role="status" className="flex items-start gap-2 rounded-control border border-charmy-llama/60 bg-charmy-llama/10 p-2 text-xs">
+          <span aria-hidden="true" className="relative mt-1 flex size-2 shrink-0">
+            <span className="absolute inline-flex size-full animate-ping rounded-full bg-charmy-llama opacity-75 motion-reduce:animate-none" />
+            <span className="relative inline-flex size-2 rounded-full bg-charmy-llama" />
+          </span>
+          <p>
+            <strong className="block font-semibold">Dibujando en el mapa</strong>
+            <span className="text-tinta-suave">
+              {dibujando === "rectangle"
+                ? "Hacé clic en dos esquinas opuestas del mapa."
+                : "Hacé clic en cada vértice y doble clic en el último para cerrar."}
+            </span>
+          </p>
+        </div>
       )}
       <BuscarLocalidad />
       <form onSubmit={usarPunto} className="flex flex-col gap-2" noValidate>

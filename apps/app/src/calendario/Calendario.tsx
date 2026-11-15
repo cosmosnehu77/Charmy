@@ -21,6 +21,7 @@ import {
   MESES,
   type Vista,
 } from "./grilla";
+import { ResumenCalendario } from "./ResumenCalendario";
 import { useCalendario } from "./useCalendario";
 
 function Leyenda({ vista }: { vista: Vista }) {
@@ -113,6 +114,7 @@ export function Calendario() {
               {consulta.data.region ? `, región ${consulta.data.region}` : ""}.
             </p>
           )}
+          <ResumenCalendario celdas={consulta.data.cells} novato={novato} />
           <Leyenda vista={vista} />
           <div className="overflow-x-auto">
             <table className="w-full min-w-[34rem] table-fixed border-separate border-spacing-0.5 text-center font-mono text-[11px]">

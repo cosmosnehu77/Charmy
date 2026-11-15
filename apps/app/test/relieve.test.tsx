@@ -473,9 +473,22 @@ describe("tu zona en Relieve (#262)", () => {
     await u.click(screen.getByRole("tab", { name: "Tu zona" }));
     const panel = screen.getByRole("complementary", { name: "Tu zona" });
     expect(screen.queryByRole("region", { name: "Ranking" })).not.toBeInTheDocument();
-    await u.click(within(panel).getByRole("button", { name: "Dibujar rectángulo" }));
+    const rectangulo = within(panel).getByRole("button", { name: "Dibujar rectángulo" });
+    expect(rectangulo).toHaveAttribute("aria-pressed", "false");
+    expect(screen.queryByText("Dibujando en el mapa")).not.toBeInTheDocument();
+    await u.click(rectangulo);
     expect(useConsulta.getState().dibujando).toBe("rectangle");
+    // Toggle: el botón queda encendido y un indicador avisa que el mapa está listo para dibujar.
+    expect(rectangulo).toHaveAttribute("aria-pressed", "true");
+    expect(rectangulo).toHaveAttribute("data-state", "on");
+    expect(within(panel).getByRole("button", { name: "Dibujar polígono" })).toHaveAttribute("aria-pressed", "false");
     expect(within(panel).getByText(/dos esquinas opuestas/)).toBeInTheDocument();
+    expect(screen.getByText("Dibujando en el mapa")).toBeInTheDocument();
+    // Tocarlo de nuevo lo apaga.
+    await u.click(rectangulo);
+    expect(useConsulta.getState().dibujando).toBeNull();
+    expect(rectangulo).toHaveAttribute("aria-pressed", "false");
+    expect(screen.queryByText("Dibujando en el mapa")).not.toBeInTheDocument();
     expect(within(panel).getByLabelText("Desde")).toHaveValue("2022-01-01");
     // Los filtros técnicos, solo en el modo experto (RF-MOD-01).
     expect(within(panel).queryByLabelText("Serie")).not.toBeInTheDocument();
@@ -492,6 +505,10 @@ describe("tu zona en Relieve (#262)", () => {
     await u.click(within(panel).getByRole("button", { name: "Usar este punto" }));
     expect(useConsulta.getState().area?.type).toBe("Polygon");
     expect(await within(panel).findByText("1 foco en el área y el período.")).toBeInTheDocument();
+    const resumen = within(panel).getByRole("region", { name: "Resumen de los focos" });
+    expect(within(resumen).getByText("Día con más focos").nextSibling).toHaveTextContent(/^\d{1,2} [a-z]{3} \d{4}$/);
+    // La potencia es un término técnico: solo en experto (RF-MOD-01).
+    expect(resumen).not.toHaveTextContent(/potencia/i);
     const calendario = await screen.findByRole("region", { name: "Calendario de quema" });
     expect(within(calendario).getByRole("link", { name: /Descargar CSV/ })).toHaveAttribute(
       "href",

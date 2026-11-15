@@ -168,6 +168,33 @@ describe("calendario (F2-D2)", () => {
   });
 });
 
+describe("estadísticas del calendario", () => {
+  it("resume el período: total, mes pico, año con más fuego y meses fuera de lo normal", async () => {
+    montar(<Calendario />);
+    const resumen = await screen.findByRole("region", { name: "Estadísticas del calendario" });
+    expect(within(resumen).getByText("Total del período").nextSibling).toHaveTextContent("25,1");
+    expect(within(resumen).getByText("Mes pico").nextSibling).toHaveTextContent("enero de 2025");
+    expect(within(resumen).getByText("Año con más fuego").nextSibling).toHaveTextContent("2025");
+    expect(within(resumen).getByText("Meses sobre lo normal").nextSibling).toHaveTextContent("1 de 3");
+  });
+
+  it("la temporada muestra el promedio de cada mes, con su texto para lectores de pantalla", async () => {
+    montar(<Calendario />);
+    const temporada = await screen.findByRole("list", { name: /temporada/i });
+    expect(within(temporada).getAllByRole("listitem")).toHaveLength(12);
+    expect(within(temporada).getByRole("listitem", { name: /enero: 12,6 en promedio/i })).toBeInTheDocument();
+    expect(within(temporada).getByRole("listitem", { name: /marzo: sin dato/i })).toBeInTheDocument();
+  });
+
+  it("en novato usa palabras simples, sin días-celda", async () => {
+    useApp.setState({ modo: "novato" });
+    montar(<Calendario />);
+    const resumen = await screen.findByRole("region", { name: "Estadísticas del calendario" });
+    expect(within(resumen).getByText("Meses con más fuego que lo normal")).toBeInTheDocument();
+    expect(resumen).not.toHaveTextContent(/días-celda/);
+  });
+});
+
 describe("describirCelda: origen de cada valor", () => {
   const celda = (origin: string) =>
     ({ year: 2020, month: 3, value: 1, median: 1, anomaly: 0, percentile: 50, origin }) as unknown as CeldaCalendario;

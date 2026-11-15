@@ -220,8 +220,8 @@ const PASOS_PREDICCION: Paso[] = [
     mood: "pensando",
     titulo: ["Cómo leer el mapa", "How to read the map"],
     texto: [
-      "Cuanto más alta y más oscura la provincia, más celdas con fuego espera el modelo.",
-      "The taller and darker the province, the more cells with fire the model expects.",
+      "La altura dice cuántas celdas con fuego espera el modelo. El color, si es más (naranja) o menos (violeta) que lo habitual para ese mes; claro es lo de siempre.",
+      "Height shows how many fire cells the model expects. Color shows whether that is more (orange) or less (purple) than usual for that month; light means as usual.",
     ],
   }),
   paso({
@@ -230,8 +230,8 @@ const PASOS_PREDICCION: Paso[] = [
     mood: "explica",
     titulo: ["Los próximos meses", "Upcoming months"],
     texto: [
-      "En la ficha ves los dos meses de pronóstico. En «Más adelante», lo habitual ajustado para los meses siguientes.",
-      "On the card you see the two forecast months. Under “Further ahead”, the adjusted usual for the following months.",
+      "En la ficha te digo por qué se espera más o menos fuego ahí, los dos meses de pronóstico y cómo predigo. En «Más adelante», lo habitual ajustado.",
+      "On the card I tell you why more or less fire is expected there, the two forecast months and how I forecast. Under “Further ahead”, the adjusted usual.",
     ],
   }),
   paso({

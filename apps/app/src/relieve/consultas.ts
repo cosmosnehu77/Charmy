@@ -3,8 +3,8 @@ import { useQuery } from "@tanstack/react-query";
 import { pedir, urlApi } from "@/lib/api";
 import type { RespuestaVivo } from "@/vivo/consultas";
 import { LIMITES_MVP } from "@/mapa/perfiles";
-import type { Poligono } from "@/consulta/consulta";
-import type { PrediccionRegiones, Resumen } from "./logica";
+import type { ColeccionFocos, Poligono } from "@/consulta/consulta";
+import { periodoUltimoMes, type PrediccionRegiones, type Resumen } from "./logica";
 
 export type PrediccionZona = components["schemas"]["ZoneForecast"];
 
@@ -75,5 +75,23 @@ export function useCalendarioRegion(region: string | null) {
         body: JSON.stringify({ region, from_year: 2012 }),
       }),
     enabled: region !== null && urlApi() !== "",
+  });
+}
+
+/**
+ * Focos del histórico armonizado de una región en los últimos 30 días (F4-D15): se piden con la caja de la región
+ * y la ficha cuenta solo los que caen dentro de su contorno. `hoy` es el día UTC de hoy (YYYY-MM-DD).
+ */
+export function useUltimoMes(caja: [number, number, number, number] | null, hoy: string) {
+  const { desde, hasta } = periodoUltimoMes(hoy);
+  return useQuery({
+    queryKey: ["ultimo-mes", caja, desde, hasta],
+    queryFn: ({ signal }) =>
+      pedir<ColeccionFocos>(`/hotspots?bbox=${caja!.join(",")}&from=${desde}&to=${hasta}`, {
+        signal,
+        headers: { Accept: "application/geo+json" },
+      }),
+    enabled: caja !== null && urlApi() !== "",
+    staleTime: 60 * 60_000,
   });
 }

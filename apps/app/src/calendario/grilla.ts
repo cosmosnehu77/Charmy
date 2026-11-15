@@ -3,16 +3,38 @@
  */
 import type { components } from "@charmy/contracts-api";
 import { colorDeRampa, colorSinDato, contraste, interfaz, rampaAnomalia, rampaConteo } from "@charmy/ui";
+import { enIngles, localeActual, t } from "@/relieve/idioma";
 
 export type RespuestaCalendario = components["schemas"]["Calendar"];
 export type CeldaCalendario = RespuestaCalendario["cells"][number];
 export type Vista = "anomalia" | "cantidad";
 
-export const MESES = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"] as const;
-export const MESES_LARGOS = [
+const MESES_ES = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"] as const;
+const MESES_EN = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"] as const;
+const MESES_LARGOS_ES = [
   "enero", "febrero", "marzo", "abril", "mayo", "junio",
   "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre",
 ] as const;
+const MESES_LARGOS_EN = [
+  "January", "February", "March", "April", "May", "June",
+  "July", "August", "September", "October", "November", "December",
+] as const;
+
+export const MESES: readonly string[] = new Proxy(MESES_ES, {
+  get(target, prop) {
+    const activo = enIngles() ? MESES_EN : target;
+    const val = Reflect.get(activo, prop, activo);
+    return typeof val === "function" ? val.bind(activo) : val;
+  },
+});
+
+export const MESES_LARGOS: readonly string[] = new Proxy(MESES_LARGOS_ES, {
+  get(target, prop) {
+    const activo = enIngles() ? MESES_LARGOS_EN : target;
+    const val = Reflect.get(activo, prop, activo);
+    return typeof val === "function" ? val.bind(activo) : val;
+  },
+});
 
 /** Días-celda con fuego (equivalente VIIRS, D-02): de 0 a más de 50 por mes. */
 export const CORTES_CANTIDAD = [1, 2, 5, 10, 20, 50] as const;
@@ -47,22 +69,25 @@ export function colorTexto(fondo: string): string {
 }
 
 /** Cómo se obtuvo cada valor (esquema.md). Un origen nuevo que no esté acá se muestra tal cual. */
-const ORIGENES: Record<string, string> = {
-  modis_convertido: "MODIS convertido",
-  modis_medido: "MODIS medido",
-  viirs_medido: "VIIRS medido",
-  viirs_convertido: "VIIRS NOAA-20 convertido",
-};
+function textoOrigen(origin: string): string {
+  if (origin === "modis_convertido") return t("MODIS convertido", "converted MODIS");
+  if (origin === "modis_medido") return t("MODIS medido", "measured MODIS");
+  if (origin === "viirs_medido") return t("VIIRS medido", "measured VIIRS");
+  if (origin === "viirs_convertido") return t("VIIRS NOAA-20 convertido", "converted NOAA-20 VIIRS");
+  return origin;
+}
 
-const numero = new Intl.NumberFormat("es-AR", { maximumFractionDigits: 1 });
-export const formatear = (n: number) => numero.format(n);
+export const formatear = (n: number) => new Intl.NumberFormat(localeActual(), { maximumFractionDigits: 1 }).format(n);
 /** Con signo explícito y el signo menos tipográfico: «+18», «−3», «0». */
 const conSigno = (n: number) => (n > 0 ? `+${formatear(n)}` : n < 0 ? `−${formatear(-n)}` : "0");
 
 /** Texto completo de una celda, para lectores de pantalla y para el tooltip. */
 export function describirCelda(celda: CeldaCalendario | null, year: number, mes: number): string {
-  const cuando = `${MESES_LARGOS[mes]} de ${year}`;
-  if (!celda) return `${cuando}: sin dato`;
-  const origen = ORIGENES[celda.origin] ?? celda.origin;
-  return `${cuando}: ${formatear(celda.value)} días-celda con fuego, anomalía ${conSigno(celda.anomaly)}, percentil ${Math.round(celda.percentile)} (mediana ${formatear(celda.median)}), ${origen}`;
+  const cuando = t(`${MESES_LARGOS[mes]} de ${year}`, `${MESES_LARGOS[mes]} ${year}`);
+  if (!celda) return t(`${cuando}: sin dato`, `${cuando}: no data`);
+  const origen = textoOrigen(celda.origin);
+  return t(
+    `${cuando}: ${formatear(celda.value)} días-celda con fuego, anomalía ${conSigno(celda.anomaly)}, percentil ${Math.round(celda.percentile)} (mediana ${formatear(celda.median)}), ${origen}`,
+    `${cuando}: ${formatear(celda.value)} fire cell-days, anomaly ${conSigno(celda.anomaly)}, percentile ${Math.round(celda.percentile)} (median ${formatear(celda.median)}), ${origen}`,
+  );
 }

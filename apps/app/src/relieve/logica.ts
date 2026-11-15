@@ -5,6 +5,7 @@
 import type { components } from "@charmy/contracts-api";
 import type { StyleSpecification } from "maplibre-gl";
 import { rampaAnomalia, rampaConteo, relieve } from "@charmy/ui";
+import { enIngles, localeActual, t } from "./idioma";
 
 export type Resumen = components["schemas"]["RegionsSummary"];
 export type PrediccionRegiones = components["schemas"]["RegionsForecast"];
@@ -17,33 +18,71 @@ export type RegionResumen = Omit<FeatureResumen, "properties"> & { properties: P
 export type Indicador = "focos" | "frp" | "anomalia" | "riesgo" | "prediccion";
 
 export const INDICADORES: { id: Indicador; nombre: string; unidad: string; ayuda: string; disponible: boolean }[] = [
-  { id: "focos", nombre: "Focos", unidad: "focos", ayuda: "Focos de calor de los últimos días.", disponible: true },
+  {
+    id: "focos",
+    get nombre() {
+      return t("Focos", "Hotspots");
+    },
+    get unidad() {
+      return t("focos", "hotspots");
+    },
+    get ayuda() {
+      return t("Focos de calor de los últimos días.", "Thermal hotspots from recent days.");
+    },
+    disponible: true,
+  },
   {
     id: "frp",
-    nombre: "Intensidad",
+    get nombre() {
+      return t("Intensidad", "Intensity");
+    },
     unidad: "MW",
-    ayuda: "Potencia del fuego sumada (FRP).",
+    get ayuda() {
+      return t("Potencia del fuego sumada (FRP).", "Total fire radiative power (FRP).");
+    },
     disponible: true,
   },
   {
     id: "anomalia",
-    nombre: "Anomalía",
-    unidad: "percentil",
-    ayuda: "Último mes contra su historia; 50 es lo típico.",
+    get nombre() {
+      return t("Anomalía", "Anomaly");
+    },
+    get unidad() {
+      return t("percentil", "percentile");
+    },
+    get ayuda() {
+      return t("Último mes contra su historia; 50 es lo típico.", "Last month vs. history; 50 is typical.");
+    },
     disponible: true,
   },
   {
     id: "riesgo",
-    nombre: "Riesgo",
+    get nombre() {
+      return t("Riesgo", "Risk");
+    },
     unidad: "",
-    ayuda: "El riesgo de incendio por región todavía no está disponible.",
+    get ayuda() {
+      return t(
+        "El riesgo de incendio por región todavía no está disponible.",
+        "Fire risk by region is not available yet.",
+      );
+    },
     disponible: false,
   },
   {
     id: "prediccion",
-    nombre: "Predicción",
-    unidad: "celdas",
-    ayuda: "Celdas de 0,1° con fuego que el modelo espera el mes que viene. Es una estimación.",
+    get nombre() {
+      return t("Predicción", "Forecast");
+    },
+    get unidad() {
+      return t("celdas", "cells");
+    },
+    get ayuda() {
+      return t(
+        "Celdas de 0,1° con fuego que el modelo espera el mes que viene. Es una estimación.",
+        "0.1° cells with fire expected by the model next month. This is an estimate.",
+      );
+    },
     disponible: true,
   },
 ];
@@ -66,10 +105,16 @@ export function conPrediccion(regiones: RegionResumen[], prediccion: PrediccionR
   });
 }
 
-const decimal = (v: number) => v.toLocaleString("es-AR", { maximumFractionDigits: 1 });
+const decimal = (v: number) => v.toLocaleString(localeActual(), { maximumFractionDigits: 1 });
 
 /** Una frase corta: cuántas celdas con fuego se esperan contra las habituales (±15 % cuenta como lo mismo). */
 export function textoPrediccion(m: MesPrediccion): string {
+  if (enIngles()) {
+    const esperadas = `${decimal(m.expected_cells)} fire ${m.expected_cells === 1 ? "cell" : "cells"} expected`;
+    const habituales = `the usual ${decimal(m.usual_cells)}`;
+    if (Math.abs(m.expected_cells - m.usual_cells) <= 0.15 * m.usual_cells) return `${esperadas}, similar to ${habituales}.`;
+    return `${esperadas}, ${m.expected_cells > m.usual_cells ? "more" : "fewer"} than ${habituales}.`;
+  }
   const esperadas = `Se esperan ${decimal(m.expected_cells)} ${m.expected_cells === 1 ? "celda" : "celdas"} con fuego`;
   const habituales = `las ${decimal(m.usual_cells)} habituales`;
   if (Math.abs(m.expected_cells - m.usual_cells) <= 0.15 * m.usual_cells) return `${esperadas}, como ${habituales}.`;
@@ -79,6 +124,12 @@ export function textoPrediccion(m: MesPrediccion): string {
 /** En un área chica, la probabilidad de al menos un evento contra la habitual (±15 % cuenta como lo mismo). */
 export function textoProbabilidad(m: MesPrediccion): string {
   const pct = (v: number) => `${Math.round(v * 100)} %`;
+  if (enIngles()) {
+    const inicio = `Fire probability: ${pct(m.probability)}`;
+    const habitual = `the usual ${pct(m.usual_probability)}`;
+    if (Math.abs(m.probability - m.usual_probability) <= 0.15 * m.usual_probability) return `${inicio}, similar to ${habitual}.`;
+    return `${inicio}, ${m.probability > m.usual_probability ? "higher" : "lower"} than ${habitual}.`;
+  }
   const inicio = `Probabilidad de fuego: ${pct(m.probability)}`;
   const habitual = `el ${pct(m.usual_probability)} habitual`;
   if (Math.abs(m.probability - m.usual_probability) <= 0.15 * m.usual_probability) return `${inicio}, como ${habitual}.`;
@@ -87,7 +138,7 @@ export function textoProbabilidad(m: MesPrediccion): string {
 
 /** Los plazos 1 y 2 son pronóstico; del 3 al 6 la compuerta no pasó todos los años (D-40). */
 export function plazoPrediccion(m: MesPrediccion): string {
-  return m.kind === "forecast" ? "Pronóstico" : "Lo habitual, ajustado";
+  return m.kind === "forecast" ? t("Pronóstico", "Forecast") : t("Lo habitual, ajustado", "Usual, adjusted");
 }
 
 export function maximo(regiones: RegionResumen[], indicador: Indicador): number {
@@ -122,19 +173,19 @@ export type Tono = "alto" | "medio" | "bajo" | "cero";
 
 /** Estado de la ficha: `posicion` es el lugar de la región en el ranking de focos (-1 si no está). */
 export function nivelRegion(focos: number | null, posicion: number): { texto: string; tono: Tono } {
-  if (focos === null) return { texto: "Focos no disponibles", tono: "cero" };
-  if (focos === 0) return { texto: "Sin focos esta semana", tono: "cero" };
-  if (posicion >= 0 && posicion < 3) return { texto: "Entre las de más fuego", tono: "alto" };
-  if (focos >= 10) return { texto: "Con fuego activo", tono: "medio" };
-  return { texto: "Poca actividad", tono: "bajo" };
+  if (focos === null) return { texto: t("Focos no disponibles", "Hotspots unavailable"), tono: "cero" };
+  if (focos === 0) return { texto: t("Sin focos esta semana", "No hotspots this week"), tono: "cero" };
+  if (posicion >= 0 && posicion < 3) return { texto: t("Entre las de más fuego", "Among the highest fire activity"), tono: "alto" };
+  if (focos >= 10) return { texto: t("Con fuego activo", "Active fire"), tono: "medio" };
+  return { texto: t("Poca actividad", "Low activity"), tono: "bajo" };
 }
 
 export function nivelPercentil(p: number): string {
-  if (p >= 75) return "bastante por encima de lo normal";
-  if (p >= 55) return "un poco por encima de lo normal";
-  if (p > 45) return "dentro de lo normal";
-  if (p > 25) return "un poco por debajo de lo normal";
-  return "bastante por debajo de lo normal";
+  if (p >= 75) return t("bastante por encima de lo normal", "well above normal");
+  if (p >= 55) return t("un poco por encima de lo normal", "slightly above normal");
+  if (p > 45) return t("dentro de lo normal", "within normal range");
+  if (p > 25) return t("un poco por debajo de lo normal", "slightly below normal");
+  return t("bastante por debajo de lo normal", "well below normal");
 }
 
 /** Con la línea de tiempo en uso, la región sube según el día: su altura de la semana en el día con más focos. */
@@ -159,6 +210,12 @@ export function colorFoco(frp: number | null | undefined): string {
 }
 
 export type NivelFoco = "Bajo" | "Fuerte" | "Muy fuerte";
+
+export function etiquetaNivelFoco(nivel: NivelFoco): string {
+  if (nivel === "Muy fuerte") return t("Muy fuerte", "Very strong");
+  if (nivel === "Fuerte") return t("Fuerte", "Strong");
+  return t("Bajo", "Low");
+}
 
 /** Niveles de intensidad de un foco (MW): desde (incluido) y hasta (sin incluir). */
 export const NIVELES_FOCO: { nivel: NivelFoco; desde: number; hasta: number | null }[] = [
@@ -205,18 +262,19 @@ export const GRUPO_LATE = 100;
 /** Aspecto de un grupo de focos: crece con la cantidad y toma el color de su foco más intenso. */
 export function estiloGrupo(cantidad: number, frpMax: number | null | undefined) {
   const diametro = cantidad >= 200 ? 54 : cantidad >= 50 ? 44 : cantidad >= 10 ? 36 : 30;
-  return { diametro, color: colorFoco(frpMax), late: cantidad >= GRUPO_LATE, texto: cantidad.toLocaleString("es-AR") };
+  return { diametro, color: colorFoco(frpMax), late: cantidad >= GRUPO_LATE, texto: cantidad.toLocaleString(localeActual()) };
 }
 
 export function hace(ahora: Date, cuando: string): string {
   const horas = Math.round((ahora.getTime() - new Date(cuando).getTime()) / 3_600_000);
-  return horas < 1 ? "hace menos de 1 h" : `hace ${horas} h`;
+  return horas < 1 ? t("hace menos de 1 h", "less than 1 h ago") : t(`hace ${horas} h`, `${horas} h ago`);
 }
 
-const MESES = ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"];
+const MESES_ES = ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"];
+const MESES_EN = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
 
 export function nombreMes(mes: number): string {
-  return MESES[mes - 1] ?? "";
+  return (enIngles() ? MESES_EN : MESES_ES)[mes - 1] ?? "";
 }
 
 /** "13/11" a partir de "2026-11-13". */
@@ -330,4 +388,28 @@ export function tendencia(serie: number[] | null, dias: string[], hoy: string): 
   const cambio = despues - antes;
   if (Math.abs(cambio) < CAMBIO_MINIMO || Math.abs(cambio) < CAMBIO_RELATIVO * Math.max(antes, despues)) return "estable";
   return cambio > 0 ? "sube" : "baja";
+}
+
+/**
+ * Capa de regiones usada para interacción en el mapa: en 2D va plana (`reg-2d`) debajo de las divisiones;
+ * en 3D se extruye (`reg-3d`).
+ */
+export function capaRegiones(plano: boolean): "reg-2d" | "reg-3d" {
+  return plano ? "reg-2d" : "reg-3d";
+}
+
+/**
+ * Visibilidad de las capas de regiones según modo:
+ * - `En vivo` y `Tu zona` (`apagado`): fondo gris (`vivo-gris`) y divisiones en 2D.
+ * - Indicadores en 2D (`plano`): relleno plano (`reg-2d`) y divisiones por encima.
+ * - Indicadores en 3D: extrusión (`reg-3d`), sin líneas planas debajo que se transparenten.
+ */
+export function capasRegionesVisibles(plano: boolean, apagado: boolean) {
+  const en2d = plano || apagado;
+  return {
+    vivoGris: apagado,
+    reg2d: !apagado && plano,
+    regBorde: en2d,
+    reg3d: !apagado && !plano,
+  };
 }

@@ -2,6 +2,7 @@ import { Charmy, type Mood, type Outfit } from "@charmy/charmy";
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useRelieve } from "./estado";
+import { t, useIdioma } from "./idioma";
 import { ubicarGlobo } from "./logica";
 
 /**
@@ -23,59 +24,133 @@ export interface Paso {
 const PASOS_MAPA: Paso[] = [
   {
     mood: "saluda",
-    titulo: "¡Hola! Soy Charmy",
-    texto: "Te muestro en un minuto cómo mirar el fuego en Argentina y Chile. Podés salir cuando quieras.",
+    get titulo() {
+      return t("¡Hola! Soy Charmy", "Hi! I’m Charmy");
+    },
+    get texto() {
+      return t(
+        "Te muestro en un minuto cómo mirar el fuego en Argentina y Chile. Podés salir cuando quieras.",
+        "I’ll show you in a minute how to explore fire activity in Argentina and Chile. You can exit anytime.",
+      );
+    },
   },
   {
     guia: "indicadores",
     mood: "explica",
-    titulo: "Elegí qué mirar",
-    texto: "Focos, intensidad o anomalía: cada provincia sube según ese dato. En vivo muestra los focos de las últimas horas.",
+    get titulo() {
+      return t("Elegí qué mirar", "Choose what to view");
+    },
+    get texto() {
+      return t(
+        "Focos, intensidad o anomalía: cada provincia sube según ese dato. En vivo muestra los focos de las últimas horas.",
+        "Hotspots, intensity, or anomaly: each province rises according to that metric. Live shows hotspots from recent hours.",
+      );
+    },
   },
   {
     guia: "zona",
     mood: "explica",
-    titulo: "Marcá tu zona",
-    texto:
-      "En Experto marcás un área en el mapa: un rectángulo, un polígono, un punto con radio o una localidad. Te muestro cuánto fuego hubo ahí mes a mes y qué hay cerca.",
+    get titulo() {
+      return t("Marcá tu zona", "Mark your area");
+    },
+    get texto() {
+      return t(
+        "En Experto marcás un área en el mapa: un rectángulo, un polígono, un punto con radio o una localidad. Te muestro cuánto fuego hubo ahí mes a mes y qué hay cerca.",
+        "In Expert you mark an area on the map: a rectangle, a polygon, a point with radius, or a locality. I’ll show you how much fire occurred there month by month and what is nearby.",
+      );
+    },
   },
-  { guia: "lupa", mood: "explica", titulo: "Buscá tu lugar", texto: "Tocá la lupa y escribí el nombre de una provincia o región." },
+  {
+    guia: "lupa",
+    mood: "explica",
+    get titulo() {
+      return t("Buscá tu lugar", "Find your place");
+    },
+    get texto() {
+      return t(
+        "Tocá la lupa y escribí el nombre de una provincia o región.",
+        "Tap the search icon and type the name of a province or region.",
+      );
+    },
+  },
   {
     guia: "ranking",
     mood: "explica",
-    titulo: "Las que más arden",
-    texto: "El ranking ordena las regiones con más fuego según el indicador. Tocá una para ver su ficha.",
+    get titulo() {
+      return t("Las que más arden", "Top burning regions");
+    },
+    get texto() {
+      return t(
+        "El ranking ordena las regiones con más fuego según el indicador. Tocá una para ver su ficha.",
+        "The ranking orders the regions with the most fire by the selected indicator. Tap one to open its card.",
+      );
+    },
   },
   {
     guia: "controles",
     mood: "explica",
-    titulo: "Mové el mapa",
-    texto: "Acercá, alejá, mirá al norte, pasá a 2D si tu conexión es lenta y frená el giro. También podés arrastrar el mapa.",
+    get titulo() {
+      return t("Mové el mapa", "Move the map");
+    },
+    get texto() {
+      return t(
+        "Acercá, alejá, mirá al norte, pasá a 2D si tu conexión es lenta y frená el giro. También podés arrastrar el mapa.",
+        "Zoom in, zoom out, reset north, switch to 2D on slower connections, and pause rotation. You can also drag the map.",
+      );
+    },
   },
   {
     guia: "leyenda",
     mood: "pensando",
-    titulo: "¿Qué significan los colores?",
-    texto: "Cuanto más alta y más oscura la región, más fuego. Si dudás, mirá acá.",
+    get titulo() {
+      return t("¿Qué significan los colores?", "What do the colors mean?");
+    },
+    get texto() {
+      return t(
+        "Cuanto más alta y más oscura la región, más fuego. Si dudás, mirá acá.",
+        "The taller and darker the region, the more fire. Whenever in doubt, check here.",
+      );
+    },
   },
   {
     guia: "ficha",
     abrirRegion: true,
     mood: "explica",
-    titulo: "La ficha de una provincia",
-    texto: "Al tocar una provincia se abre su ficha y las demás se apagan para que la veas sola. Para volver, tocala de nuevo.",
+    get titulo() {
+      return t("La ficha de una provincia", "A province’s card");
+    },
+    get texto() {
+      return t(
+        "Al tocar una provincia se abre su ficha y las demás se apagan para que la veas sola. Para volver, tocala de nuevo.",
+        "Tapping a province opens its card and dims the others so you can focus on it. Tap it again to go back.",
+      );
+    },
   },
   {
     guia: "linea",
     mood: "explica",
-    titulo: "Día por día",
-    texto: "Con el play ves cómo suben y bajan los focos de esa provincia. También podés tocar un día.",
+    get titulo() {
+      return t("Día por día", "Day by day");
+    },
+    get texto() {
+      return t(
+        "Con el play ves cómo suben y bajan los focos de esa provincia. También podés tocar un día.",
+        "Press play to watch hotspots rise and fall across days in that province, or tap any day directly.",
+      );
+    },
   },
   {
     cerrarRegion: true,
     mood: "festeja",
-    titulo: "¡Listo!",
-    texto: "Si necesitás ayuda de nuevo, tocame: estoy abajo a la izquierda.",
+    get titulo() {
+      return t("¡Listo!", "All set!");
+    },
+    get texto() {
+      return t(
+        "Si necesitás ayuda de nuevo, tocame: estoy abajo a la izquierda.",
+        "If you need help again, tap me—I’m in the bottom-left corner.",
+      );
+    },
     emergencia: true,
   },
 ];
@@ -90,7 +165,7 @@ export function CharmyGuia({
   pasos: PASOS = PASOS_MAPA,
   outfit = "guia",
   boton = "figura",
-  etiqueta = "Charmy: ¿necesitás ayuda? Tocá para ver cómo se usa el mapa",
+  etiqueta,
 }: {
   regionMasFuego?: string | null;
   pasos?: Paso[];
@@ -99,6 +174,8 @@ export function CharmyGuia({
   boton?: "figura" | "cabeza";
   etiqueta?: string;
 }) {
+  useIdioma((s) => s.idioma);
+  const etiquetaFinal = etiqueta ?? t("Charmy: ¿necesitás ayuda? Tocá para ver cómo se usa el mapa", "Charmy: need help? Tap to see how to use the map");
   const [abierto, setAbierto] = useState(false);
   const [paso, setPaso] = useState(0);
   const [rect, setRect] = useState<DOMRect | null>(null);
@@ -212,13 +289,14 @@ export function CharmyGuia({
           data-invita={invita}
           hidden={abierto}
           onClick={abrir}
-          aria-label={etiqueta}
+          aria-label={etiquetaFinal}
         >
           <span className="guia-figura">
             <Charmy size={84} mood="saluda" outfit={outfit} decorative />
           </span>
           <span className="guia-pregunta" aria-hidden="true">
-            <b>¿Necesitás ayuda?</b>Tocame y te muestro cómo usar el mapa.
+            <b>{t("¿Necesitás ayuda?", "Need help?")}</b>
+            {t("Tocame y te muestro cómo usar el mapa.", "Tap me and I’ll show you how to use the map.")}
           </span>
         </button>
       ) : (
@@ -226,12 +304,12 @@ export function CharmyGuia({
           ref={botonRef}
           type="button"
           onClick={abrir}
-          aria-label={etiqueta}
-          title={etiqueta}
+          aria-label={etiquetaFinal}
+          title={etiquetaFinal}
           className="inline-flex min-h-8 items-center gap-1 rounded-full border border-white/20 py-0.5 pl-0.5 pr-2.5 text-[12.5px] hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
         >
           <Charmy size={28} variant="cabeza" outfit={outfit} animate={false} decorative />
-          Guía
+          {t("Guía", "Guide")}
         </button>
       )}
       {/* En `body`: dentro de la vista quedaba atrapado en la capa del bloque de abajo, debajo de la píldora y la ficha (#226). */}
@@ -269,8 +347,16 @@ export function CharmyGuia({
               <p>{actual.texto}</p>
               {actual.emergencia && (
                 <p className="guia-emergencia">
-                  Charmy no reemplaza a los servicios de emergencia. Si ves fuego, llamá al <b>100</b> en Argentina o al{" "}
-                  <b>132</b> en Chile.
+                  {t(
+                    <>
+                      Charmy no reemplaza a los servicios de emergencia. Si ves fuego, llamá al <b>100</b> en Argentina o al{" "}
+                      <b>132</b> en Chile.
+                    </>,
+                    <>
+                      Charmy does not replace emergency services. If you see fire, call <b>100</b> in Argentina or{" "}
+                      <b>132</b> in Chile.
+                    </>,
+                  )}
                 </p>
               )}
               <div className="guia-puntos" aria-hidden="true">
@@ -280,15 +366,15 @@ export function CharmyGuia({
               </div>
               <div className="guia-acciones">
                 <button type="button" className="guia-salir" onClick={terminar}>
-                  Salir
+                  {t("Salir", "Exit")}
                 </button>
                 {paso > 0 && (
                   <button type="button" className="guia-atras" onClick={() => ir(paso - 1, -1)}>
-                    Atrás
+                    {t("Atrás", "Back")}
                   </button>
                 )}
                 <button ref={siguienteRef} type="button" className="guia-sig" onClick={() => ir(paso + 1, 1)}>
-                  {paso === PASOS.length - 1 ? "Terminar" : "Siguiente"}
+                  {paso === PASOS.length - 1 ? t("Terminar", "Finish") : t("Siguiente", "Next")}
                 </button>
               </div>
             </div>

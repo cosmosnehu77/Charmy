@@ -33,13 +33,13 @@ const equipo = [
   { nombre: "Angelo", login: "dimidio6" },
 ];
 
-// Ejemplo: las personas reales las pasa el equipo. Hasta entonces las cards muestran el formato, no nombres.
+// Agradecimientos: una card por persona, con la foto que pasó el equipo.
 const gracias = [
-  { nombre: "Nombre Apellido", rol: "Institución o rol", por: "Datos" },
-  { nombre: "Nombre Apellido", rol: "Institución o rol", por: "Mentoría" },
-  { nombre: "Nombre Apellido", rol: "Institución o rol", por: "Método" },
-  { nombre: "Nombre Apellido", rol: "Institución o rol", por: "Diseño" },
-  { nombre: "Nombre Apellido", rol: "Institución o rol", por: "Pruebas" },
+  { nombre: "Walter Sánchez", foto: "walter-sanchez", alt: "Walter Sánchez junto al equipo de Charmy" },
+  { nombre: "Debora Reitovich", foto: "debora-reitovich", alt: "Debora Reitovich junto al equipo de Charmy" },
+  { nombre: "Franco García", foto: "franco-garcia", alt: "Franco García" },
+  { nombre: "Brian Rodríguez", foto: "brian-rodriguez", alt: "Brian Rodríguez junto al equipo de Charmy" },
+  { nombre: "El equipo de Charmy", foto: "equipo", alt: "Los cinco integrantes del equipo de Charmy" },
 ];
 const medioGracias = (gracias.length - 1) / 2;
 
@@ -347,9 +347,9 @@ const tira = [...instituciones, ...instituciones];
           <div class="abanico" id="abanico">
             {
               gracias.map((p, i) => (
-                <article class={`persona t${(i % 5) + 1}`} tabindex="0" style={`--d:${i - medioGracias};--a:${Math.abs(i - medioGracias)}`}>
-                  <header><div><strong>{p.nombre}</strong><span>{p.rol}</span></div><i>{p.por}</i></header>
-                  <div class="mono" aria-hidden="true">{p.nombre.split(" ").map((s) => s[0]).join("").slice(0, 2)}</div>
+                <article class="persona" tabindex="0" style={`--d:${i - medioGracias};--a:${Math.abs(i - medioGracias)}`}>
+                  <img src={`/gracias/${p.foto}.webp`} alt={p.alt} width="660" height="924" loading="lazy" />
+                  <strong>{p.nombre}</strong>
                 </article>
               ))
             }

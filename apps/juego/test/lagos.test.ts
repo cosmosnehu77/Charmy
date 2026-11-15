@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import dia from "../../../data/muestras/dia-juego.json";
-import { LAGOS, lagoTocado } from "../src/lagos";
+import { paleta } from "@charmy/ui";
+import { COLOR_LAGO, LAGOS, lagoTocado } from "../src/lagos";
 
 describe("lagos", () => {
   it("hay al menos seis lagos y todos caen dentro del recuadro del día", () => {
@@ -13,6 +14,11 @@ describe("lagos", () => {
       expect(l.lat).toBeLessThanOrEqual(norte!);
     }
     expect(LAGOS.map((l) => l.nombre)).toContain("Nahuel Huapi");
+  });
+
+  it("los lagos usan el token de agua de packages/ui, no el color del cielo", () => {
+    expect(COLOR_LAGO).toBe(paleta.agua);
+    expect(COLOR_LAGO).not.toBe(paleta.cielo);
   });
 
   it("un toque cerca de un lago lo encuentra; lejos, no", () => {

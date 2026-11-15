@@ -7,7 +7,7 @@ import { focos } from "../cierre";
 import { encuadre, proyectar, regionEn } from "../contorno";
 import { cargarDia } from "../datos";
 import { aCelda, centroDe, crearGrilla, type Grilla } from "../grilla";
-import { LAGOS, lagoTocado, type LagoEnPantalla } from "../lagos";
+import { COLOR_LAGO, LAGOS, lagoTocado, type LagoEnPantalla } from "../lagos";
 import { DURACION_PARTIDA_MS, DURACION_PASADAS_MS, planPorPasadas, potencia, type Ventana } from "../mecanica";
 import {
   HERRAMIENTAS,
@@ -159,9 +159,9 @@ export class Nivel extends Phaser.Scene {
       return { nombre: l.nombre, x: x + this.origen.x, y: y + this.origen.y };
     });
     for (const l of this.lagos) {
-      // Un lago es un hueco en la tierra: del color del agua de afuera, con borde.
+      // Un lago es agua sobre la tierra, con borde: azul, para que no se confunda con el fuego.
       const lago = this.add
-        .circle(l.x, l.y, 8, color(paleta.cielo))
+        .circle(l.x, l.y, 8, color(COLOR_LAGO))
         .setStrokeStyle(2, color(interfaz.tintaSuave))
         .setDepth(2);
       lago.setInteractive({

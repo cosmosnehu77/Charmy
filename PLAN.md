@@ -528,7 +528,7 @@ Qué tareas cubren cada requisito. Si un requisito de `REQUISITOS.md` no aparece
 | RF-MOD-01, 02, 03 | F3-D1, F3-D2; F4-D7 (retira el modo novato), F4-D8 (organización de Experto) | 3, 4 |
 | RF-CHA-01, 04 | F0-E1, F1-E1, F1-E2, F1-E4 | 1 |
 | RF-CHA-02, 03, 06 | F2-E1, F3-E2 | 2 (mínimo) / 3 |
-| RF-CHA-05 | F3-D1; F4-D9 (guía de Experto) | 3, 4 |
+| RF-CHA-05 | F3-D1; F4-D9 (guía de Experto), F4-D10 (invitación a la guía) | 3, 4 |
 | RF-CHA-07 | F2-F1 | 2 |
 | RF-LAN-01 a 04 | F1-F1, F2-E2, F4-E1 | 2 |
 | RF-VIV-01 a 04 | F3-C1, F3-C3, F3-D3, F4-D2, F4-D4 | 3, 4 |

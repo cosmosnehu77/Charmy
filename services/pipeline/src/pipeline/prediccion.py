@@ -175,6 +175,12 @@ def mensual(focos: pl.LazyFrame, fijas: list[str]) -> pl.DataFrame:
     return grilla.join(conteo, on=CLAVE, how="left").with_columns(pl.col("dias").fill_null(0.0)).sort(CLAVE)
 
 
+def meses_descartados(m: pl.DataFrame) -> list[date]:
+    """Meses entre el primero y el último de `m` que faltan: `mensual` los descartó por incompletos (R-B2)."""
+    todos = pl.date_range(m["mes"].min(), m["mes"].max(), "1mo", eager=True)
+    return sorted(set(todos.to_list()) - set(m["mes"].unique().to_list()))
+
+
 def entrenamiento(m: pl.DataFrame) -> pl.DataFrame:
     """Tabla `entrenamiento` del contrato (F3-B5): la entrada del modelo, para entrenar sin los focos."""
     return m.select(
@@ -193,6 +199,11 @@ def main(argv: list[str] | None = None) -> int:
     columnas = ["satellite", "latitude", "longitude", "cell_id", "type", "acq_datetime"]
     fijas = mascara(focos.select(columnas))["cell_id"].to_list()
     m = mensual(focos, fijas)
+    # Una fuente que se corta no debe pasar en silencio: los meses descartados se ven en la salida (R-B2).
+    print(f"último mes completo de S-NPP: {m['mes'].max():%Y-%m}")
+    descartados = meses_descartados(m)
+    if descartados:
+        print("meses incompletos descartados:", ", ".join(f"{d:%Y-%m}" for d in descartados))
     args.out.mkdir(parents=True, exist_ok=True)
     entrenamiento(m).write_parquet(args.out / "entrenamiento.parquet")
     resultado = entrenar_y_validar(m)

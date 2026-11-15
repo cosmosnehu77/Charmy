@@ -6,7 +6,7 @@ from datetime import UTC, date, datetime, timedelta
 
 import polars as pl
 from pipeline.esquema import ESQUEMAS
-from pipeline.prediccion import entrenamiento, entrenar_y_validar, filas, particion
+from pipeline.prediccion import entrenamiento, entrenar_y_validar, filas, meses_descartados, particion
 from pipeline.prediccion import mensual as mensual_snpp
 
 
@@ -127,3 +127,15 @@ def test_tabla_de_entrenamiento_sin_meses_incompletos_ni_fuentes_fijas_ni_celdas
     assert "2018-06" not in tabla["month"].to_list()
     assert tabla.filter(pl.col("cell_id") == FONDO).height == 6 * 12 - 1
     assert tabla.filter(pl.col("cell_id") == MENSUAL)["fire_days"].unique().to_list() == [1]
+
+
+# --- R-B2 (#221): una fuente que se corta se ve en la salida ----------------------------------------------
+
+
+def test_meses_descartados_nombra_el_mes_incompleto_de_snpp():
+    m = mensual_snpp(_focos_snpp(), [FIJA])
+    assert meses_descartados(m) == [date(2018, 6, 1)]
+
+
+def test_meses_descartados_vacio_si_no_falta_ningun_mes():
+    assert meses_descartados(mensual(0.0, celdas=2)) == []

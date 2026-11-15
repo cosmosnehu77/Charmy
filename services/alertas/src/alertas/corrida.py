@@ -80,3 +80,5 @@ async def corrida(api: Api, tg: Telegram, destinos: Sequence[tuple[Zona, int]]) 
         " · avisos mandados %d · envíos fallidos %d · actualizaciones %d",
         len(destinos), guardados, r.focos, r.reportes, r.nuevos, r.mandados, r.fallidos, r.actualizados,
     )
+    if r.fallidos:  # #349: roja en Actions, así se abre "Bot de avisos caído"; se reintentan en la próxima
+        raise RuntimeError(f"no se pudo mandar {r.fallidos} aviso(s): el registro dice a qué zona")

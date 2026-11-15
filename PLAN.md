@@ -10,7 +10,7 @@
 
 **Fase activa:** 4
 **Líder:** `@cosmosnehu77`. Hasta que vuelva (probablemente en la fase 4), **líder interino `@daniace`** (D-28).
-**Versión:** 2.3.8 · **Última actualización:** 15 de noviembre de 2026
+**Versión:** 2.3.10 · **Última actualización:** 15 de noviembre de 2026
 
 ## Objetivo del proyecto
 
@@ -91,7 +91,7 @@ Lo que se usa hoy. La columna **Dec.** apunta a la decisión que lo justifica ([
 | Tiempo y riesgo de incendio | API de Meteomatics, desde `services/contexto` | B | Parámetros probados el 14/11 con la cuenta del equipo: `wind_speed_10m:ms`, `wind_dir_10m:d`, `t_2m:C`, `relative_humidity_2m:p`, `forest_fire_warning:idx` y `fosberg_fire_weather_index:idx`. Un pedido admite varios parámetros, varias horas y un área. **Límites: 1.000 pedidos por día**, 250 por minuto y 10 en paralelo, así que la caché es obligatoria (por celda de 0,1° y por media hora). Tiene histórico desde 1900. **La cuenta vence el 22/11/2026.** Credenciales en `METEOMATICS_USER` y `METEOMATICS_PASSWORD`, solo en el servidor. | D-18 |
 | Imagen satelital | Sentinel-2 L2A de Copernicus Data Space por API, desde `services/contexto`: Catalog API para encontrar la escena reciente más despejada y Process API para generar la imagen | B | Entrada con un cliente OAuth (`client_credentials`) creado en el Dashboard de Copernicus; el token se pide a `identity.dataspace.copernicus.eu` y las APIs están en `sh.dataspace.copernicus.eu`. Solo desde el servidor. Cuenta gratuita: 10.000 unidades de proceso y 50.000 pedidos por mes, 300 por minuto. Cada imagen generada se guarda en caché para no gastar cuota dos veces. Dos estilos: color real y falso color, que resalta lo quemado. Las rutas exactas de Catalog y Process se confirman al crear el cliente. | D-19 |
 | Estadísticas de referencia | currentwildfires.com | B | Sin API ni licencia visible: solo comparación manual, cita y enlace. No se copian datos. Usa FIRMS, EFFIS, GWIS y filtra antorchas e industria, igual que Charmy. | D-20 |
-| Modelo de predicción | LightGBM (vigente); candidato: TimesFM 3.0 | E (D-31) | Solo si supera a la climatología. LightGBM sigue publicado hasta que TimesFM 3.0 lo supere en la compuerta con los mismos años de prueba. TimesFM 3.0 autorizada por el líder (15/11): Charmy es gratuito y sin fines de lucro, así que se usa dentro de la licencia TimesFM Non-Commercial v1.0 de sus pesos. TimesFM 2.5 (Apache-2.0) queda solo para comparar. Alternativa: Prophet por región. | D-10, D-31 |
+| Modelo de predicción | LightGBM (vigente); candidato: TimesFM 3.0 | E (D-31) | Solo si supera a la climatología. LightGBM sigue publicado hasta que TimesFM 3.0 lo supere en la compuerta con los mismos años de prueba. TimesFM 3.0 autorizada por el líder (15/11): Charmy es gratuito y sin fines de lucro, así que se usa dentro de la licencia TimesFM Non-Commercial v1.0 de sus pesos. TimesFM 2.5 (Apache-2.0) queda solo para comparar. Alternativa: Prophet por región. Predicción por zona: modelo binario `charmy-eventos-v1` en un servicio aparte en Render, que la API expone (D-40). | D-10, D-31, D-40 |
 | API | FastAPI + DuckDB sobre Parquet + httpx | C | OpenAPI automático. | D-05 |
 | Base operativa | Postgres (Supabase) para reportes y estados | C | Alternativa: SQLite. El login de Supabase solo hace falta si entra RF-ALE-05. | D-08 |
 | Focos en vivo | API de área de FIRMS, fuentes `VIIRS_NOAA20_NRT` y `VIIRS_NOAA21_NRT` | C | S-NPP no publica datos nuevos desde el 2/11/2026. Límite: 5.000 transacciones cada 10 min, de 1 a 5 días por consulta. La clave del equipo ya existe y funciona: va en `FIRMS_MAP_KEY` del `.env` local y de la plataforma, nunca en el repo ni en el tablero. | D-13 |
@@ -219,6 +219,7 @@ si nada: avisen en el tablero y propongan el PR que actualiza este documento.
 | D-37 | **Los avisos solo de focos verificados, una vez por celda.** El bot avisa un foco satelital cuando su veredicto (D-09) es confirmado, con cualquier confianza, o probable con confianza nominal o alta. Sin veredicto, sin confirmar o fuente fija, no avisa. Como revisa todo en cada corrida, un foco que sube de veredicto con una segunda pasada, noticias o reportes se avisa cuando sube. Un incendio se avisa una vez por celda de 0,1° (`cell_id`): el aviso se registra con la detección más antigua de la celda en `/live` (48 horas), así que un incendio que sigue activo vuelve a avisarse como mucho cada 48 horas. Los reportes ciudadanos se siguen avisando todos. El viento tiene su propia espera de 15 s: es opcional y no frena el aviso. El Reloj (D-33) se relanza también si falla, cada push a `main` le deja un sucesor en espera, y `avisos.yml` sube su tope a 10 minutos. | Hoy se avisa todo lo de la zona, también focos de confianza baja que ni siquiera son incendios, y un mismo incendio da un mensaje por píxel y por pasada: el canal se satura y la entidad deja de leerlo. Si el Reloj se cortaba, los avisos se frenaban hasta relanzarlo a mano, porque el cron de GitHub casi no dispara. | RF-ALE-02, RF-VIV-01 |
 | D-38 | **El servicio de avisos vuelve a `@dimidio6` de forma permanente.** `services/alertas/` (F3-A1, F3-A2 y el bot de Telegram) pasa de `@daniace` (D-34) a `@dimidio6`, como `apps/juego/` en D-35. `@dimidio6` lo pidió en el tablero, y `@daniace`, líder interino, lo aceptó. Las tareas abiertas de avisos siguen con el mismo alcance. | Que el carril de avisos tenga un solo dueño y no quede en el líder interino. | RF-ALE-02, RF-ALE-03, RF-ALE-04 |
 | D-39 | **Un solo bot de avisos para varias zonas, cada una con su grupo** (propuesta de `@dimidio6`, pendiente de aprobación del líder: es una excepción al congelamiento de la fase 3, como D-35). Amplía D-08: en lugar de una sola zona de demostración, el bot atiende varias. Cada zona es un **punto con radio** (id, nombre, latitud, longitud, radio en km y país) y vive en el código de `services/alertas/`. El id del grupo de Telegram de cada zona va en un secreto de Actions (`TELEGRAM_ZONAS`, zona → grupo), nunca en el repo; mientras no esté, sigue `TELEGRAM_CHAT_ID` con la zona de demostración. Una corrida pide `/live` y `/reports` una sola vez para el rectángulo que cubre todas las zonas y a cada grupo le manda solo lo que cae dentro de su radio; un foco que cae en dos zonas se avisa en las dos. Las reglas de D-37 valen por zona. El feed CAP sale para cada zona, con su área como círculo. Para la demostración las zonas son de prueba, con grupos marcados como demo que no se presentan como una entidad real. No entran que un grupo elija su zona desde Telegram ni las cuentas de entidad (RF-ALE-05 sigue deseable). El trabajo queda acotado a `services/alertas/`, una línea de `services/api/src/api/cap.py` (con traspaso de `@BrunoAguinaga0`) y `avisos.yml`; si no llega, queda la zona única. | A una entidad solo le sirven los focos de su zona: avisarle los de otra provincia satura el canal y deja de leerlo. Un solo bot evita crear y mantener un bot, una clave y un workflow por región, y pide los datos una vez por corrida. Un punto con radio describe una localidad mejor que un rectángulo, y CAP 1.2 lo admite tal cual. | RF-ALE-02, RF-ALE-04 |
+| D-40 | **Predicción por zona con el modelo binario, servido aparte.** El modelo `charmy-eventos-v1` de `@cosmosnehu77` (#336) corre como servicio propio en Render (`services/prediccion`, plan gratis, #341) y la API lo expone con `GET /regions/forecast` y `POST /forecast/zone` (F4-C4). La app lo muestra en la pestaña Predicción de Relieve y en Experto (F4-D12). Los plazos 1 y 2 se muestran como pronóstico; del 3 al 6, como lo habitual ajustado. `/forecast` (LightGBM, D-31) no cambia. | Pasa la compuerta D-10 en los seis plazos (mejora del Brier de 8 % a 13 %), pero a 3 meses o más hubo un año peor que la climatología. Un servicio aparte no carga a la API con el modelo, y el navegador nunca lo llama: lo llama la API con un token. | RF-PRE |
 
 ---
 
@@ -426,6 +427,7 @@ Si falta tiempo en el carril B, el orden es: fuentes fijas, tiempo, imagen y, po
 | #314 | F4-D7 | Tu zona pasa a llamarse Experto y se retira el modo novato (queda solo lo experto); con la herramienta de dibujo encendida, el cursor del mapa es una cruz | `@daniace` | `apps/app/` | F4-D3 | RF-MOD-01, RF-MOD-02, RF-MOD-03 | hecho |
 | #323 | F4-D8 | Organización de Experto: en la barra, Experto anteúltima y sin ícono y En vivo última; el panel va por pasos (dónde, cuándo y filtros plegados), con una franja de resultado y reproducción, pestañas Resumen / Lugar / Validación y Reportar en el encabezado; las descargas del calendario en un menú | `@daniace` | `apps/app/` | F4-D7 | RF-MOD-02, RNF-04 | hecho |
 | #329 | F4-D9 | Charmy guía el panel de Experto: botón Guía en el encabezado que abre el recorrido de Charmy (vestuario científica) por cada parte del panel y sus parámetros, como el de la vista común | `@daniace` | `apps/app/` | F4-D8 | RF-CHA-05, RF-MOD-02, RNF-04 | hecho |
+| #347 | F4-D12 | Pestaña Predicción de Relieve (celdas esperadas contra las habituales por provincia, ficha con los seis meses) y predicción del área en Experto; "no disponible" si la API no responde (D-40) | `@BrunoAguinaga0` (traspaso de `apps/app/`) | `apps/app/` | F4-C4 | RF-PRE-01, RF-PRE-02 | pendiente |
 | #60 | F4-E1 | Pulido de la landing; enlaces entre las tres piezas | `@daniace` (D-34) | `apps/landing/` | fase 3 | RF-LAN-04, RNF-12 | pendiente |
 | #61 | F4-E2 | Pulido del juego | `@daniace` (D-34) | `apps/juego/` | F3-E1 | RNF-12 | pendiente |
 | #183 | F4-E3 | El juego pasa a llamarse Charmy Brigada en todas las piezas; requisitos y tareas de D-35 | `@dimidio6` | `apps/juego/`, y el nombre en `apps/app/`, `apps/landing/`, `packages/charmy/`, `docs/` | — | RF-KID-01, RNF-12 | en revisión |
@@ -441,6 +443,7 @@ Si falta tiempo en el carril B, el orden es: fuentes fijas, tiempo, imagen y, po
 | — | F4-B2 | `fuente_fija` en cada foco de `dia-juego.json` (contrato y muestra) | `@leonelcnr` | `data/muestras/`, `packages/contracts/datos/` | F4-X1 (después del envío, D-35) | RF-KID-06 | pendiente |
 | — | F4-C2 | `GET /game/day?date=`: focos de un día con la forma de `dia-juego.json`, `fuente_fija` por foco y el viento del día, con caché | `@BrunoAguinaga0` | `services/api/`, `packages/contracts/api/` | F4-X1 (después del envío, D-35), F4-B2 | RF-KID-10, RF-KID-08 | pendiente |
 | — | F4-C3 | `GET` y `POST /game/scores`: tabla del desafío del día, apodo filtrado sin datos personales, puntaje validado y límite de pedidos | `@BrunoAguinaga0` | `services/api/`, `packages/contracts/api/` | F4-X1 (después del envío, D-35) | RF-KID-04 | pendiente |
+| #345 | F4-C4 | `GET /regions/forecast` y `POST /forecast/zone`: la API llama al servicio de predicción por zona con su token, guarda las respuestas y da 503 si no responde a tiempo (D-40) | `@BrunoAguinaga0` | `services/api/`, `packages/contracts/api/` | #341 | RF-PRE-01, RF-PRE-02 | en curso |
 | #62 | F4-F1 | Video o slides finales | sin asignar, al final (D-32) | `docs/entrega/` | F3-F1 | RNF-07, RNF-11 | al final |
 | #63 | F4-X1 | Envío en la plataforma de Space Apps | carril F y `@cosmosnehu77` | — | F4-A1, F4-F1 | RNF-01 | pendiente |
 
@@ -525,7 +528,7 @@ Qué tareas cubren cada requisito. Si un requisito de `REQUISITOS.md` no aparece
 | RF-MOD-01, 02, 03 | F3-D1, F3-D2; F4-D7 (retira el modo novato), F4-D8 (organización de Experto) | 3, 4 |
 | RF-CHA-01, 04 | F0-E1, F1-E1, F1-E2, F1-E4 | 1 |
 | RF-CHA-02, 03, 06 | F2-E1, F3-E2 | 2 (mínimo) / 3 |
-| RF-CHA-05 | F3-D1; F4-D9 (guía de Experto) | 3, 4 |
+| RF-CHA-05 | F3-D1; F4-D9 (guía de Experto), F4-D10 (invitación a la guía) | 3, 4 |
 | RF-CHA-07 | F2-F1 | 2 |
 | RF-LAN-01 a 04 | F1-F1, F2-E2, F4-E1 | 2 |
 | RF-VIV-01 a 04 | F3-C1, F3-C3, F3-D3, F4-D2, F4-D4 | 3, 4 |
@@ -533,7 +536,7 @@ Qué tareas cubren cada requisito. Si un requisito de `REQUISITOS.md` no aparece
 | RF-ALE-02, 04, 06 | F3-A1, F3-A2, F3-D3 | 3 |
 | RF-ALE-05 | sin tarea (deseable) | hoja de ruta |
 | RF-ALE-07 | cumplido por diseño (D-14) | — |
-| RF-PRE-01, 02 | F3-B2, F3-B5, F3-E3 | 3, con compuerta |
+| RF-PRE-01, 02 | F3-B2, F3-B5, F3-E3; F4-C4, F4-D12 (D-40) | 3 y 4, con compuerta |
 | RF-KID-01, 03 | F1-E4, F3-E1, F4-E3, F4-E12 (D-36) | 3 |
 | RF-KID-02 | fuera (D-36: focos simulados) | — |
 | RF-KID-04 | F4-C3, F4-E10 (D-35) | 4 |
@@ -636,6 +639,7 @@ La fase 5 no cubre requisitos nuevos: refuerza RNF-02 y RNF-10 sobre lo ya entre
 | 2026-11-15 | Versión 2.3.6. La decisión de que `services/alertas/` vuelve a `@dimidio6` pasa de D-36 a D-38: el número D-36 ya era del juego en 3D. Solo cambia el número, no la decisión. | 3 y `AGENTS.md` §6 | `@daniace` (líder interino) |
 | 2026-11-15 | Versión 2.3.7, con `REQUISITOS.md` 1.8. Decisión D-39 (pendiente de aprobación del líder): un solo bot de avisos para varias zonas, cada una un punto con radio y con su grupo de Telegram. Tarea nueva F4-A3 (#324). | 3, 5 | `@dimidio6` |
 | 2026-11-15 | Versión 2.3.8. Tarea nueva F4-D8 (#323): organización de Experto (orden de la barra, panel por pasos y pestañas, descargas en un menú), ya fusionada en #327; y F4-D9 (#329): Charmy guía el panel de Experto, en #330. | encabezado, 5, 6 | `@daniace` |
+| 2026-11-15 | Versión 2.3.10. Predicción por zona con el modelo binario servido aparte (D-40): tareas nuevas F4-C4 (#345, API) y F4-D12 (#347, app). | 1.1, 3, 5, 6 | `@BrunoAguinaga0` |
 
 ## 10. Registro de cierres
 

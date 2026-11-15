@@ -79,7 +79,9 @@ async def _avisar_zona(
             try:
                 mensaje = await enviar(chat_id, texto, botones(alerta.id), responder_a)
             except Exception as e:  # uno que falla no frena a los demás (#263); sin marca, se reintenta
-                log.warning("no se pudo mandar el aviso %s (foco %s): %s", alerta.id, foco.id, e)
+                log.warning(
+                    "no se pudo mandar el aviso %s (foco %s) a %s: %s", alerta.id, foco.id, zona.id, e
+                )
                 fallidos += 1
                 continue
             await api.marcar_enviada(alerta.id, foco.veredicto, mensaje)  # #280: sin marca, se reintenta
@@ -89,7 +91,9 @@ async def _avisar_zona(
             try:
                 await enviar(chat_id, armar_confirmado(foco, zona), [], alerta.message_id)
             except Exception as e:
-                log.warning("no se pudo mandar la actualización del aviso %s: %s", alerta.id, e)
+                log.warning(
+                    "no se pudo mandar la actualización del aviso %s a %s: %s", alerta.id, zona.id, e
+                )
                 fallidos += 1
                 continue
             await api.marcar_enviada(alerta.id, "confirmado")

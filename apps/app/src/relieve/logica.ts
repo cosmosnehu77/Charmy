@@ -154,6 +154,12 @@ export function focosVivoVisibles<T extends { t: number; frp: number | null | un
  */
 export const AGRUPAR_VIVO = { clusterRadius: 50, clusterMinPoints: 3, clusterMaxZoom: 8 } as const;
 
+/**
+ * Agrupado de Experto (#343): igual que En vivo, pero hasta el zoom 12. El área se ve más cerca que el país y un
+ * período largo junta muchos focos en el mismo lugar; desde el zoom 13 se ven todos sueltos.
+ */
+export const AGRUPAR_ZONA = { clusterRadius: 50, clusterMinPoints: 3, clusterMaxZoom: 12 } as const;
+
 export function hace(ahora: Date, cuando: string): string {
   const horas = Math.round((ahora.getTime() - new Date(cuando).getTime()) / 3_600_000);
   return horas < 1 ? "hace menos de 1 h" : `hace ${horas} h`;

@@ -14,6 +14,7 @@ import {
   tendencia,
   regionDePunto,
   AGRUPAR_VIVO,
+  AGRUPAR_ZONA,
   enNiveles,
   focosVivoVisibles,
   nombresPorZoom,
@@ -276,5 +277,11 @@ describe("agrupado de En vivo (#333)", () => {
 
   it("agrupa a menos de 50 px, desde 3 focos y hasta el zoom 8", () => {
     expect(AGRUPAR_VIVO).toEqual({ clusterRadius: 50, clusterMinPoints: 3, clusterMaxZoom: 8 });
+  });
+});
+
+describe("agrupado de Experto (#343)", () => {
+  it("agrupa a menos de 50 px, desde 3 focos y hasta el zoom 12", () => {
+    expect(AGRUPAR_ZONA).toEqual({ clusterRadius: 50, clusterMinPoints: 3, clusterMaxZoom: 12 });
   });
 });

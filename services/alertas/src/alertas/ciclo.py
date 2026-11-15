@@ -2,6 +2,7 @@
 
 import logging
 from collections.abc import Awaitable, Callable
+from dataclasses import dataclass
 from typing import Protocol
 
 import httpx
@@ -24,9 +25,21 @@ class Api(Protocol):
     async def crear_alerta(self, zone_id: str, kind: Tipo, ref_id: str) -> tuple[str, bool]: ...
 
 
-async def avisar(api: Api, enviar: Enviar, zona: Zona, chat_id: int, avisados: set[str]) -> None:
-    candidatos = await api.focos_en_vivo(zona) + await api.reportes(zona)
-    for foco in nuevos_para_avisar(zona, candidatos, avisados):
+@dataclass(frozen=True)
+class Resumen:
+    """Lo que hizo un ciclo, para el registro: focos y reportes leídos, nuevos en la zona, avisos mandados."""
+
+    focos: int
+    reportes: int
+    nuevos: int
+    mandados: int
+
+
+async def avisar(api: Api, enviar: Enviar, zona: Zona, chat_id: int, avisados: set[str]) -> Resumen:
+    focos, reportes = await api.focos_en_vivo(zona), await api.reportes(zona)
+    nuevos = nuevos_para_avisar(zona, focos + reportes, avisados)
+    mandados = 0
+    for foco in nuevos:
         try:
             alert_id, es_nueva = await api.crear_alerta(zona.id, foco.tipo, foco.id)
         except httpx.HTTPError as e:
@@ -37,3 +50,5 @@ async def avisar(api: Api, enviar: Enviar, zona: Zona, chat_id: int, avisados: s
             continue  # ya se avisó antes de reiniciar el servicio
         texto = armar_mensaje(foco, zona, await api.viento(foco.lat, foco.lon))
         await enviar(chat_id, texto, botones(alert_id))
+        mandados += 1
+    return Resumen(len(focos), len(reportes), len(nuevos), mandados)

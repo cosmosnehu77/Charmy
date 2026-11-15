@@ -46,15 +46,17 @@ def con_estado(texto: str, estado: str) -> str:
     return texto.split(SEPARADOR_ESTADO)[0] + SEPARADOR_ESTADO + estado
 
 
-async def procesar_toques(api: Api, tg: Telegram) -> None:
-    """Guarda cada estado con PATCH /alerts. Si la API falla, ese toque y los siguientes esperan."""
-    confirmado = None
+async def procesar_toques(api: Api, tg: Telegram) -> int:
+    """Guarda cada estado con PATCH /alerts y dice cuántos guardó. Si la API falla, ese toque y los siguientes
+    esperan."""
+    confirmado, guardados = None, 0
     for t in sorted(await tg.toques_pendientes(), key=lambda t: t.update_id):
         leido = leer_dato(t.dato)
         if leido is not None:
             alert_id, estado = leido
             if not await api.actualizar_alerta(alert_id, estado):
                 break
+            guardados += 1
             try:
                 texto = con_estado(t.texto, ESTADOS[estado])
                 await tg.editar(t.chat_id, t.message_id, texto, botones(alert_id))
@@ -63,8 +65,14 @@ async def procesar_toques(api: Api, tg: Telegram) -> None:
         confirmado = t.update_id
     if confirmado is not None:
         await tg.confirmar(confirmado)
+    return guardados
 
 
 async def corrida(api: Api, tg: Telegram, zona: Zona, chat_id: int) -> None:
-    await procesar_toques(api, tg)
-    await avisar(api, tg.enviar, zona, chat_id, set())
+    """Una corrida que deja una línea de resumen en el registro (Actions), aunque no haya nada que avisar."""
+    guardados = await procesar_toques(api, tg)
+    r = await avisar(api, tg.enviar, zona, chat_id, set())
+    log.info(
+        "corrida: botones %d · focos en vivo %d · reportes %d · nuevos en la zona %d · avisos mandados %d",
+        guardados, r.focos, r.reportes, r.nuevos, r.mandados,
+    )

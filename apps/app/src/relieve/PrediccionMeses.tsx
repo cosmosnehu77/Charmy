@@ -37,8 +37,8 @@ export function PrediccionMeses({ meses, texto }: { meses: MesPrediccion[]; text
       )}
       <p className="mt-1 text-[11.5px] leading-snug text-white/45">
         {t(
-          "Es una estimación del modelo con los datos hasta el mes pasado: cuenta celdas de 0,1° (unos 11 km) con fuego.",
-          "Model estimate based on data through last month: counts 0.1° cells (~11 km) with fire.",
+          "Es una estimación del modelo con los datos hasta el mes pasado: cuenta cuadrados de unos 11 km con fuego.",
+          "Model estimate based on data through last month: counts squares of about 11 km with fire.",
         )}
       </p>
     </div>

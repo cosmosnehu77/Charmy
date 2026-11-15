@@ -211,8 +211,8 @@ const PASOS_PREDICCION: Paso[] = [
     mood: "explica",
     titulo: ["Dónde se espera más fuego", "Where more fire is expected"],
     texto: [
-      "El ranking ordena las provincias por las celdas con fuego que espera el modelo. Cada celda mide 0,1°, unos 11 km de lado.",
-      "The ranking orders provinces by the cells with fire the model expects. Each cell is 0.1°, about 11 km across.",
+      "El ranking ordena las provincias por los cuadrados con fuego que espera el modelo. Cada cuadrado mide unos 11 km de lado.",
+      "The ranking orders provinces by the squares with fire the model expects. Each square is about 11 km across.",
     ],
   }),
   paso({
@@ -220,8 +220,8 @@ const PASOS_PREDICCION: Paso[] = [
     mood: "pensando",
     titulo: ["Cómo leer el mapa", "How to read the map"],
     texto: [
-      "La altura dice cuántas celdas con fuego espera el modelo. El color, si es más (naranja) o menos (violeta) que lo habitual para ese mes; claro es lo de siempre.",
-      "Height shows how many fire cells the model expects. Color shows whether that is more (orange) or less (purple) than usual for that month; light means as usual.",
+      "La altura dice cuántos cuadrados con fuego espera el modelo. El color, si es más (naranja) o menos (violeta) que lo habitual para ese mes; claro es lo de siempre.",
+      "Height shows how many squares with fire the model expects. Color shows whether that is more (orange) or less (purple) than usual for that month; light means as usual.",
     ],
   }),
   paso({

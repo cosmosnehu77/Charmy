@@ -93,6 +93,19 @@
     box-shadow: 0 0 0 10px color-mix(in srgb, var(--charmy-llama) 0%, transparent);
   }
 }
+/* Con la pestaña elegida el fondo es naranja: el punto toma el color del texto para no perderse. */
+[aria-selected="true"] > .punto-vivo {
+  background: currentColor;
+  animation-name: relieve-punto-activo;
+}
+@keyframes relieve-punto-activo {
+  from {
+    box-shadow: 0 0 0 0 color-mix(in srgb, currentColor 45%, transparent);
+  }
+  to {
+    box-shadow: 0 0 0 8px color-mix(in srgb, currentColor 0%, transparent);
+  }
+}
 
 /* Lupa: crece al tocarla, borde y halo naranja, sin el rectángulo del navegador. */
 .buscador-relieve {

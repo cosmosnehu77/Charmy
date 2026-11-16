@@ -21,7 +21,7 @@ export function ControlesMapa({ conGiro }: { conGiro: boolean }) {
       data-guia="controles"
       className="pointer-events-auto absolute right-3 top-(--relieve-techo) z-20 flex flex-col items-end gap-2.5 md:right-4 md:top-[72px]"
     >
-      <Grupo nombre={t("Zoom", "Zoom")} clase="max-md:hidden">
+      <Grupo nombre={t("Zoom", "Zoom")} clase="control-zoom">
         <Boton etiqueta={t("Acercar", "Zoom in")} onClick={() => controlMapa.zoom(0.75)}>
           <Plus aria-hidden="true" className="size-4" />
         </Boton>

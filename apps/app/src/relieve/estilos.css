@@ -298,6 +298,10 @@
   .relieve .nav-acc {
     top: 74px;
   }
+  /* Sin + y −: en el teléfono se acerca con dos dedos. */
+  .relieve .control-zoom {
+    display: none;
+  }
 }
 @media (max-width: 480px) {
   .relieve {

@@ -102,7 +102,7 @@ def etiquetar(
         "o de años anteriores; prevención, alertas, simulacros, balances, policiales, deportes y política.\n"
         f"Cada titular termina con el nombre del medio: un titular o un medio de otro país que no es {pais} "
         'es "sin_informacion". Ante la duda, "sin_informacion". Respondé solo un arreglo JSON de cadenas, '
-        "una por titular, en el mismo orden.\n\n"
+        "una por titular, en el mismo orden, aunque haya un solo titular.\n\n"
         + "\n".join(f"{i + 1}. {t['title']}" for i, t in enumerate(titulares))
     )
     try:
@@ -125,8 +125,12 @@ def etiquetar(
             # Un modelo que razona puede gastar los tokens pensando y devolver content null (#279).
             motivo = eleccion.get("finish_reason") or "sin motivo"
             raise NoticiasNoDisponibles(f"Modelo de lenguaje: respuesta sin texto ({motivo})")
-        # El modelo a veces envuelve el JSON en un bloque de código.
-        etiquetas = json.loads(texto[texto.index("[") : texto.rindex("]") + 1])
+        if "[" not in texto and len(titulares) == 1:
+            # #420: con un solo titular, el modelo a veces contesta la etiqueta suelta, sin arreglo.
+            etiquetas = [texto.strip(" \n`\"'")]
+        else:
+            # El modelo a veces envuelve el JSON en un bloque de código.
+            etiquetas = json.loads(texto[texto.index("[") : texto.rindex("]") + 1])
     except httpx.HTTPStatusError as error:
         # Solo el código: la URL y los encabezados no se imprimen.
         raise NoticiasNoDisponibles(f"Modelo de lenguaje: HTTP {error.response.status_code}") from None

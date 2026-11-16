@@ -7,7 +7,7 @@ from datetime import UTC, datetime, timedelta
 import httpx
 import pytest
 from worker import noticias, verificacion
-from worker.noticias import NoticiasNoDisponibles, etiquetar
+from worker.noticias import NoticiasNoDisponibles, buscar, etiquetar
 
 AHORA = datetime(2026, 11, 15, 14, 0, tzinfo=UTC)
 TITULARES = [
@@ -240,3 +240,43 @@ def test_la_muestra_real_esta_marcada_y_cada_bloque_entra_en_un_pedido():
         assert {e for _, e in filas} <= noticias.ETIQUETAS
     reales = {e for _, _, filas in m.MUESTRA_REAL for _, e in filas}
     assert {"apoya", "sin_informacion"} <= reales
+
+
+def rss(*items: tuple[str, str]) -> str:
+    # RSS de Google News con la misma forma que el real; titulares y medios de muestra.
+    cuerpo = "".join(
+        f"<item><title>{titulo}</title><link>https://news.google.com/x</link>"
+        f'<pubDate>Sun, 15 Nov 2026 12:00:00 GMT</pubDate><source url="{medio}">Medio</source></item>'
+        for titulo, medio in items
+    )
+    return f"<rss><channel>{cuerpo}</channel></rss>"
+
+
+def test_buscar_descarta_los_medios_con_dominio_de_otro_pais():
+    # #407: "Santa Cruz" también es Bolivia; sus medios traían el incendio de Taperas como si fuera argentino.
+    texto = rss(
+        ("Incendio en Taperas", "https://www.reduno.com.bo"),
+        ("Incendio forestal en El Calafate", "https://www.laopinionaustral.com.ar"),
+        ("Fuego en un campo cerca de Caleta Olivia", "https://www.mejorinformado.com"),
+        ("Explosión de gas al sur de Buenos Aires", "https://www.europapress.es"),
+        ("Incendio en la Patagonia chilena", "https://www.biobiochile.cl"),
+    )
+    titulares = buscar("Santa Cruz", "Argentina", cliente(lambda req: httpx.Response(200, text=texto)))
+    assert [t["title"] for t in titulares] == [
+        "Incendio forestal en El Calafate",
+        "Fuego en un campo cerca de Caleta Olivia",
+    ]
+
+
+def test_en_chile_quedan_los_medios_chilenos():
+    texto = rss(
+        ("Incendio forestal en Chonchi", "https://www.biobiochile.cl"), ("Otro", "https://diario.com.ar")
+    )
+    titulares = buscar("Los Lagos", "Chile", cliente(lambda req: httpx.Response(200, text=texto)))
+    assert [t["title"] for t in titulares] == ["Incendio forestal en Chonchi"]
+
+
+def test_el_pedido_dice_que_un_medio_de_otro_pais_no_cuenta():
+    pedido = pedido_de("Santa Cruz")
+    assert "Cada titular termina con el nombre del medio" in pedido
+    assert "un titular o un medio de otro país" in pedido

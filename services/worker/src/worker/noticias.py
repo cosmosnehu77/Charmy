@@ -8,6 +8,7 @@ import json
 import os
 import xml.etree.ElementTree as ET
 from email.utils import parsedate_to_datetime
+from urllib.parse import urlparse
 
 import httpx
 
@@ -20,6 +21,13 @@ OPCIONES_MODELO = {"chat_template_kwargs": {"enable_thinking": False}}  # si raz
 ETIQUETAS = {"apoya", "contradice", "sin_informacion"}
 MAX_TITULARES = 8
 ESPERA_MODELO_S = 20  # con 60 s, un modelo caído alargaba cada vuelta varios minutos (#279)
+# #407: "Santa Cruz", "Misiones" o "La Rioja" también son de otros países, y Google News trae sus medios.
+# Se descarta un medio cuyo dominio es de un país de la región o de España que no es el de la provincia.
+DOMINIO_PAIS = {"Argentina": "ar", "Chile": "cl"}
+DOMINIOS_DE_PAIS = {
+    "ar", "bo", "br", "cl", "co", "cr", "cu", "do", "ec", "es", "gt", "hn", "mx", "ni", "pa", "pe", "pr",
+    "py", "sv", "uy", "ve",
+}  # fmt: skip
 
 
 class NoticiasNoDisponibles(Exception):
@@ -43,6 +51,8 @@ def buscar(provincia: str, pais: str, cliente: httpx.Client) -> list[dict]:
         raise NoticiasNoDisponibles(f"Google News: {type(error).__name__}") from None
     titulares = []
     for item in items:
+        if _medio_de_otro_pais(item, pais):
+            continue
         fecha = item.findtext("pubDate")
         titulares.append(
             {
@@ -53,6 +63,13 @@ def buscar(provincia: str, pais: str, cliente: httpx.Client) -> list[dict]:
         )
     titulares.sort(key=lambda t: t["published"] or "", reverse=True)
     return [t for t in titulares if t["title"]][:MAX_TITULARES]
+
+
+def _medio_de_otro_pais(item: ET.Element, pais: str) -> bool:
+    fuente = item.find("source")
+    host = urlparse(fuente.get("url", "") if fuente is not None else "").hostname or ""
+    dominio = host.rsplit(".", 1)[-1]
+    return dominio in DOMINIOS_DE_PAIS and dominio != DOMINIO_PAIS.get(pais)
 
 
 def etiquetar(
@@ -83,8 +100,10 @@ def etiquetar(
         '- "sin_informacion": todo lo demás. Por ejemplo: incendios de casas, departamentos, comercios, '
         "galpones, depósitos, fábricas o vehículos; explosiones; incendios de otra provincia u otro país "
         "o de años anteriores; prevención, alertas, simulacros, balances, policiales, deportes y política.\n"
-        'Ante la duda, "sin_informacion". Respondé solo un arreglo JSON de cadenas, una por titular, en el '
-        "mismo orden.\n\n" + "\n".join(f"{i + 1}. {t['title']}" for i, t in enumerate(titulares))
+        f"Cada titular termina con el nombre del medio: un titular o un medio de otro país que no es {pais} "
+        'es "sin_informacion". Ante la duda, "sin_informacion". Respondé solo un arreglo JSON de cadenas, '
+        "una por titular, en el mismo orden.\n\n"
+        + "\n".join(f"{i + 1}. {t['title']}" for i, t in enumerate(titulares))
     )
     try:
         respuesta = cliente.post(

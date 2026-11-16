@@ -10,7 +10,7 @@
 
 **Fase activa:** 4
 **Líder:** `@cosmosnehu77`. Hasta que vuelva (probablemente en la fase 4), **líder interino `@daniace`** (D-28).
-**Versión:** 2.3.14 · **Última actualización:** 15 de noviembre de 2026
+**Versión:** 2.3.15 · **Última actualización:** 16 de noviembre de 2026
 
 ## Objetivo del proyecto
 
@@ -434,6 +434,7 @@ Si falta tiempo en el carril B, el orden es: fuentes fijas, tiempo, imagen y, po
 | #377 | F4-D15 | El último mes en la ficha de Focos (focos por día de 30 días, con `/hotspots` y el contorno de la provincia); en Predicción, color contra lo habitual (rampa divergente), ficha solo con la predicción y su porqué, y cómo predice el modelo; Charmy en el ícono de la pestaña. Sin cambiar el contrato | `@daniace` | `apps/app/` | F4-D12 | RF-CAL-03, RF-PRE-01, RF-PRE-02, RF-CHA-05, RNF-04 | en revisión |
 | #396 | F4-D16 | Botón de vista satelital junto a 2D/3D en todas las pestañas: cambia el mapa base a imagen Sentinel-2 (EOxCloudless) y, otra vez, vuelve al modelo; las provincias se ven más transparentes sobre la imagen | `@BrunoAguinaga0` (traspaso de `apps/app/`) | `apps/app/` | — | RF-MAP-06 | en revisión |
 | #406 | F4-D17 | La navbar del mapa pasa a íconos (boceto 6 de los bocetos de la navbar): Charmy, pestañas y lupa en piezas de vidrio; las inactivas solo con su ícono y la elegida con su nombre junto a un círculo naranja; «Charmy» sale del logo con el hover; en el teléfono entran las seis pestañas | `@dimidio6` (traspaso de `apps/app/src/relieve/`) | `apps/app/` | — | RF-MAP-01, RNF-04 | en revisión |
+| #416 | F4-D19 | «Analizando datos…» con Charmy y una explicación corta cuando la predicción tarda (el servicio se despierta): ranking y ficha de Predicción y área de Experto; un solo reintento | `@BrunoAguinaga0` (traspaso de `apps/app/`) | `apps/app/` | F4-C5 | RF-PRE-01, RF-PRE-02 | en curso |
 | #60 | F4-E1 | Pulido de la landing; enlaces entre las tres piezas | `@daniace` (D-34) | `apps/landing/` | fase 3 | RF-LAN-04, RNF-12 | pendiente |
 | #61 | F4-E2 | Pulido del juego | `@daniace` (D-34) | `apps/juego/` | F3-E1 | RNF-12 | pendiente |
 | #183 | F4-E3 | El juego pasa a llamarse Charmy Brigada en todas las piezas; requisitos y tareas de D-35 | `@dimidio6` | `apps/juego/`, y el nombre en `apps/app/`, `apps/landing/`, `packages/charmy/`, `docs/` | — | RF-KID-01, RNF-12 | en revisión |
@@ -450,6 +451,7 @@ Si falta tiempo en el carril B, el orden es: fuentes fijas, tiempo, imagen y, po
 | — | F4-C2 | `GET /game/day?date=`: focos de un día con la forma de `dia-juego.json`, `fuente_fija` por foco y el viento del día, con caché | `@BrunoAguinaga0` | `services/api/`, `packages/contracts/api/` | F4-X1 (después del envío, D-35), F4-B2 | RF-KID-10, RF-KID-08 | pendiente |
 | — | F4-C3 | `GET` y `POST /game/scores`: tabla del desafío del día, apodo filtrado sin datos personales, puntaje validado y límite de pedidos | `@BrunoAguinaga0` | `services/api/`, `packages/contracts/api/` | F4-X1 (después del envío, D-35) | RF-KID-04 | pendiente |
 | #345 | F4-C4 | `GET /regions/forecast` y `POST /forecast/zone`: la API llama al servicio de predicción por zona con su token, guarda las respuestas y da 503 si no responde a tiempo (D-40) | `@BrunoAguinaga0` | `services/api/`, `packages/contracts/api/` | #341 | RF-PRE-01, RF-PRE-02 | en curso |
+| #415 | F4-C5 | `GET /regions/forecast` despierta el servicio de predicción en segundo plano (toque a `/salud`, como mucho cada 5 min) y la API lo espera hasta 60 s; sin cambiar el contrato | `@BrunoAguinaga0` | `services/api/` | F4-C4 | RF-PRE-01, RF-PRE-02 | en curso |
 | #62 | F4-F1 | Video o slides finales | sin asignar, al final (D-32) | `docs/entrega/` | F3-F1 | RNF-07, RNF-11 | al final |
 | #63 | F4-X1 | Envío en la plataforma de Space Apps | carril F y `@cosmosnehu77` | — | F4-A1, F4-F1 | RNF-01 | pendiente |
 
@@ -542,7 +544,7 @@ Qué tareas cubren cada requisito. Si un requisito de `REQUISITOS.md` no aparece
 | RF-ALE-02, 04, 06 | F3-A1, F3-A2, F3-D3 | 3 |
 | RF-ALE-05 | sin tarea (deseable) | hoja de ruta |
 | RF-ALE-07 | cumplido por diseño (D-14) | — |
-| RF-PRE-01, 02 | F3-B2, F3-B5, F3-E3; F4-C4, F4-D12 (D-40) | 3 y 4, con compuerta |
+| RF-PRE-01, 02 | F3-B2, F3-B5, F3-E3; F4-C4, F4-D12 (D-40); F4-C5, F4-D19 (espera del servicio) | 3 y 4, con compuerta |
 | RF-KID-01, 03 | F1-E4, F3-E1, F4-E3, F4-E12 (D-36) | 3 |
 | RF-KID-02 | fuera (D-36: focos simulados) | — |
 | RF-KID-04 | F4-C3, F4-E10 (D-35) | 4 |
@@ -650,6 +652,7 @@ La fase 5 no cubre requisitos nuevos: refuerza RNF-02 y RNF-10 sobre lo ya entre
 | 2026-11-15 | Versión 2.3.12. Tarea nueva F4-D14 (#368): Charmy guía cada pestaña del mapa. | encabezado, 5, 6 | `@daniace` |
 | 2026-11-15 | Versión 2.3.13. Tarea nueva F4-D16 (#396): vista satelital del mapa con EOxCloudless 2024 (tabla 1.1). | encabezado, 1.1, 5, 6 | `@BrunoAguinaga0` |
 | 2026-11-15 | Versión 2.3.14. Tarea nueva F4-D17 (#406): la navbar del mapa pasa a íconos con el nombre de la pestaña elegida. | encabezado, 5, 6 | `@dimidio6` |
+| 2026-11-16 | Versión 2.3.15. Tareas nuevas F4-C5 (#415) y F4-D19 (#416): la API despierta el servicio de predicción al abrir la app y lo espera, y la app muestra «Analizando datos…» mientras arranca. | encabezado, 5, 6 | `@BrunoAguinaga0` |
 
 ## 10. Registro de cierres
 

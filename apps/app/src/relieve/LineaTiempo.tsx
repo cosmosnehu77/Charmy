@@ -39,7 +39,7 @@ export function LineaTiempo({ region, dias }: { region: RegionResumen; dias: str
       role="group"
       aria-label={t(`Focos por día en ${region.properties.name}`, `Daily hotspots in ${region.properties.name}`)}
       data-guia="linea"
-      className="linea-relieve vidrio-relieve pointer-events-auto absolute left-1/2 top-[76px] z-20 flex w-max max-w-[calc(100%-24px)] -translate-x-1/2 items-center gap-4 rounded-full py-[9px] pl-[9px] pr-[22px] md:bottom-[84px] md:top-auto"
+      className="linea-relieve vidrio-relieve pointer-events-auto absolute left-2 top-(--relieve-techo) z-20 flex w-max max-w-[calc(100%-68px)] items-center gap-3 rounded-full py-[9px] pl-[9px] pr-[14px] md:bottom-[84px] md:left-1/2 md:top-auto md:max-w-[calc(100%-24px)] md:-translate-x-1/2 md:gap-4 md:pr-[22px]"
     >
       <button
         type="button"
@@ -51,14 +51,14 @@ export function LineaTiempo({ region, dias }: { region: RegionResumen; dias: str
       </button>
       <div className="flex min-w-0 flex-col gap-1">
         <div className="flex items-baseline justify-between gap-4 whitespace-nowrap text-xs text-white/60">
-          <span>{t(`Focos en ${region.properties.name}`, `Hotspots in ${region.properties.name}`)}</span>
+          <span className="min-w-0 truncate">{t(`Focos en ${region.properties.name}`, `Hotspots in ${region.properties.name}`)}</span>
           <b className="font-semibold text-white" aria-live="polite">
             {linea.activa
               ? `${diaCorto(dia)} · ${focosDelDia} ${focosDelDia === 1 ? t("foco", "hotspot") : t("focos", "hotspots")}`
               : t("Tocá play o un día", "Tap play or a day")}
           </b>
         </div>
-        <div className="flex items-end gap-2">
+        <div className="flex items-end gap-1.5 md:gap-2">
           {dias.map((d, i) => {
             const n = porDia[i] ?? 0;
             const estado = !linea.activa ? "" : i === linea.dia ? "hoy" : i < linea.dia ? "paso" : "";
@@ -69,7 +69,7 @@ export function LineaTiempo({ region, dias }: { region: RegionResumen; dias: str
                 onClick={() => usarLinea({ activa: true, play: false, dia: i })}
                 aria-label={`${diaCorto(d)}: ${n} ${n === 1 ? t("foco", "hotspot") : t("focos", "hotspots")}`}
                 aria-pressed={linea.activa && i === linea.dia}
-                className="group flex w-[34px] flex-col items-center gap-[3px]"
+                className="group flex w-[30px] flex-col md:w-[34px] items-center gap-[3px]"
               >
                 <span className="flex h-6 w-full items-end">
                   <i className={`barra-dia ${estado}`} style={{ height: `${n ? Math.max(8, (n / max) * 100) : 4}%` }} />

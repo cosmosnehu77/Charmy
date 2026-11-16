@@ -174,7 +174,7 @@ export function Relieve() {
       </div>
 
       {resumen.isError && (
-        <p role="alert" className="vidrio-relieve absolute left-1/2 top-24 z-20 -translate-x-1/2 rounded-xl px-4 py-2.5 text-sm">
+        <p role="alert" className="vidrio-relieve absolute left-3 top-(--relieve-techo) z-20 w-[calc(100%-72px)] md:left-1/2 md:top-24 md:w-auto md:-translate-x-1/2 rounded-xl px-4 py-2.5 text-sm">
           {t(
             "Los datos por provincia no están disponibles ahora. Probá en un rato.",
             "Provincial data is not available right now. Try again shortly.",
@@ -322,14 +322,17 @@ export function Relieve() {
       )}
 
       {/* Los controles van en todas las pestañas: En vivo y Experto también se ven en 3D. En escritorio, arriba para no
-          tapar la leyenda de abajo a la derecha (#402); en celular no hay leyenda. */}
-      <div data-guia="controles" className="pointer-events-auto absolute right-4 top-1/2 z-20 flex -translate-y-1/2 flex-col gap-2 md:top-[72px] md:translate-y-0 md:gap-1.5">
-          <BotonRedondo etiqueta={t("Acercar", "Zoom in")} onClick={() => controlMapa.zoom(0.75)}>
-            <Plus aria-hidden="true" className="size-4" />
-          </BotonRedondo>
-          <BotonRedondo etiqueta={t("Alejar", "Zoom out")} onClick={() => controlMapa.zoom(1.33)}>
-            <Minus aria-hidden="true" className="size-4" />
-          </BotonRedondo>
+          tapar la leyenda de abajo a la derecha (#402). En celular, debajo de la franja de arriba y sin + y −: se acerca
+          con dos dedos, y así las hojas de abajo no los tapan (#413). */}
+      <div data-guia="controles" className="pointer-events-auto absolute right-3 top-(--relieve-techo) z-20 flex flex-col gap-2 md:right-4 md:top-[72px] md:gap-1.5">
+          <div className="contents max-md:hidden">
+            <BotonRedondo etiqueta={t("Acercar", "Zoom in")} onClick={() => controlMapa.zoom(0.75)}>
+              <Plus aria-hidden="true" className="size-4" />
+            </BotonRedondo>
+            <BotonRedondo etiqueta={t("Alejar", "Zoom out")} onClick={() => controlMapa.zoom(1.33)}>
+              <Minus aria-hidden="true" className="size-4" />
+            </BotonRedondo>
+          </div>
           <BotonRedondo etiqueta={t("Mirar al norte", "Reset north")} onClick={() => controlMapa.norte()}>
             <Compass aria-hidden="true" className="size-4 text-relieve-brillo" />
           </BotonRedondo>
@@ -361,10 +364,10 @@ export function Relieve() {
         </div>
 
       {/* z-20: la ayuda de Charmy y el aviso de emergencias quedan por encima del ranking, la leyenda y la línea de tiempo.
-          En celular la ficha sale como hoja desde abajo: Charmy se guarda y el aviso queda encima (#218).
+          En celular la ficha sale como hoja desde abajo: Charmy se guarda y el aviso queda debajo de la hoja (#218, #413).
           En Tu zona el panel ocupa la izquierda: queda solo el aviso, debajo del panel. */}
       <div
-        className={`pointer-events-auto absolute bottom-4 left-4 z-20 flex flex-col items-start gap-2 ${region || zona ? "max-md:right-4 max-md:bottom-3 max-md:z-40" : ""} ${zona ? "md:max-w-[340px]" : ""}`}
+        className={`pointer-events-auto absolute bottom-4 left-4 z-20 flex flex-col items-start gap-2 max-md:inset-x-3 max-md:bottom-3 ${region || zona ? "max-md:z-40" : ""} ${zona ? "md:max-w-[340px]" : ""}`}
       >
         {!enVivo && !zona && (
           <div className={region ? "max-md:hidden" : ""}>
@@ -383,7 +386,7 @@ export function Relieve() {
             />
           </div>
         )}
-        {/* Sobre la ficha, en celular, el aviso va con fondo sólido para que no se mezcle con su texto. */}
+        {/* Debajo de la ficha, en celular, el aviso va con fondo sólido, como la hoja. */}
         <p
           className={`rounded-full bg-relieve-vidrio/60 px-3 py-1 text-[11px] text-white/70 ring-1 ring-white/10 ${region || zona ? "max-md:rounded-xl max-md:bg-relieve-panel max-md:shadow-lg" : ""} ${zona ? "md:rounded-xl" : ""}`}
         >

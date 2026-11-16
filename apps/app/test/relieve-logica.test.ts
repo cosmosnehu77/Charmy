@@ -5,6 +5,7 @@ import {
   capasRegionesVisibles,
   mapaPlano,
   opacidadRegiones,
+  margenesCamara,
   colorFoco,
   escalaRegion,
   hace,
@@ -536,5 +537,52 @@ describe("vista satelital (#396)", () => {
     expect(sat.regiones).toBeLessThan(0.6);
     expect(sat.gris).toBeLessThan(0.3);
     expect(opacidadRegiones(true, true).regiones).toBeGreaterThan(sat.regiones);
+  });
+});
+
+describe("cámara en celular (#413)", () => {
+  it("en escritorio deja los márgenes de siempre", () => {
+    expect(margenesCamara({ ancho: 1280, alto: 800, region: false, zona: false, area: false })).toEqual({
+      top: 90,
+      bottom: 80,
+      left: 300,
+      right: 80,
+    });
+    expect(margenesCamara({ ancho: 1280, alto: 800, region: true, zona: false, area: false })).toEqual({
+      top: 90,
+      bottom: 80,
+      left: 60,
+      right: 460,
+    });
+  });
+
+  it("en celular deja libre la franja de arriba, el aviso de abajo y la columna de controles", () => {
+    const m = margenesCamara({ ancho: 390, alto: 844, region: false, zona: false, area: false });
+    expect(m.top).toBeGreaterThanOrEqual(104);
+    expect(m.bottom).toBeGreaterThanOrEqual(72);
+    expect(m.right).toBeGreaterThanOrEqual(56);
+    // De 481 a 767 px la píldora es más alta y tema e idioma bajan más.
+    expect(margenesCamara({ ancho: 600, alto: 844, region: false, zona: false, area: false }).top).toBeGreaterThanOrEqual(122);
+  });
+
+  it("con una hoja abierta encuadra arriba de la hoja", () => {
+    const alto = 844;
+    const ficha = margenesCamara({ ancho: 390, alto, region: true, zona: false, area: false });
+    expect(ficha.bottom).toBeGreaterThanOrEqual(Math.round(alto * 0.52) + 72);
+    const area = margenesCamara({ ancho: 390, alto, region: false, zona: true, area: true });
+    expect(area.bottom).toBe(ficha.bottom);
+  });
+
+  it("sin nada elegido encuadra el país entero y la hoja tapa solo el sur", () => {
+    const pais = margenesCamara({ ancho: 390, alto: 640, region: false, zona: false, area: false });
+    expect(margenesCamara({ ancho: 390, alto: 640, region: false, zona: true, area: false })).toEqual(pais);
+    expect(pais.bottom).toBeLessThan(120);
+  });
+
+  it("en una pantalla baja deja al menos 120 px de mapa", () => {
+    for (const alto of [480, 560, 620]) {
+      const m = margenesCamara({ ancho: 360, alto, region: false, zona: true, area: true });
+      expect(alto - m.top - m.bottom).toBeGreaterThanOrEqual(120);
+    }
   });
 });

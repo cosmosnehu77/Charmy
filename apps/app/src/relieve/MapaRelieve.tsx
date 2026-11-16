@@ -28,6 +28,7 @@ import {
   estiloGrupo,
   focosPorRegion,
   focosVivoVisibles,
+  margenesCamara,
   maximo,
   nombresPorZoom,
   opacidadRegiones,
@@ -669,7 +670,7 @@ export default function MapaRelieve({ regiones, dias, focos, onHover }: Props) {
   useEffect(() => {
     const m = mapa.current;
     if (!m) return;
-    const ancho = (contenedor.current?.clientWidth ?? 1000) >= 768;
+    const ancho = contenedor.current?.clientWidth ?? 1000;
     const alto = contenedor.current?.clientHeight ?? 800;
     const zona = estado.pestana === "zona";
     const region = props.current.regiones.find((r) => r.id === estado.seleccion);
@@ -678,21 +679,16 @@ export default function MapaRelieve({ regiones, dias, focos, onHover }: Props) {
       : zona && area
         ? bboxDeArea(area)
         : LIMITES_MVP;
-    // En Tu zona el panel ocupa la izquierda y, con un área, el calendario la parte de abajo (en celular, la hoja).
-    const padding = zona
-      ? ancho
-        ? { top: 90, bottom: area ? Math.round(alto * 0.46) + 30 : 60, left: 380, right: 90 }
-        : { top: 80, bottom: Math.round(alto * 0.62) + 20, left: 20, right: 20 }
-      : ancho
-        ? { top: 90, bottom: 80, left: region ? 60 : 300, right: region ? 460 : 80 }
-        : { top: 80, bottom: region ? 300 : 40, left: 20, right: 20 };
-    m.fitBounds(caja, {
-      padding,
-      maxZoom: zona && area ? 11 : 6.5,
-      pitch: mapaPlano(estado.pestana, estado.plano, useConsulta.getState().dibujando) ? 0 : region ? 58 : 55,
-      bearing: m.getBearing(),
-      duration: reducido() ? 0 : 1200,
-    });
+    const padding = margenesCamara({ ancho, alto, region: !!region, zona, area: !!area });
+    const pitch = mapaPlano(estado.pestana, estado.plano, useConsulta.getState().dibujando) ? 0 : region ? 58 : 55;
+    const opciones = { padding, maxZoom: zona && area ? 11 : 6.5, bearing: m.getBearing() };
+    const duration = reducido() ? 0 : 1200;
+    // En celular la pantalla es angosta: encuadrado con el ángulo que dejó el giro, el país de costado quedaba diminuto,
+    // con medio mundo alrededor. Se encuadra derecho y plano y se inclina después; si no sigue girando, mira al norte (#413).
+    const sigueGirando = useRelieve.getState().giro && !estado.plano && !region && !zona && estado.pestana !== "vivo";
+    const camara = ancho < 768 ? m.cameraForBounds(caja, { ...opciones, bearing: 0 }) : undefined;
+    if (camara) m.easeTo({ ...camara, bearing: sigueGirando ? m.getBearing() : 0, pitch, duration });
+    else m.fitBounds(caja, { ...opciones, pitch, duration });
   }, [estado.seleccion, estado.plano, estado.pestana, area]);
 
   // Herramienta de dibujo: solo en Tu zona.

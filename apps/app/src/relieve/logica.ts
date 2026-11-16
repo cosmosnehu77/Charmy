@@ -581,3 +581,35 @@ export function opacidadRegiones(seleccion: boolean, satelital: boolean): { regi
   if (satelital) return { regiones: seleccion ? 0.7 : 0.45, gris: 0.15 };
   return { regiones: seleccion ? 1 : 0.92, gris: 0.55 };
 }
+
+/** Franjas fijas del celular, en px (#413): arriba la píldora con tema e idioma; abajo el aviso de emergencias. */
+export const TECHO_CELULAR = { chico: 104, mediano: 122 } as const;
+export const PIE_CELULAR = 72;
+/** Alto máximo de las hojas del celular: la ficha, Experto y las fichas de foco. */
+export const HOJA_CELULAR = 0.52;
+const MAPA_MINIMO = 120;
+
+/**
+ * Márgenes de la cámara al encuadrar el país, una provincia o el área de Experto. En celular la provincia queda
+ * en el pedazo de mapa libre: entre la franja de arriba, la hoja abierta y el aviso, a la izquierda de los controles.
+ * El panel de En vivo y Experto sin área no cuentan: encuadrar el país arriba de la hoja lo achicaba hasta mostrar
+ * medio mundo; así la hoja tapa solo el sur.
+ */
+export function margenesCamara(c: {
+  ancho: number;
+  alto: number;
+  region: boolean;
+  zona: boolean;
+  area: boolean;
+}): { top: number; bottom: number; left: number; right: number } {
+  if (c.ancho >= 768) {
+    // En Tu zona el panel ocupa la izquierda y, con un área, el calendario la parte de abajo.
+    return c.zona
+      ? { top: 90, bottom: c.area ? Math.round(c.alto * 0.46) + 30 : 60, left: 380, right: 90 }
+      : { top: 90, bottom: 80, left: c.region ? 60 : 300, right: c.region ? 460 : 80 };
+  }
+  const top = c.ancho <= 480 ? TECHO_CELULAR.chico : TECHO_CELULAR.mediano;
+  const hoja = c.region || (c.zona && c.area) ? HOJA_CELULAR : 0;
+  const bottom = Math.max(PIE_CELULAR, Math.min(PIE_CELULAR + Math.round(c.alto * hoja) + 16, c.alto - MAPA_MINIMO - top));
+  return { top, bottom, left: 16, right: 56 };
+}

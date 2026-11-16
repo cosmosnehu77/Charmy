@@ -70,7 +70,7 @@ export function FichaRegion({
     <section
       aria-label={t(`Ficha de ${p.name}`, `Card for ${p.name}`)}
       data-guia="ficha"
-      className="ficha-relieve pointer-events-auto absolute inset-x-2 bottom-2 z-30 flex max-h-[72%] flex-col overflow-hidden rounded-[20px] text-white md:inset-x-auto md:bottom-4 md:right-4 md:top-24 md:max-h-none md:w-[380px]"
+      className="ficha-relieve pointer-events-auto absolute inset-x-2 bottom-(--relieve-pie) z-30 flex max-h-[52%] flex-col overflow-hidden rounded-[20px] text-white md:inset-x-auto md:bottom-4 md:right-4 md:top-24 md:max-h-none md:w-[380px]"
     >
       {/* El desplazamiento va adentro: así la barra no rompe el redondeo del panel. */}
       <div className="scroll-relieve flex min-h-0 flex-1 flex-col overflow-y-auto">
@@ -100,15 +100,14 @@ export function FichaRegion({
             <X aria-hidden="true" className="size-4" />
           </button>
         </header>
-        {/* En celular el aviso de emergencias queda encima del final de la hoja: este espacio deja leer lo último. */}
         {foco ? (
-          <div className="px-5 pb-20 md:pb-5">
+          <div className="px-5 pb-5">
             <DetalleFoco foco={foco} avisoEnCelular={false} />
           </div>
         ) : enPrediccion ? (
           <FichaPrediccion region={region} />
         ) : (
-          <div className="flex flex-col gap-4 px-5 pb-20 pt-1 md:pb-5">
+          <div className="flex flex-col gap-4 px-5 pb-5 pt-1">
             <span className={`nivel-relieve ${TONOS[nivel.tono]}`}>{nivel.texto}</span>
             <div className="flex items-center gap-3.5">
               <b className="font-titulos text-[56px] font-extrabold leading-[.9] tracking-tight text-relieve-brillo tabular-nums">
@@ -203,7 +202,7 @@ function FichaPrediccion({ region }: { region: RegionResumen }) {
   const m = mesSiguiente(p);
   if (!m || !p.prediccion) {
     return (
-      <div className="flex flex-col gap-4 px-5 pb-20 pt-1 md:pb-5">
+      <div className="flex flex-col gap-4 px-5 pb-5 pt-1">
         <p className="text-sm text-white/65">{t("No hay predicción para esta región.", "There is no forecast for this region.")}</p>
         <AvisoFicha />
       </div>
@@ -218,7 +217,7 @@ function FichaPrediccion({ region }: { region: RegionResumen }) {
         ? t("Menos fuego que lo habitual", "Less fire than usual")
         : t("Como lo habitual", "About as usual");
   return (
-    <div className="flex flex-col gap-4 px-5 pb-20 pt-1 md:pb-5">
+    <div className="flex flex-col gap-4 px-5 pb-5 pt-1">
       <span className={`nivel-relieve ${TONO_SENTIDO[sentido]}`}>{etiqueta}</span>
       <div className="flex items-center gap-3.5">
         <b className="font-titulos text-[56px] font-extrabold leading-[.9] tracking-tight text-relieve-brillo tabular-nums">{num(m.expected_cells, 1)}</b>

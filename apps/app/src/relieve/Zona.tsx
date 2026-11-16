@@ -86,7 +86,7 @@ export function Zona() {
     <>
       <aside
         aria-label={t("Experto", "Expert")}
-        className="tema-relieve ficha-relieve pointer-events-auto absolute inset-x-2 bottom-2 z-30 flex max-h-[62%] flex-col overflow-hidden rounded-[20px] md:inset-x-auto md:bottom-[76px] md:left-3 md:top-[76px] md:max-h-none md:w-[340px]"
+        className="tema-relieve ficha-relieve pointer-events-auto absolute inset-x-2 bottom-(--relieve-pie) z-30 flex max-h-[52%] flex-col overflow-hidden rounded-[20px] md:inset-x-auto md:bottom-[76px] md:left-3 md:top-[76px] md:max-h-none md:w-[340px]"
       >
         <header className="flex items-center justify-between gap-2 border-b border-white/10 px-4 pb-3 pt-4">
           <h2 className="font-titulos text-xl font-bold">{t("Experto", "Expert")}</h2>
@@ -111,7 +111,7 @@ export function Zona() {
           </div>
         </header>
         {/* El desplazamiento va adentro: así la barra no rompe el redondeo del panel (#236). */}
-        <div className="scroll-relieve flex flex-col gap-4 overflow-y-auto px-4 pb-20 pt-3.5 md:pb-5">
+        <div className="scroll-relieve flex flex-col gap-4 overflow-y-auto px-4 pb-5 pt-3.5">
           <FormReporte />
           <div data-guia="zona-donde">
             <Area />
@@ -180,7 +180,7 @@ export function Zona() {
         // Sobre el mapa, para que se vea dónde se dibuja. El panel ya lo anuncia a los lectores de pantalla.
         <div
           aria-hidden="true"
-          className="tema-relieve ficha-relieve pointer-events-none absolute left-1/2 top-3 z-30 flex -translate-x-1/2 items-center gap-2 rounded-full border border-charmy-llama/60 px-3 py-1.5 text-xs font-medium text-white md:left-[calc(50%+170px)] md:top-[76px]"
+          className="tema-relieve ficha-relieve pointer-events-none absolute left-1/2 top-(--relieve-techo) z-30 flex -translate-x-1/2 items-center gap-2 rounded-full border border-charmy-llama/60 px-3 py-1.5 text-xs font-medium text-white md:left-[calc(50%+170px)] md:top-[76px]"
         >
           <span className="size-2 animate-pulse rounded-full bg-charmy-llama motion-reduce:animate-none" />
           {dibujando === "rectangle"
@@ -259,7 +259,7 @@ function FichaAtributos() {
   return (
     <section
       aria-label={t("Atributos del foco", "Hotspot attributes")}
-      className="ficha-relieve pointer-events-auto absolute inset-x-3 bottom-3 z-40 flex max-h-[70%] flex-col overflow-hidden rounded-[20px] text-white md:inset-x-auto md:bottom-auto md:right-3 md:top-[76px] md:w-[300px]"
+      className="ficha-relieve pointer-events-auto absolute inset-x-2 bottom-(--relieve-pie) z-40 flex max-h-[52%] flex-col overflow-hidden rounded-[20px] text-white md:inset-x-auto md:bottom-auto md:right-3 md:top-[76px] md:w-[300px]"
     >
       <div className="scroll-relieve overflow-y-auto px-[18px] py-4">
         <header className="flex items-start justify-between gap-2.5">

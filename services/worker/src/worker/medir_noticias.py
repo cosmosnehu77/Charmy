@@ -78,6 +78,10 @@ MUESTRA_REAL = [
         ("Incendio en Chiquitos supera las 8.000 hectáreas - Correo del Sur", S),
         ("Incendio en una fábrica de colchones : fuerte operativo - NoticiasNQN", S),
     ]),
+    ("Tarapacá", "Chile", [
+        # Un solo titular (#420): el modelo contestaba la etiqueta suelta, sin arreglo.
+        ("Incendio en Iquique deja dos viviendas afectadas - La Tercera", S),
+    ]),
     ("Los Lagos", "Chile", [
         ("Incendio forestal afecta cerca de ocho hectáreas en Maullín durante jornada de altas temperaturas "
          "en Los Lagos - Diario De Puerto Montt", "apoya"),

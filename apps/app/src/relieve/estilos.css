@@ -290,6 +290,91 @@
   }
 }
 
+/* Controles del mapa (#414): una cápsula de vidrio por función. El modo encendido lleva una barra naranja en el
+   borde de la cápsula y el ícono naranja; el nombre de cada botón sale a la izquierda en un globo. */
+.control-grupo {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 4px;
+  border-radius: 999px;
+}
+.control-sep {
+  width: 18px;
+  height: 1px;
+  margin: 3px 0;
+  background: color-mix(in srgb, white 12%, transparent);
+}
+.control-boton {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 999px;
+  color: inherit;
+  transition:
+    background 0.3s,
+    color 0.3s;
+}
+.control-boton:hover {
+  background: color-mix(in srgb, white 8%, transparent);
+}
+.control-boton:focus-visible {
+  outline: 2px solid var(--color-oscuro-acento);
+  outline-offset: 2px;
+}
+.control-boton[aria-pressed="true"] {
+  color: var(--relieve-brillo);
+}
+.control-barra {
+  position: absolute;
+  top: 50%;
+  left: -4px;
+  width: 3px;
+  height: 0;
+  border-radius: 0 3px 3px 0;
+  background: var(--charmy-llama);
+  translate: 0 -50%;
+  transition: height 0.32s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.control-boton[aria-pressed="true"] > .control-barra {
+  height: 20px;
+}
+.control-globo {
+  position: absolute;
+  top: 50%;
+  right: calc(100% + 14px);
+  width: max-content;
+  padding: 5px 11px;
+  border-radius: 999px;
+  background: var(--color-oscuro-tinta);
+  color: var(--charmy-tinta);
+  font-size: 12.5px;
+  font-weight: 600;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  translate: 6px -50%;
+  transition:
+    opacity 0.2s,
+    translate 0.25s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.control-boton:is(:hover, :focus-visible) > .control-globo {
+  opacity: 1;
+  translate: 0 -50%;
+}
+/* Teléfono: botones de 40 px para el dedo; sin hover, el globo sale solo con el foco del teclado. */
+@media (max-width: 767px) {
+  .control-boton {
+    width: 40px;
+    height: 40px;
+  }
+  .control-boton:hover > .control-globo {
+    opacity: 0;
+  }
+}
+
 /* Lupa: crece al tocarla, borde y halo naranja, sin el rectángulo del navegador. */
 .buscador-relieve {
   position: relative;
@@ -798,6 +883,9 @@
   }
   .buscador-relieve,
   .buscador-campo,
+  .control-boton,
+  .control-barra,
+  .control-globo,
   .pildora-charmy,
   .pildora-titulo,
   .pildora-pestana,
@@ -1108,4 +1196,19 @@ html[data-tema="claro"] .relieve [role="tab"][aria-selected="true"] {
 html[data-tema="claro"] .relieve .pildora-pestana[aria-selected="true"] {
   background: var(--mapa-dia-elevado);
   color: var(--mapa-dia-tinta);
+}
+
+/* Controles del mapa en tema claro (#414). */
+html[data-tema="claro"] .control-sep {
+  background: var(--mapa-dia-linea);
+}
+html[data-tema="claro"] .control-boton:hover {
+  background: color-mix(in srgb, var(--mapa-dia-tinta) 7%, transparent);
+}
+html[data-tema="claro"] .control-boton[aria-pressed="true"] {
+  color: var(--mapa-dia-acento-texto);
+}
+html[data-tema="claro"] .control-globo {
+  background: var(--mapa-dia-tinta);
+  color: var(--mapa-dia-fondo);
 }

@@ -1,10 +1,10 @@
 import { rampaAnomalia, rampaConteo } from "@charmy/ui";
-import { ChevronRight, Compass, Minus, Plus, RotateCw, Satellite } from "lucide-react";
+import { ChevronRight } from "lucide-react";
 import { lazy, Suspense, useEffect, useMemo, useState } from "react";
 import { useConsulta } from "@/estado/consulta";
 import { useVivo } from "@/vivo/estado";
 import { CharmyGuia } from "./CharmyGuia";
-import { controlMapa } from "./controlMapa";
+import { ControlesMapa } from "./ControlesMapa";
 import { useDatosRelieve } from "./datos";
 import { FichaFoco, PanelEnVivo } from "./EnVivo";
 import { indicadorDe, useRelieve } from "./estado";
@@ -323,42 +323,7 @@ export function Relieve() {
 
       {/* Los controles van en todas las pestañas: En vivo y Experto también se ven en 3D. En escritorio, arriba para no
           tapar la leyenda de abajo a la derecha (#402); en celular no hay leyenda. */}
-      <div data-guia="controles" className="pointer-events-auto absolute right-4 top-1/2 z-20 flex -translate-y-1/2 flex-col gap-2 md:top-[72px] md:translate-y-0 md:gap-1.5">
-          <BotonRedondo etiqueta={t("Acercar", "Zoom in")} onClick={() => controlMapa.zoom(0.75)}>
-            <Plus aria-hidden="true" className="size-4" />
-          </BotonRedondo>
-          <BotonRedondo etiqueta={t("Alejar", "Zoom out")} onClick={() => controlMapa.zoom(1.33)}>
-            <Minus aria-hidden="true" className="size-4" />
-          </BotonRedondo>
-          <BotonRedondo etiqueta={t("Mirar al norte", "Reset north")} onClick={() => controlMapa.norte()}>
-            <Compass aria-hidden="true" className="size-4 text-relieve-brillo" />
-          </BotonRedondo>
-          <BotonRedondo
-            etiqueta={estado.plano ? t("Ver en 3D", "View in 3D") : t("Ver en 2D, más liviano", "View in 2D, lighter")}
-            onClick={() => estado.cambiar({ plano: !estado.plano })}
-          >
-            <span className="text-[10px] font-bold">{estado.plano ? "3D" : "2D"}</span>
-          </BotonRedondo>
-          <BotonRedondo
-            etiqueta={estado.satelital ? t("Volver al modelo", "Back to the model") : t("Ver imagen satelital", "View satellite imagery")}
-            activo={estado.satelital}
-            onClick={() => estado.cambiar({ satelital: !estado.satelital })}
-          >
-            <Satellite aria-hidden="true" className="size-4" />
-          </BotonRedondo>
-          {/* El giro queda para los indicadores: en En vivo y Experto los grupos de focos se rearman al mover el mapa. */}
-          {!enVivo && !zona && (
-            <>
-              <BotonRedondo
-                etiqueta={estado.giro ? t("Detener el giro", "Stop rotation") : t("Girar el mapa", "Rotate map")}
-                activo={estado.giro}
-                onClick={() => estado.cambiar({ giro: !estado.giro })}
-              >
-                <RotateCw aria-hidden="true" className="size-4" />
-              </BotonRedondo>
-            </>
-          )}
-        </div>
+      <ControlesMapa conGiro={!enVivo && !zona} />
 
       {/* z-20: la ayuda de Charmy y el aviso de emergencias quedan por encima del ranking, la leyenda y la línea de tiempo.
           En celular la ficha sale como hoja desde abajo: Charmy se guarda y el aviso queda encima (#218).
@@ -402,32 +367,5 @@ export function Relieve() {
         </p>
       </div>
     </div>
-  );
-}
-
-function BotonRedondo({
-  etiqueta,
-  onClick,
-  activo,
-  children,
-}: {
-  etiqueta: string;
-  onClick: () => void;
-  activo?: boolean;
-  children: React.ReactNode;
-}) {
-  return (
-    <button
-      type="button"
-      aria-label={etiqueta}
-      title={etiqueta}
-      aria-pressed={activo}
-      onClick={onClick}
-      className={`grid size-10 place-items-center rounded-full ring-1 backdrop-blur-md transition ${
-        activo ? "bg-white/15 ring-white/30" : "bg-relieve-vidrio/70 ring-white/10 hover:bg-white/10"
-      }`}
-    >
-      {children}
-    </button>
   );
 }

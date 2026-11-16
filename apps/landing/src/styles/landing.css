@@ -160,7 +160,7 @@ main{position:relative;z-index:5}
 .modo-txt>p{margin:0;max-width:38ch;color:var(--l-texto)}
 .escena{position:relative;min-width:0}
 
-/* novato: lecturas apiladas, como notificaciones que llegan */
+/* tu provincia: lecturas apiladas, como notificaciones que llegan */
 .n .escena::before{content:"";position:absolute;inset:-20% -10% -30% 10%;background:radial-gradient(closest-side,color-mix(in srgb,var(--l-ambar) 16%,transparent),transparent);z-index:-1}
 .malla{position:absolute;right:-120px;top:-60px;width:620px;height:620px;opacity:.5;z-index:-1}
 .malla circle{fill:none;stroke:var(--l-linea)}

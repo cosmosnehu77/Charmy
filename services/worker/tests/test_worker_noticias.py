@@ -280,3 +280,21 @@ def test_el_pedido_dice_que_un_medio_de_otro_pais_no_cuenta():
     pedido = pedido_de("Santa Cruz")
     assert "Cada titular termina con el nombre del medio" in pedido
     assert "un titular o un medio de otro país" in pedido
+
+
+@pytest.mark.parametrize("texto", ["sin_informacion", '"apoya"', "```\napoya\n```"])
+def test_con_un_solo_titular_acepta_la_etiqueta_suelta(texto):
+    # #420: con un titular (CL-TA, 15/11) el modelo contestaba "sin_informacion" sin arreglo y fallaba.
+    respuesta = cliente(lambda req: httpx.Response(200, json=respuesta_grabada(texto)))
+    etiqueta = texto.strip('`"\n')
+    assert etiquetar(TITULARES[:1], "Tarapacá", "Chile", respuesta) == [etiqueta]
+
+
+def test_con_varios_titulares_una_etiqueta_suelta_no_alcanza():
+    respuesta = cliente(lambda req: httpx.Response(200, json=respuesta_grabada("apoya")))
+    with pytest.raises(NoticiasNoDisponibles):
+        etiquetar(TITULARES, "Chubut", "Argentina", respuesta)
+
+
+def test_el_pedido_pide_un_arreglo_aunque_haya_un_titular():
+    assert "aunque haya un solo titular" in pedido_de()

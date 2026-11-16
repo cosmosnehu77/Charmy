@@ -69,7 +69,7 @@ export function PanelEnVivo({ focos, disponible, mensaje, regiones }: Props) {
     // Con las estadísticas el panel crece: se desplaza adentro para no tapar el aviso de emergencias.
     <aside
       aria-label={t("Resumen en vivo", "Live summary")}
-      className="vidrio-relieve scroll-relieve pointer-events-auto absolute left-3 top-[76px] z-20 max-h-[calc(100dvh-140px)] w-[min(270px,calc(100%-24px))] overflow-y-auto rounded-2xl px-4 py-3.5 text-white"
+      className="vidrio-relieve scroll-relieve pointer-events-auto absolute inset-x-2 bottom-(--relieve-pie) z-20 max-h-[40%] md:inset-x-auto md:bottom-auto md:left-3 md:top-[76px] md:max-h-[calc(100dvh-140px)] md:w-[min(270px,calc(100%-24px))] overflow-y-auto rounded-2xl px-4 py-3.5 text-white"
     >
       <header className="flex items-center justify-between gap-2">
         <h2 className="flex items-center gap-2 font-titulos text-lg font-bold">
@@ -260,7 +260,7 @@ export function FichaFoco({ foco, regiones }: { foco: FocoReciente; regiones: Re
   return (
     <section
       aria-label={t("Ficha del foco", "Hotspot card")}
-      className="ficha-relieve pointer-events-auto absolute inset-x-3 bottom-3 z-30 flex max-h-[78%] flex-col overflow-hidden rounded-[20px] text-white md:inset-x-auto md:bottom-auto md:right-3 md:top-[76px] md:max-h-[calc(100%-92px)] md:w-[300px]"
+      className="ficha-relieve pointer-events-auto absolute inset-x-2 bottom-(--relieve-pie) z-30 flex max-h-[52%] flex-col overflow-hidden rounded-[20px] text-white md:inset-x-auto md:bottom-auto md:right-3 md:top-[76px] md:max-h-[calc(100%-92px)] md:w-[300px]"
     >
       {/* El desplazamiento va adentro: así la barra no rompe el redondeo del panel (#236). */}
       <div className="scroll-relieve overflow-y-auto px-[18px] py-4">

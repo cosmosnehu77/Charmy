@@ -8,6 +8,7 @@ import { t, useIdioma } from "./idioma";
  * Botones de la derecha del mapa (#414, boceto 7 con la barra y el globo del 9): una cápsula de vidrio por función.
  * Un modo encendido lleva una barra naranja en el borde de su cápsula; el nombre de cada botón sale en un globo.
  * El giro queda para los indicadores: en En vivo y Experto los grupos de focos se rearman al mover el mapa.
+ * En celular van debajo de la franja de arriba y sin + y −: se acerca con dos dedos, y las hojas no los tapan (#413).
  */
 export function ControlesMapa({ conGiro }: { conGiro: boolean }) {
   useIdioma((s) => s.idioma);
@@ -18,9 +19,9 @@ export function ControlesMapa({ conGiro }: { conGiro: boolean }) {
       aria-label={t("Controles del mapa", "Map controls")}
       aria-orientation="vertical"
       data-guia="controles"
-      className="pointer-events-auto absolute right-4 top-1/2 z-20 flex -translate-y-1/2 flex-col items-end gap-2.5 md:top-[72px] md:translate-y-0"
+      className="pointer-events-auto absolute right-3 top-(--relieve-techo) z-20 flex flex-col items-end gap-2.5 md:right-4 md:top-[72px]"
     >
-      <Grupo nombre={t("Zoom", "Zoom")}>
+      <Grupo nombre={t("Zoom", "Zoom")} clase="control-zoom">
         <Boton etiqueta={t("Acercar", "Zoom in")} onClick={() => controlMapa.zoom(0.75)}>
           <Plus aria-hidden="true" className="size-4" />
         </Boton>
@@ -63,10 +64,10 @@ export function ControlesMapa({ conGiro }: { conGiro: boolean }) {
   );
 }
 
-function Grupo({ nombre, children }: { nombre: string; children: ReactNode[] | ReactNode }) {
+function Grupo({ nombre, clase = "", children }: { nombre: string; clase?: string; children: ReactNode[] | ReactNode }) {
   const botones = Array.isArray(children) ? children : [children];
   return (
-    <div role="group" aria-label={nombre} className="control-grupo vidrio-relieve">
+    <div role="group" aria-label={nombre} className={`control-grupo vidrio-relieve ${clase}`}>
       {botones.map((boton, i) => (
         <Fragment key={i}>
           {i > 0 && <i aria-hidden="true" className="control-sep" />}

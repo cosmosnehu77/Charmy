@@ -284,7 +284,29 @@
     height: calc(var(--pildora-b) + 4px);
     padding: 2px;
   }
-  /* Tema e idioma bajan debajo de la píldora: arriba a la derecha la tapaban (pasaba también antes de #406). */
+}
+
+/* Celular (#413): arriba una franja para la píldora con tema e idioma debajo, abajo otra para el aviso de emergencias.
+   Las hojas y los paneles van entre las dos. Los valores son los de TECHO_CELULAR y PIE_CELULAR (logica.ts), que usa
+   la cámara para encuadrar arriba de la hoja. */
+@media (max-width: 767px) {
+  .relieve {
+    --relieve-techo: 122px;
+    --relieve-pie: 72px;
+  }
+  /* Tema e idioma bajan debajo de la píldora: en la misma fila la tapaban. */
+  .relieve .nav-acc {
+    top: 74px;
+  }
+  /* Sin + y −: en el teléfono se acerca con dos dedos. */
+  .relieve .control-zoom {
+    display: none;
+  }
+}
+@media (max-width: 480px) {
+  .relieve {
+    --relieve-techo: 104px;
+  }
   .relieve .nav-acc {
     top: 56px;
   }

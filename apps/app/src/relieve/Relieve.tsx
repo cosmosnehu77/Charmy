@@ -174,7 +174,7 @@ export function Relieve() {
       </div>
 
       {resumen.isError && (
-        <p role="alert" className="vidrio-relieve absolute left-1/2 top-24 z-20 -translate-x-1/2 rounded-xl px-4 py-2.5 text-sm">
+        <p role="alert" className="vidrio-relieve absolute left-3 top-(--relieve-techo) z-20 w-[calc(100%-72px)] md:left-1/2 md:top-24 md:w-auto md:-translate-x-1/2 rounded-xl px-4 py-2.5 text-sm">
           {t(
             "Los datos por provincia no están disponibles ahora. Probá en un rato.",
             "Provincial data is not available right now. Try again shortly.",
@@ -322,14 +322,14 @@ export function Relieve() {
       )}
 
       {/* Los controles van en todas las pestañas: En vivo y Experto también se ven en 3D. En escritorio, arriba para no
-          tapar la leyenda de abajo a la derecha (#402); en celular no hay leyenda. */}
+          tapar la leyenda de abajo a la derecha (#402); en celular, debajo de la franja de arriba (#413). */}
       <ControlesMapa conGiro={!enVivo && !zona} />
 
       {/* z-20: la ayuda de Charmy y el aviso de emergencias quedan por encima del ranking, la leyenda y la línea de tiempo.
-          En celular la ficha sale como hoja desde abajo: Charmy se guarda y el aviso queda encima (#218).
+          En celular la ficha sale como hoja desde abajo: Charmy se guarda y el aviso queda debajo de la hoja (#218, #413).
           En Tu zona el panel ocupa la izquierda: queda solo el aviso, debajo del panel. */}
       <div
-        className={`pointer-events-auto absolute bottom-4 left-4 z-20 flex flex-col items-start gap-2 ${region || zona ? "max-md:right-4 max-md:bottom-3 max-md:z-40" : ""} ${zona ? "md:max-w-[340px]" : ""}`}
+        className={`pointer-events-auto absolute bottom-4 left-4 z-20 flex flex-col items-start gap-2 max-md:inset-x-3 max-md:bottom-3 ${region || zona ? "max-md:z-40" : ""} ${zona ? "md:max-w-[340px]" : ""}`}
       >
         {!enVivo && !zona && (
           <div className={region ? "max-md:hidden" : ""}>
@@ -348,7 +348,7 @@ export function Relieve() {
             />
           </div>
         )}
-        {/* Sobre la ficha, en celular, el aviso va con fondo sólido para que no se mezcle con su texto. */}
+        {/* Debajo de la ficha, en celular, el aviso va con fondo sólido, como la hoja. */}
         <p
           className={`rounded-full bg-relieve-vidrio/60 px-3 py-1 text-[11px] text-white/70 ring-1 ring-white/10 ${region || zona ? "max-md:rounded-xl max-md:bg-relieve-panel max-md:shadow-lg" : ""} ${zona ? "md:rounded-xl" : ""}`}
         >

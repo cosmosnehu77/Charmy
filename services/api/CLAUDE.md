@@ -37,7 +37,9 @@ Docs interactivas en `http://localhost:8000/api/v1/docs`.
 - `services/contexto` (carril B) se monta como router; no se edita desde este carril.
 - `/forecast/zone` y `/regions/forecast` (F4-C4) llaman al servicio `charmy-prediccion` (services/prediccion, en
   Render) con `PREDICCION_URL` y `PREDICCION_TOKEN` (Bearer). Respuestas guardadas 12 h; si el servicio no responde
-  en 20 s (plan gratis, se duerme) o falta la configuración, 503 `fuente_no_disponible`.
+  en 60 s (plan gratis, se duerme y tarda hasta un minuto en arrancar) o falta la configuración, 503
+  `fuente_no_disponible`. `GET /regions/forecast`, que la app pide al abrir, lo despierta en segundo plano con un
+  toque a `/salud`, como mucho cada 5 minutos (F4-C5).
 - La imagen se construye desde la **raíz del repo** con `-f services/api/Dockerfile`, porque monta
   `services/contexto`. Lo que entra está en `services/api/Dockerfile.dockerignore`.
 - Pruebas: `uv run pytest services/api` desde la raíz (usan `data/muestras/`, sin red ni base).

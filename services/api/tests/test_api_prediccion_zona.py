@@ -65,6 +65,8 @@ def servicio(monkeypatch):
     monkeypatch.setenv("PREDICCION_TOKEN", TOKEN)
     monkeypatch.setattr(prediccion_zona, "_ahora", lambda: AHORA)
     monkeypatch.setattr(prediccion_zona, "_codigos", lambda: ["AR-U", "AR-H"])
+    # Sin despertador salvo en sus pruebas: un toque en otro hilo se mezclaría con los pedidos que se cuentan.
+    monkeypatch.setattr(prediccion_zona, "_en_segundo_plano", lambda f: None)
     prediccion_zona._guardado.clear()
     return s
 
@@ -205,3 +207,55 @@ def test_al_arrancar_deja_la_prediccion_por_region_calculada(monkeypatch):
     monkeypatch.setattr(main.prediccion_zona, "por_region", lambda: llamadas.append(True))
     main._copiar_datos()
     assert llamadas == [True]
+
+
+# F4-C5 (#415): al abrir la app, el pedido de /regions/forecast despierta el servicio en segundo plano.
+
+
+@pytest.fixture
+def toques(servicio, monkeypatch):
+    """El toque corre en el mismo hilo para poder mirarlo; guarda las URL de /salud que se pidieron."""
+    monkeypatch.setattr(prediccion_zona, "_en_segundo_plano", lambda f: f())
+    prediccion_zona._ultimo_toque = None
+    return lambda: [str(p.url) for p in servicio.pedidos if p.method == "GET"]
+
+
+def test_pedir_la_prediccion_por_region_toca_salud(cliente, servicio, toques):
+    cliente.get(REGIONES)
+    assert toques() == [f"{URL}/salud"]
+    assert servicio.pedidos[0].headers.get("authorization") is None
+
+
+def test_el_toque_es_como_mucho_cada_cinco_minutos(cliente, servicio, toques, monkeypatch):
+    cliente.get(REGIONES)
+    monkeypatch.setattr(prediccion_zona, "_ahora", lambda: AHORA + timedelta(minutes=4))
+    cliente.get(REGIONES)
+    assert len(toques()) == 1
+    monkeypatch.setattr(prediccion_zona, "_ahora", lambda: AHORA + timedelta(minutes=5, seconds=1))
+    cliente.get(REGIONES)
+    assert len(toques()) == 2
+
+
+@pytest.mark.parametrize("falla", [_agotado, lambda _: httpx.Response(503)])
+def test_si_el_toque_falla_la_respuesta_no_cambia(cliente, servicio, toques, falla):
+    servicio.responder = lambda p: falla(p) if p.method == "GET" else httpx.Response(200, json=GRABADA)
+    r = cliente.get(REGIONES)
+    assert r.status_code == 200 and toques() == [f"{URL}/salud"]
+
+
+def test_sin_configuracion_no_toca(cliente, servicio, toques, monkeypatch):
+    monkeypatch.delenv("PREDICCION_URL")
+    cliente.get(REGIONES)
+    assert toques() == []
+
+
+def test_el_toque_no_frena_la_respuesta(cliente, servicio, monkeypatch):
+    lanzados = []
+    monkeypatch.setattr(prediccion_zona, "_en_segundo_plano", lanzados.append)
+    prediccion_zona._ultimo_toque = None
+    assert cliente.get(REGIONES).status_code == 200
+    assert len(lanzados) == 1 and [p.method for p in servicio.pedidos] == ["POST", "POST"]
+
+
+def test_la_api_espera_al_servicio_hasta_un_minuto():
+    assert prediccion_zona.CLIENTE.timeout.read == 60

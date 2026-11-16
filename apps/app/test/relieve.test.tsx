@@ -427,6 +427,38 @@ describe("vista Relieve (F4-R1)", () => {
     expect(screen.getByRole("button", { name: "Ver en 3D" })).toBeInTheDocument();
   });
 
+  it("los controles del mapa van en cápsulas por función y cada botón tiene su nombre en un globo (#414)", () => {
+    montar();
+    const grupos = within(screen.getByRole("toolbar", { name: "Controles del mapa" })).getAllByRole("group");
+    expect(grupos.map((g) => g.getAttribute("aria-label"))).toEqual(["Zoom", "Norte", "Vista", "Giro"]);
+    expect(within(grupos[0]!).getAllByRole("button").map((b) => b.getAttribute("aria-label"))).toEqual(["Acercar", "Alejar"]);
+    expect(within(grupos[2]!).getAllByRole("button").map((b) => b.getAttribute("aria-label"))).toEqual([
+      "Ver en 2D, más liviano",
+      "Ver imagen satelital",
+    ]);
+    for (const boton of within(screen.getByRole("toolbar", { name: "Controles del mapa" })).getAllByRole("button")) {
+      expect(boton.querySelector(".control-globo")).toHaveTextContent(boton.getAttribute("aria-label")!);
+    }
+  });
+
+  it("satélite y girar encendidos llevan la barra de encendido; girar no está en En vivo ni en Experto (#414)", async () => {
+    montar();
+    const u = userEvent.setup();
+    // El mapa arranca girando: el botón está encendido y tocarlo lo apaga.
+    const girar = screen.getByRole("button", { name: "Detener el giro" });
+    expect(girar).toHaveAttribute("aria-pressed", "true");
+    expect(girar.querySelector(".control-barra")).not.toBeNull();
+    await u.click(girar);
+    expect(screen.getByRole("button", { name: "Girar el mapa" })).toHaveAttribute("aria-pressed", "false");
+    await u.click(screen.getByRole("button", { name: "Ver imagen satelital" }));
+    expect(screen.getByRole("button", { name: "Volver al modelo" })).toHaveAttribute("aria-pressed", "true");
+    for (const pestana of ["En vivo", "Experto"]) {
+      await u.click(screen.getByRole("tab", { name: pestana }));
+      expect(screen.queryByRole("group", { name: "Giro" })).not.toBeInTheDocument();
+    }
+    useRelieve.setState({ giro: true, satelital: false });
+  });
+
   it("el botón satelital cambia el mapa a la imagen y, otra vez, vuelve al modelo (#396)", async () => {
     montar();
     const u = userEvent.setup();

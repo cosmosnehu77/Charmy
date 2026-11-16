@@ -9,7 +9,10 @@ La compuerta D-10 pasa en los seis plazos, pero a 3 meses o más hubo un año pe
 plazos 1 y 2 van como pronóstico y los demás como lo habitual ajustado (#341).
 
 La emisión cambia una vez por mes: cada respuesta se guarda doce horas. En el plan gratis de Render el
-servicio se duerme; si no contesta a tiempo, esa parte queda no disponible (503) y no se guarda nada.
+servicio se duerme a los 15 minutos sin pedidos y tarda hasta un minuto en arrancar. La app pide
+`/regions/forecast` al abrir: con ese pedido se lo despierta en segundo plano (F4-C5, #415), así ya está
+despierto cuando la persona llega a Predicción o a Experto. Si igual no contesta a tiempo, esa parte queda
+no disponible (503) y no se guarda nada.
 """
 
 import logging
@@ -28,8 +31,8 @@ from api.errores import ErrorDeContrato
 log = logging.getLogger(__name__)
 router = APIRouter()
 
-# El servicio despierto responde en milisegundos; dormido tarda casi un minuto en arrancar.
-CLIENTE = httpx.Client(timeout=20)
+# El servicio despierto responde en milisegundos; dormido tarda hasta un minuto en arrancar (F4-C5).
+CLIENTE = httpx.Client(timeout=60)
 VIDA_GUARDADO = timedelta(hours=12)
 PLAZOS_PRONOSTICO = 2
 NO_DISPONIBLE = "La predicción no está disponible ahora. Probá más tarde."
@@ -38,6 +41,10 @@ NO_DISPONIBLE = "La predicción no está disponible ahora. Probá más tarde."
 _guardado: dict[str, tuple[datetime, dict]] = {}
 # Uno para las zonas y otro para el resumen por región, que tarda más: no se traban entre sí.
 _candados = {"zona": threading.Lock(), "regiones": threading.Lock()}
+# Despertador (F4-C5): como mucho un toque cada cinco minutos, aunque entren muchas personas a la vez.
+CADA_TOQUE = timedelta(minutes=5)
+_ultimo_toque: datetime | None = None
+_candado_toque = threading.Lock()
 
 
 def _ahora() -> datetime:
@@ -52,6 +59,30 @@ class Zona(BaseModel):
     bbox: Annotated[list[float], Field(min_length=4, max_length=4)] | None = None
     geometry: dict[str, Any] | None = None
     region: str | None = None
+
+
+def _en_segundo_plano(funcion) -> None:
+    threading.Thread(target=funcion, daemon=True).start()
+
+
+def _tocar(url: str) -> None:
+    try:
+        CLIENTE.get(f"{url}/salud")
+    except httpx.HTTPError as error:
+        log.info("El toque al servicio de predicción no respondió: %s", type(error).__name__)
+
+
+def despertar() -> None:
+    """Le pide `/salud` al servicio sin esperarlo: si está dormido, Render lo empieza a levantar."""
+    global _ultimo_toque
+    url = os.environ.get("PREDICCION_URL", "").strip().rstrip("/")
+    if not url:
+        return
+    with _candado_toque:
+        if _ultimo_toque and _ahora() - _ultimo_toque < CADA_TOQUE:
+            return
+        _ultimo_toque = _ahora()
+    _en_segundo_plano(lambda: _tocar(url))
 
 
 def _no_disponible() -> ErrorDeContrato:
@@ -144,4 +175,5 @@ def forecast_zone(cuerpo: Zona) -> dict:
 
 @router.get("/regions/forecast", operation_id="getRegionsForecast", tags=["historico"])
 def regions_forecast() -> dict:
+    despertar()
     return por_region()
